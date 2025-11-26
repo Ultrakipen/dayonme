@@ -160,11 +160,11 @@ export class Database {
       this.SomeoneDayTag = SomeoneDayTag.initialize(this.sequelize);
       this.Tag = Tag.initialize(this.sequelize);
       this.Challenge = Challenge.initialize(this.sequelize);
+      this.ChallengeEmotion = ChallengeEmotion.initialize(this.sequelize);
       this.ChallengeComment = ChallengeComment.initialize(this.sequelize);
       this.ChallengeLike = ChallengeLike.initialize(this.sequelize);
       this.ChallengeCommentLike = ChallengeCommentLike.initialize(this.sequelize);
       this.ChallengeParticipant = ChallengeParticipant.initialize(this.sequelize);
-      this.ChallengeEmotion = ChallengeEmotion.initialize(this.sequelize);
       this.ChallengeReport = ChallengeReport.initialize(this.sequelize);
       this.SimpleChallenge = SimpleChallenge.initialize(this.sequelize);
       this.SimpleChallengeParticipant = SimpleChallengeParticipant.initialize(this.sequelize);
