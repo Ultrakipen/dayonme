@@ -71,11 +71,7 @@ class ChallengeComment extends Model<ChallengeCommentAttributes> {
         },
         challenge_emotion_id: {
           type: DataTypes.INTEGER,
-          allowNull: true,
-          references: {
-            model: 'challenge_emotions',
-            key: 'challenge_emotion_id'
-          }
+          allowNull: true
         },
         created_at: {
           type: DataTypes.DATE,
