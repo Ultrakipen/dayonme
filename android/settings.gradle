@@ -1,0 +1,30 @@
+rootProject.name = 'IExist'
+
+// React Native 0.80+ gradle plugin
+includeBuild('../node_modules/@react-native/gradle-plugin')
+
+// Include native modules
+def modules = [
+    ':@react-native-async-storage_async-storage',
+    ':@react-native-community_blur',
+    ':@react-native-community_datetimepicker',
+    ':react-native-gesture-handler',
+    ':react-native-haptic-feedback',
+    ':react-native-image-picker',
+    ':react-native-linear-gradient',
+    ':react-native-reanimated',
+    ':react-native-safe-area-context',
+    ':react-native-screens',
+    ':react-native-svg',
+    ':react-native-vector-icons'
+]
+
+modules.each { moduleName ->
+    def packageName = moduleName.replaceAll(':', '').replaceAll('_', '/').replaceAll('-', '-')
+    def modulePath = "../node_modules/${packageName}/android"
+
+    include moduleName
+    project(moduleName).projectDir = file(modulePath)
+}
+
+include ':app'

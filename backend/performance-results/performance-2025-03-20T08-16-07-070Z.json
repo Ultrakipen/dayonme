@@ -1,0 +1,322 @@
+[
+  {
+    "api": "/api/emotions",
+    "method": "GET",
+    "responseTime": 40.82829999999922,
+    "timestamp": "2025-03-20T08:15:16.521Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/emotions",
+    "method": "GET",
+    "responseTime": 10.508399999998801,
+    "timestamp": "2025-03-20T08:15:16.531Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/emotions",
+    "method": "GET",
+    "responseTime": 7.485400000001391,
+    "timestamp": "2025-03-20T08:15:16.539Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/emotions",
+    "method": "GET",
+    "responseTime": 6.973400000000765,
+    "timestamp": "2025-03-20T08:15:16.546Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/emotions",
+    "method": "GET",
+    "responseTime": 9.220999999999549,
+    "timestamp": "2025-03-20T08:15:16.555Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/users/profile",
+    "method": "GET",
+    "responseTime": 17.004300000000512,
+    "timestamp": "2025-03-20T08:15:16.575Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/users/profile",
+    "method": "GET",
+    "responseTime": 8.340700000000652,
+    "timestamp": "2025-03-20T08:15:16.584Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/users/profile",
+    "method": "GET",
+    "responseTime": 8.587799999999334,
+    "timestamp": "2025-03-20T08:15:16.592Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/users/profile",
+    "method": "GET",
+    "responseTime": 7.971300000001065,
+    "timestamp": "2025-03-20T08:15:16.600Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/users/profile",
+    "method": "GET",
+    "responseTime": 8.497300000000905,
+    "timestamp": "2025-03-20T08:15:16.609Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/my-day/posts",
+    "method": "GET",
+    "responseTime": 30.550600000000486,
+    "timestamp": "2025-03-20T08:15:16.642Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/my-day/posts",
+    "method": "GET",
+    "responseTime": 17.865399999998772,
+    "timestamp": "2025-03-20T08:15:16.659Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/my-day/posts",
+    "method": "GET",
+    "responseTime": 19.414600000000064,
+    "timestamp": "2025-03-20T08:15:16.679Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/my-day/posts",
+    "method": "GET",
+    "responseTime": 18.26599999999962,
+    "timestamp": "2025-03-20T08:15:16.697Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/my-day/posts",
+    "method": "GET",
+    "responseTime": 20.42450000000099,
+    "timestamp": "2025-03-20T08:15:16.718Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/notifications",
+    "method": "GET",
+    "responseTime": 14.152099999999336,
+    "timestamp": "2025-03-20T08:15:16.733Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/notifications",
+    "method": "GET",
+    "responseTime": 9.64890000000014,
+    "timestamp": "2025-03-20T08:15:16.743Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/notifications",
+    "method": "GET",
+    "responseTime": 8.940699999999197,
+    "timestamp": "2025-03-20T08:15:16.752Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/notifications",
+    "method": "GET",
+    "responseTime": 10.09610000000066,
+    "timestamp": "2025-03-20T08:15:16.762Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/notifications",
+    "method": "GET",
+    "responseTime": 8.975799999998344,
+    "timestamp": "2025-03-20T08:15:16.771Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/my-day/posts",
+    "method": "POST",
+    "responseTime": 34.056399999999485,
+    "timestamp": "2025-03-20T08:15:16.806Z",
+    "statusCode": 201,
+    "success": true
+  },
+  {
+    "api": "/api/my-day/posts",
+    "method": "POST",
+    "responseTime": 12.811299999999392,
+    "timestamp": "2025-03-20T08:15:16.819Z",
+    "statusCode": 201,
+    "success": true
+  },
+  {
+    "api": "/api/my-day/posts",
+    "method": "POST",
+    "responseTime": 12.044599999999264,
+    "timestamp": "2025-03-20T08:15:16.831Z",
+    "statusCode": 201,
+    "success": true
+  },
+  {
+    "api": "/api/my-day/posts",
+    "method": "POST",
+    "responseTime": 12.032799999999042,
+    "timestamp": "2025-03-20T08:15:16.843Z",
+    "statusCode": 201,
+    "success": true
+  },
+  {
+    "api": "/api/my-day/posts",
+    "method": "POST",
+    "responseTime": 14.984999999998763,
+    "timestamp": "2025-03-20T08:15:16.858Z",
+    "statusCode": 201,
+    "success": true
+  },
+  {
+    "api": "/api/someone-day",
+    "method": "GET",
+    "responseTime": 23.722599999999147,
+    "timestamp": "2025-03-20T08:15:16.883Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/someone-day",
+    "method": "GET",
+    "responseTime": 19.480999999999767,
+    "timestamp": "2025-03-20T08:15:16.903Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/someone-day",
+    "method": "GET",
+    "responseTime": 19.61909999999989,
+    "timestamp": "2025-03-20T08:15:16.922Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/someone-day",
+    "method": "GET",
+    "responseTime": 19.644200000000637,
+    "timestamp": "2025-03-20T08:15:16.942Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/someone-day",
+    "method": "GET",
+    "responseTime": 18.022099999998318,
+    "timestamp": "2025-03-20T08:15:16.960Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/tags",
+    "method": "GET",
+    "responseTime": 10.868000000000393,
+    "timestamp": "2025-03-20T08:15:16.972Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/tags",
+    "method": "GET",
+    "responseTime": 9.22780000000057,
+    "timestamp": "2025-03-20T08:15:16.981Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/tags",
+    "method": "GET",
+    "responseTime": 8.517499999999927,
+    "timestamp": "2025-03-20T08:15:16.990Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/tags",
+    "method": "GET",
+    "responseTime": 7.763500000000931,
+    "timestamp": "2025-03-20T08:15:16.998Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/tags",
+    "method": "GET",
+    "responseTime": 8.857399999998961,
+    "timestamp": "2025-03-20T08:15:17.007Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/challenges",
+    "method": "GET",
+    "responseTime": 10012.803800000002,
+    "timestamp": "2025-03-20T08:15:27.021Z",
+    "statusCode": 500,
+    "success": false
+  },
+  {
+    "api": "/api/challenges",
+    "method": "GET",
+    "responseTime": 10013.1924,
+    "timestamp": "2025-03-20T08:15:37.034Z",
+    "statusCode": 500,
+    "success": false
+  },
+  {
+    "api": "/api/challenges",
+    "method": "GET",
+    "responseTime": 10014.5366,
+    "timestamp": "2025-03-20T08:15:47.049Z",
+    "statusCode": 500,
+    "success": false
+  },
+  {
+    "api": "/api/challenges",
+    "method": "GET",
+    "responseTime": 10003.128900000003,
+    "timestamp": "2025-03-20T08:15:57.052Z",
+    "statusCode": 500,
+    "success": false
+  },
+  {
+    "api": "/api/challenges",
+    "method": "GET",
+    "responseTime": 10014.790699999998,
+    "timestamp": "2025-03-20T08:16:07.067Z",
+    "statusCode": 500,
+    "success": false
+  }
+]

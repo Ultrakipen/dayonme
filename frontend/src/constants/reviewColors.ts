@@ -1,0 +1,53 @@
+export const emotionColors = {
+  primary: '#667eea',
+  secondary: '#2C2C2E',
+  accent: '#764ba2',
+  text: '#1C1C1E',
+  textSecondary: '#3C3C43',
+  textLight: '#8E8E93',
+  background: '#FFFFFF',
+  surface: '#F2F2F7',
+  surfaceElevated: '#FFFFFF',
+  border: '#C6C6C8',
+  success: '#30D158',
+  warning: '#FF9F0A',
+  error: '#FF3B30',
+  instagramPink: '#E91E63',
+  instagramPurple: '#9C27B0',
+  instagramOrange: '#FF9800',
+  instagramYellow: '#FFC107',
+  glassLight: 'rgba(255, 255, 255, 0.25)',
+  glassDark: 'rgba(0, 0, 0, 0.1)',
+  shadowLight: 'rgba(0, 0, 0, 0.05)',
+  shadowMedium: 'rgba(0, 0, 0, 0.1)',
+  shadowDark: 'rgba(0, 0, 0, 0.15)',
+};
+
+// 다크모드 전용 색상
+export const emotionColorsDark = {
+  primary: '#7B8CFF',
+  secondary: '#48484A',
+  accent: '#9060D9',
+  text: '#F2F2F7',
+  textSecondary: '#EBEBF5',
+  textLight: '#8E8E93',
+  background: '#000000',
+  surface: '#1C1C1E',
+  surfaceElevated: '#2C2C2E',
+  border: '#38383A',
+  success: '#32D74B',
+  warning: '#FF9F0A',
+  error: '#FF453A',
+  instagramPink: '#FF2D92',
+  instagramPurple: '#BF5AF2',
+  instagramOrange: '#FFB340',
+  instagramYellow: '#FFD60A',
+  glassLight: 'rgba(255, 255, 255, 0.1)',
+  glassDark: 'rgba(0, 0, 0, 0.3)',
+  shadowLight: 'rgba(255, 255, 255, 0.05)',
+  shadowMedium: 'rgba(255, 255, 255, 0.1)',
+  shadowDark: 'rgba(255, 255, 255, 0.15)',
+};
+
+// 테마에 따라 적절한 색상 반환 헬퍼 함수
+export const getEmotionColors = (isDark: boolean) => isDark ? emotionColorsDark : emotionColors;

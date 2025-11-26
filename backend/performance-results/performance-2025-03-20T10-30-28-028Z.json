@@ -1,0 +1,26 @@
+[
+  {
+    "api": "/api/emotions",
+    "method": "GET",
+    "responseTime": 9.318899999954738,
+    "timestamp": "2025-03-20T10:30:28.004Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/emotions",
+    "method": "GET",
+    "responseTime": 8.674800000037067,
+    "timestamp": "2025-03-20T10:30:28.013Z",
+    "statusCode": 200,
+    "success": true
+  },
+  {
+    "api": "/api/emotions",
+    "method": "GET",
+    "responseTime": 11.462799999979325,
+    "timestamp": "2025-03-20T10:30:28.024Z",
+    "statusCode": 200,
+    "success": true
+  }
+]

@@ -1,0 +1,26 @@
+// 챌린지 전용 컬러 팔레트
+export const CHALLENGE_COLORS = {
+  primary: '#6366F1',
+  secondary: '#EC4899',
+  accent: '#10B981',
+  success: '#10B981',
+  warning: '#F59E0B',
+  danger: '#EF4444',
+  background: '#FAFBFC',
+  darkBackground: '#0D0D1E',
+  surface: '#FFFFFF',
+  darkSurface: '#1A1D29',
+  text: '#1E293B',
+  darkText: '#F8FAFC',
+  textSecondary: '#64748B',
+  darkTextSecondary: '#94A3B8',
+  border: '#E2E8F0',
+  darkBorder: '#334155',
+  glass: 'rgba(255, 255, 255, 0.15)',
+  darkGlass: 'rgba(15, 15, 30, 0.4)',
+  glassBorder: 'rgba(255, 255, 255, 0.3)',
+  darkGlassBorder: 'rgba(255, 255, 255, 0.1)',
+  gradientStart: '#667EEA',
+  gradientEnd: '#764BA2',
+  shadowColor: 'rgba(99, 102, 241, 0.35)'
+} as const;

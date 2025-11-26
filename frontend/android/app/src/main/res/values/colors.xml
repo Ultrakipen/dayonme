@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 스플래시 스크린 배경색 (앱 브랜드 컬러) -->
+    <color name="splashscreen_bg">#FFFFFF</color>
+
+    <!-- 앱 기본 색상 -->
+    <color name="primary">#405DE6</color>
+    <color name="primary_dark">#3451B2</color>
+    <color name="accent">#5851DB</color>
+
+    <!-- 다크 모드용 색상 -->
+    <color name="splashscreen_bg_dark">#000000</color>
+</resources>

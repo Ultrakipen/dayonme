@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "*"
+    ],
+    "deny": [],
+    "ask": [],
+    "defaultMode": "bypassPermissions",
+    "additionalDirectories": [
+      "C:/app_build/Iexist"
+    ]
+  }
+}

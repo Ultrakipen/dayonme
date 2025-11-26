@@ -1,0 +1,115 @@
+{
+  "timestamp": "2025-03-20T06:52:16.454Z",
+  "summary": {
+    "totalApis": 7,
+    "overallAvgResponseTime": 11.679667142857047,
+    "overallSuccessRate": 100
+  },
+  "apiAnalysis": [
+    {
+      "api": "GET /api/emotions",
+      "samples": 10,
+      "avgResponseTime": 9.1998700000001,
+      "maxResponseTime": 27.56800000000021,
+      "minResponseTime": 6.4494000000004235,
+      "p95ResponseTime": 27.56800000000021,
+      "p99ResponseTime": 27.56800000000021,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "GET /api/users/profile",
+      "samples": 10,
+      "avgResponseTime": 8.127719999999863,
+      "maxResponseTime": 11.433399999999892,
+      "minResponseTime": 7.168899999999667,
+      "p95ResponseTime": 11.433399999999892,
+      "p99ResponseTime": 11.433399999999892,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "GET /api/my-day/posts",
+      "samples": 10,
+      "avgResponseTime": 18.02611999999981,
+      "maxResponseTime": 27.111899999999878,
+      "minResponseTime": 15.897400000000744,
+      "p95ResponseTime": 27.111899999999878,
+      "p99ResponseTime": 27.111899999999878,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "GET /api/notifications",
+      "samples": 10,
+      "avgResponseTime": 8.563169999999719,
+      "maxResponseTime": 10.247699999999895,
+      "minResponseTime": 7.772699999999531,
+      "p95ResponseTime": 10.247699999999895,
+      "p99ResponseTime": 10.247699999999895,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "POST /api/my-day/posts",
+      "samples": 10,
+      "avgResponseTime": 15.396399999999995,
+      "maxResponseTime": 29.938199999999597,
+      "minResponseTime": 10.713700000000244,
+      "p95ResponseTime": 29.938199999999597,
+      "p99ResponseTime": 29.938199999999597,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "GET /api/someone-day",
+      "samples": 10,
+      "avgResponseTime": 16.027889999999935,
+      "maxResponseTime": 19.24420000000009,
+      "minResponseTime": 15.10439999999926,
+      "p95ResponseTime": 19.24420000000009,
+      "p99ResponseTime": 19.24420000000009,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "GET /api/tags",
+      "samples": 10,
+      "avgResponseTime": 6.416499999999905,
+      "maxResponseTime": 7.061399999999594,
+      "minResponseTime": 5.964699999999539,
+      "p95ResponseTime": 7.061399999999594,
+      "p99ResponseTime": 7.061399999999594,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    }
+  ]
+}

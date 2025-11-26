@@ -1,0 +1,14 @@
+{
+  "development": {
+    "storage": "./database/iexist_development.sqlite",
+    "dialect": "sqlite"
+  },
+  "test": {
+    "storage": "./database/iexist_test.sqlite",
+    "dialect": "sqlite"
+  },
+  "production": {
+    "storage": "./database/iexist_production.sqlite",
+    "dialect": "sqlite"
+  }
+}

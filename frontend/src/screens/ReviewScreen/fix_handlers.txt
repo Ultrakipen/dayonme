@@ -1,0 +1,23 @@
+912,917c
+  const handleEditIntention = useCallback(() => {
+    setIntentionInputText(userIntentions[uiState.selectedPeriod]);
+    setIntentionModalVisible(true);
+  }, [userIntentions, uiState.selectedPeriod]);
+.
+919,933c
+  const handleSaveIntention = useCallback(async () => {
+    if (intentionInputText && intentionInputText.trim()) {
+      try {
+        const sanitized = sanitizeText(intentionInputText.trim());
+        await userService.saveIntention(uiState.selectedPeriod, sanitized);
+        await loadUserIntentions();
+        setIntentionModalVisible(false);
+        Alert.alert('성공', '마음이 저장되었습니다');
+      } catch (error) {
+        Alert.alert('오류', '마음 저장에 실패했습니다');
+      }
+    } else {
+      Alert.alert('알림', '마음을 입력해주세요');
+    }
+  }, [intentionInputText, uiState.selectedPeriod]);
+.

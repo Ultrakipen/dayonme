@@ -1,0 +1,96 @@
+// 챌린지 관련 감정 상수
+
+import { AnonymousEmotion, Emotion } from '../types/ChallengeDetailScreen.types';
+
+// 익명 감정 아이콘 (댓글/답글용)
+export const anonymousEmotions: AnonymousEmotion[] = [
+  { label: '기쁨이', icon: 'emoticon-happy', color: '#FFD700' },
+  { label: '행복이', icon: 'emoticon-excited', color: '#FFA500' },
+  { label: '슬픔이', icon: 'emoticon-sad', color: '#4682B4' },
+  { label: '우울이', icon: 'emoticon-neutral', color: '#708090' },
+  { label: '지루미', icon: 'emoticon-dead', color: '#A9A9A9' },
+  { label: '버럭이', icon: 'emoticon-angry', color: '#FF4500' },
+  { label: '불안이', icon: 'emoticon-confused', color: '#DDA0DD' },
+  { label: '걱정이', icon: 'emoticon-frown', color: '#FFA07A' },
+  { label: '감동이', icon: 'heart', color: '#FF6347' },
+  { label: '황당이', icon: 'emoticon-wink', color: '#20B2AA' },
+  { label: '당황이', icon: 'emoticon-tongue', color: '#FF8C00' },
+  { label: '짜증이', icon: 'emoticon-devil', color: '#DC143C' },
+  { label: '무섭이', icon: 'emoticon-cry', color: '#9370DB' },
+  { label: '추억이', icon: 'emoticon-cool', color: '#87CEEB' },
+  { label: '설렘이', icon: 'heart-multiple', color: '#FF69B4' },
+  { label: '편안이', icon: 'emoticon-kiss', color: '#98FB98' },
+  { label: '궁금이', icon: 'emoticon-outline', color: '#DAA520' },
+  { label: '사랑이', icon: 'heart', color: '#E91E63' },
+  { label: '아픔이', icon: 'medical-bag', color: '#8B4513' },
+  { label: '희망이', icon: 'star', color: '#FFD700' },
+];
+
+// 감정 이모지 매핑 (데이터베이스 감정 이름과 정확히 매칭)
+export const emotionEmojiMap: Record<string, { emoji: string; color: string }> = {
+  '기쁨이': { emoji: '😊', color: '#FFD700' },
+  '행복이': { emoji: '😄', color: '#FFA500' },
+  '슬픔이': { emoji: '😢', color: '#4682B4' },
+  '우울이': { emoji: '😞', color: '#708090' },
+  '지루미': { emoji: '😑', color: '#A9A9A9' },
+  '버럭이': { emoji: '😠', color: '#FF4500' },
+  '불안이': { emoji: '😰', color: '#DDA0DD' },
+  '걱정이': { emoji: '😟', color: '#FFA07A' },
+  '감동이': { emoji: '🥺', color: '#FF6347' },
+  '황당이': { emoji: '🤨', color: '#20B2AA' },
+  '당황이': { emoji: '😲', color: '#FF8C00' },
+  '짜증이': { emoji: '😤', color: '#DC143C' },
+  '무섭이': { emoji: '😨', color: '#9370DB' },
+  '추억이': { emoji: '🥰', color: '#87CEEB' },
+  '설렘이': { emoji: '🤗', color: '#FF69B4' },
+  '편안이': { emoji: '😌', color: '#98FB98' },
+  '궁금이': { emoji: '🤔', color: '#DAA520' },
+  '사랑이': { emoji: '❤️', color: '#E91E63' },
+  '아픔이': { emoji: '🤕', color: '#8B4513' },
+  '욕심이': { emoji: '🤑', color: '#32CD32' },
+  // 추가로 '이' 없는 버전도 지원 (호환성)
+  '기쁨': { emoji: '😊', color: '#FFD700' },
+  '행복': { emoji: '😄', color: '#FFA500' },
+  '슬픔': { emoji: '😢', color: '#4682B4' },
+  '우울': { emoji: '😞', color: '#708090' },
+  '지루함': { emoji: '😑', color: '#A9A9A9' },
+  '분노': { emoji: '😠', color: '#FF4500' },
+  '불안': { emoji: '😰', color: '#DDA0DD' },
+  '걱정': { emoji: '😟', color: '#FFA07A' },
+  '감동': { emoji: '🥺', color: '#FF6347' },
+  '황당': { emoji: '🤨', color: '#20B2AA' },
+  '당황': { emoji: '😲', color: '#FF8C00' },
+  '짜증': { emoji: '😤', color: '#DC143C' },
+  '무서움': { emoji: '😨', color: '#9370DB' },
+  '추억': { emoji: '🥰', color: '#87CEEB' },
+  '설렘': { emoji: '🤗', color: '#FF69B4' },
+  '편안함': { emoji: '😌', color: '#98FB98' },
+  '궁금함': { emoji: '🤔', color: '#DAA520' },
+  '사랑': { emoji: '❤️', color: '#E91E63' },
+  '아픔': { emoji: '🤕', color: '#8B4513' },
+  '욕심': { emoji: '🤑', color: '#32CD32' }
+};
+
+// 폴백 감정 데이터
+export const fallbackEmotions: Emotion[] = [
+  { emotion_id: 1, name: '기쁨이', icon: 'smile', color: '#FFD700' },
+  { emotion_id: 2, name: '행복이', icon: 'smile', color: '#FFA500' },
+  { emotion_id: 3, name: '슬픔이', icon: 'sad', color: '#4682B4' },
+  { emotion_id: 4, name: '우울이', icon: 'sad', color: '#708090' },
+  { emotion_id: 5, name: '지루미', icon: 'neutral', color: '#A9A9A9' },
+  { emotion_id: 6, name: '버럭이', icon: 'angry', color: '#FF4500' },
+  { emotion_id: 7, name: '불안이', icon: 'worried', color: '#DDA0DD' },
+  { emotion_id: 8, name: '걱정이', icon: 'worried', color: '#FFA07A' },
+  { emotion_id: 9, name: '감동이', icon: 'love', color: '#FF6347' },
+  { emotion_id: 10, name: '황당이', icon: 'confused', color: '#20B2AA' },
+  { emotion_id: 11, name: '당황이', icon: 'surprised', color: '#FF8C00' },
+  { emotion_id: 12, name: '짜증이', icon: 'angry', color: '#DC143C' },
+  { emotion_id: 13, name: '무섭이', icon: 'scared', color: '#9370DB' },
+  { emotion_id: 14, name: '추억이', icon: 'love', color: '#87CEEB' },
+  { emotion_id: 15, name: '설렘이', icon: 'excited', color: '#FF69B4' },
+  { emotion_id: 16, name: '편안이', icon: 'calm', color: '#98FB98' },
+  { emotion_id: 17, name: '궁금이', icon: 'curious', color: '#DAA520' },
+  { emotion_id: 18, name: '사랑이', icon: 'love', color: '#E91E63' },
+  { emotion_id: 19, name: '아픔이', icon: 'hurt', color: '#8B4513' },
+  { emotion_id: 20, name: '욕심이', icon: 'greedy', color: '#32CD32' }
+];

@@ -1,0 +1,39 @@
+# Prometheus 설정 파일
+global:
+  scrape_interval: 15s # 15초마다 메트릭 수집
+  evaluation_interval: 15s # 15초마다 규칙 평가
+
+# 알림 규칙
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# 스크랩 설정
+scrape_configs:
+  # Node.js 백엔드 애플리케이션
+  - job_name: 'nodejs-backend'
+    static_configs:
+      - targets: ['localhost:3001']
+    metrics_path: '/api/health/metrics'
+    scrape_interval: 10s
+
+  # Prometheus 자체 모니터링
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter (시스템 메트릭)
+  # - job_name: 'node-exporter'
+  #   static_configs:
+  #     - targets: ['localhost:9100']
+
+  # MySQL Exporter (데이터베이스 메트릭)
+  # - job_name: 'mysql-exporter'
+  #   static_configs:
+  #     - targets: ['localhost:9104']
+
+  # Redis Exporter (캐시 메트릭)
+  # - job_name: 'redis-exporter'
+  #   static_configs:
+  #     - targets: ['localhost:9121']

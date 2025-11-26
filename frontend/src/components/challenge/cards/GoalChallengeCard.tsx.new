@@ -1,0 +1,15 @@
+import React, { memo, useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  ScrollView,
+  Image,
+  StyleSheet,
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { CHALLENGE_COLORS as COLORS, getGradientColors } from '../../../constants/challenge';
+import { getDday, formatDate, getStatusColor } from '../../../utils/challenge';

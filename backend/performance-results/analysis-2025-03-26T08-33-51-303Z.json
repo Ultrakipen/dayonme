@@ -1,0 +1,25 @@
+{
+  "timestamp": "2025-03-26T08:33:51.305Z",
+  "summary": {
+    "totalApis": 1,
+    "overallAvgResponseTime": 25.428266666664666,
+    "overallSuccessRate": 100
+  },
+  "apiAnalysis": [
+    {
+      "api": "GET /api/emotions",
+      "samples": 3,
+      "avgResponseTime": 25.428266666664666,
+      "maxResponseTime": 55.209399999992456,
+      "minResponseTime": 8.498099999997066,
+      "p95ResponseTime": 55.209399999992456,
+      "p99ResponseTime": 55.209399999992456,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    }
+  ]
+}

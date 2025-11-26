@@ -1,0 +1,130 @@
+{
+  "timestamp": "2025-03-20T08:16:07.072Z",
+  "summary": {
+    "totalApis": 8,
+    "overallAvgResponseTime": 1264.3464574999998,
+    "overallSuccessRate": 87.5
+  },
+  "apiAnalysis": [
+    {
+      "api": "GET /api/emotions",
+      "samples": 5,
+      "avgResponseTime": 15.003299999999944,
+      "maxResponseTime": 40.82829999999922,
+      "minResponseTime": 6.973400000000765,
+      "p95ResponseTime": 40.82829999999922,
+      "p99ResponseTime": 40.82829999999922,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "GET /api/users/profile",
+      "samples": 5,
+      "avgResponseTime": 10.080280000000494,
+      "maxResponseTime": 17.004300000000512,
+      "minResponseTime": 7.971300000001065,
+      "p95ResponseTime": 17.004300000000512,
+      "p99ResponseTime": 17.004300000000512,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "GET /api/my-day/posts",
+      "samples": 5,
+      "avgResponseTime": 21.304219999999987,
+      "maxResponseTime": 30.550600000000486,
+      "minResponseTime": 17.865399999998772,
+      "p95ResponseTime": 30.550600000000486,
+      "p99ResponseTime": 30.550600000000486,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "GET /api/notifications",
+      "samples": 5,
+      "avgResponseTime": 10.362719999999536,
+      "maxResponseTime": 14.152099999999336,
+      "minResponseTime": 8.940699999999197,
+      "p95ResponseTime": 14.152099999999336,
+      "p99ResponseTime": 14.152099999999336,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "POST /api/my-day/posts",
+      "samples": 5,
+      "avgResponseTime": 17.18601999999919,
+      "maxResponseTime": 34.056399999999485,
+      "minResponseTime": 12.032799999999042,
+      "p95ResponseTime": 34.056399999999485,
+      "p99ResponseTime": 34.056399999999485,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "GET /api/someone-day",
+      "samples": 5,
+      "avgResponseTime": 20.097799999999552,
+      "maxResponseTime": 23.722599999999147,
+      "minResponseTime": 18.022099999998318,
+      "p95ResponseTime": 23.722599999999147,
+      "p99ResponseTime": 23.722599999999147,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "GET /api/tags",
+      "samples": 5,
+      "avgResponseTime": 9.046840000000156,
+      "maxResponseTime": 10.868000000000393,
+      "minResponseTime": 7.763500000000931,
+      "p95ResponseTime": 10.868000000000393,
+      "p99ResponseTime": 10.868000000000393,
+      "successRate": 100,
+      "performanceAssessment": {
+        "isAcceptable": true,
+        "isGood": true,
+        "requiresAttention": false
+      }
+    },
+    {
+      "api": "GET /api/challenges",
+      "samples": 5,
+      "avgResponseTime": 10011.690480000001,
+      "maxResponseTime": 10014.790699999998,
+      "minResponseTime": 10003.128900000003,
+      "p95ResponseTime": 10014.790699999998,
+      "p99ResponseTime": 10014.790699999998,
+      "successRate": 0,
+      "performanceAssessment": {
+        "isAcceptable": false,
+        "isGood": false,
+        "requiresAttention": true
+      }
+    }
+  ]
+}

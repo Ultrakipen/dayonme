@@ -1,0 +1,33 @@
+{
+      "java.compile.nullAnalysis.mode": "disabled",
+      "files.autoSave": "off",
+      "editor.formatOnSave": false,
+      "editor.formatOnType": false,
+      "editor.formatOnPaste": false,
+
+      // TypeScript Language Server 비활성화
+      "typescript.tsserver.experimental.enableProjectDiagnostics": false,        
+      "typescript.tsserver.maxTsServerMemory": 0,
+      "typescript.validate.enable": false,
+      "typescript.suggest.enabled": false,
+      "javascript.validate.enable": false,
+
+      // File Watcher 비활성화
+      "files.watcherExclude": {
+          "**/.git/objects/**": true,
+          "**/.git/subtree-cache/**": true,
+          "**/node_modules/**": true,
+          "**/.hg/store/**": true,
+          "**/*": true
+      },
+      "files.watcherInclude": [],
+      "search.followSymlinks": false,
+      "files.hotExit": "off",
+
+      // 추가 성능 최적화
+      "extensions.autoUpdate": false,
+      "extensions.autoCheckUpdates": false,
+      "git.autorefresh": false,
+      "git.enabled": false,
+      "telemetry.telemetryLevel": "off"
+  }

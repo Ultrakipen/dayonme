@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "991643228514",
+    "project_id": "dayonme-58f11",
+    "storage_bucket": "dayonme-58f11.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:991643228514:android:3fbd238e8131489acf343b",
+        "android_client_info": {
+          "package_name": "com.dayonme"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAOM7IA-eGshRUEXMV0ByGPMVnuK52nWcY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

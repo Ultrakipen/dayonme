@@ -1,0 +1,53 @@
+{
+  "name": "dayonme",
+  "displayName": "Dayonme",
+  "version": "1.0.0",
+  "description": "일상을 공유하고 서로 위로하는 SNS 앱",
+  "expo": {
+    "name": "Dayonme",
+    "slug": "dayonme",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.dayonme.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "프로필 사진 및 게시물 이미지를 촬영하기 위해 카메라 접근이 필요합니다.",
+        "NSPhotoLibraryUsageDescription": "프로필 사진 및 게시물 이미지를 선택하기 위해 사진 라이브러리 접근이 필요합니다.",
+        "NSPhotoLibraryAddUsageDescription": "이미지를 저장하기 위해 사진 라이브러리 접근이 필요합니다."
+      }
+    },
+    "android": {
+      "package": "com.dayonme.app",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES",
+        "POST_NOTIFICATIONS",
+        "VIBRATE"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "사진 라이브러리에 접근하여 이미지를 선택합니다.",
+          "cameraPermission": "카메라로 사진을 촬영합니다."
+        }
+      ]
+    ]
+  }
+}
