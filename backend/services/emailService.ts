@@ -52,9 +52,7 @@ export async function sendEmail(
     }
 
     if (process.env.NODE_ENV === 'test') {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('테스트 환경에서 이메일 전송 시뮬레이션:', { to, subject: mailSubject });
-      }
+      console.log('테스트 환경에서 이메일 전송 시뮬레이션:', { to, subject: mailSubject });
       return true;
     }
 

@@ -14,6 +14,9 @@ export {
   addEmailJob,
   setFallbackHandler,
   BULL_ENABLED,
+} from './queue';
+
+export type {
   NotificationJobData,
   ImageProcessingJobData,
   EmailJobData,

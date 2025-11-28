@@ -213,6 +213,8 @@ export const cleanupOldImages = async (olderThanDays: number = 7): Promise<numbe
 };
 
 // 폴백 핸들러 등록 (Bull 비활성화 시 사용)
-setFallbackHandler('imageProcessing', processImage);
+setFallbackHandler('imageProcessing', async (data: ImageProcessingJobData): Promise<void> => {
+  await processImage(data);
+});
 
 export default processImage;
