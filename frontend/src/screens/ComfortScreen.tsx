@@ -3383,7 +3383,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     letterSpacing: -0.3,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.2,
   },
@@ -3802,7 +3802,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     gap: 8,
   },
   postsListTitle: {
-    fontSize: 15, // 게시물 목록 제목
+    fontSize: 16, // 게시물 목록 제목 (15→16)
     fontWeight: '700',
     color: COLORS.onSurface,
   },

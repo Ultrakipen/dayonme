@@ -26,7 +26,7 @@ const getResponsiveSizes = () => {
     TAB_ITEM_HEIGHT: 60,          // 아이템 높이
     ICON_SIZE_ACTIVE: 26,         // 활성 아이콘 크기 (인스타그램과 동일)
     ICON_SIZE_INACTIVE: 26,       // 비활성 아이콘도 같은 크기로 통일
-    FONT_SIZE: 11,                // 폰트 크기 (인스타그램 스타일)
+    FONT_SIZE: 12,                // 폰트 크기 (11→12 가독성 향상)
     PADDING_BOTTOM: 12,           // 하단 패딩 증가 (텍스트와 하단 여백)
     PADDING_TOP: 0,               // 상단 패딩
     SHADOW_OFFSET: -2,            // 그림자 오프셋

@@ -143,9 +143,9 @@ const styles = StyleSheet.create({
   searchPlaceholder: {
     flex: 1,
     marginLeft: 10,
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '500',
-    lineHeight: 16,
+    lineHeight: 18,
     textAlignVertical: 'center',
     includeFontPadding: false,
     fontFamily: Platform.select({
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   filterChipText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     marginLeft: 4,
     letterSpacing: -0.2,
@@ -185,6 +185,6 @@ const styles = StyleSheet.create({
       ios: 'System',
       android: 'Roboto',
     }),
-    lineHeight: 14,
+    lineHeight: 16,
   },
 });
