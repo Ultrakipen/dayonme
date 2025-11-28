@@ -4336,30 +4336,30 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={{
-                            paddingHorizontal: normalizeSpace(12),
-                            height: normalizeSpace(32),
-                            borderRadius: normalizeSpace(16),
+                            paddingHorizontal: normalizeSpace(18),
+                            height: normalizeSpace(44),
+                            borderRadius: normalizeSpace(22),
                             justifyContent: 'center',
                             alignItems: 'center',
                             shadowColor: hasPostedToday ? SEMANTIC_COLORS.success : SEMANTIC_COLORS.purpleDark,
-                            shadowOffset: { width: 0, height: 3 },
-                            shadowOpacity: 0.3,
-                            shadowRadius: 8,
-                            elevation: 6,
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.35,
+                            shadowRadius: 10,
+                            elevation: 8,
                         }}
                     >
                         <RNText
                             style={{
                                 color: '#ffffff',
-                                fontSize: normalize(13, 11, 13),
-                                fontWeight: '600',
+                                fontSize: normalize(15, 13, 16),
+                                fontWeight: '700',
                                 letterSpacing: -0.3,
                                 includeFontPadding: false,
                             }}
                         >
                             {isCheckingTodayPost
                                 ? "확인 중..."
-                                : (hasPostedToday ? "✓ 하루 완료 ✨" : "❤ 하루 공유")}
+                                : (hasPostedToday ? "✓ 하루 완료 ✨" : "💜 하루 공유")}
                         </RNText>
                     </LinearGradient>
                 </TouchableOpacity>

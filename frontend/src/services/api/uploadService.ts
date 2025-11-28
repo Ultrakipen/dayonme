@@ -35,12 +35,26 @@ const uploadService = {
       if (file.includes('..') || file.includes('system') || file.includes('root')) {
         throw new Error('유효하지 않은 이미지 파일 경로입니다. 다시 선택해주세요.');
       }
-      
+
+      // 파일명과 확장자 추출
+      const fileName = file.split('/').pop() || 'image.jpg';
+      const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
+
+      // 확장자에 따른 MIME 타입 결정
+      const mimeTypes: Record<string, string> = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+      };
+      const mimeType = mimeTypes[ext] || 'image/jpeg';
+
       // URI 문자열인 경우 (React Native Image Picker 경로 포함)
       formData.append('images', {
         uri: file,
-        name: file.split('/').pop() || 'image.jpg',
-        type: 'image/jpeg'
+        name: fileName,
+        type: mimeType
       } as any);
     } else {
       // File 객체인 경우

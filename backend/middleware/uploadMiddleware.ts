@@ -77,19 +77,28 @@ console.log('🔧 업로드 디렉토리 설정:', {
   }
 });
 
-// 파일 필터 - 이미지 파일만 허용
-const imageFilter = async (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+// 파일 필터 - 이미지 파일만 허용 (동기 함수로 변경)
+const imageFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+
+  console.log('📁 파일 필터 체크:', {
+    originalname: file.originalname,
+    mimetype: file.mimetype,
+    fieldname: file.fieldname
+  });
 
   // 파일명에서 경로 탐색 공격 방지
   if (file.originalname.includes('..') || file.originalname.includes('/') || file.originalname.includes('\\')) {
+    console.log('❌ 잘못된 파일명');
     return cb(new Error('잘못된 파일명입니다.'));
   }
 
   if (allowedMimeTypes.includes(file.mimetype)) {
+    console.log('✅ 파일 필터 통과');
     cb(null, true);
   } else {
-    cb(new Error('지원하지 않는 이미지 형식입니다. JPEG, PNG, WebP 파일만 업로드 가능합니다.'));
+    console.log('❌ 지원하지 않는 MIME 타입:', file.mimetype);
+    cb(new Error(`지원하지 않는 이미지 형식입니다. (받은 형식: ${file.mimetype}) JPEG, PNG, WebP, GIF 파일만 업로드 가능합니다.`));
   }
 };
 

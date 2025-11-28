@@ -1,7 +1,14 @@
+// API URL 설정
+const API_BASE = 'https://dayonme.com';
+
 export const ENV = {
-  API_BASE_URL: process.env.API_BASE_URL || 'https://dayonme.com',
-  API_TIMEOUT: parseInt(process.env.API_TIMEOUT || '10000', 10),
-  MAX_IMAGE_SIZE: parseInt(process.env.MAX_IMAGE_SIZE || '5242880', 10),
-  IMAGE_QUALITY: parseFloat(process.env.IMAGE_QUALITY || '0.8'),
-  ONESIGNAL_APP_ID: process.env.ONESIGNAL_APP_ID || '',
+  API_BASE_URL: API_BASE,
+  API_URL: `${API_BASE}/api`,
+  API_TIMEOUT: 30000,
+  MAX_IMAGE_SIZE: 5242880,
+  IMAGE_QUALITY: 0.8,
+  ONESIGNAL_APP_ID: '15af93a8-c7c6-4c3c-ae9f-2d83dffa6c47',
 } as const;
+
+// Default export for compatibility
+export default ENV;

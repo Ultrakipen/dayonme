@@ -18,7 +18,7 @@ const _values: any = {
 export const initializeTypography = () => {
   if (_initialized) return;
 
-  // FONT_SIZES 초기화 (인스타그램 스타일)
+  // FONT_SIZES 초기화 (인스타그램 스타일 + 가독성 향상)
   Object.assign(_values.FONT_SIZES, {
     h1: normalizeFont(24),
     h2: normalizeFont(20),
@@ -29,8 +29,8 @@ export const initializeTypography = () => {
     bodyLarge: normalizeFont(16),
     bodySmall: normalizeFont(14),
     caption: normalizeFont(13),
-    small: normalizeFont(12),
-    tiny: normalizeFont(11),
+    small: normalizeFont(13),  // 12 → 13 (가독성 향상)
+    tiny: normalizeFont(12),   // 11 → 12 (가독성 향상)
     button: normalizeFont(15),
     buttonSmall: normalizeFont(14),
     input: normalizeFont(15),

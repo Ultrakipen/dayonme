@@ -591,11 +591,11 @@ const ProfileScreen: React.FC = () => {
           </RNText>
 
           <RNText style={{
-            fontSize: getFontSize(13),
+            fontSize: getFontSize(14),
             color: isDark ? theme.colors.text.secondary : '#6B7280',
             marginBottom: 32,
             textAlign: 'center',
-            lineHeight: 20,
+            lineHeight: 21,
           }}>
             나만의 감정을 기록하고{'\n'}특별한 순간을 공유해보세요 ✨
           </RNText>
@@ -711,10 +711,10 @@ const ProfileScreen: React.FC = () => {
                   </RNText>
                   <RNText
                     style={{
-                      fontSize: getFontSize(11.5),
+                      fontSize: getFontSize(13),
                       fontWeight: '600',
                       color: isDark ? theme.colors.text.primary : '#1A1A1A',
-                      lineHeight: 17,
+                      lineHeight: 18,
                     }}
                     numberOfLines={3}
                   >

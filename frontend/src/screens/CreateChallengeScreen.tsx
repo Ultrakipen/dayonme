@@ -877,9 +877,11 @@ const styles = StyleSheet.create({
   dateRow: {
     flexDirection: 'row',
     gap: scaleWidth(10),
+    alignItems: 'stretch',
   },
   dateItem: {
     flex: 1,
+    flexDirection: 'column',
   },
   dateLabel: {
     fontSize: scaleFontSize(14),
@@ -895,7 +897,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: scaleWidth(12),
     gap: scaleWidth(6),
-    minHeight: scaleHeight(44),
+    minHeight: scaleHeight(52),
+    flex: 1,
   },
   dateText: {
     fontSize: scaleFontSize(13),

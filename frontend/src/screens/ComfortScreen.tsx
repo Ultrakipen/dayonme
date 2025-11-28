@@ -3841,7 +3841,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     borderColor: COLORS.primary,
   },
   sortButtonText: {
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '700',
     color: COLORS.onSurface,
     letterSpacing: 0.3,

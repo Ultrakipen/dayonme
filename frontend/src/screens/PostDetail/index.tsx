@@ -3542,7 +3542,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       <Box
         style={{
           position: 'absolute',
-          bottom: 0,
+          bottom: keyboardHeight,
           left: 0,
           right: 0,
           backgroundColor: colors.cardBackground,
@@ -3550,7 +3550,6 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           borderTopColor: colors.border,
           padding: normalizeSpace(16),
           paddingBottom: Platform.OS === 'ios' ? normalizeSpace(34) : normalizeSpace(16),
-          marginBottom: keyboardHeight,
         }}
       >
         {!isCommentInputFocused ? (
