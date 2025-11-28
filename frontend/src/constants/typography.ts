@@ -24,6 +24,7 @@ export const initializeTypography = () => {
     h2: normalizeFont(20),
     h3: normalizeFont(18),
     h4: normalizeFont(17),
+    h5: normalizeFont(16),
     body: normalizeFont(15),
     bodyLarge: normalizeFont(16),
     bodySmall: normalizeFont(14),

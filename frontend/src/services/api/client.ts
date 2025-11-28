@@ -4,23 +4,9 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { requestQueue } from './requestQueue';
 
-// API 서버의 기본 URL 설정 (환경별 분리)
+// API 서버의 기본 URL 설정 - 실제 서버 사용
 const getBaseURL = () => {
-  if (__DEV__) {
-    // 개발 환경: 환경변수 우선, Android 에뮬레이터 기본값
-    // .env 파일에서 API_BASE_URL 설정 가능
-    const envUrl = process.env.API_BASE_URL;
-    if (envUrl) {
-      return `${envUrl}/api`;
-    }
-    // 기본값: Android 에뮬레이터용
-    return Platform.OS === 'android'
-      ? 'http://10.0.2.2:3001/api'  // Android 에뮬레이터용
-      : 'http://localhost:3001/api'; // iOS 시뮬레이터용
-  } else {
-    // 프로덕션 환경 - 환경 변수 필수
-    return process.env.REACT_APP_API_BASE_URL || 'https://api.dayonme.app/api';
-  }
+  return 'https://dayonme.com/api';
 };
 
 // Axios 인스턴스 생성

@@ -4310,8 +4310,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                         </Box>
                     </Surface>
                 </Animated.View>
-            )}: null
-            
+            )}
+
             {/* 커스텀 플로팅 액션 버튼 - 로그인한 사용자만 표시 */}
             {isAuthenticated && (
                 <TouchableOpacity

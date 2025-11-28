@@ -161,6 +161,13 @@ export type RootStackParamList = {
   PrivacyPolicy: undefined;
   UserProfile: { userId: number; nickname?: string }; // 다른 사용자 프로필 화면 추가
 
+  // 설정 하부 화면들
+  Notice: undefined;
+  AccountSettings: undefined;
+  NotificationSettings: undefined;
+  Bookmarks: undefined;
+  TermsOfService: undefined;
+
   // 신고 관련 화면
   MyReports: undefined; // 내 신고 내역
 

@@ -6,8 +6,8 @@ import { authEvents, AUTH_EVENTS } from '../../utils/authEvents';
 import { showAlert } from '../../contexts/AlertContext';
 
 // 네이버 Native App 설정
-const NAVER_CLIENT_ID = 'sdlZLc5BdOEm6UuMuGnH';
-const NAVER_CLIENT_SECRET = 'TpnwOsEK61';
+const NAVER_CLIENT_ID = 'lX6cDQ4s3ZncTBOWQZzu';
+const NAVER_CLIENT_SECRET = '0zHQPwjoB5';
 const NAVER_APP_NAME = 'Dayonme';
 
 export interface NaverAuthResponse {
@@ -83,21 +83,35 @@ export const naverNativeLogin = async (): Promise<void> => {
     }
 
     // 네이버 로그인 실행
+    console.log('🔄 네이버 로그인 시도 중...');
     const result = await NaverLogin.default.login();
+
+    // 디버그: 전체 결과 로그
+    console.log('📋 네이버 로그인 결과:', JSON.stringify(result, null, 2));
 
     if (!result.isSuccess) {
       // 사용자가 취소한 경우 조용히 리턴
-      const errorMessage = result.failureResponse?.message || '';
+      const errorMessage = result.failureResponse?.message || result.failureResponse?.lastErrorCode || '';
+      const errorCode = result.failureResponse?.lastErrorCode || '';
+
+      console.log('❌ 네이버 로그인 실패 상세:', {
+        isSuccess: result.isSuccess,
+        failureResponse: result.failureResponse,
+        errorMessage,
+        errorCode
+      });
+
       if (
         errorMessage.includes('user_cancel') ||
         errorMessage.includes('CANCELED') ||
         errorMessage.includes('cancelled') ||
-        errorMessage.includes('canceled')
+        errorMessage.includes('canceled') ||
+        errorCode === 'user_cancel'
       ) {
         console.log('ℹ️ 사용자가 네이버 로그인을 취소했습니다.');
         return;
       }
-      throw new Error(errorMessage || '로그인 실패');
+      throw new Error(errorMessage || `로그인 실패 (코드: ${errorCode || 'unknown'})`);
     }
 
     const accessToken = result.successResponse?.accessToken;
@@ -238,7 +252,7 @@ export default {
  *        <string>Editor</string>
  *        <key>CFBundleURLSchemes</key>
  *        <array>
- *          <string>naversdlZLc5BdOEm6UuMuGnH</string>
+ *          <string>naverlX6cDQ4s3ZncTBOWQZzu</string>
  *        </array>
  *      </dict>
  *    </array>
@@ -254,7 +268,7 @@ export default {
  *
  *    defaultConfig {
  *      manifestPlaceholders = [
- *        NAVER_CLIENT_ID: "sdlZLc5BdOEm6UuMuGnH",
+ *        NAVER_CLIENT_ID: "lX6cDQ4s3ZncTBOWQZzu",
  *        NAVER_CLIENT_SECRET: "TpnwOsEK61",
  *        NAVER_CLIENT_NAME: "IExist"
  *      ]

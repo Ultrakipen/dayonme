@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,9 @@ import {
   Animated,
   useWindowDimensions,
   Platform,
+  InteractionManager,
 } from 'react-native';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+// MaterialCommunityIcons 대신 이모지 사용 - React Native 브릿지 오류 방지
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useModernTheme } from '../../contexts/ModernThemeContext';
 import { FONT_SIZES, SPACING, moderateScale, verticalScale } from '../../constants';
@@ -59,9 +60,19 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   const { width } = useWindowDimensions();
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [iconReady, setIconReady] = useState(false);
+  const isMountedRef = useRef(true);
 
   // React Native 0.80 호환성: 런타임에 스케일 값 계산
   const sv = useMemo(() => getScaledValues(), []);
+
+  // 마운트 상태 추적
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // 2026 트렌드: 미니멀 글래스모피즘 색상
   const colors = {
@@ -84,6 +95,9 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
 
   useEffect(() => {
     if (visible) {
+      // 아이콘 렌더링 초기화
+      setIconReady(false);
+
       ReactNativeHapticFeedback.trigger('notificationWarning');
       Animated.parallel([
         Animated.spring(scaleAnim, {
@@ -98,7 +112,19 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
           useNativeDriver: true,
         }),
       ]).start();
+
+      // InteractionManager + 지연으로 아이콘 렌더링 안전하게 수행
+      const handle = InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            setIconReady(true);
+          }
+        }, 100);
+      });
+
+      return () => handle.cancel();
     } else {
+      setIconReady(false);
       Animated.parallel([
         Animated.spring(scaleAnim, {
           toValue: 0.95,
@@ -115,17 +141,18 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
     }
   }, [visible, scaleAnim, fadeAnim]);
 
+  // 이모지 기반 아이콘 설정 - 벡터 아이콘 브릿지 오류 방지
   const getIconConfig = () => {
     if (!type) return null;
     switch (type) {
       case 'success':
-        return { name: 'check-circle', color: colors.success };
+        return { emoji: '✓', color: colors.success };
       case 'error':
-        return { name: 'alert-circle', color: colors.error };
+        return { emoji: '!', color: colors.error };
       case 'warning':
-        return { name: 'alert', color: colors.warning };
+        return { emoji: '⚠', color: colors.warning };
       case 'info':
-        return { name: 'information', color: colors.info };
+        return { emoji: 'i', color: colors.info };
       default:
         return null;
     }
@@ -210,8 +237,8 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
             },
           ]}
         >
-          {/* 아이콘 */}
-          {iconConfig && (
+          {/* 아이콘 - 텍스트 기반으로 브릿지 오류 방지 */}
+          {iconConfig && iconReady && (
             <View style={[styles.iconContainer, {
               backgroundColor: iconConfig.color + '12',
               width: sv.ms40,
@@ -219,11 +246,13 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
               borderRadius: sv.ms20,
               marginBottom: sv.ms10,
             }]}>
-              <MaterialCommunityIcons
-                name={iconConfig.name}
-                size={sv.ms24}
-                color={iconConfig.color}
-              />
+              <Text style={{
+                fontSize: sv.ms20,
+                fontWeight: '700',
+                color: iconConfig.color,
+              }}>
+                {iconConfig.emoji}
+              </Text>
             </View>
           )}
 
@@ -296,16 +325,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: FONT_SIZES.h5,
+    fontSize: FONT_SIZES.h5 || 16,
     fontWeight: '700',
     textAlign: 'center',
     letterSpacing: -0.4,
-    lineHeight: FONT_SIZES.h5 * 1.3,
+    lineHeight: (FONT_SIZES.h5 || 16) * 1.3,
   },
   message: {
-    fontSize: FONT_SIZES.bodySmall,
+    fontSize: FONT_SIZES.bodySmall || 14,
     textAlign: 'center',
-    lineHeight: FONT_SIZES.bodySmall * 1.5,
+    lineHeight: (FONT_SIZES.bodySmall || 14) * 1.5,
     marginBottom: SPACING.sm,
     letterSpacing: -0.2,
   },
@@ -324,10 +353,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   buttonText: {
-    fontSize: FONT_SIZES.body,
+    fontSize: FONT_SIZES.body || 15,
     fontWeight: '600',
     letterSpacing: -0.2,
-    lineHeight: FONT_SIZES.body * 1.3,
+    lineHeight: (FONT_SIZES.body || 15) * 1.3,
   },
 });
 

@@ -4,14 +4,17 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// 이메일 전송을 위한 설정
+// 이메일 전송을 위한 설정 (자체 메일 서버)
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  host: process.env.EMAIL_HOST || '222.122.203.18',
   port: parseInt(process.env.EMAIL_PORT || '587'),
   secure: process.env.EMAIL_SECURE === 'true',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
+  },
+  tls: {
+    rejectUnauthorized: false // 자체 서명 인증서 허용
   }
 });
 

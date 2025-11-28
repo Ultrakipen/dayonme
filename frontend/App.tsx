@@ -297,8 +297,7 @@ const AppContent = ({ isAppReady }: AppContentProps) => {
           <NavigationContainer
             theme={navigationTheme}
             linking={linking}
-            onReady={() => console.log('📱 네비게이션 준비 완료')}
-            onStateChange={(state) => console.log('🧭 네비게이션 상태 변경:', state?.routes[state.index]?.name)}
+            onReady={() => __DEV__ && console.log('📱 네비게이션 준비 완료')}
             fallback={<ActivityIndicator size="large" color="#405DE6" />}
           >
             <RootNavigatorStatic />

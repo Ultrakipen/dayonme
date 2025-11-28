@@ -93,9 +93,9 @@ android {
 
         // 소셜 로그인 SDK 설정
         manifestPlaceholders = [
-            KAKAO_NATIVE_APP_KEY: "bba709858cebc078a7aa3189ede59587",
-            NAVER_CLIENT_ID: "sdlZLc5BdOEm6UuMuGnH",
-            NAVER_CLIENT_SECRET: "TpnwOsEK61",
+            KAKAO_NATIVE_APP_KEY: "184257b4534e3e26b4d70dde7b44d91e",
+            NAVER_CLIENT_ID: "lX6cDQ4s3ZncTBOWQZzu",
+            NAVER_CLIENT_SECRET: "0zHQPwjoB5",
             NAVER_CLIENT_NAME: "dayonme"
         ]
     }

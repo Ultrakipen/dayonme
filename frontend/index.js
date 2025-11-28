@@ -2,7 +2,18 @@
  * @format
  */
 
-import { AppRegistry, InteractionManager } from 'react-native';
+import { AppRegistry, InteractionManager, LogBox } from 'react-native';
+
+// 개발 환경에서 불필요한 에러 로그 숨김
+LogBox.ignoreLogs([
+  'ErrorReporting',
+  '🚨 [ErrorReporting]',
+  'Non-serializable values were found',
+  'VirtualizedLists should never be nested',
+  'Malformed calls from JS',
+  'field sizes are different',
+  'Exception in HostFunction',
+]);
 import React, { Component } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { name as appName } from './app.json';

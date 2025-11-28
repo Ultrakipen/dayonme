@@ -323,12 +323,50 @@ export const Text: React.FC<TextProps> = ({ children, className, style, ...props
   );
 };
 
-// Pressable component
+// Pressable component (React Native 0.80 호환: 안전한 children 렌더링)
 export const Pressable: React.FC<PressableProps> = ({ children, className, style, onPress, ...props }) => {
   const computedStyle = { ...convertClassToStyle(className), ...style };
+
+  // React Native 0.80 호환성: children을 안전하게 필터링
+  const safeChildren = React.useMemo(() => {
+    if (children === null || children === undefined) {
+      return null;
+    }
+
+    // 원시 타입 값들을 Text로 자동 감싸기 (문자열, 숫자, boolean)
+    if (typeof children === 'string') {
+      return children.trim() === '' ? null : <RNText>{children}</RNText>;
+    }
+
+    if (typeof children === 'number') {
+      return <RNText>{children}</RNText>;
+    }
+
+    if (typeof children === 'boolean') {
+      return null;
+    }
+
+    // 배열인 경우 각 요소를 필터링하고 변환
+    if (Array.isArray(children)) {
+      return children.map((child, index) => {
+        if (child === null || child === undefined) return null;
+        if (typeof child === 'boolean') return null;
+        if (typeof child === 'string') {
+          return child.trim() === '' ? null : <RNText key={index}>{child}</RNText>;
+        }
+        if (typeof child === 'number') {
+          return <RNText key={index}>{child}</RNText>;
+        }
+        return child;
+      }).filter(child => child !== null);
+    }
+
+    return children;
+  }, [children]);
+
   return (
     <RNPressable style={computedStyle} onPress={onPress} {...props}>
-      {children}
+      {safeChildren}
     </RNPressable>
   );
 };

@@ -1,6 +1,7 @@
 import { DataTypes, Model, Optional, Sequelize } from 'sequelize';
 
 export type ThemePreference = 'light' | 'dark' | 'system';
+export type UserRole = 'user' | 'admin';
 
 interface UserAttributes {
   user_id: number;
@@ -14,6 +15,7 @@ interface UserAttributes {
   theme_preference?: ThemePreference;
   privacy_settings?: JSON;
   is_active: boolean;
+  role: UserRole;
   last_login_at?: Date;
   created_at: Date;
   updated_at: Date;
@@ -35,7 +37,7 @@ interface UserAttributes {
 
 // created_at, updated_at, notification_settings도 선택사항으로 만들기
 interface UserCreationAttributes extends Optional<UserAttributes,
-  'user_id' | 'created_at' | 'updated_at' | 'notification_settings' |
+  'user_id' | 'created_at' | 'updated_at' | 'notification_settings' | 'role' |
   'nickname' | 'profile_image_url' | 'background_image_url' | 'favorite_quote' |
   'theme_preference' | 'privacy_settings' | 'last_login_at' | 'reset_token' | 'reset_token_expires' |
   'email_verification_code' | 'email_verification_expires'> {}
@@ -52,6 +54,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
   public theme_preference?: ThemePreference;
   public privacy_settings?: JSON;
   public is_active!: boolean;
+  public role!: UserRole;
   public last_login_at?: Date;
   public created_at!: Date;
   public updated_at!: Date;
@@ -131,6 +134,11 @@ export class User extends Model<UserAttributes, UserCreationAttributes> {
           type: DataTypes.BOOLEAN,
           allowNull: false,
           defaultValue: true
+        },
+        role: {
+          type: DataTypes.ENUM('user', 'admin'),
+          allowNull: false,
+          defaultValue: 'user'
         },
         last_login_at: {
           type: DataTypes.DATE,

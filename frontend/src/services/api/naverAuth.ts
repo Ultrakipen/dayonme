@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from './apiClient';
 
 // 네이버 OAuth 설정
-const NAVER_CLIENT_ID = 'sdlZLc5BdOEm6UuMuGnH';
+const NAVER_CLIENT_ID = 'lX6cDQ4s3ZncTBOWQZzu';
 const NAVER_CLIENT_SECRET = 'TpnwOsEK61';
 const NAVER_REDIRECT_URI = 'http://localhost:3001/auth/callback';
 

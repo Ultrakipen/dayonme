@@ -209,14 +209,14 @@ const PrivacyPolicyScreen: React.FC = () => {
         <View style={[dynamicStyles.updateBadge, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Icon name="calendar-outline" size={18} color={colors.textSecondary} />
           <Text style={[dynamicStyles.updateText, { color: colors.textSecondary }]}>
-            최종 업데이트: 2025년 11월 1일
+            최종 업데이트: 2025년 12월 1일
           </Text>
         </View>
 
         <View style={[dynamicStyles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[dynamicStyles.sectionTitle, { color: colors.text }]}>개인정보 처리방침</Text>
           <Text style={[dynamicStyles.paragraph, { color: colors.textSecondary }]}>
-            감정 기록 앱(이하 "회사")은 이용자의 개인정보를 중요시하며, 「개인정보 보호법」을 준수하고 있습니다.
+            Dayonme 앱(이하 "회사")은 이용자의 개인정보를 중요시하며, 「개인정보 보호법」을 준수하고 있습니다.
             회사는 개인정보 처리방침을 통하여 이용자가 제공하는 개인정보가 어떠한 용도와 방식으로 이용되고 있으며,
             개인정보 보호를 위해 어떠한 조치가 취해지고 있는지 알려드립니다.
           </Text>
@@ -430,13 +430,13 @@ const PrivacyPolicyScreen: React.FC = () => {
               <Icon name="mail-outline" size={20} color={colors.accent} />
               <Text style={[dynamicStyles.contactLabel, { color: colors.text }]}>이메일:</Text>
               {/* TODO: 실제 이메일 주소로 변경 */}
-              <Text style={[dynamicStyles.contactValue, { color: colors.textSecondary }]}>privacy@dayonme.com</Text>
+              <Text style={[dynamicStyles.contactValue, { color: colors.textSecondary }]}>admin@dayonme.com</Text>
             </View>
             <View style={dynamicStyles.contactRow}>
               <Icon name="call-outline" size={20} color={colors.accent} />
               <Text style={[dynamicStyles.contactLabel, { color: colors.text }]}>전화:</Text>
               {/* TODO: 실제 전화번호로 변경 */}
-              <Text style={[dynamicStyles.contactValue, { color: colors.textSecondary }]}>02-0000-0000</Text>
+              <Text style={[dynamicStyles.contactValue, { color: colors.textSecondary }]}>010-4667-9824</Text>
             </View>
           </View>
         </View>

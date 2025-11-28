@@ -263,7 +263,13 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
         {
           title: '프로필 편집',
           icon: 'person-outline',
-          action: () => navigation.navigate('ProfileEdit'),
+          action: () => {
+            try {
+              navigation.navigate('ProfileEdit' as never);
+            } catch (error) {
+              console.error('프로필 편집 네비게이션 오류:', error);
+            }
+          },
           showArrow: true,
         },
         {

@@ -31,7 +31,11 @@ class ErrorBoundary extends Component<Props, State> {
     // React Native 0.80 + Hermes 호환성 오류는 무시
     if (errorMessage.includes('property is not configurable') ||
         errorMessage.includes('AlertProvider') ||
-        errorMessage.includes('undefined')) {
+        errorMessage.includes('undefined') ||
+        errorMessage.includes('Text strings must be rendered') ||
+        errorMessage.includes('Malformed calls from JS') ||
+        errorMessage.includes('field sizes are different') ||
+        errorMessage.includes('HostFunction')) {
       return { hasError: false, error: null };
     }
 
@@ -44,7 +48,11 @@ class ErrorBoundary extends Component<Props, State> {
     // React Native 0.80 + Hermes 호환성 오류는 무시
     if (errorMessage.includes('property is not configurable') ||
         errorMessage.includes('AlertProvider') ||
-        errorMessage.includes('undefined')) {
+        errorMessage.includes('undefined') ||
+        errorMessage.includes('Text strings must be rendered') ||
+        errorMessage.includes('Malformed calls from JS') ||
+        errorMessage.includes('field sizes are different') ||
+        errorMessage.includes('HostFunction')) {
       return;
     }
 

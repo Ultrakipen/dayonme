@@ -64,7 +64,7 @@
   import * as KakaoLogin from '@react-native-seoul/kakao-login';
 
   // 카카오 네이티브 앱 키
-  const KAKAO_NATIVE_APP_KEY = 'bba709858cebc078a7aa3189ede59587';
+  const KAKAO_NATIVE_APP_KEY = '184257b4534e3e26b4d70dde7b44d91e';
 
 
 

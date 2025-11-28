@@ -6,34 +6,19 @@ import { Platform } from 'react-native';
  * 환경별 URL 직접 설정
  */
 
-// 프로덕션 API URL (배포 시 변경)
-const PRODUCTION_API_URL = 'https://your-production-api.com/api';
+// 실제 서버 API URL (HTTPS)
+const PRODUCTION_API_URL = 'https://dayonme.com/api';
 
-// 개발/프로덕션 환경별 Base URL
+// 개발/프로덕션 환경별 Base URL - 모두 실제 서버 사용
 const getBaseURL = (): string => {
-  if (__DEV__) {
-    // 기본 개발 URL
-    if (Platform.OS === 'android') {
-      return 'http://10.0.2.2:3001/api'; // Android 에뮬레이터
-    }
-    return 'http://localhost:3001/api'; // iOS 시뮬레이터
-  }
-
-  // 프로덕션 환경
   return PRODUCTION_API_URL;
 };
 
 // 프로덕션 설정 검증
 export const validateApiConfig = (): boolean => {
-  if (!__DEV__) {
-    if (!PRODUCTION_API_URL || PRODUCTION_API_URL === 'https://your-production-api.com/api') {
-      console.error('🚨 프로덕션 API URL이 설정되지 않았습니다');
-      return false;
-    }
-    if (!PRODUCTION_API_URL.startsWith('https://')) {
-      console.error('🚨 프로덕션 API는 HTTPS를 사용해야 합니다');
-      return false;
-    }
+  if (!PRODUCTION_API_URL) {
+    console.error('🚨 API URL이 설정되지 않았습니다');
+    return false;
   }
   return true;
 };

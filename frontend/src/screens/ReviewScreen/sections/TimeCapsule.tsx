@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
 
-const API_URL = 'http://10.0.2.2:3001/api';
+const API_URL = 'https://dayonme.com/api';
 
 export const TimeCapsule: React.FC = React.memo(() => {
   const { colors, isDark } = useModernTheme();

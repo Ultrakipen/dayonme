@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, lazy, Suspense, useRef } from 'react';
+import { InteractionManager } from 'react-native';
 
 // React Native 0.80 + Hermes 호환성: CustomAlert를 lazy import
 const CustomAlert = lazy(() => import('../components/ui/CustomAlert'));
@@ -80,17 +81,45 @@ class AlertManager {
 export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [alertConfig, setAlertConfig] = useState<AlertConfig | null>(null);
   const [visible, setVisible] = useState(false);
+  const isMountedRef = useRef(true);
+  const interactionHandleRef = useRef<ReturnType<typeof InteractionManager.runAfterInteractions> | null>(null);
+
+  // 컴포넌트 마운트 상태 추적
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      // 진행 중인 InteractionManager 작업 취소
+      if (interactionHandleRef.current) {
+        interactionHandleRef.current.cancel();
+      }
+    };
+  }, []);
 
   const showAlertFunc = useCallback((title: string, message: string, buttons?: AlertButton[], type?: 'success' | 'error' | 'warning' | 'info') => {
-    setAlertConfig({ title, message, buttons, type });
-    setVisible(true);
+    // InteractionManager로 네이티브 브릿지 준비 후 상태 업데이트
+    interactionHandleRef.current = InteractionManager.runAfterInteractions(() => {
+      if (isMountedRef.current) {
+        // 약간의 지연으로 브릿지 안정화
+        setTimeout(() => {
+          if (isMountedRef.current) {
+            setAlertConfig({ title, message, buttons, type });
+            setVisible(true);
+          }
+        }, 50);
+      }
+    });
   }, []);
 
   const hideAlert = useCallback(() => {
-    setVisible(false);
-    setTimeout(() => {
-      setAlertConfig(null);
-    }, 200);
+    if (isMountedRef.current) {
+      setVisible(false);
+      setTimeout(() => {
+        if (isMountedRef.current) {
+          setAlertConfig(null);
+        }
+      }, 200);
+    }
   }, []);
 
   // AlertManager에 등록

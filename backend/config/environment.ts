@@ -185,6 +185,7 @@ export const config = {
   social: {
     kakao: {
       appKey: process.env.KAKAO_APP_KEY,
+      restApiKey: process.env.KAKAO_REST_API_KEY,
       redirectUri: process.env.KAKAO_REDIRECT_URI,
     },
     naver: {

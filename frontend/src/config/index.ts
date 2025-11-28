@@ -13,17 +13,15 @@ const ENV = {
   };
   
   // API 기본 URL
-  // TODO: 실제 서버 배포 후 프로덕션 도메인 확정 시 수정 필요
   const API_BASE_URL = {
-    development: 'http://192.168.219.51:3001/api', // 로컬 개발 서버 IP
-    production: 'https://api.dayonme.app/api',     // 프로덕션 서버 (도메인 확정 후 수정)
+    development: 'https://dayonme.com/api',
+    production: 'https://dayonme.com/api',
   };
 
   // Socket 기본 URL
-  // TODO: 실제 서버 배포 후 프로덕션 도메인 확정 시 수정 필요
   const SOCKET_BASE_URL = {
-    development: 'ws://192.168.219.51:3001',      // 로컬 개발 서버 IP
-    production: 'wss://api.dayonme.app',          // 프로덕션 서버 (도메인 확정 후 수정)
+    development: 'wss://dayonme.com',
+    production: 'wss://dayonme.com',
   };
 
   // 기본 타임아웃 설정
@@ -31,8 +29,8 @@ const ENV = {
 
   // 이미지 업로드 URL
   const UPLOAD_URL = {
-    development: 'http://localhost:3001/api/uploads',
-    production: 'https://api.dayonme.app/api/uploads',
+    development: 'https://dayonme.com/api/uploads',
+    production: 'https://dayonme.com/api/uploads',
   };
   
   // 앱 설정

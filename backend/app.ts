@@ -40,6 +40,7 @@ import bookmarkRoutes from './routes/bookmarks';
 import healthRoutes from './routes/health';
 import imageRoutes from './routes/images';
 import noticeRoutes from './routes/notices';
+import liveComfortRoutes from './routes/liveComfort';
 
 // 데이터베이스 연결
 import db from './models';
@@ -242,6 +243,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/notices', noticeRoutes);
+app.use('/api/live-comfort', liveComfortRoutes);
 
 // 개발 환경 디버그 라우트
 if (NODE_ENV === 'development') {

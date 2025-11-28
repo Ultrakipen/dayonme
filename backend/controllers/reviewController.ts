@@ -1379,7 +1379,7 @@ export const getNightFragments = async (req: AuthRequest, res: Response) => {
 
     const fragments = await db.sequelize.query<any>(
       `SELECT p.post_id, p.content, p.created_at,
-              e.name as emotion, e.icon, e.color,
+              MAX(e.name) as emotion, MAX(e.icon) as icon, MAX(e.color) as color,
               (SELECT COUNT(*) FROM my_day_likes WHERE post_id = p.post_id) as like_count
        FROM my_day_posts p
        LEFT JOIN my_day_emotions pe ON p.post_id = pe.post_id
@@ -1387,7 +1387,7 @@ export const getNightFragments = async (req: AuthRequest, res: Response) => {
        WHERE p.user_id = ?
          AND (HOUR(p.created_at) >= 22 OR HOUR(p.created_at) < 4)
          AND p.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-       GROUP BY p.post_id
+       GROUP BY p.post_id, p.content, p.created_at
        ORDER BY p.created_at DESC
        LIMIT ?`,
       { replacements: [user_id, Number(limit)], type: QueryTypes.SELECT }
@@ -1438,14 +1438,14 @@ export const getDailyComfortQuote = async (req: AuthRequest, res: Response) => {
     const quotes = await db.sequelize.query<any>(
       `SELECT p.post_id, p.content,
               COUNT(DISTINCT l.id) as like_count,
-              e.name as emotion, e.icon
+              MAX(e.name) as emotion, MAX(e.icon) as icon
        FROM someone_day_posts p
        LEFT JOIN someone_day_likes l ON p.post_id = l.post_id
        LEFT JOIN someone_day_emotions pe ON p.post_id = pe.post_id
        LEFT JOIN emotions e ON pe.emotion_id = e.emotion_id
        WHERE p.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
          AND p.is_anonymous = 1
-       GROUP BY p.post_id
+       GROUP BY p.post_id, p.content
        HAVING like_count >= 1
        ORDER BY like_count DESC, RAND()
        LIMIT 10`,
@@ -1568,8 +1568,8 @@ export const getEmotionColorPalette = async (req: AuthRequest, res: Response) =>
        JOIN emotions e ON pe.emotion_id = e.emotion_id
        WHERE p.user_id = ?
          AND p.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-       GROUP BY DATE(p.created_at), e.emotion_id
-       ORDER BY p.created_at ASC`,
+       GROUP BY DATE(p.created_at), e.emotion_id, e.name, e.color, e.icon
+       ORDER BY date ASC`,
       { replacements: [user_id], type: QueryTypes.SELECT }
     );
 

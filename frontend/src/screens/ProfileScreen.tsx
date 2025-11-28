@@ -112,6 +112,7 @@ const ProfileScreen: React.FC = () => {
       fontWeight: '600' as const,
       letterSpacing: -0.3,
       lineHeight: getFontSize(16) * 1.4, // 22.4px
+      textAlignVertical: 'center' as const,
     },
     sectionHeader: {
       fontSize: getFontSize(16),
@@ -804,9 +805,12 @@ const ProfileScreen: React.FC = () => {
                 {user.nickname || user.username}
               </RNText>
 
-              <RNText style={[styles.userHandle, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
-                @{user.username}
-              </RNText>
+              {/* 소셜 로그인 사용자가 아닌 경우에만 username 표시 */}
+              {user.username && !user.username.startsWith('naver_') && !user.username.startsWith('kakao_') && !user.username.startsWith('google_') && (
+                <RNText style={[styles.userHandle, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
+                  @{user.username}
+                </RNText>
+              )}
 
               <RNText style={[styles.userEmail, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
                 {maskEmail(user.email)}
@@ -1728,6 +1732,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: -0.2,
     lineHeight: 20,
+    textAlignVertical: 'center',
   },
   settingIconContainer: {
     width: 42,

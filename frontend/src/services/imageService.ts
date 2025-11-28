@@ -137,7 +137,7 @@ class ImageService {
           'localhost',
           '127.0.0.1:3001',
           '127.0.0.1',
-          '10.0.2.2:3001', // Android 에뮬레이터
+          'dayonme.com',
         ];
 
         // CDN 도메인 허용

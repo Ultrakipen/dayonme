@@ -151,7 +151,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       // 업로드된 이미지 URL이 상대경로인 경우 절대경로로 변환
       let processedUrl = uploadedImageUrl;
       if (!uploadedImageUrl.startsWith('http')) {
-        processedUrl = `http://10.0.2.2:3001${uploadedImageUrl}`;
+        processedUrl = `https://dayonme.com${uploadedImageUrl}`;
         console.log('🖼️ 상대경로를 절대경로로 변환 (screens):', processedUrl);
       }
 
@@ -168,7 +168,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       // 기존 이미지 URL 처리
       const baseUrl = currentImageUrl.startsWith('http')
         ? currentImageUrl
-        : `http://10.0.2.2:3001${currentImageUrl}`;
+        : `https://dayonme.com${currentImageUrl}`;
       console.log('🖼️ currentImageUrl 처리됨 (screens):', baseUrl);
       return baseUrl;
     }

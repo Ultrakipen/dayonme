@@ -27,6 +27,11 @@ import MyChallengesScreen from '../screens/MyChallengesScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import MyReportsScreen from '../screens/MyReportsScreen';
+import NoticeScreen from '../screens/NoticeScreen';
+import AccountSettingsScreen from '../screens/AccountSettingsScreen';
+import NotificationSettingsScreen from '../screens/NotificationSettingsScreen';
+import BookmarksScreen from '../screens/BookmarksScreen';
+import TermsOfServiceScreen from '../screens/TermsOfServiceScreen';
 import AdminDashboardScreen from '../screens/AdminDashboardScreen';
 import AdminReportListScreen from '../screens/AdminReportListScreen';
 import AdminReportDetailScreen from '../screens/AdminReportDetailScreen';
@@ -85,7 +90,7 @@ const RootNavigator: React.FC = () => {
         <Stack.Screen
           name="ProfileEdit"
           component={ProfileEditScreen}
-          options={{ title: '프로필 수정' }}
+          options={{ title: '프로필 수정', headerShown: false }}
         />
 
         <Stack.Screen
@@ -156,6 +161,31 @@ const RootNavigator: React.FC = () => {
         <Stack.Screen
           name="PrivacyPolicy"
           component={PrivacyPolicyScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Notice"
+          component={NoticeScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="AccountSettings"
+          component={AccountSettingsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="NotificationSettings"
+          component={NotificationSettingsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Bookmarks"
+          component={BookmarksScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="TermsOfService"
+          component={TermsOfServiceScreen}
           options={{ headerShown: false }}
         />
           </Stack.Group>

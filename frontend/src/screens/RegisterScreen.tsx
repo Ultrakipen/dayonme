@@ -131,6 +131,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const [resendTimer, setResendTimer] = useState(0);
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isSocialLoading, setIsSocialLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // 인증 코드 입력 refs
   const codeInputRefs = useRef<Array<RNTextInput | null>>([]);
@@ -199,7 +201,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     setSendingCode(true);
     try {
       await authService.sendVerificationCode(formData.email);
-      showAlert.success('인증 코드 발송', `${formData.email}으로 인증 코드를 발송했습니다.`);
+      // 성공 알림 대신 바로 다음 단계로 이동 (브릿지 오류 방지)
       setStep(2);
       startResendTimer();
     } catch (error: any) {
@@ -224,7 +226,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     try {
       await authService.verifyCode(formData.email, code);
       setIsEmailVerified(true);
-      showAlert.success('인증 완료', '이메일 인증이 완료되었습니다.');
+      // 성공 알림 대신 바로 다음 단계로 이동 (브릿지 오류 방지)
       setStep(3);
     } catch (error: any) {
       showAlert.error('오류', error.message || '인증 코드가 올바르지 않습니다.');
@@ -698,34 +700,54 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         </VStack>
 
         {/* 인증 코드 입력 */}
-        <HStack style={{ justifyContent: 'center', gap: 12 }}>
+        <View style={{
+          flexDirection: 'row',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginVertical: 8,
+          paddingHorizontal: 10,
+        }}>
           {formData.verificationCode.map((digit, index) => (
-            <RNTextInput
+            <View
               key={index}
-              ref={(ref) => (codeInputRefs.current[index] = ref)}
               style={{
-                width: 52,
-                height: 64,
-                borderRadius: 16,
-                borderWidth: 3,
-                borderColor: digit ? COLORS.gradient.primary[0] : COLORS.progress.inactive,
-                textAlign: 'center',
-                fontSize: 28,
-                fontWeight: '900',
-                color: isDark ? theme.text.primary : '#1a1a1a',
-                backgroundColor: theme.bg.secondary
+                flex: 1,
+                maxWidth: 44,
+                height: 40,
+                borderRadius: 8,
+                borderWidth: digit ? 2 : 1.5,
+                borderColor: digit ? COLORS.gradient.primary[0] : (isDark ? 'rgba(255,255,255,0.2)' : '#D1D5DB'),
+                backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F9FAFB',
+                marginHorizontal: 4,
+                shadowColor: digit ? COLORS.gradient.primary[0] : '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: digit ? 0.15 : 0.05,
+                shadowRadius: 4,
+                elevation: digit ? 3 : 1,
               }}
-              value={digit}
-              onChangeText={(value) => handleCodeChange(index, value)}
-              onKeyPress={({ nativeEvent: { key } }) => handleCodeKeyPress(index, key)}
-              keyboardType="number-pad"
-              maxLength={1}
-              selectTextOnFocus
-              editable={!loading}
-              accessibilityLabel={`인증 코드 ${index + 1}번째 자리`}
-            />
+            >
+              <RNTextInput
+                ref={(ref) => (codeInputRefs.current[index] = ref)}
+                style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  fontSize: 20,
+                  fontWeight: '700',
+                  color: isDark ? '#FFFFFF' : '#1F2937',
+                  padding: 0,
+                }}
+                value={digit}
+                onChangeText={(value) => handleCodeChange(index, value)}
+                onKeyPress={({ nativeEvent: { key } }) => handleCodeKeyPress(index, key)}
+                keyboardType="number-pad"
+                maxLength={1}
+                selectTextOnFocus
+                editable={!loading}
+                accessibilityLabel={`인증 코드 ${index + 1}번째 자리`}
+              />
+            </View>
           ))}
-        </HStack>
+        </View>
 
         {resendTimer > 0 && (
           <Text style={{
@@ -849,7 +871,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
             borderWidth: 2,
             borderColor: formData.password ? COLORS.gradient.primary[0] : 'transparent'
           }}
-          secureTextEntry
+          secureTextEntry={!showPassword}
           theme={{
             colors: {
               primary: COLORS.gradient.primary[0],
@@ -869,7 +891,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           lineHeight: 22,
           fontWeight: '600'
         }}>
-          소문자, 숫자, 특수문자(@$!%*?&) 포함
+          대문자, 소문자, 숫자, 특수문자(!@#$%^&*) 포함
         </Text>
 
         <TextInput
@@ -887,7 +909,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               (formData.password === formData.confirmPassword ? COLORS.success : COLORS.error) :
               'transparent'
           }}
-          secureTextEntry
+          secureTextEntry={!showConfirmPassword}
           theme={{
             colors: {
               primary: COLORS.gradient.primary[0],
@@ -898,6 +920,46 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           placeholderTextColor={isDark ? theme.text.tertiary : COLORS.placeholder.light}
           accessibilityLabel="비밀번호 확인 입력"
         />
+
+        {/* 비밀번호 보기 체크박스 */}
+        <Pressable
+          onPress={() => {
+            setShowPassword(!showPassword);
+            setShowConfirmPassword(!showConfirmPassword);
+          }}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: 4,
+            marginLeft: 4
+          }}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: showPassword }}
+          accessibilityLabel="비밀번호 보기"
+        >
+          <View style={{
+            width: 22,
+            height: 22,
+            borderRadius: 6,
+            borderWidth: 2,
+            borderColor: showPassword ? COLORS.gradient.primary[0] : (isDark ? '#555' : '#ccc'),
+            backgroundColor: showPassword ? COLORS.gradient.primary[0] : 'transparent',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 10
+          }}>
+            {showPassword && (
+              <MaterialCommunityIcons name="check" size={14} color={COLORS.white} />
+            )}
+          </View>
+          <Text style={{
+            color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
+            fontSize: FONT_SIZES.bodySmall,
+            fontWeight: '600'
+          }}>
+            비밀번호 보기
+          </Text>
+        </Pressable>
         {formData.confirmPassword && formData.password !== formData.confirmPassword && (
           <Text
             style={{
@@ -937,7 +999,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         </LinearGradient>
       </Pressable>
     </VStack>
-  ), [formData.username, formData.password, formData.confirmPassword, updateFormData, spacing, normalizeFontSize, isDark, theme, styles]);
+  ), [formData.username, formData.password, formData.confirmPassword, updateFormData, spacing, normalizeFontSize, isDark, theme, styles, showPassword, showConfirmPassword]);
 
   // Step 4: 프로필 설정 (선택)
   const renderStep4 = useCallback(() => (

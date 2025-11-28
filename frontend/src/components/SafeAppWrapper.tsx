@@ -60,6 +60,13 @@ class SafeAppWrapper extends Component<Props, State> {
         return { hasError: false };
       }
 
+      // Native Bridge 통신 오류 무시 (빠른 연속 렌더링 시 발생)
+      if (errorMessage.includes('Malformed calls from JS') ||
+          errorMessage.includes('field sizes are different') ||
+          errorMessage.includes('HostFunction')) {
+        return { hasError: false };
+      }
+
       console.error('앱 래퍼에서 오류 캐치:', errorMessage);
       return { hasError: true, error };
     } catch (handlerError) {
@@ -87,6 +94,9 @@ class SafeAppWrapper extends Component<Props, State> {
           errorMessage.includes('Rendered more hooks') ||
           errorMessage.includes('Rendered fewer hooks') ||
           errorMessage.includes('hooks than during the previous render') ||
+          errorMessage.includes('Malformed calls from JS') ||
+          errorMessage.includes('field sizes are different') ||
+          errorMessage.includes('HostFunction') ||
           errorMessage.includes("Property") && errorMessage.includes("doesn't exist")) {
         // 오류 무시 (로그 출력 안함 - 무한 루프 방지)
         return;

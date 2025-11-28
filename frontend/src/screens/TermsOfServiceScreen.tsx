@@ -116,12 +116,12 @@ const TermsOfServiceScreen: React.FC = () => {
 
       {/* 내용 */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.lastUpdated}>최종 업데이트: 2024년 1월 1일</Text>
+        <Text style={styles.lastUpdated}>최종 업데이트: 2025년 12월 1일</Text>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>제1조 (목적)</Text>
           <Text style={styles.paragraph}>
-            이 약관은 iExist(이하 "서비스")가 제공하는 모바일 애플리케이션 및 관련 서비스의 이용조건 및 절차, 회사와 회원 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
+            이 약관은 Dayonme(이하 "서비스")가 제공하는 모바일 애플리케이션 및 관련 서비스의 이용조건 및 절차, 회사와 회원 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
           </Text>
         </View>
 
@@ -194,7 +194,7 @@ const TermsOfServiceScreen: React.FC = () => {
         <View style={[styles.section, { marginBottom: 40 }]}>
           <Text style={styles.sectionTitle}>부칙</Text>
           <Text style={styles.paragraph}>
-            본 약관은 2024년 1월 1일부터 시행합니다.
+            본 약관은 2025년 12월 1일부터 시행합니다.
           </Text>
         </View>
       </ScrollView>
