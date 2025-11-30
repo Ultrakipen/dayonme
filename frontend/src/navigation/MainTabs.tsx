@@ -179,7 +179,7 @@ const MainTabs = () => {
         component={ReviewScreen}
         options={{
           headerShown: false,
-          tabBarLabel: '일상 돌아보기',
+          tabBarLabel: '감정 리뷰',
           tabBarIcon: ({ color, size, focused }: { color: string; size: number; focused: boolean }) => (
             <MaterialCommunityIcons
               name={focused ? 'chart-line' : 'chart-line-variant'}

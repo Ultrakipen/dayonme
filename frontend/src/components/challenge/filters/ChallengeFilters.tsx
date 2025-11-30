@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   searchPlaceholder: {
     flex: 1,
     marginLeft: 10,
-    fontSize: 13,
+    fontSize: normalize(14),
     fontWeight: '500',
     lineHeight: 18,
     textAlignVertical: 'center',
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   filterChipText: {
-    fontSize: 12,
+    fontSize: normalize(13),
     fontWeight: '600',
     marginLeft: 4,
     letterSpacing: -0.2,

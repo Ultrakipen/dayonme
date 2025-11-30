@@ -323,19 +323,25 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
   // 상대시간 포맷 (현대적 트렌드)
   const getRelativeTime = (dateString: string) => {
     try {
+      if (!dateString) return '방금';
+
       const now = new Date();
       const date = new Date(dateString);
+
+      // 유효하지 않은 날짜 체크
+      if (isNaN(date.getTime())) return '방금';
+
       const diffMs = now.getTime() - date.getTime();
       const diffMins = Math.floor(diffMs / 60000);
       const diffHours = Math.floor(diffMs / 3600000);
       const diffDays = Math.floor(diffMs / 86400000);
-      
+
       if (diffMins < 1) return '방금';
       if (diffMins < 60) return `${diffMins}분 전`;
       if (diffHours < 24) return `${diffHours}시간 전`;
       if (diffDays === 1) return '어제';
       if (diffDays < 7) return `${diffDays}일 전`;
-      
+
       // 일주일 이상은 월.일 형식
       const month = date.getMonth() + 1;
       const day = date.getDate();

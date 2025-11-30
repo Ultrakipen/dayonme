@@ -1,5 +1,5 @@
 // 기존 ChallengeScreen.tsx 파일을 복사하고 삭제 기능을 추가한 수정 버전
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect, useIsFocused } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
+import FastImage from 'react-native-fast-image';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MasonryList from '@react-native-seoul/masonry-list';
 import challengeService from '../services/api/challengeService';
@@ -122,6 +123,30 @@ const ChallengeScreenFixed = ({ route }: any) => {
     border: theme.bg.border,
     primary: isDark ? '#60a5fa' : '#3b82f6',
   };
+
+  // 프로필 이미지 컴포넌트 - 필터/탭 변경과 무관하게 유지
+  const HeaderProfileImage = useMemo(() => {
+    if (user?.profile_image_url) {
+      return (
+        <FastImage
+          source={{
+            uri: normalizeImageUrl(user.profile_image_url),
+            priority: FastImage.priority.high,
+            cache: FastImage.cacheControl.immutable,
+          }}
+          style={{
+            width: 46,
+            height: 46,
+            borderRadius: 17,
+            borderWidth: 2,
+            borderColor: theme.bg.border,
+          }}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+      );
+    }
+    return <MaterialCommunityIcons name="account-circle-outline" size={34} color={theme.text.primary} />;
+  }, [user?.profile_image_url, user?.user_id, theme.bg.border, theme.text.primary]);
 
   // Refs
   const scrollViewRef = useRef<typeof ScrollView | null>(null);
@@ -1422,24 +1447,7 @@ const executeSearch = useCallback((query: string) => {
                 style={styles.headerIconButton}
                 onPress={() => navigation.navigate('ProfileMain' as never)}
               >
-                {user?.profile_image_url ? (
-                  <Image
-                    source={{ uri: normalizeImageUrl(user.profile_image_url) }}
-                    style={{
-                      width: 46,
-                      height: 46,
-                      borderRadius: 17,
-                      borderWidth: 2,
-                      borderColor: theme.bg.border,
-                    }}
-                    onError={(e) => {
-                      console.error('❌ 헤더 프로필 이미지 로드 실패:', e.nativeEvent);
-                    }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <MaterialCommunityIcons name="account-circle-outline" size={34} color={theme.text.primary} />
-                )}
+                {HeaderProfileImage}
               </TouchableOpacity>
             </View>
           </View>

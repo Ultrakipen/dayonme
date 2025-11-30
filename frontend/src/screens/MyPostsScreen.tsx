@@ -112,27 +112,32 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchInputText, setSearchInputText] = useState(''); // 검색 입력 상태를 부모로 이동
   const [searchType, setSearchType] = useState<'all' | 'content' | 'tag'>('all');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [cachedPosts, setCachedPosts] = useState<Post[]>([]);
   const [lastFetch, setLastFetch] = useState(0);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const PAGE_SIZE = 15;
   const CACHE_DURATION = 3 * 60 * 1000;
 
-  const handleSearchSubmit = useCallback((query: string) => {
-    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    debounceTimerRef.current = setTimeout(() => {
-      if (query.length >= 1) setSearchQuery(query);
-    }, 300);
-  }, []);
+  // 검색 실행 - 즉시 실행으로 변경
+  const handleSearchSubmit = useCallback(() => {
+    const trimmedQuery = searchInputText.trim();
+    if (trimmedQuery.length >= 1) {
+      setSearchQuery(trimmedQuery);
+      setPage(1);
+    }
+    Vibration.vibrate(5);
+  }, [searchInputText]);
 
   const handleSearchClear = useCallback(() => {
+    setSearchInputText('');
     setSearchQuery('');
     setSearchType('all');
     setPage(1);
+    Vibration.vibrate(5);
   }, []);
 
   // 정렬 기능 상태
@@ -290,12 +295,6 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
     }, [loadPosts])
   );
 
-  useEffect(() => {
-    return () => {
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-    };
-  }, []);
-
   // 뒤로가기 핸들러
   const handleGoBack = useCallback(() => {
     if (sourceScreen === 'Comfort') {
@@ -364,9 +363,12 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
         isEditMode: true,
         editPostId: post.id,
         existingPost: {
+          post_id: post.id,
           content: post.content,
           image_url: post.image_url,
-          emotions: post.emotions
+          emotions: post.emotions,
+          emotion_id: post.emotion_id,
+          is_anonymous: post.is_anonymous
         }
       });
     } else {
@@ -450,6 +452,9 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
 
   // 더 불러오기
   const loadMore = useCallback(() => {
+    // 검색 중일 때는 클라이언트 필터링이므로 더 불러오지 않음
+    if (searchQuery.trim()) return;
+
     const totalFiltered = selectedTab === 'all' ? posts.length : posts.filter(p => p.type === selectedTab).length;
     if (!isLoadingMore && hasMore && filteredAndSearchedPosts.length < totalFiltered) {
       setIsLoadingMore(true);
@@ -458,56 +463,11 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
         setIsLoadingMore(false);
       }, 300);
     }
-  }, [isLoadingMore, hasMore, filteredAndSearchedPosts.length, posts.length, selectedTab]);
+  }, [searchQuery, isLoadingMore, hasMore, filteredAndSearchedPosts.length, posts.length, selectedTab]);
 
 
-  const SearchInput = ({ onSearch, onClear }: { onSearch: (query: string) => void; onClear: () => void }) => {
-    const [inputText, setInputText] = useState('');
-    const handleSearch = useCallback(() => {
-      onSearch(inputText.trim());
-      Vibration.vibrate(5);
-    }, [inputText, onSearch]);
-    const handleClear = useCallback(() => {
-      setInputText('');
-      onClear();
-      Vibration.vibrate(5);
-    }, [onClear]);
-
-    return (
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: themeColors.inputBackground,
-        borderRadius: scaleSpacing(10),
-        paddingHorizontal: scaleSpacing(10),
-        borderWidth: 1,
-        borderColor: themeColors.border,
-        minHeight: scaleSpacing(44)
-      }}>
-        <TouchableOpacity onPress={handleSearch} style={{ marginRight: scaleSpacing(6) }} accessibilityLabel="검색" accessibilityRole="button">
-          <MaterialCommunityIcons name="magnify" size={scaleFontSize(18)} color={themeColors.searchIcon} />
-        </TouchableOpacity>
-        <TextInput
-          placeholder="게시물 검색..."
-          placeholderTextColor={themeColors.placeholder}
-          value={inputText}
-          onChangeText={setInputText}
-          onSubmitEditing={handleSearch}
-          style={{ flex: 1, fontSize: scaleFontSize(TYPOGRAPHY.body), color: theme.text.primary, paddingVertical: 0, fontWeight: '500' }}
-          returnKeyType="search"
-          autoCorrect={false}
-          accessibilityLabel="게시물 검색 입력"
-        />
-        {inputText.length > 0 && (
-          <TouchableOpacity onPress={handleClear} style={{ marginLeft: scaleSpacing(4) }} accessibilityLabel="검색어 지우기" accessibilityRole="button">
-            <MaterialCommunityIcons name="close-circle" size={scaleFontSize(16)} color={themeColors.placeholder} />
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  };
-
-  const SearchSection = () => (
+  // SearchSection을 useMemo로 메모이제이션
+  const SearchSection = useMemo(() => (
     <VStack style={{
       paddingHorizontal: scaleSpacing(12),
       paddingVertical: scaleSpacing(10),
@@ -520,7 +480,37 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
       shadowRadius: 2,
       elevation: isDark ? 0 : 1
     }}>
-      <SearchInput onSearch={handleSearchSubmit} onClear={handleSearchClear} />
+      {/* 인라인 검색 입력 */}
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: themeColors.inputBackground,
+        borderRadius: scaleSpacing(10),
+        paddingHorizontal: scaleSpacing(10),
+        borderWidth: 1,
+        borderColor: themeColors.border,
+        minHeight: scaleSpacing(44)
+      }}>
+        <TouchableOpacity onPress={handleSearchSubmit} style={{ marginRight: scaleSpacing(6) }} accessibilityLabel="검색" accessibilityRole="button">
+          <MaterialCommunityIcons name="magnify" size={scaleFontSize(18)} color={themeColors.searchIcon} />
+        </TouchableOpacity>
+        <TextInput
+          placeholder="게시물 검색..."
+          placeholderTextColor={themeColors.placeholder}
+          value={searchInputText}
+          onChangeText={setSearchInputText}
+          onSubmitEditing={handleSearchSubmit}
+          style={{ flex: 1, fontSize: scaleFontSize(TYPOGRAPHY.body), color: theme.text.primary, paddingVertical: 0, fontWeight: '500' }}
+          returnKeyType="search"
+          autoCorrect={false}
+          accessibilityLabel="게시물 검색 입력"
+        />
+        {searchInputText.length > 0 && (
+          <TouchableOpacity onPress={handleSearchClear} style={{ marginLeft: scaleSpacing(4) }} accessibilityLabel="검색어 지우기" accessibilityRole="button">
+            <MaterialCommunityIcons name="close-circle" size={scaleFontSize(16)} color={themeColors.placeholder} />
+          </TouchableOpacity>
+        )}
+      </View>
       <HStack style={{ marginTop: scaleSpacing(8), gap: scaleSpacing(6) }}>
         {(['all', 'content', 'tag'] as const).map(type => (
           <Pressable
@@ -567,14 +557,14 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
         </HStack>
       )}
     </VStack>
-  );
+  ), [isDark, theme, themeColors, scaleSpacing, scaleFontSize, searchInputText, searchQuery, searchType, filteredAndSearchedPosts.length, handleSearchSubmit, handleSearchClear]);
 
   const getSortLabel = () => {
     const labels = { latest: '최신순', oldest: '오래된순', mostLiked: '좋아요순', mostCommented: '댓글순' };
     return labels[sortBy];
   };
 
-  const TabAndSortSection = () => (
+  const TabAndSortSection = useMemo(() => (
     <HStack style={{
       paddingHorizontal: scaleSpacing(12),
       paddingVertical: scaleSpacing(10),
@@ -686,7 +676,7 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
         ))}
       </Menu>
     </HStack>
-  );
+  ), [isDark, theme, themeColors, scaleSpacing, scaleFontSize, selectedTab, posts, sortMenuVisible, sortBy, getSortLabel]);
 
   const PostCard = React.memo(({ post }: { post: Post }) => (
     <Card
@@ -1065,7 +1055,8 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
   );
 
   const renderFooter = () => {
-    if (!isLoadingMore) return null;
+    // 검색 중이거나 로딩 중이 아니면 표시하지 않음
+    if (searchQuery.trim() || !isLoadingMore) return null;
     return (
       <Center style={{ paddingVertical: scaleSpacing(16) }}>
         <ActivityIndicator size="small" color={theme.colors.primary} />
@@ -1075,8 +1066,8 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
-      <SearchSection />
-      <TabAndSortSection />
+      {SearchSection}
+      {TabAndSortSection}
 
       <FlatList
         ref={flatListRef}

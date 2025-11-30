@@ -52,7 +52,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 }) => {
   const { isDark, theme } = useModernTheme();
   const width = getWidth();
-  const scaleValue = React.useRef(new Animated.Value(0)).current;
+  const opacityValue = React.useRef(new Animated.Value(0)).current;
+  const scaleValue = React.useRef(new Animated.Value(0.9)).current;
 
   // 동적 스타일 (React Native 0.80 호환)
   const dynamicStyles = useMemo(() => ({
@@ -141,20 +142,35 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   React.useEffect(() => {
     if (visible) {
-      Animated.spring(scaleValue, {
-        toValue: 1,
-        tension: 150,
-        friction: 8,
-        useNativeDriver: true,
-      }).start();
+      // 병렬 애니메이션: opacity와 scale 동시에
+      Animated.parallel([
+        Animated.timing(opacityValue, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleValue, {
+          toValue: 1,
+          tension: 200,
+          friction: 12,
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else {
-      Animated.timing(scaleValue, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+      Animated.parallel([
+        Animated.timing(opacityValue, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleValue, {
+          toValue: 0.9,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
-  }, [visible, scaleValue]);
+  }, [visible, opacityValue, scaleValue]);
 
   const getTypeConfig = () => {
     switch (type) {
@@ -208,6 +224,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             style={[
               dynamicStyles.modal,
               {
+                opacity: opacityValue,
                 transform: [{ scale: scaleValue }],
                 backgroundColor: isDark ? '#1a1a1a' : '#FFFFFF',
               }
@@ -265,6 +282,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   ]}
                   onPress={onCancel}
                   activeOpacity={0.7}
+                  delayPressIn={0}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <Text style={[
                     dynamicStyles.cancelButtonText,
@@ -282,6 +301,8 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                 ]}
                 onPress={onConfirm}
                 activeOpacity={0.7}
+                delayPressIn={0}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <Text style={dynamicStyles.confirmButtonText}>{confirmText}</Text>
               </TouchableOpacity>

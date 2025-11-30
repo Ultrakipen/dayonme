@@ -169,7 +169,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
                 return;
               }
               
-              await postService.deletePost(postId);
+              await comfortWallService.deletePost(postId);
               Alert.alert('완료', '게시물이 삭제되었습니다.');
               loadMyPosts();
             } catch (error) {

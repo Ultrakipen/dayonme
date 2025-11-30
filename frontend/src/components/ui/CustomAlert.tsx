@@ -166,11 +166,15 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
 
   const handleButtonPress = (button: AlertButton) => {
     ReactNativeHapticFeedback.trigger('impactLight');
-    if (button.onPress) {
-      button.onPress();
-    }
+    // 먼저 현재 알림을 닫은 후 onPress 콜백 실행 (새 알림 표시를 위해)
     if (onDismiss) {
       onDismiss();
+    }
+    // 알림이 닫힌 후 onPress 실행 (새 알림 표시 가능하도록 지연)
+    if (button.onPress) {
+      setTimeout(() => {
+        button.onPress?.();
+      }, 250);
     }
   };
 

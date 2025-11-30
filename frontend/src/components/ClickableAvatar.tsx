@@ -66,18 +66,6 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
     [isAnonymous, normalizedImageUrl, imageError]
   );
 
-  // 디버깅: 렌더링 로깅
-  console.log('🎨 [ClickableAvatar] 렌더링:', {
-    userId,
-    nickname,
-    isAnonymous,
-    avatarUrl,
-    avatarText,
-    avatarColor,
-    normalizedImageUrl,
-    shouldShowImage,
-    imageError
-  });
 
   const handlePress = () => {
     if (!isClickable) {
@@ -159,37 +147,35 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
   // FastImage source 객체 (메모이제이션) - 깜빡임 방지
   const imageSource = useMemo(() => ({
     uri: normalizedImageUrl,
-    priority: FastImage.priority.normal,
+    priority: FastImage.priority.high,
     cache: FastImage.cacheControl.immutable
   }), [normalizedImageUrl]);
 
   // 이미지 로드 실패 핸들러 (메모이제이션)
   const handleImageError = useCallback(() => {
-    console.error('❌ [ClickableAvatar] 이미지 로드 실패:', normalizedImageUrl);
     setImageError(true);
-  }, [normalizedImageUrl]);
+  }, []);
 
   // 이미지 로드 성공 핸들러 (메모이제이션)
   const handleImageLoad = useCallback(() => {
-    console.log('✅ [ClickableAvatar] 이미지 로드 성공:', normalizedImageUrl);
-  }, [normalizedImageUrl]);
+    // 이미지 로드 성공
+  }, []);
 
   // 아바tar 내용 렌더링 (이미지 또는 텍스트) - 메모이제이션
   const renderAvatarContent = useCallback(() => {
     if (shouldShowImage) {
-      console.log('✅ [ClickableAvatar] 이미지 렌더링:', normalizedImageUrl);
       return (
         <FastImage
           source={imageSource}
           style={imageStyle}
+          resizeMode={FastImage.resizeMode.cover}
           onError={handleImageError}
           onLoad={handleImageLoad}
         />
       );
     }
-    console.log('⚠️ [ClickableAvatar] 텍스트 아바타 렌더링:', avatarText);
     return <Text style={avatarTextStyle}>{avatarText}</Text>;
-  }, [shouldShowImage, normalizedImageUrl, imageSource, imageStyle, handleImageError, handleImageLoad, avatarText, avatarTextStyle]);
+  }, [shouldShowImage, imageSource, imageStyle, handleImageError, handleImageLoad, avatarText, avatarTextStyle]);
 
   // 클릭 불가능한 경우 일반 View로 렌더링
   if (!isClickable) {
@@ -234,7 +220,7 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
 // React.memo로 컴포넌트 메모이제이션하여 불필요한 재렌더링 방지
 export default React.memo(ClickableAvatar, (prevProps, nextProps) => {
   // 커스텀 비교 함수: 모든 props가 동일하면 재렌더링하지 않음
-  const shouldSkipRerender = (
+  return (
     prevProps.userId === nextProps.userId &&
     prevProps.nickname === nextProps.nickname &&
     prevProps.isAnonymous === nextProps.isAnonymous &&
@@ -243,24 +229,4 @@ export default React.memo(ClickableAvatar, (prevProps, nextProps) => {
     prevProps.avatarColor === nextProps.avatarColor &&
     prevProps.size === nextProps.size
   );
-
-  // 디버깅: 재렌더링되는 경우 어떤 prop이 변경되었는지 로깅
-  if (!shouldSkipRerender) {
-    console.log('🔄 [ClickableAvatar] 재렌더링 이유:', {
-      userId: nextProps.userId,
-      userId_changed: prevProps.userId !== nextProps.userId,
-      nickname_changed: prevProps.nickname !== nextProps.nickname,
-      isAnonymous_changed: prevProps.isAnonymous !== nextProps.isAnonymous,
-      avatarUrl_changed: prevProps.avatarUrl !== nextProps.avatarUrl,
-      avatarText_changed: prevProps.avatarText !== nextProps.avatarText,
-      avatarColor_changed: prevProps.avatarColor !== nextProps.avatarColor,
-      size_changed: prevProps.size !== nextProps.size,
-      prevAvatarText: prevProps.avatarText,
-      nextAvatarText: nextProps.avatarText,
-      prevAvatarColor: prevProps.avatarColor,
-      nextAvatarColor: nextProps.avatarColor,
-    });
-  }
-
-  return shouldSkipRerender;
 });

@@ -845,23 +845,41 @@ const ChallengeDetailScreen = () => {
       setShowProgressModal(false);
       setSelectedEmotionId(null);
       setProgressNote("");
+      const wasEditMode = isEditMode;
       setIsEditMode(false);
       setEditingEmotion(null);
 
       // 캐시 클리어 (수정/추가된 데이터가 즉시 반영되도록)
-      challengeService.clearCacheByPattern(`challenge_detail_${challengeId}`);
-      if (__DEV__) console.log("🗑️ 챌린지 상세 캐시 클리어 완료");
+      challengeService.clearCacheByPattern(`challenge_detail`);
+      challengeService.clearCacheByPattern(`challenge_${challengeId}`);
+      if (__DEV__) console.log("🗑️ 챌린지 캐시 클리어 완료");
 
-      // 데이터 새로고침 (에러 발생해도 무시)
-      try {
-        await loadChallengeDetail();
-        setRefreshKey((prev) => prev + 1);
-      } catch (refreshError) {
-        if (__DEV__) console.warn("⚠️ 새로고침 실패 (무시):", refreshError);
+      // 수정 시 로컬 상태 즉시 업데이트
+      if (wasEditMode && editingEmotion) {
+        setChallenge((prev) => {
+          if (!prev) return prev;
+          const updatedEntries = prev.progress_entries?.map((e: any) => {
+            if (e.challenge_emotion_id === editingEmotion.challenge_emotion_id) {
+              return {
+                ...e,
+                emotion_id: selectedEmotionId,
+                note: progressNote.trim() || e.note,
+              };
+            }
+            return e;
+          }) || [];
+          return { ...prev, progress_entries: updatedEntries };
+        });
       }
+      setRefreshKey((prev) => prev + 1);
 
       // 성공 메시지 표시
-      showAlert.show("성공", isEditMode ? "감정 기록이 수정되었습니다!" : "감정이 기록되었습니다!");
+      showAlert.show("성공", wasEditMode ? "감정 기록이 수정되었습니다!" : "감정이 기록되었습니다!");
+
+      // 백그라운드에서 서버와 동기화 (지연 후 실행하여 캐시 반영 대기)
+      setTimeout(() => {
+        loadChallengeDetail().catch(() => {});
+      }, 1500);
     } catch (error) {
       if (__DEV__) console.error("❌ 감정 기록 오류:", error);
       showAlert.show("오류", sanitizeErrorMessage(error));
@@ -920,18 +938,30 @@ const ChallengeDetailScreen = () => {
               if (__DEV__) console.log("✅ 감정 기록 삭제 완료");
 
               // 캐시 클리어 (삭제된 데이터가 표시되지 않도록)
-              challengeService.clearCacheByPattern(`challenge_detail_${challengeId}`);
-              if (__DEV__) console.log("🗑️ 챌린지 상세 캐시 클리어 완료");
+              challengeService.clearCacheByPattern(`challenge_detail`);
+              challengeService.clearCacheByPattern(`challenge_${challengeId}`);
+              if (__DEV__) console.log("🗑️ 챌린지 캐시 클리어 완료");
 
-              // 데이터 새로고침 (에러 발생해도 무시)
-              try {
-                await loadChallengeDetail();
-                setRefreshKey((prev) => prev + 1);
-              } catch (refreshError) {
-                if (__DEV__) console.warn("⚠️ 새로고침 실패 (무시):", refreshError);
-              }
+              // 로컬 상태 즉시 업데이트 (삭제된 항목 제거)
+              setChallenge((prev) => {
+                if (!prev) return prev;
+                const newEntries = prev.progress_entries?.filter(
+                  (e: any) => e.challenge_emotion_id !== entry.challenge_emotion_id
+                ) || [];
+                return {
+                  ...prev,
+                  progress_entries: newEntries,
+                  progress_entry_count: newEntries.length,
+                };
+              });
+              setRefreshKey((prev) => prev + 1);
 
               showAlert.show("성공", "감정 기록이 삭제되었습니다.");
+
+              // 백그라운드에서 서버와 동기화 (지연 후 실행하여 캐시 반영 대기)
+              setTimeout(() => {
+                loadChallengeDetail().catch(() => {});
+              }, 1500);
             } catch (error: any) {
               if (__DEV__) console.error("❌ 감정 기록 삭제 오류:", error);
               if (__DEV__) console.error("오류 응답:", error.response?.data);
@@ -960,14 +990,33 @@ const ChallengeDetailScreen = () => {
       emotion_name: string;
       user_id: number;
       nickname?: string;
-    }>
+    }>,
+    emotionId?: number | null
   ) => {
-    const baseName = emotionName;
+    // emotion_id가 있으면 EMOTIONS 배열에서 감정 이름 가져오기
+    let baseName = emotionName;
+
+    if (emotionId && (!emotionName || emotionName === "Unknown")) {
+      const emotionFromId = EMOTIONS.find(e => e.emotion_id === emotionId);
+      if (emotionFromId) {
+        baseName = emotionFromId.name;
+      }
+    }
+
+    // 여전히 "Unknown" 또는 빈 감정 이름인 경우 익명 감정 목록에서 선택
+    const fallbackEmotions = [
+      "기쁨이", "행복이", "슬픔이", "우울이", "지루미", "버럭이",
+      "불안이", "걱정이", "감동이", "황당이", "당황이", "짜증이",
+      "무섭이", "추억이", "설렘이", "편안이", "궁금이"
+    ];
+
+    if (!baseName || baseName === "Unknown") {
+      baseName = fallbackEmotions[userId % fallbackEmotions.length];
+    }
 
     // 같은 사용자가 같은 감정으로 이미 작성한 기록이 있는지 확인
     const existingUserEmotion = existingData.find(
       (item: { emotion_name: string; user_id: number; nickname?: string }) =>
-        item.emotion_name === emotionName &&
         item.user_id === userId &&
         item.nickname
     );
@@ -1027,7 +1076,8 @@ const ChallengeDetailScreen = () => {
         const nickname = generateEmotionNickname(
           entry.emotion_name,
           entry.user_id,
-          emotionData
+          emotionData,
+          entry.emotion_id
         );
 
         // 생성된 닉네임을 다음 처리를 위해 저장
@@ -1037,17 +1087,29 @@ const ChallengeDetailScreen = () => {
           nickname: nickname,
         });
 
-        const emotionColor = getEmotionColor(entry.emotion_name);
+        // emotion_id가 있으면 EMOTIONS에서 색상 가져오기
+        let emotionColor = getEmotionColor(entry.emotion_name);
+        if (entry.emotion_id && (!entry.emotion_name || entry.emotion_name === "Unknown")) {
+          const emotionFromId = EMOTIONS.find(e => e.emotion_id === entry.emotion_id);
+          if (emotionFromId) {
+            emotionColor = emotionFromId.color;
+          }
+        }
         if (__DEV__)
           console.log(
-            `🎨 감정 아바타 색상 생성: ${entry.emotion_name} -> ${emotionColor}`
+            `🎨 감정 아바타 색상 생성: ${entry.emotion_name} (id: ${entry.emotion_id}) -> ${emotionColor}`
           );
+
+        // emotion_name이 "Unknown"이면 nickname에서 감정 이름 추출
+        const displayEmotionName = (!entry.emotion_name || entry.emotion_name === "Unknown")
+          ? nickname.split("_")[0]
+          : entry.emotion_name;
 
         feedItems.push({
           id: `emotion_${entry.challenge_emotion_id}`,
           type: "emotion",
           emotion_id: entry.emotion_id,
-          emotion_name: entry.emotion_name,
+          emotion_name: displayEmotionName,
           emotion_color: emotionColor,
           content: entry.note || "감정 이야기를 나눠주셨네요.",
           user_id: entry.user_id,
@@ -1080,7 +1142,8 @@ const ChallengeDetailScreen = () => {
       const nickname = generateEmotionNickname(
         entry.emotion_name,
         entry.user_id,
-        emotionData
+        emotionData,
+        entry.emotion_id
       );
 
       emotionData.push({
@@ -1089,7 +1152,14 @@ const ChallengeDetailScreen = () => {
         nickname: nickname,
       });
 
-      const emotionColor = getEmotionColor(entry.emotion_name);
+      // emotion_id가 있으면 EMOTIONS에서 색상 가져오기
+      let emotionColor = getEmotionColor(entry.emotion_name);
+      if (entry.emotion_id && (!entry.emotion_name || entry.emotion_name === "Unknown")) {
+        const emotionFromId = EMOTIONS.find(e => e.emotion_id === entry.emotion_id);
+        if (emotionFromId) {
+          emotionColor = emotionFromId.color;
+        }
+      }
       const getEmotionIcon = (emotionName: string): string => {
         const iconMap: { [key: string]: string } = {
           '기쁨': 'emoticon-happy',
@@ -1104,13 +1174,18 @@ const ChallengeDetailScreen = () => {
         return iconMap[emotionName] || 'emoticon-happy';
       };
 
+      // emotion_name이 "Unknown"이면 nickname에서 감정 이름 추출
+      const displayEmotionName = (!entry.emotion_name || entry.emotion_name === "Unknown")
+        ? nickname.split("_")[0]
+        : entry.emotion_name;
+
       return {
         challenge_emotion_id: entry.challenge_emotion_id,
         user_id: entry.user_id,
         date: entry.date,
         emotion_id: entry.emotion_id,
-        emotion_name: entry.emotion_name,
-        emotion_icon: getEmotionIcon(entry.emotion_name),
+        emotion_name: displayEmotionName,
+        emotion_icon: getEmotionIcon(displayEmotionName),
         emotion_color: emotionColor,
         note: entry.note,
         nickname: nickname,
@@ -1336,6 +1411,73 @@ const ChallengeDetailScreen = () => {
                 </View>
               </View>
             </View>
+
+            {/* 인라인 답글 입력창 */}
+            {inlineReplyingTo === item.id && (
+              <View style={[
+                styles.inlineReplyContainer,
+                {
+                  backgroundColor: theme.bg.card,
+                  borderColor: theme.bg.border,
+                }
+              ]}>
+                <TextInput
+                  style={[
+                    styles.inlineReplyInput,
+                    {
+                      backgroundColor: theme.bg.primary,
+                      color: theme.text.primary,
+                    }
+                  ]}
+                  placeholder={`${item.nickname || ''}님에게 답글...`}
+                  placeholderTextColor={theme.text.secondary}
+                  value={inlineReplyText}
+                  onChangeText={setInlineReplyText}
+                  multiline
+                  maxLength={200}
+                  autoFocus
+                />
+                <View style={styles.inlineReplyActions}>
+                  <TouchableOpacity
+                    style={styles.inlineReplyCancel}
+                    onPress={() => {
+                      setInlineReplyingTo(null);
+                      setInlineReplyText("");
+                    }}
+                  >
+                    <Text style={{ color: theme.text.secondary, fontSize: scaleFont(13) }}>취소</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.inlineReplySend,
+                      {
+                        backgroundColor: inlineReplyText.trim() ? '#667eea' : theme.bg.secondary,
+                        opacity: inlineReplyText.trim() ? 1 : 0.5,
+                      }
+                    ]}
+                    onPress={async () => {
+                      if (!inlineReplyText.trim()) return;
+                      try {
+                        await handleAddComment(inlineReplyText.trim(), undefined, true, item.challenge_emotion_id);
+                        setInlineReplyingTo(null);
+                        setInlineReplyText("");
+                        // 답글 목록 새로고침
+                        await loadEmotionComments(item.emotion_id, item.id);
+                      } catch (error) {
+                        if (__DEV__) console.error("답글 작성 오류:", error);
+                      }
+                    }}
+                    disabled={!inlineReplyText.trim()}
+                  >
+                    <MaterialCommunityIcons
+                      name="send"
+                      size={scaleSize(16)}
+                      color={inlineReplyText.trim() ? "#FFFFFF" : theme.text.tertiary}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
 
             {/* 답글 섹션 */}
             {replies[item.id] && replies[item.id].length > 0 && (
@@ -1709,8 +1851,8 @@ const ChallengeDetailScreen = () => {
 
   // 답글 토글
   const toggleReplies = (itemId: string) => {
-    // 댓글 모달 열기 + 감정 필터 선택
-    setCommentFilter('emotion');
+    // 댓글 모달 열기 + 전체 보기
+    setCommentFilter('all');
     setCommentModalVisible(true);
   };
 
@@ -1719,8 +1861,8 @@ const ChallengeDetailScreen = () => {
     setIsCommentsExpanded((prev) => !prev);
   };
 
-  // 좋아요 토글
-  const toggleLike = async (challengeId: number) => {
+  // 감정 기록 공감 토글 (로컬 상태)
+  const toggleLike = (itemId: string) => {
     // 비로그인 사용자 체크
     if (!user) {
       setGuestPromptConfig({
@@ -1731,19 +1873,15 @@ const ChallengeDetailScreen = () => {
       return;
     }
 
-    try {
-      const response = await challengeService.toggleChallengeLike(challengeId);
-
-      if (response?.data?.data) {
-        const { is_liked, like_count } = response.data.data;
-
-        // 챌린지 상태 업데이트
-        setChallenge((prev) => (prev ? { ...prev, like_count } : prev));
-      }
-    } catch (error) {
-      if (__DEV__) console.error("좋아요 처리 오류:", error);
-      showAlert.show("오류", sanitizeErrorMessage(error));
-    }
+    // 로컬 상태 토글
+    setLikedItems((prev) => ({
+      ...prev,
+      [itemId]: !prev[itemId],
+    }));
+    setLikeCounts((prev) => ({
+      ...prev,
+      [itemId]: (prev[itemId] || 0) + (likedItems[itemId] ? -1 : 1),
+    }));
   };
 
   // 챌린지 수정 함수
@@ -2245,7 +2383,34 @@ const ChallengeDetailScreen = () => {
       });
       if (__DEV__) console.log("🗨️ 댓글 추가 성공:", result);
 
-      // 댓글 목록만 재로드 (챌린지 전체 정보는 재로드하지 않음)
+      // Optimistic update: 답글인 경우 즉시 로컬 상태에 추가
+      if (parentId && result?.data) {
+        const newReply = {
+          comment_id: result.data.comment_id || Date.now(),
+          content: content,
+          is_anonymous: isAnonymous,
+          created_at: new Date().toISOString(),
+          user_id: user?.user_id,
+          user: isAnonymous ? null : { user_id: user?.user_id, nickname: user?.nickname },
+          like_count: 0,
+        };
+
+        setComments((prevComments: any[]) =>
+          prevComments.map((comment: any) => {
+            if (comment.comment_id === parentId) {
+              return {
+                ...comment,
+                replies: [...(comment.replies || []), newReply],
+                reply_count: (comment.reply_count || 0) + 1,
+              };
+            }
+            return comment;
+          })
+        );
+        if (__DEV__) console.log("🗨️ Optimistic update 완료");
+      }
+
+      // 댓글 목록 재로드 (서버와 동기화)
       await loadComments();
       if (__DEV__) console.log("🗨️ 댓글 목록 새로고침 완료");
     } catch (error) {
@@ -2272,6 +2437,29 @@ const ChallengeDetailScreen = () => {
 
   // 댓글 삭제
   const handleDeleteComment = async (commentId: number) => {
+    // Optimistic update: 즉시 UI에서 제거
+    setComments((prevComments: any[]) => {
+      // 최상위 댓글인지 확인
+      const isTopLevelComment = prevComments.some((c: any) => c.comment_id === commentId);
+
+      if (isTopLevelComment) {
+        // 최상위 댓글 삭제
+        return prevComments.filter((c: any) => c.comment_id !== commentId);
+      } else {
+        // 답글 삭제 - 부모 댓글의 replies에서 제거
+        return prevComments.map((comment: any) => {
+          if (comment.replies?.some((r: any) => r.comment_id === commentId)) {
+            return {
+              ...comment,
+              replies: comment.replies.filter((r: any) => r.comment_id !== commentId),
+              reply_count: Math.max((comment.reply_count || 0) - 1, 0),
+            };
+          }
+          return comment;
+        });
+      }
+    });
+
     try {
       await challengeCommentService.deleteChallengeComment(
         challengeId,
@@ -2281,12 +2469,13 @@ const ChallengeDetailScreen = () => {
       if (__DEV__) console.error("댓글 삭제 오류:", error);
       // 404 오류는 이미 삭제된 경우이므로 무시
       if (error?.status !== 404) {
+        // 오류 발생 시 다시 로드하여 복구
+        await loadComments();
         throw error;
       }
-    } finally {
-      // 댓글 목록만 재로드
-      await loadComments();
     }
+    // 성공 시에도 서버와 동기화
+    await loadComments();
   };
 
   // 댓글 좋아요
@@ -2507,26 +2696,27 @@ const ChallengeDetailScreen = () => {
       setSelectedEmotionId(item.emotion_id);
     };
 
+    const isSelected = selectedEmotionId === item.emotion_id;
+    const emotionColor = getEmotionColor(item.name);
+
     return (
       <TouchableOpacity
         style={[
           styles.emotionCard,
           {
-            backgroundColor:
-              selectedEmotionId === item.emotion_id
-                ? theme.colors.card
-                : theme.bg.surface,
-            borderWidth: selectedEmotionId === item.emotion_id ? 3 : 0,
-            borderColor:
-              selectedEmotionId === item.emotion_id
-                ? item.color
-                : "transparent",
-            transform:
-              selectedEmotionId === item.emotion_id
-                ? [{ scale: 1.05 }]
-                : [{ scale: 1 }],
-            elevation: selectedEmotionId === item.emotion_id ? 8 : 2,
-            shadowOpacity: selectedEmotionId === item.emotion_id ? 0.3 : 0.1,
+            backgroundColor: isSelected
+              ? `${emotionColor}15`
+              : isDark ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.9)',
+            borderWidth: isSelected ? 2.5 : 1,
+            borderColor: isSelected
+              ? emotionColor
+              : isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+            transform: isSelected
+              ? [{ scale: 1.05 }]
+              : [{ scale: 1 }],
+            elevation: isSelected ? 6 : 1,
+            shadowOpacity: isSelected ? 0.25 : 0.05,
+            shadowColor: isSelected ? emotionColor : '#000',
           },
         ]}
         onPress={handlePress}
@@ -2536,7 +2726,7 @@ const ChallengeDetailScreen = () => {
         <View
           style={[
             styles.emotionModalAvatar,
-            { backgroundColor: getEmotionColor(item.name) },
+            { backgroundColor: emotionColor },
           ]}
         >
           <Text style={styles.emotionModalEmoji}>
@@ -2547,10 +2737,10 @@ const ChallengeDetailScreen = () => {
           style={[
             styles.emotionName,
             {
-              color:
-                selectedEmotionId === item.emotion_id
-                  ? item.color
-                  : theme.text.primary,
+              color: isSelected
+                ? emotionColor
+                : theme.text.primary,
+              fontWeight: isSelected ? '700' : '500',
             },
           ]}
         >
@@ -2786,7 +2976,7 @@ const ChallengeDetailScreen = () => {
                     : "🎉 완료"}
                 </Text>
               </View>
-              {/* 달성률 표시 */}{" "}
+              {/* 달성률 표시 */}
               <View
                 style={[
                   styles.progressBadge,
@@ -2800,17 +2990,15 @@ const ChallengeDetailScreen = () => {
                   },
                 ]}
               >
-                {" "}
                 <MaterialCommunityIcons
                   name="chart-line"
                   size={scaleSize(14)}
                   color={colors.primary}
                   style={styles.progressIcon}
-                />{" "}
+                />
                 <Text style={[styles.progressText, { color: colors.primary }]}>
-                  {" "}
-                  {challenge.progress || 0}% 달성{" "}
-                </Text>{" "}
+                  {challenge.progress || 0}% 달성
+                </Text>
               </View>
             </View>
 
@@ -5035,16 +5223,14 @@ const styles = StyleSheet.create({
   emotionCard: {
     width: "22%",
     aspectRatio: 1.0,
-    borderRadius: 20,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
-    padding: 12,
+    padding: 10,
     marginHorizontal: "1.5%",
     minHeight: 90,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 6,
   },
   emotionIcon: {
     fontSize: scaleFont(48),
@@ -6197,13 +6383,39 @@ const styles = StyleSheet.create({
   },
 
   // 인라인 답글 입력창 스타일
-  inlineReplyInput: {
+  inlineReplyContainer: {
+    marginTop: scaleSize(8),
     marginHorizontal: scaleSize(4),
-    marginVertical: scaleSize(8),
-    padding: scaleSize(8),
+    padding: scaleSize(12),
     borderRadius: scaleSize(12),
     borderWidth: 1,
-    borderColor: COLORS.border + "30",
+  },
+  inlineReplyInput: {
+    fontSize: scaleFont(14),
+    lineHeight: scaleFont(20),
+    borderRadius: scaleSize(10),
+    paddingHorizontal: scaleSize(12),
+    paddingVertical: scaleSize(10),
+    minHeight: scaleSize(40),
+    maxHeight: scaleSize(80),
+  },
+  inlineReplyActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginTop: scaleSize(8),
+    gap: scaleSize(12),
+  },
+  inlineReplyCancel: {
+    paddingVertical: scaleSize(6),
+    paddingHorizontal: scaleSize(12),
+  },
+  inlineReplySend: {
+    width: scaleSize(36),
+    height: scaleSize(36),
+    borderRadius: scaleSize(18),
+    justifyContent: "center",
+    alignItems: "center",
   },
   inlineReplyRow: {
     flexDirection: "row",

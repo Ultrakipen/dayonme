@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { COLORS as DS_COLORS } from '../constants/designSystem';
+import { useModernTheme } from '../contexts/ModernThemeContext';
 
 interface BottomSheetAction {
   id: string;
@@ -36,7 +37,19 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
   subtitle,
   actions,
 }) => {
-  // useWindowDimensions 제거 - 현재 사용하지 않음
+  const { theme, isDarkMode } = useModernTheme();
+
+  // 테마별 색상
+  const sheetBg = isDarkMode ? '#2A2A2A' : '#FFFFFF';
+  const textColor = isDarkMode ? '#FFFFFF' : '#1A1A1A';
+  const subtitleColor = isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+  const handleColor = isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)';
+  const borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
+  const cancelBg = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+  const cancelBorder = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+  const cancelTextColor = isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.5)';
+  const chevronColor = isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.3)';
+
   return (
     <Modal
       visible={visible}
@@ -52,22 +65,22 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
           activeOpacity={1}
         />
 
-        <View style={styles.bottomSheet}>
+        <View style={[styles.bottomSheet, { backgroundColor: sheetBg }]}>
           {/* Handle Bar */}
           <View style={styles.handleContainer}>
-            <View style={styles.handle} />
+            <View style={[styles.handle, { backgroundColor: handleColor }]} />
           </View>
 
         {/* Header - title이나 subtitle이 있을 때만 표시 */}
         {(title || subtitle) && (
           <View style={styles.header}>
             {title && (
-              <Text style={styles.title}>
+              <Text style={[styles.title, { color: textColor }]}>
                 {title}
               </Text>
             )}
             {subtitle && (
-              <Text style={styles.subtitle}>
+              <Text style={[styles.subtitle, { color: subtitleColor }]}>
                 {subtitle}
               </Text>
             )}
@@ -85,7 +98,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
               style={[
                 styles.actionButton,
                 {
-                  borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+                  borderBottomColor: borderColor,
                   borderBottomWidth: index < actions.length - 1 ? 0.5 : 0,
                 },
               ]}
@@ -102,7 +115,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                   color={
                     action.destructive
                       ? COLORS.danger
-                      : action.color || '#FFF'
+                      : action.color || textColor
                   }
                   style={styles.actionIcon}
                 />
@@ -110,7 +123,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
                   style={[
                     styles.actionText,
                     {
-                      color: action.destructive ? COLORS.danger : '#FFFFFF',
+                      color: action.destructive ? COLORS.danger : textColor,
                     },
                   ]}
                 >
@@ -120,7 +133,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
               <MaterialCommunityIcons
                 name="chevron-right"
                 size={20}
-                color={'rgba(255, 255, 255, 0.5)'}
+                color={chevronColor}
               />
             </TouchableOpacity>
           ))}
@@ -131,14 +144,14 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
           style={[
             styles.cancelButton,
             {
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              borderColor: 'rgba(255, 255, 255, 0.2)',
+              backgroundColor: cancelBg,
+              borderColor: cancelBorder,
             },
           ]}
           onPress={onClose}
           activeOpacity={0.7}
         >
-          <Text style={styles.cancelText}>
+          <Text style={[styles.cancelText, { color: cancelTextColor }]}>
             취소
           </Text>
         </TouchableOpacity>
@@ -162,7 +175,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   bottomSheet: {
-    backgroundColor: '#2A2A2A',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingTop: 8,
@@ -181,7 +193,6 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 2,
   },
   header: {
@@ -192,13 +203,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFF',
     marginBottom: 4,
     letterSpacing: 0,
   },
   subtitle: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.6)',
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -227,7 +236,6 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 16,
-    color: '#FFF',
     fontWeight: '500',
     letterSpacing: 0,
     flex: 1,
@@ -243,7 +251,6 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: 16,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.6)',
   },
 });
 

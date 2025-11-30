@@ -1517,10 +1517,10 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   mainTitle: {
-    fontSize: FONT_SIZES.h2,
+    fontSize: FONT_SIZES.h1,
     fontWeight: '700',
-    letterSpacing: 0,
-    lineHeight: 24,
+    letterSpacing: -0.3,
+    lineHeight: 30,
     textAlign: 'left',
     flex: 1,
   },
@@ -1561,9 +1561,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   subtitle: {
-    fontSize: FONT_SIZES.bodySmall,
+    fontSize: FONT_SIZES.body,
     fontWeight: '600',
-    letterSpacing: 0,
+    letterSpacing: -0.2,
   },
   heartIcon: {
     fontSize: FONT_SIZES.bodyLarge,

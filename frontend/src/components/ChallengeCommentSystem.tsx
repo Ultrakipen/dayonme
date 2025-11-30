@@ -13,6 +13,7 @@ import {
   Dimensions,
   Image,
   ScrollView,
+  Text as RNText,
 } from 'react-native';
 import { Box, HStack, VStack } from './ui';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -755,11 +756,19 @@ const CommentItem: React.FC<{
 
 // CommentItem 메모이제이션 (props가 변경되지 않으면 리렌더링 방지)
 const MemoizedCommentItem = React.memo(CommentItem, (prevProps, nextProps) => {
+  // replies 배열 비교 (길이 및 각 항목의 ID)
+  const prevReplies = prevProps.comment.replies || [];
+  const nextReplies = nextProps.comment.replies || [];
+  const repliesEqual = prevReplies.length === nextReplies.length &&
+    prevReplies.every((r, i) => r.comment_id === nextReplies[i]?.comment_id);
+
   return (
     prevProps.comment.comment_id === nextProps.comment.comment_id &&
     prevProps.comment.like_count === nextProps.comment.like_count &&
     prevProps.comment.is_liked === nextProps.comment.is_liked &&
     prevProps.comment.content === nextProps.comment.content &&
+    prevProps.comment.reply_count === nextProps.comment.reply_count &&
+    repliesEqual &&
     prevProps.currentUserId === nextProps.currentUserId &&
     prevProps.isDarkMode === nextProps.isDarkMode
   );
@@ -782,6 +791,7 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
   const { isAuthenticated } = require('../contexts/AuthContext').useAuth();
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyTargetName, setReplyTargetName] = useState<string | null>(null);
   const [editingComment, setEditingComment] = useState<ChallengeComment | null>(null);
   const [editContent, setEditContent] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -839,6 +849,7 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
       await onAddComment(contentWithEmotion, replyingTo || undefined, isAnonymous);
       setNewComment('');
       setReplyingTo(null);
+      setReplyTargetName(null);
       setIsAnonymous(false);
       setSelectedEmotion(null);
       setShowEmotionPicker(false);
@@ -909,10 +920,15 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
     const { rootId, targetComment } = findRootParent(parentId);
     setReplyingTo(rootId);
 
-    // 답글의 답글인 경우 멘션 텍스트 추가
-    if (targetComment && rootId !== parentId) {
+    // 답글 대상 이름 설정
+    if (targetComment) {
       const targetName = targetComment.is_anonymous ? '익명 사용자' : (targetComment.user?.nickname || '사용자');
-      setNewComment(`@${targetName} `);
+      setReplyTargetName(targetName);
+
+      // 답글의 답글인 경우 멘션 텍스트 추가
+      if (rootId !== parentId) {
+        setNewComment(`@${targetName} `);
+      }
     }
 
     // 키보드 올라올 때 스크롤 (약간 지연)
@@ -1014,12 +1030,13 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
               <Text style={[
                 styles.replyIndicatorText,
                 { color: theme.text.primary }
-              ]}>
-                {editingComment ? '댓글 수정 중...' : '답글 작성 중...'}
+              ]} numberOfLines={1}>
+                {editingComment ? '댓글 수정 중...' : `${replyTargetName || ''}님에게 답글 작성 중`}
               </Text>
               <TouchableOpacity
                 onPress={() => {
                   setReplyingTo(null);
+                  setReplyTargetName(null);
                   setEditingComment(null);
                   setEditContent('');
                   setNewComment('');
@@ -1063,80 +1080,80 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
 
           {/* 입력 필드 */}
           <View style={styles.inputRow}>
-            {/* 감정 선택 토글 */}
-            <TouchableOpacity
-              style={styles.emotionToggle}
-              onPress={() => setShowEmotionPicker(!showEmotionPicker)}
-            >
-              {selectedEmotion ? (
-                <MaterialCommunityIcons
-                  name={anonymousEmotions.find(e => e.label === selectedEmotion)?.icon || 'emoticon-outline'}
-                  size={scaleSize(20)}
-                  color={anonymousEmotions.find(e => e.label === selectedEmotion)?.color || '#667eea'}
-                />
-              ) : (
-                <MaterialCommunityIcons name="emoticon-outline" size={scaleSize(20)} color={theme.text.secondary} />
-              )}
-            </TouchableOpacity>
+            {/* 입력창 */}
+            <View style={[
+              styles.inputWrapper,
+              {
+                backgroundColor: theme.bg.primary,
+                borderColor: replyingTo ? theme.colors.primary : theme.bg.border,
+                borderWidth: replyingTo ? 1.5 : 1,
+              }
+            ]}>
+              {/* 왼쪽 아이콘 그룹 */}
+              <View style={styles.inputIconGroup}>
+                {/* 감정 선택 토글 */}
+                <TouchableOpacity
+                  style={styles.inputIconButton}
+                  onPress={() => setShowEmotionPicker(!showEmotionPicker)}
+                >
+                  <MaterialCommunityIcons
+                    name={selectedEmotion
+                      ? (anonymousEmotions.find(e => e.label === selectedEmotion)?.icon || 'emoticon')
+                      : 'emoticon-outline'}
+                    size={Math.max(scaleSize(22), 20)}
+                    color={selectedEmotion
+                      ? (anonymousEmotions.find(e => e.label === selectedEmotion)?.color || '#667eea')
+                      : theme.text.tertiary}
+                  />
+                </TouchableOpacity>
 
-            {/* 익명 토글 */}
-            <TouchableOpacity
-              style={styles.anonymousToggle}
-              onPress={() => setIsAnonymous(!isAnonymous)}
-            >
-              <View style={[
-                styles.checkbox,
-                isAnonymous && styles.checkboxChecked,
-                { backgroundColor: isAnonymous ? '#667eea' : 'transparent' }
-              ]}>
-                {isAnonymous && (
-                  <MaterialCommunityIcons name="check" size={Math.max(scaleSize(12), 11)} color="#FFFFFF" />
-                )}
+                {/* 익명 토글 - 아이콘 형태 */}
+                <TouchableOpacity
+                  style={styles.inputIconButton}
+                  onPress={() => setIsAnonymous(!isAnonymous)}
+                >
+                  <MaterialCommunityIcons
+                    name={isAnonymous ? 'incognito' : 'incognito-off'}
+                    size={Math.max(scaleSize(22), 20)}
+                    color={isAnonymous ? '#667eea' : theme.text.tertiary}
+                  />
+                </TouchableOpacity>
               </View>
-              <Text style={[
-                styles.anonymousText,
-                { color: theme.text.primary }
-              ]}>익명</Text>
-            </TouchableOpacity>
 
-            <TextInput
-              ref={textInputRef}
-              style={[
-                styles.textInput,
-                {
-                  backgroundColor: theme.bg.primary,
-                  color: theme.text.primary
-                }
-              ]}
-              placeholder={editingComment ? '댓글을 수정하세요...' : replyingTo ? '답글을 입력하세요...' : '댓글을 입력하세요...'}
-              placeholderTextColor={theme.text.secondary}
-              value={editingComment ? editContent : newComment}
-              onChangeText={editingComment ? setEditContent : setNewComment}
-              multiline
-              maxLength={500}
-            />
+              {/* 텍스트 입력 */}
+              <TextInput
+                ref={textInputRef}
+                style={[
+                  styles.textInputInner,
+                  { color: theme.text.primary }
+                ]}
+                placeholder={editingComment ? '댓글을 수정하세요...' : replyingTo ? `${replyTargetName || ''}님에게 답글...` : '댓글을 입력하세요...'}
+                placeholderTextColor={replyingTo ? theme.colors.primary : theme.text.secondary}
+                value={editingComment ? editContent : newComment}
+                onChangeText={editingComment ? setEditContent : setNewComment}
+                multiline
+                maxLength={500}
+              />
 
-            <TouchableOpacity
-              style={[
-                styles.sendButton,
-                {
-                  opacity: (editingComment ? editContent.trim() : newComment.trim()) ? 1 : 0.5
-                }
-              ]}
-              onPress={editingComment ? handleEditComment : handleAddComment}
-              disabled={!(editingComment ? editContent.trim() : newComment.trim())}
-            >
-              <LinearGradient
-                colors={['#667eea', '#764ba2']}
-                style={styles.sendButtonGradient}
+              {/* 전송 버튼 - 입력창 내부 */}
+              <TouchableOpacity
+                style={[
+                  styles.sendButtonInner,
+                  {
+                    opacity: (editingComment ? editContent.trim() : newComment.trim()) ? 1 : 0.4,
+                    backgroundColor: (editingComment ? editContent.trim() : newComment.trim()) ? '#667eea' : theme.bg.secondary,
+                  }
+                ]}
+                onPress={editingComment ? handleEditComment : handleAddComment}
+                disabled={!(editingComment ? editContent.trim() : newComment.trim())}
               >
                 <MaterialCommunityIcons
-                  name={editingComment ? 'check' : 'send'}
-                  size={Math.max(scaleSize(24), 22)}
-                  color="white"
+                  name={editingComment ? 'check' : 'arrow-up'}
+                  size={Math.max(scaleSize(18), 16)}
+                  color={(editingComment ? editContent.trim() : newComment.trim()) ? '#FFFFFF' : theme.text.tertiary}
                 />
-              </LinearGradient>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       ) : showInput ? (
@@ -1167,12 +1184,13 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
         data={displayedData}
         renderItem={renderItem}
         keyExtractor={(item) => item.key}
+        extraData={comments}
         ListFooterComponent={renderFooter}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={contentContainerStyle}
         showsVerticalScrollIndicator={true}
         scrollEnabled={true}
-        removeClippedSubviews={true}
+        removeClippedSubviews={false}
         maxToRenderPerBatch={10}
         windowSize={10}
         initialNumToRender={10}
@@ -1382,52 +1400,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
-  textInput: {
+  // 통합 입력창 wrapper
+  inputWrapper: {
     flex: 1,
-    borderRadius: scaleSize(20),
-    paddingHorizontal: scaleSize(16),
-    paddingVertical: scaleSize(10),
-    fontSize: scaleFont(16),
-    lineHeight: scaleFont(24),
-    letterSpacing: -0.1,
-    maxHeight: scaleSize(100),
-    marginRight: scaleSize(10),
-
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    borderRadius: scaleSize(24),
+    paddingLeft: scaleSize(4),
+    paddingRight: scaleSize(4),
+    paddingVertical: scaleSize(4),
+    minHeight: scaleSize(44),
   },
-  sendButton: {
-    borderRadius: Math.max(scaleSize(29), 25),
-    overflow: 'hidden',
-  },
-  sendButtonGradient: {
-    width: Math.max(scaleSize(22), 20),
-    height: Math.max(scaleSize(22), 20),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  anonymousToggle: {
+  inputIconGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: scaleSize(10),
-    paddingVertical: scaleSize(6),
+    paddingBottom: scaleSize(6),
   },
-  checkbox: {
-    width: Math.max(scaleSize(16), 14),
-    height: Math.max(scaleSize(16), 14),
-    borderRadius: scaleSize(5),
-    borderWidth: scaleSize(1.5),
-    borderColor: '#667eea',
+  inputIconButton: {
+    padding: scaleSize(6),
+    marginHorizontal: scaleSize(2),
+  },
+  textInputInner: {
+    flex: 1,
+    fontSize: scaleFont(15),
+    lineHeight: scaleFont(20),
+    letterSpacing: -0.1,
+    maxHeight: scaleSize(100),
+    paddingVertical: scaleSize(8),
+    paddingHorizontal: scaleSize(4),
+  },
+  sendButtonInner: {
+    width: Math.max(scaleSize(32), 28),
+    height: Math.max(scaleSize(32), 28),
+    borderRadius: Math.max(scaleSize(16), 14),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: scaleSize(15),
-  },
-  checkboxChecked: {
-    backgroundColor: '#667eea',
-  },
-  anonymousText: {
-    fontSize: scaleFont(13),
-    fontWeight: '600',
-    lineHeight: scaleFont(17),
-    letterSpacing: -0.1,
+    marginBottom: scaleSize(2),
   },
   // 감정 선택 스타일
   emotionToggle: {

@@ -483,14 +483,18 @@ export const getPosts = async (req: AuthRequestGeneric<never, PostQuery>, res: R
             }
           }
 
+          // Sequelize underscored: true일 때 created_at/updated_at 필드 확실하게 가져오기
+          const createdAtValue = post.createdAt || postData.created_at || postData.createdAt || new Date();
+          const updatedAtValue = post.updatedAt || postData.updated_at || postData.updatedAt || createdAtValue;
+
           const result = {
             ...postData,
             images,
             image_url: images.length > 0 ? images[0] : null, // 하위 호환성
             emotions: postData.emotions || [],
             user_liked: userLiked,
-            created_at: post.get('createdAt') || post.get('created_at') || postData.createdAt || postData.created_at || null,
-            updated_at: post.get('updatedAt') || post.get('updated_at') || postData.updatedAt || postData.updated_at || null
+            created_at: createdAtValue,
+            updated_at: updatedAtValue
           };
           return result;
         }),

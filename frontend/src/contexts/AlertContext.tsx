@@ -83,6 +83,7 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [visible, setVisible] = useState(false);
   const isMountedRef = useRef(true);
   const interactionHandleRef = useRef<ReturnType<typeof InteractionManager.runAfterInteractions> | null>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 컴포넌트 마운트 상태 추적
   useEffect(() => {
@@ -93,10 +94,19 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (interactionHandleRef.current) {
         interactionHandleRef.current.cancel();
       }
+      // hideAlert 타이머 취소
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current);
+      }
     };
   }, []);
 
   const showAlertFunc = useCallback((title: string, message: string, buttons?: AlertButton[], type?: 'success' | 'error' | 'warning' | 'info') => {
+    // 이전 hideAlert 타이머 취소 (새 알림이 표시되므로)
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
     // InteractionManager로 네이티브 브릿지 준비 후 상태 업데이트
     interactionHandleRef.current = InteractionManager.runAfterInteractions(() => {
       if (isMountedRef.current) {
@@ -114,10 +124,17 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const hideAlert = useCallback(() => {
     if (isMountedRef.current) {
       setVisible(false);
-      setTimeout(() => {
+      // 이전 타이머 취소
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current);
+      }
+      hideTimerRef.current = setTimeout(() => {
+        // 새 알림이 표시되면 showAlertFunc에서 이 타이머를 취소하므로
+        // 여기까지 도달하면 새 알림이 없는 것
         if (isMountedRef.current) {
           setAlertConfig(null);
         }
+        hideTimerRef.current = null;
       }, 200);
     }
   }, []);

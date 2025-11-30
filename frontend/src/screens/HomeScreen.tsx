@@ -22,7 +22,8 @@ import {
   TouchableOpacity,
   StatusBar,
   StyleProp,
-  ViewStyle
+  ViewStyle,
+  DeviceEventEmitter
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
@@ -804,8 +805,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
 
                                 devLog(`   📍 실제 측정 스크롤: Y=${y}, height=${height}, scrollY=${scrollY} (중앙 정렬)`);
 
-                                scrollViewRef.current.scrollTo({
-                                    y: Math.max(0, scrollY),
+                                scrollViewRef.current.scrollToOffset({
+                                    offset: Math.max(0, scrollY),
                                     animated: true,
                                 });
 
@@ -834,8 +835,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                         const targetY = headerHeight + (adjustedIndex * (estimatedCardHeight + cardSpacing));
                         const scrollY = targetY - offsetToCenterScreen;
 
-                        scrollViewRef.current.scrollTo({
-                            y: Math.max(0, scrollY),
+                        scrollViewRef.current.scrollToOffset({
+                            offset: Math.max(0, scrollY),
                             animated: true,
                         });
 
@@ -1042,9 +1043,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     // 본인 게시물 수정 기능 추가
     const editMyPost = (postId: number) => {
         setMenuVisible({});
+
+        // posts 배열에서 해당 게시물 찾기
+        const postToEdit = posts.find(p => p.post_id === postId);
+
         const params = {
             editPostId: postId,
-            mode: 'edit' as const
+            mode: 'edit' as const,
+            isEditMode: true,
+            existingPost: postToEdit || null
         };
 
         if (navigation) {
@@ -1163,6 +1170,32 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             return () => clearTimeout(timer);
         }
     }, [isAuthenticated]);
+
+    // DeviceEventEmitter로 새 글 작성/수정 이벤트 리스닝
+    useEffect(() => {
+        const subscription = DeviceEventEmitter.addListener('homeScreenRefresh', (event) => {
+            devLog('📡 homeScreenRefresh 이벤트 수신:', event);
+
+            if (event?.newPostCreated || event?.postUpdated) {
+                // 새 글 작성 또는 수정 시 데이터 새로고침 (로딩 표시 없이)
+                setHasPostedToday(true);
+                setTimeout(() => {
+                    loadPosts(true, true); // silent: true - 로딩 표시 없음
+                    loadMyRecentPosts();
+                    checkTodayPostVoid(true);
+                }, 100);
+            }
+
+            if (event?.userBlocked || event?.userUnblocked) {
+                // 차단/차단 해제 시 게시물 새로고침 (로딩 표시 없이)
+                loadPosts(true, true);
+            }
+        });
+
+        return () => {
+            subscription.remove();
+        };
+    }, []);
 
     // 화면 포커스시 데이터 새로고침 (게시물 수정 후 돌아왔을 때)
     useFocusEffect(
@@ -1658,8 +1691,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     
                     // 새 게시물을 보여주기 위해 자동으로 맨 위로 스크롤
                     setTimeout(() => {
-                        scrollViewRef.current?.scrollTo({
-                            y: 0,
+                        scrollViewRef.current?.scrollToOffset({
+                            offset: 0,
                             animated: true,
                         });
                     }, 500); // 토스트가 나타난 후 부드럽게 스크롤
@@ -2211,15 +2244,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     const CACHE_DURATION = 0; // 5초 캐시 (너무 자주 요청 방지)
 
     // 실제 API를 사용한 게시물 로드 함수 (최적화된 버전)
-    const loadPosts = async (forceRefresh: boolean = false) => {
+    const loadPosts = async (forceRefresh: boolean = false, silent: boolean = false) => {
         try {
             // 네트워크 연결 확인
             if (!isConnected) {
-                Alert.alert(
-                    '오프라인',
-                    '인터넷 연결을 확인해주세요.\n네트워크에 연결된 후 다시 시도해주세요.',
-                    [{ text: '확인' }]
-                );
+                if (!silent) {
+                    Alert.alert(
+                        '오프라인',
+                        '인터넷 연결을 확인해주세요.\n네트워크에 연결된 후 다시 시도해주세요.',
+                        [{ text: '확인' }]
+                    );
+                }
                 setIsRefreshing(false);
                 setLoadingPosts(false);
                 return;
@@ -2232,12 +2267,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 return; // 캐시된 데이터 사용
             }
 
-            setIsRefreshing(true);
-            setLoadingPosts(true);
+            // silent 모드에서는 로딩 표시 안함
+            if (!silent) {
+                setIsRefreshing(true);
+                setLoadingPosts(true);
+            }
             lastLoadTime.current = now;
             
-            // 강제 새로고침 시 캐시 및 클라이언트 상태 초기화
-            if (forceRefresh) {
+            // 강제 새로고침 시 캐시 및 클라이언트 상태 초기화 (silent 모드에서는 건너뜀)
+            if (forceRefresh && !silent) {
                 // 감정 사용량 초기화로 중복 방지
                 resetEmotionUsage();
                 try {
@@ -2348,8 +2386,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     image_url: myDayPost.image_url ? sanitizeUrl(myDayPost.image_url) : undefined,
                     like_count: myDayPost.like_count || 0,
                     comment_count: actualMyDayCommentCount,
-                    created_at: myDayPost.created_at,
-                    updated_at: myDayPost.updated_at,
+                    created_at: myDayPost.created_at || myDayPost.createdAt || new Date().toISOString(),
+                    updated_at: myDayPost.updated_at || myDayPost.updatedAt || myDayPost.created_at || new Date().toISOString(),
                     is_anonymous: myDayPost.is_anonymous,
                     user: myDayPost.user,
                     emotions: myDayPost.emotions || (myDayPost.emotion_id ? [{
@@ -3493,6 +3531,49 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         );
     };
 
+    // 프로필 이미지 메모이제이션 (불필요한 재렌더링 방지)
+    const MemoizedProfileImage = useMemo(() => (
+        <Box
+            style={{
+                width: normalizeIcon(48),
+                height: normalizeIcon(48),
+                borderRadius: normalizeSpace(14),
+                backgroundColor: user?.profile_image_url ? 'transparent' : (isDark ? DARK_COLORS.purple : LIGHT_COLORS.purple),
+                justifyContent: 'center',
+                alignItems: 'center',
+                borderWidth: 2,
+                borderColor: isDark ? DARK_COLORS.purpleLight : LIGHT_COLORS.purpleLight,
+                overflow: 'hidden'
+            }}
+        >
+            {user?.profile_image_url ? (
+                <OptimizedImage
+                    uri={normalizeImageUrl(user.profile_image_url)}
+                    width={normalizeIcon(42)}
+                    height={normalizeIcon(42)}
+                    borderRadius={normalizeSpace(14)}
+                    resizeMode="cover"
+                    priority="high"
+                />
+            ) : (
+                <Box style={{
+                    width: '100%',
+                    height: '100%',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}>
+                    <Text style={{
+                        fontSize: normalize(24, 26, 28),
+                        lineHeight: normalize(24, 26, 28),
+                        textAlign: 'center',
+                        textAlignVertical: 'center',
+                        includeFontPadding: false
+                    }}>😊</Text>
+                </Box>
+            )}
+        </Box>
+    ), [user?.profile_image_url, isDark]);
+
     // 비로그인 사용자도 게시물 조회 가능 (인증 체크 제거)
     return (
         <SafeAreaView
@@ -3530,7 +3611,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             <FlatList
                 ref={scrollViewRef}
                 data={paginatedPosts}
-                keyExtractor={(item) => `post-${item.post_id}`}
+                extraData={posts.length}
+                keyExtractor={(item) => `post-${item.post_id}-${item.updated_at || item.created_at}`}
                 renderItem={renderFlatListItem}
                 getItemLayout={getItemLayout}
                 style={{ flex: 1, backgroundColor: colors.background }}
@@ -3581,46 +3663,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                         <VStack className="px-4" style={{ paddingVertical: normalizeSpace(8), gap: normalizeSpace(12) }}>
                             {/* 1행: 프로필 사진 + 환영 인사말 + 아이콘들 */}
                             <HStack style={{ alignItems: 'center', gap: normalizeSpace(12) }}>
-                                {/* 프로필 사진 */}
-                                <Box
-                                    style={{
-                                        width: normalizeIcon(48),
-                                        height: normalizeIcon(48),
-                                        borderRadius: normalizeSpace(14),
-                                        backgroundColor: user?.profile_image_url ? 'transparent' : (isDark ? DARK_COLORS.purple : LIGHT_COLORS.purple),
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        borderWidth: 2,
-                                        borderColor: isDark ? DARK_COLORS.purpleLight : LIGHT_COLORS.purpleLight,
-                                        overflow: 'hidden'
-                                    }}
-                                >
-                                    {user?.profile_image_url ? (
-                                        <OptimizedImage
-                                            uri={normalizeImageUrl(user.profile_image_url)}
-                                            width={normalizeIcon(42)}
-                                            height={normalizeIcon(42)}
-                                            borderRadius={normalizeSpace(14)}
-                                            resizeMode="cover"
-                                            priority="high"
-                                        />
-                                    ) : (
-                                        <Box style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            justifyContent: 'center',
-                                            alignItems: 'center'
-                                        }}>
-                                            <Text style={{
-                                                fontSize: normalize(24, 26, 28),
-                                                lineHeight: normalize(24, 26, 28),
-                                                textAlign: 'center',
-                                                textAlignVertical: 'center',
-                                                includeFontPadding: false
-                                            }}>😊</Text>
-                                        </Box>
-                                    )}
-                                </Box>
+                                {/* 프로필 사진 (메모이제이션) */}
+                                {MemoizedProfileImage}
 
                                 {/* 환영 인사말 */}
                                 <Text
@@ -4319,10 +4363,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                     disabled={isCheckingTodayPost}
                     onPress={navigateToWriteMyDay}
                     onLongPress={() => InteractionManager.runAfterInteractions(() => Alert.alert(
-                        hasPostedToday ? '✅ 오늘의 하루 완료!' : '✍️ 나의 하루 작성하기',
+                        hasPostedToday ? '✅ 오늘 기록 완료!' : '✍️ 오늘 기록하기',
                         hasPostedToday
-                            ? '오늘 하루 이야기를 공유해주셨네요!\n\n• 기존 글 수정 가능\n• 내일 새로운 이야기 기대해요'
-                            : '오늘의 감정과 순간들을 기록해보세요!\n\n• 감정 선택하기\n• 이야기와 사진 추가\n• 익명으로 공유 가능',
+                            ? '오늘의 이야기를 남겼어요!\n\n• 기존 글 수정 가능\n• 내일 또 만나요'
+                            : '오늘의 감정과 순간을 기록해보세요!\n\n• 감정 선택\n• 이야기와 사진 추가\n• 익명 공유 가능',
                         [{ text: '확인', style: 'default' }]
                     ))}
                     style={{
@@ -4359,7 +4403,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                         >
                             {isCheckingTodayPost
                                 ? "확인 중..."
-                                : (hasPostedToday ? "✓ 하루 완료 ✨" : "💜 하루 공유")}
+                                : (hasPostedToday ? "나눔 완료! ✨" : "💕 나의 하루")}
                         </RNText>
                     </LinearGradient>
                 </TouchableOpacity>

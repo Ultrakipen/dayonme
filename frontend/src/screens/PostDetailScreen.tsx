@@ -1,5 +1,6 @@
 // src/screens/PostDetailScreen.tsx
 // 익명 게시물/댓글 "나" 표시 기능 추가
+// BUILD_TIMESTAMP: 2025-11-28T23:40:00 - comfort delete fix
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import {
   ScrollView,
@@ -15,7 +16,8 @@ import {
   Keyboard,
   Animated,
   Modal,
-  TextInput as RNTextInput
+  TextInput as RNTextInput,
+  KeyboardAvoidingView
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -465,7 +467,6 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isCommentInputFocused, setIsCommentInputFocused] = useState(false);
   const [highlightedCommentId, setHighlightedCommentId] = useState<number | null>(highlightCommentId || null);
 
@@ -714,33 +715,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   );
 
   // 헤더 설정 - 게시물 로드 후 동적 업데이트
-  // 키보드 이벤트 리스너
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (event: any) => {
-      setKeyboardHeight(event.endCoordinates.height);
-    });
-
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardHeight(0);
-    });
-
-    const keyboardWillShowListener = Platform.OS === 'ios' ?
-      Keyboard.addListener('keyboardWillShow', (event: any) => {
-        setKeyboardHeight(event.endCoordinates.height);
-      }) : null;
-
-    const keyboardWillHideListener = Platform.OS === 'ios' ?
-      Keyboard.addListener('keyboardWillHide', () => {
-        setKeyboardHeight(0);
-      }) : null;
-
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-      keyboardWillShowListener?.remove();
-      keyboardWillHideListener?.remove();
-    };
-  }, []);
+  // 키보드 처리는 KeyboardAvoidingView가 담당
 
   // 현재 네비게이션 스택을 기반으로 타이틀 결정
   const getScreenTitle = useCallback(() => {
@@ -1654,16 +1629,30 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         postType: postType
       });
 
+      // postType에 따른 삭제 서비스 호출
+      console.log('🗑️ 삭제 API 호출:', { postType, postId: post!.post_id });
       if (postType === 'myday') {
         await myDayService.deletePost(post!.post_id);
+      } else if (postType === 'comfort') {
+        console.log('🗑️ comfort-wall 삭제 API 호출');
+        await comfortWallService.deletePost(post!.post_id);
       } else {
         await postService.deletePost(post!.post_id);
       }
 
       logger.log('✅ 게시물 삭제 성공');
-      
-      // 게시물 목록으로 돌아가기
-      navigation.goBack();
+
+      // 게시물 목록으로 돌아가면서 새로고침 요청
+      if (navigation.canGoBack()) {
+        const parentRoute = navigation.getState()?.routes?.slice(-2)?.[0];
+        if (parentRoute?.name) {
+          navigation.navigate(parentRoute.name as never, { refresh: true } as never);
+        } else {
+          navigation.goBack();
+        }
+      } else {
+        navigation.goBack();
+      }
     } catch (error: any) {
       console.error('❌ 게시물 삭제 실패:', error);
       const errorMessage = error.response?.data?.message || error.message || '게시물 삭제 중 오류가 발생했습니다.';
@@ -3503,7 +3492,11 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
     };
   return (
     <>
-      <View style={{ flex: 1, backgroundColor: modernTheme.bg.primary }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1, backgroundColor: modernTheme.bg.primary }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
       <ScrollView
         ref={scrollViewRef}
         style={{ flex: 1 }}
@@ -4114,19 +4107,14 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         </TouchableOpacity>
       )}
 
-      {/* 고정된 댓글 입력창 */}
+      {/* 고정된 댓글 입력창 - flex 기반 (키보드 회피 개선) */}
       <Box
         style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
           backgroundColor: modernTheme.bg.card,
           borderTopWidth: 1,
           borderTopColor: modernTheme.bg.border,
           padding: 16,
           paddingBottom: Platform.OS === 'ios' ? 34 : 16,
-          marginBottom: keyboardHeight,
         }}
       >
         {(() => {
@@ -4522,7 +4510,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         );
       })()}
 
-    </View>
+    </KeyboardAvoidingView>
       <ConfirmationModal
         visible={showDeleteModal}
         title="게시물 삭제"

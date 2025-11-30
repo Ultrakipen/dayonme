@@ -104,31 +104,36 @@ const safeAlert = (title: string, message?: string, buttons?: any[]) => {
 interface LocalEmotion {
   label: string;
   emoji: string; // 이모지
+  emojiCode: string; // Twemoji 코드포인트
   color: string;
 }
 
+// Twemoji CDN URL 생성 함수
+const getTwemojiUrl = (code: string) =>
+  `https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/${code}.png`;
+
 // 사용자 지정 감정 목록 (이모지와 색상 포함)
 const localEmotions: LocalEmotion[] = [
-  { label: '기쁨이', emoji: '😊', color: '#FFD700' },
-  { label: '행복이', emoji: '😄', color: '#FFA500' },
-  { label: '슬픔이', emoji: '😢', color: '#4682B4' },
-  { label: '우울이', emoji: '😞', color: '#708090' },
-  { label: '지루미', emoji: '😑', color: '#A9A9A9' },
-  { label: '버럭이', emoji: '😠', color: '#FF4500' },
-  { label: '불안이', emoji: '😰', color: '#DDA0DD' },
-  { label: '걱정이', emoji: '😟', color: '#FFA07A' },
-  { label: '감동이', emoji: '🥺', color: '#FF6347' },
-  { label: '황당이', emoji: '🤨', color: '#20B2AA' },
-  { label: '당황이', emoji: '😲', color: '#FF8C00' },
-  { label: '짜증이', emoji: '😤', color: '#DC143C' },
-  { label: '무섭이', emoji: '😨', color: '#9370DB' },
-  { label: '추억이', emoji: '🥰', color: '#87CEEB' },
-  { label: '설렘이', emoji: '🤗', color: '#FF69B4' },
-  { label: '편안이', emoji: '😌', color: '#98FB98' },
-  { label: '궁금이', emoji: '🤔', color: '#DAA520' },
-  { label: '사랑이', emoji: '❤️', color: '#E91E63' },
-  { label: '아픔이', emoji: '🤕', color: '#8B4513' },
-  { label: '욕심이', emoji: '🤑', color: '#32CD32' }
+  { label: '기쁨이', emoji: '😊', emojiCode: '1f60a', color: '#FFD700' },
+  { label: '행복이', emoji: '😄', emojiCode: '1f604', color: '#FFA500' },
+  { label: '슬픔이', emoji: '😢', emojiCode: '1f622', color: '#4682B4' },
+  { label: '우울이', emoji: '😞', emojiCode: '1f61e', color: '#708090' },
+  { label: '지루미', emoji: '😑', emojiCode: '1f611', color: '#A9A9A9' },
+  { label: '버럭이', emoji: '😠', emojiCode: '1f620', color: '#FF4500' },
+  { label: '불안이', emoji: '😰', emojiCode: '1f630', color: '#DDA0DD' },
+  { label: '걱정이', emoji: '😟', emojiCode: '1f61f', color: '#FFA07A' },
+  { label: '감동이', emoji: '🥺', emojiCode: '1f97a', color: '#FF6347' },
+  { label: '황당이', emoji: '🤨', emojiCode: '1f928', color: '#20B2AA' },
+  { label: '당황이', emoji: '😲', emojiCode: '1f632', color: '#FF8C00' },
+  { label: '짜증이', emoji: '😤', emojiCode: '1f624', color: '#DC143C' },
+  { label: '무섭이', emoji: '😨', emojiCode: '1f628', color: '#9370DB' },
+  { label: '추억이', emoji: '🥰', emojiCode: '1f970', color: '#87CEEB' },
+  { label: '설렘이', emoji: '🤗', emojiCode: '1f917', color: '#FF69B4' },
+  { label: '편안이', emoji: '😌', emojiCode: '1f60c', color: '#98FB98' },
+  { label: '궁금이', emoji: '🤔', emojiCode: '1f914', color: '#DAA520' },
+  { label: '사랑이', emoji: '❤️', emojiCode: '2764', color: '#E91E63' },
+  { label: '아픔이', emoji: '🤕', emojiCode: '1f915', color: '#8B4513' },
+  { label: '욕심이', emoji: '🤑', emojiCode: '1f911', color: '#32CD32' }
 ];
 
 // 기본 감정 색상 매핑 (백엔드에서 색상이 없을 경우 사용)
@@ -528,19 +533,72 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         }
         
         // 감정 데이터 설정 - emotions 배열에서 또는 직접 emotion_id에서
-        if (existingPost.emotions && existingPost.emotions.length > 0) {
-          console.log('😊 감정 데이터 (emotions 배열):', existingPost.emotions[0]);
-          setSelectedEmotion(existingPost.emotions[0]);
-        } else if (existingPost.emotion_id) {
+        let emotionSet = false;
+        console.log('😊 감정 데이터 확인:', {
+          hasEmotions: !!existingPost.emotions,
+          emotionsLength: existingPost.emotions?.length,
+          hasEmotion: !!existingPost.emotion,
+          emotionId: existingPost.emotion_id
+        });
+
+        // emotion (단수) 객체 확인
+        if (!emotionSet && existingPost.emotion && existingPost.emotion.emotion_id) {
+          const existingEmotion = existingPost.emotion;
+          console.log('😊 감정 데이터 (emotion 객체):', existingEmotion);
+          const matchedEmotion = emotions.find(e => e.emotion_id === existingEmotion.emotion_id);
+          if (matchedEmotion) {
+            setSelectedEmotion(matchedEmotion);
+            emotionSet = true;
+          } else {
+            setSelectedEmotion(existingEmotion as ExtendedEmotion);
+            emotionSet = true;
+          }
+        }
+
+        if (!emotionSet && existingPost.emotions && existingPost.emotions.length > 0) {
+          const existingEmotion = existingPost.emotions[0];
+          console.log('😊 감정 데이터 (emotions 배열):', existingEmotion);
+
+          // emotions 배열에서 매칭되는 감정 찾기 (더 완전한 데이터를 위해)
+          if (existingEmotion.emotion_id) {
+            const matchedEmotion = emotions.find(e => e.emotion_id === existingEmotion.emotion_id);
+            if (matchedEmotion) {
+              console.log('😊 매칭된 감정 설정:', matchedEmotion);
+              setSelectedEmotion(matchedEmotion);
+              emotionSet = true;
+            } else {
+              // 매칭되지 않으면 기존 데이터 그대로 사용
+              console.log('😊 기존 감정 데이터 그대로 사용:', existingEmotion);
+              setSelectedEmotion(existingEmotion as ExtendedEmotion);
+              emotionSet = true;
+            }
+          }
+        }
+
+        if (!emotionSet && existingPost.emotion_id) {
           console.log('😊 감정 ID로 감정 찾기:', existingPost.emotion_id);
           // 로드된 감정 목록에서 해당 ID 찾기
-          setTimeout(() => {
-            const matchedEmotion = emotions.find(e => e.emotion_id === existingPost.emotion_id);
-            if (matchedEmotion) {
-              console.log('😊 매칭된 감정:', matchedEmotion);
-              setSelectedEmotion(matchedEmotion);
+          const matchedEmotion = emotions.find(e => e.emotion_id === existingPost.emotion_id);
+          if (matchedEmotion) {
+            console.log('😊 매칭된 감정:', matchedEmotion);
+            setSelectedEmotion(matchedEmotion);
+            emotionSet = true;
+          } else {
+            // ID 매핑 시도 (백엔드 ID 1-17 ↔ 로컬 ID)
+            const mappedId = ((existingPost.emotion_id - 1) % emotions.length) + 1;
+            const mappedEmotion = emotions.find(e => e.emotion_id === mappedId) || emotions[0];
+            if (mappedEmotion) {
+              console.log('😊 매핑된 감정:', mappedEmotion);
+              setSelectedEmotion(mappedEmotion);
+              emotionSet = true;
             }
-          }, 100);
+          }
+        }
+
+        // 그래도 설정되지 않았으면 첫 번째 감정 사용
+        if (!emotionSet && emotions.length > 0) {
+          console.log('😊 기본 감정 설정:', emotions[0]);
+          setSelectedEmotion(emotions[0]);
         }
         
         console.log('✅ 게시물 수정 데이터 로드 완료');
@@ -784,41 +842,45 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
       return;
     }
 
-    if (!selectedEmotion) {
+    // 수정 모드에서는 기존 감정 사용 가능
+    let emotionToUse = selectedEmotion;
+    if (!emotionToUse && isEditMode) {
+      // 기존 게시물의 감정 데이터 사용
+      if (existingPost?.emotions && existingPost.emotions.length > 0) {
+        emotionToUse = existingPost.emotions[0];
+      } else if (existingPost?.emotion_id) {
+        emotionToUse = emotions.find(e => e.emotion_id === existingPost.emotion_id) || null;
+      }
+    }
+
+    if (!emotionToUse) {
       safeAlert('알림', '감정을 선택해주세요.');
       return;
     }
 
-    // 감정 선택 유효성 검사 강화
-    if (!selectedEmotion) {
-      console.error('❌ 감정이 선택되지 않았습니다');
-      safeAlert('오류', '감정을 선택해주세요.');
-      return;
-    }
-
-    if (!selectedEmotion.emotion_id || typeof selectedEmotion.emotion_id !== 'number') {
-      console.error('❌ 유효하지 않은 감정 ID 타입:', selectedEmotion);
+    if (!emotionToUse.emotion_id || typeof emotionToUse.emotion_id !== 'number') {
+      console.error('❌ 유효하지 않은 감정 ID 타입:', emotionToUse);
       safeAlert('오류', '선택된 감정이 유효하지 않습니다. 다른 감정을 선택해주세요.');
       return;
     }
 
-    if (selectedEmotion.emotion_id < 1 || selectedEmotion.emotion_id > 20) {
-      console.error('❌ 감정 ID 범위 초과:', selectedEmotion.emotion_id);
+    if (emotionToUse.emotion_id < 1 || emotionToUse.emotion_id > 20) {
+      console.error('❌ 감정 ID 범위 초과:', emotionToUse.emotion_id);
       safeAlert('오류', '선택된 감정 ID가 유효 범위를 벗어났습니다. 다른 감정을 선택해주세요.');
       return;
     }
 
     // 로컬 감정 ID를 백엔드 감정 ID로 매핑
-    let backendEmotionId = selectedEmotion.emotion_id;
+    let backendEmotionId = emotionToUse.emotion_id;
     
     // 로컬 감정 ID(1-20)를 백엔드 감정 ID(1-17)로 매핑
-    if (selectedEmotion.emotion_id > 17) {
+    if (emotionToUse.emotion_id > 17) {
       // 18번 이상은 1-17 범위로 순환 매핑
-      backendEmotionId = ((selectedEmotion.emotion_id - 1) % 17) + 1;
+      backendEmotionId = ((emotionToUse.emotion_id - 1) % 17) + 1;
       console.log('🔄 감정 ID 매핑:', {
-        localId: selectedEmotion.emotion_id,
+        localId: emotionToUse.emotion_id,
         mappedId: backendEmotionId,
-        localName: selectedEmotion.name
+        localName: emotionToUse.name
       });
     }
     
@@ -832,8 +894,8 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
     }
 
     console.log('✅ 감정 선택 유효성 검사 통과:', {
-      emotionId: selectedEmotion.emotion_id,
-      emotionName: selectedEmotion.name,
+      emotionId: emotionToUse.emotion_id,
+      emotionName: emotionToUse.name,
       isAnonymous: isAnonymous
     });
 
@@ -862,9 +924,9 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
 
       console.log('📤 제출할 게시물 데이터 상세:', {
         contentLength: content.trim().length,
-        localEmotionId: selectedEmotion.emotion_id,
+        localEmotionId: emotionToUse.emotion_id,
         backendEmotionId: backendEmotionId,
-        emotionName: selectedEmotion.name,
+        emotionName: emotionToUse.name,
         hasImages: uploadedImageUrls.length > 0,
         imagesCount: uploadedImageUrls.length,
         isAnonymous: isAnonymous,
@@ -879,7 +941,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         console.log('📤 MyDay 게시물 수정 요청:', {
           postId: editPostId,
           content: content.substring(0, 50) + '...',
-          emotion_id: selectedEmotion.emotion_id,
+          emotion_id: emotionToUse.emotion_id,
           images: uploadedImageUrls,
           imagesCount: uploadedImageUrls.length
         });
@@ -898,7 +960,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         // 작성 모드: POST 요청
         console.log('📤 MyDay 게시물 작성 요청:', {
           content: content.substring(0, 50) + '...',
-          emotion_id: selectedEmotion.emotion_id,
+          emotion_id: emotionToUse.emotion_id,
           images: uploadedImageUrls,
           imagesCount: uploadedImageUrls.length
         });
@@ -924,7 +986,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           try {
             console.log('📊 감정 통계에 기록 추가:', {
               emotionId: backendEmotionId,
-              emotionName: selectedEmotion.name
+              emotionName: emotionToUse.name
             });
             
             // 감정 기록 API 호출
@@ -955,7 +1017,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [content, selectedEmotion, contentError, emotions, isEditMode, editPostId, uploadedImageUrls, isAnonymous, navigation]);
+  }, [content, selectedEmotion, contentError, emotions, isEditMode, editPostId, uploadedImageUrls, isAnonymous, navigation, existingPost]);
 
   const handleRemoveImage = useCallback((index: number) => {
     console.log('🗑️ 이미지 제거됨:', index);
@@ -1012,10 +1074,13 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
 
   const remainingChars = MAX_CONTENT_LENGTH - content.length;
   const isFormValid = useMemo(() => {
-    const isValid = content.trim().length >= MIN_CONTENT_LENGTH && selectedEmotion && !contentError;
-    console.log('🔍 isFormValid 계산:', { isValid, contentLength: content.trim().length, hasEmotion: !!selectedEmotion, contentError });
+    const hasValidContent = content.trim().length >= MIN_CONTENT_LENGTH && !contentError;
+    // 수정 모드에서는 기존 감정이 있으면 새로 선택하지 않아도 됨
+    const hasEmotion = selectedEmotion || (isEditMode && existingPost?.emotions?.length > 0) || (isEditMode && existingPost?.emotion_id);
+    const isValid = hasValidContent && hasEmotion;
+    console.log('🔍 isFormValid 계산:', { isValid, contentLength: content.trim().length, hasEmotion: !!hasEmotion, selectedEmotion: !!selectedEmotion, isEditMode, contentError });
     return isValid;
-  }, [content, selectedEmotion, contentError]);
+  }, [content, selectedEmotion, contentError, isEditMode, existingPost]);
 
   // handleSubmit의 최신 참조 유지
   const handleSubmitRef = useRef(handleSubmit);
@@ -1178,18 +1243,21 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                 }}>
                   {/* 로컬 감정 이모지 표시 */}
                   {(() => {
-                    // 로컬 감정 목록에서 해당 감정의 이모지 찾기
                     const localEmotion = localEmotions.find(local => local.label === selectedEmotion.name);
-                    const emoji = localEmotion?.emoji || selectedEmotion.icon || '😊';
-
-                    return (
-                      <Text style={{
-                        fontSize: normalize(20),
-                        marginRight: SPACING.xs
-                      }}>
-                        {emoji}
-                      </Text>
-                    );
+                    if (localEmotion) {
+                      return (
+                        <Image
+                          source={{ uri: getTwemojiUrl(localEmotion.emojiCode) }}
+                          style={{
+                            width: normalize(20, false),
+                            height: normalize(20, false),
+                            marginRight: SPACING.xs
+                          }}
+                          resizeMode="contain"
+                        />
+                      );
+                    }
+                    return null;
                   })()}
                   <Text style={{
                     fontSize: FONT_SIZES.sm,
@@ -1318,26 +1386,24 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                         accessibilityState={emotion ? { selected: selectedEmotion?.emotion_id === emotion.emotion_id } : undefined}
                       >
                         {emotion && localEmotion && (
-                          <>
-                            <Text style={{
-                              fontSize: FONT_SIZES.emotionEmoji,
-                              marginBottom: 0,
-                              opacity: selectedEmotion?.emotion_id === emotion.emotion_id ? 1 : 0.85
-                            }}>
-                              {localEmotion.emoji}
-                            </Text>
-                          </>
+                          <Image
+                            source={{ uri: getTwemojiUrl(localEmotion.emojiCode) }}
+                            style={{
+                              width: normalize(28, false),
+                              height: normalize(28, false),
+                              marginBottom: normalize(2, false)
+                            }}
+                            resizeMode="contain"
+                          />
                         )}
                         {emotion && (
                           <Text style={{
-                            fontSize: FONT_SIZES.xs,
-                            fontWeight: selectedEmotion?.emotion_id === emotion.emotion_id ? '700' : '600',
+                            fontSize: FONT_SIZES.sm,
+                            fontWeight: '700',
                             color: selectedEmotion?.emotion_id === emotion.emotion_id
                               ? 'white'
-                              : isDark ? '#D1D5DB' : '#374151',
-                            fontFamily: selectedEmotion?.emotion_id === emotion.emotion_id
-                              ? 'Pretendard-Bold'
-                              : 'Pretendard-SemiBold',
+                              : isDark ? '#FFFFFF' : '#111827',
+                            fontFamily: 'Pretendard-Bold',
                             textAlign: 'center'
                           }}>
                             {emotion.name}

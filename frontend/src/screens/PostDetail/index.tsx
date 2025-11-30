@@ -1129,10 +1129,11 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
     } else {
       logger.log('🔄 나의 하루 게시물 수정 - WriteMyDay로 이동');
       // 나의 하루 게시물 수정
-      navigation.navigate('WriteMyDay', { 
-        editPostId: post.post_id, 
+      navigation.navigate('WriteMyDay', {
+        editPostId: post.post_id,
         mode: 'edit',
-        existingPost: post 
+        isEditMode: true,
+        existingPost: post
       });
     }
   }, [post, navigation, postType, route.params]);
@@ -1152,14 +1153,26 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
 
       if (postType === 'myday') {
         await myDayService.deletePost(post!.post_id);
+      } else if (postType === 'comfort') {
+        await comfortWallService.deletePost(post!.post_id);
       } else {
         await postService.deletePost(post!.post_id);
       }
 
       logger.log('✅ 게시물 삭제 성공');
-      
-      // 게시물 목록으로 돌아가기
-      navigation.goBack();
+
+      // 게시물 목록으로 돌아가면서 새로고침 요청
+      if (navigation.canGoBack()) {
+        // 이전 화면에 refresh 파라미터 전달
+        const parentRoute = navigation.getState()?.routes?.slice(-2)?.[0];
+        if (parentRoute?.name) {
+          navigation.navigate(parentRoute.name as never, { refresh: true } as never);
+        } else {
+          navigation.goBack();
+        }
+      } else {
+        navigation.goBack();
+      }
     } catch (error: unknown) {
       logger.error('❌ 게시물 삭제 실패:', error);
       const errorMessage = error.response?.data?.message || error.message || '게시물 삭제 중 오류가 발생했습니다.';

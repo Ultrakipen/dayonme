@@ -973,15 +973,19 @@ if (tags) {
 
       // 감정 기록 내역 조회
       let progressEntries: any[] = [];
+      let emotionMap: Map<number, { name: string; color: string }> = new Map();
       try {
+        // 먼저 모든 emotion 데이터를 조회하여 Map 생성
+        const allEmotions = await db.Emotion.findAll({
+          attributes: ['emotion_id', 'name', 'color']
+        });
+        allEmotions.forEach((e: any) => {
+          emotionMap.set(e.emotion_id, { name: e.name, color: e.color });
+        });
+
         progressEntries = await db.ChallengeEmotion.findAll({
           where: { challenge_id: challengeId },
-          include: [{
-            model: db.Emotion,
-            as: 'emotion',
-            attributes: ['emotion_id', 'name', 'color']
-          }],
-          attributes: ['challenge_emotion_id', 'user_id', 'log_date', 'note'],
+          attributes: ['challenge_emotion_id', 'user_id', 'emotion_id', 'log_date', 'note'],
           order: [['log_date', 'DESC']],
           limit: 50
         });
@@ -1025,15 +1029,18 @@ if (tags) {
         };
       });
 
-      const progressList = progressEntries.map((entry: any) => ({
-        challenge_emotion_id: entry.challenge_emotion_id,
-        user_id: entry.user_id,
-        date: entry.log_date,
-        emotion_id: entry.emotion?.emotion_id || null,
-        emotion_name: entry.emotion?.name || 'Unknown',
-        emotion_color: entry.emotion?.color || '#666',
-        note: entry.note
-      }));
+      const progressList = progressEntries.map((entry: any) => {
+        const emotionData = emotionMap.get(entry.emotion_id);
+        return {
+          challenge_emotion_id: entry.challenge_emotion_id,
+          user_id: entry.user_id,
+          date: entry.log_date,
+          emotion_id: entry.emotion_id || null,
+          emotion_name: emotionData?.name || 'Unknown',
+          emotion_color: emotionData?.color || '#666',
+          note: entry.note
+        };
+      });
 
       // 달성률 계산 (참여 중인 경우에만)
       let progressPercentage = 0;
@@ -1442,6 +1449,13 @@ if (tags) {
       const challengeId = parseInt(req.params.id);
       const { progress_note, emotion_id } = req.body;
 
+      // 🔍 emotion_id 디버깅
+      console.log('🔍 emotion_id 추출 결과:', {
+        emotion_id,
+        emotion_id_type: typeof emotion_id,
+        raw_body: req.body
+      });
+
       if (!userId) {
         return res.status(401).json({
           status: 'error',
@@ -1474,6 +1488,9 @@ if (tags) {
         created_at: new Date()
       };
 
+      // 🔍 progressData 디버깅
+      console.log('🔍 progressData 생성:', JSON.stringify(progressData, null, 2));
+
       // ChallengeEmotion 테이블이 없을 경우를 위한 임시 구현
       let result;
       try {
@@ -1488,14 +1505,18 @@ if (tags) {
 
         if (existingLog) {
           // 기존 기록 업데이트
+          console.log('🔄 기존 기록 업데이트:', { emotion_id, existingEmotionId: existingLog.emotion_id });
           await existingLog.update({
             emotion_id: emotion_id,
             note: progress_note
           });
           result = existingLog;
+          console.log('✅ 업데이트 후 결과:', JSON.stringify(result.toJSON(), null, 2));
         } else {
           // 새 기록 생성
+          console.log('➕ 새 기록 생성:', progressData);
           result = await db.ChallengeEmotion.create(progressData);
+          console.log('✅ 생성 결과:', JSON.stringify(result.toJSON(), null, 2));
         }
       } catch (error: any) {
         // 테이블이 없는 경우 생성 후 재시도
@@ -1727,6 +1748,8 @@ if (tags) {
           {
             model: db.ChallengeComment,
             as: 'replies',
+            separate: true, // 별도 쿼리로 조회하여 정렬 적용
+            order: [['created_at', 'ASC']], // 답글은 오래된 순으로 정렬
             include: [
               {
                 model: db.User,
@@ -1765,7 +1788,7 @@ if (tags) {
         user: comment.is_anonymous ? null : comment.user,
         like_count: comment.likes?.length || 0,
         reply_count: comment.replies?.length || 0,
-        replies: comment.replies?.slice(0, 3).map((reply: any) => ({
+        replies: comment.replies?.map((reply: any) => ({
           comment_id: reply.comment_id,
           content: reply.content,
           is_anonymous: reply.is_anonymous,

@@ -20,6 +20,7 @@ import {
   Vibration,
   Share,
   useWindowDimensions,
+  Text as RNText,
 } from 'react-native';
 import {
   Text,
@@ -48,6 +49,7 @@ import blockService, { BlockedUser, BlockedContent } from '../services/api/block
 import reportService from '../services/api/reportService';
 import bookmarkService from '../services/api/bookmarkService';
 import { normalizeImageUrl, isValidImageUrl } from '../utils/imageUtils';
+import SearchMode from '../components/ComfortScreen/SearchMode';
 import { RFValue, normalize, normalizeSpace, normalizeTouchable, normalizeIcon, wp, hp } from '../utils/responsive';
 import ImageCarousel from '../components/ImageCarousel';
 import ClickableNickname from '../components/ClickableNickname';
@@ -58,6 +60,7 @@ import { COLORS } from '../constants/designSystem';
 import { sanitizeInput, logger } from '../utils/security';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { FONT_SIZES } from '../constants';
+import FastImage from 'react-native-fast-image';
 
 // 레이아웃 상수 계산 함수 (반응형)
 const getLayoutConstants = (screenWidth: number) => {
@@ -1328,12 +1331,12 @@ const ComfortScreen: React.FC = () => {
     }
   }, []); // ref를 사용하므로 빈 의존성 배열 안전
 
-  // 검색 모드 진입
+  // 검색 모드 진입 - 항상 빈 검색어로 시작하여 인기 검색어 표시
   const enterSearchMode = useCallback(() => {
     console.log('🔍 [enterSearchMode] 검색 모드 진입');
     setIsSearchMode(true);
-    setCurrentSearchQuery(searchQuery || '');
-  }, [searchQuery]);
+    setCurrentSearchQuery(''); // 항상 빈 문자열로 시작
+  }, []);
 
   // 검색 모드 종료
   const exitSearchMode = useCallback(() => {
@@ -1629,8 +1632,11 @@ const ComfortScreen: React.FC = () => {
       [postId]: false
     }));
 
-    setDeletePostId(postId);
-    setShowDeleteModal(true);
+    // 메뉴가 닫힌 후 모달 열기 (터치 이벤트 충돌 방지)
+    setTimeout(() => {
+      setDeletePostId(postId);
+      setShowDeleteModal(true);
+    }, 100);
   }, []);
 
   // 게시물 삭제 확인
@@ -2027,8 +2033,32 @@ const ComfortScreen: React.FC = () => {
     }, [route.params, posts.length, navigation])
   );
 
-  // 2025년 트렌드 헤더 컴포넌트
-  const ModernHeader = () => (
+  // 프로필 이미지 컴포넌트 - 필터 변경과 무관하게 유지
+  const HeaderProfileImage = useMemo(() => {
+    if (user?.profile_image_url) {
+      return (
+        <FastImage
+          source={{
+            uri: normalizeImageUrl(user.profile_image_url),
+            priority: FastImage.priority.high,
+            cache: FastImage.cacheControl.immutable,
+          }}
+          style={{
+            width: 46,
+            height: 46,
+            borderRadius: 17,
+            borderWidth: 2,
+            borderColor: modernTheme.bg.border,
+          }}
+          resizeMode={FastImage.resizeMode.cover}
+        />
+      );
+    }
+    return <MaterialCommunityIcons name="account-circle-outline" size={34} color={modernTheme.text.primary} />;
+  }, [user?.profile_image_url, user?.user_id, modernTheme.bg.border, modernTheme.text.primary]);
+
+  // 2025년 트렌드 헤더 컴포넌트 - 메모이제이션으로 불필요한 재렌더링 방지
+  const ModernHeader = useMemo(() => (
     <View style={styles.modernHeader}>
       <View style={[styles.headerGradient, {
         backgroundColor: modernTheme.bg.primary,
@@ -2054,26 +2084,7 @@ const ComfortScreen: React.FC = () => {
                   style={styles.headerIconButton}
                   onPress={() => navigation.navigate('ProfileMain' as never)}
                 >
-                  {user?.profile_image_url ? (
-                    <Image
-                      source={{ uri: normalizeImageUrl(user.profile_image_url), cache: 'force-cache' }}
-                      style={{
-                        width: 46,
-                        height: 46,
-                        borderRadius: 17,
-                        borderWidth: 2,
-                        borderColor: modernTheme.bg.border,
-                      }}
-                      onError={(e) => {
-                        logger.error('❌ 헤더 프로필 이미지 로드 실패:', e.nativeEvent);
-                      }}
-                      resizeMode="cover"
-                      progressiveRenderingEnabled={true}
-                      fadeDuration={150}
-                    />
-                  ) : (
-                    <MaterialCommunityIcons name="account-circle-outline" size={34} color={modernTheme.text.primary} />
-                  )}
+                  {HeaderProfileImage}
                 </TouchableOpacity>
               </View>
             </View>
@@ -2091,7 +2102,7 @@ const ComfortScreen: React.FC = () => {
                   styles.searchButton,
                   {
                     backgroundColor: modernTheme.bg.card,
-                    borderColor: modernTheme.bg.border,
+                    borderColor: searchQuery ? COLORS.primary : modernTheme.bg.border,
                     shadowOpacity: isDark ? 0.2 : 0.08,
                   }
                 ]}
@@ -2102,15 +2113,35 @@ const ComfortScreen: React.FC = () => {
                   <MaterialCommunityIcons
                     name="magnify"
                     size={normalizeIcon(18)}
-                    color={modernTheme.text.secondary}
+                    color={searchQuery ? COLORS.primary : modernTheme.text.secondary}
                   />
-                  <Text style={[
-                    styles.searchPlaceholder,
-                    { color: modernTheme.text.secondary }
-                  ]}>
+                  <Text
+                    style={[
+                      styles.searchPlaceholder,
+                      { color: searchQuery ? modernTheme.text.primary : modernTheme.text.secondary }
+                    ]}
+                    numberOfLines={1}
+                  >
                     {searchQuery || '제목, 내용으로 검색...'}
                   </Text>
                 </View>
+                {/* 검색어 초기화 버튼 */}
+                {searchQuery ? (
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleSearchClear();
+                    }}
+                    style={styles.searchClearButton}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <MaterialCommunityIcons
+                      name="close-circle"
+                      size={16}
+                      color={modernTheme.text.secondary}
+                    />
+                  </TouchableOpacity>
+                ) : null}
               </TouchableOpacity>
 
               {/* 필터 칩 */}
@@ -2146,11 +2177,11 @@ const ComfortScreen: React.FC = () => {
                 ))}
               </View>
             </View>
-            
+
         </View>
       </View>
     </View>
-  );
+  ), [modernTheme, isDark, styles, COLORS, HeaderProfileImage, searchQuery, selectedFilter, navigation, enterSearchMode, handleSearchClear, handleFilterChange]);
 
   // 베스트 게시물 카드 (3개씩 배치)
   const BestPostCard = ({ post, index }: { post: BestPost; index: number }) => (
@@ -2272,8 +2303,6 @@ const ComfortScreen: React.FC = () => {
 
   // 인스타그램 스타일 게시물 카드 (2개씩 배치)
   const InstagramStylePostCard = React.memo(({ item, index, highlightedPostId, isMenuVisible, isBookmarked, isLiked }: { item: ComfortPost; index: number; highlightedPostId: number | null; isMenuVisible: boolean; isBookmarked: boolean; isLiked: boolean }) => {
-    console.log('🎨 [InstagramStylePostCard] 렌더링:', { post_id: item.post_id, index });
-
     const isMyPost = user?.user_id === item.user_id;
     const hasImage = (item.image_url || (item.images && item.images.length > 0));
 
@@ -2387,6 +2416,7 @@ const ComfortScreen: React.FC = () => {
               {/* Profile image or avatar */}
               {/* 프로필 사진 또는 감정 이모지 */}
               <ClickableAvatar
+                key={`avatar-${item.post_id}-${item.user_id}`}
                 userId={item.user_id}
                 nickname={item.user?.nickname || '사용자'}
                 isAnonymous={item.is_anonymous}
@@ -2876,129 +2906,17 @@ const ComfortScreen: React.FC = () => {
     </View>
   ), []);
 
-  // 검색 모드 렌더링
+  // 검색 모드 렌더링 - 별도 컴포넌트 사용
   if (isSearchMode) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: modernTheme.bg.primary }]}>
-        <StatusBar
-          barStyle={isDark ? "light-content" : "dark-content"}
-          backgroundColor={modernTheme.bg.primary}
-          translucent={false}
-        />
-        {/* 검색 헤더 */}
-        <View style={[styles.searchHeader, { borderBottomColor: modernTheme.bg.border, shadowColor: isDark ? '#ffffff' : '#000000' }]}>
-          <TouchableOpacity onPress={exitSearchMode} style={styles.backButton}>
-            <MaterialCommunityIcons
-              name="arrow-left"
-              size={24}
-              color={modernTheme.text.primary}
-            />
-          </TouchableOpacity>
-          <View style={[styles.searchInputContainer, { backgroundColor: modernTheme.bg.card, shadowColor: isDark ? '#ffffff' : '#6366F1' }]}>
-            <TouchableOpacity
-              onPress={() => {
-                console.log('🔍 [SearchMode] 검색 아이콘 클릭');
-                executeSearch(currentSearchQuery);
-              }}
-              style={{ padding: 4 }}
-            >
-              <MaterialCommunityIcons
-                name="magnify"
-                size={20}
-                color={modernTheme.text.secondary}
-              />
-            </TouchableOpacity>
-            <TextInput
-              style={[styles.searchTextInput, { color: modernTheme.text.primary }]}
-              placeholder="제목, 내용으로 검색..."
-              placeholderTextColor={modernTheme.text.secondary}
-              value={currentSearchQuery}
-              onChangeText={handleSearchQueryChange}
-              onSubmitEditing={() => {
-                console.log('⌨️ [SearchMode] 검색 제출:', currentSearchQuery);
-                executeSearch(currentSearchQuery);
-              }}
-              autoFocus
-              returnKeyType="search"
-              blurOnSubmit={true}
-            />
-            {currentSearchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setCurrentSearchQuery('')} style={styles.clearButton}>
-                <MaterialCommunityIcons
-                  name="close-circle"
-                  size={20}
-                  color={modernTheme.text.secondary}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-        {/* 검색 내용 */}
-        <ScrollView style={styles.searchContent}>
-          {/* 검색 기록 */}
-          {currentSearchQuery.length === 0 && searchHistory.length > 0 && (
-            <View style={styles.searchModeSection}>
-              <Text style={[styles.searchSectionTitle, { color: modernTheme.text.primary }]}>
-                최근 검색
-              </Text>
-              {searchHistory.map((item, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.searchHistoryItem}
-                  onPress={() => {
-                    setCurrentSearchQuery(item);
-                    executeSearch(item);
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="history"
-                    size={16}
-                    color={modernTheme.text.secondary}
-                  />
-                  <Text style={[styles.searchHistoryText, { color: modernTheme.text.primary }]}>
-                    {item}
-                  </Text>
-                  <TouchableOpacity
-                    onPress={() => setSearchHistory(prev => prev.filter((_, i) => i !== index))}
-                    style={styles.removeHistoryButton}
-                  >
-                    <MaterialCommunityIcons
-                      name="close"
-                      size={14}
-                      color={modernTheme.text.secondary}
-                    />
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-          {/* 인기 검색어 */}
-          {currentSearchQuery.length === 0 && (
-            <View style={styles.searchModeSection}>
-              <Text style={[styles.searchSectionTitle, { color: modernTheme.text.primary }]}>
-                인기 검색어
-              </Text>
-              {['위로', '공감', '마음챙김', '일상', '고민'].map((item, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.popularSearchItem}
-                  onPress={() => {
-                    setCurrentSearchQuery(item);
-                    executeSearch(item);
-                  }}
-                >
-                  <Text style={[styles.popularSearchRank, { color: COLORS.primary }]}>
-                    {index + 1}
-                  </Text>
-                  <Text style={[styles.popularSearchText, { color: modernTheme.text.primary }]}>
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </ScrollView>
-      </SafeAreaView>
+      <SearchMode
+        isDark={isDark}
+        theme={modernTheme}
+        currentSearchQuery={currentSearchQuery}
+        onSearchQueryChange={handleSearchQueryChange}
+        onSearch={executeSearch}
+        onExit={exitSearchMode}
+      />
     );
   }
 
@@ -3006,7 +2924,7 @@ const ComfortScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.safeContainer}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={modernTheme.bg.primary} />
-        <ModernHeader />
+        {ModernHeader}
         <View style={[styles.content, { paddingTop: 20 }]}>
           <View style={styles.postRow}>
             <SkeletonCard />
@@ -3041,7 +2959,7 @@ const ComfortScreen: React.FC = () => {
           keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
           enabled={true}
         >
-          <ModernHeader />
+          {ModernHeader}
           
           <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.listContainer}>
@@ -3051,7 +2969,7 @@ const ComfortScreen: React.FC = () => {
               data={posts}
               renderItem={renderPostItem}
               keyExtractor={(item: ComfortPost) => `post-${item.post_id}`}
-              extraData={menuVisible}
+              extraData={{ menuVisible, bookmarkedPosts, likedPosts }}
               numColumns={2}
               columnWrapperStyle={styles.postListColumns}
               contentContainerStyle={styles.postList}
@@ -3422,12 +3340,19 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     shadowRadius: 3,
     elevation: 2,
     borderWidth: 0.5,
+    overflow: 'visible',
   },
   searchButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
     gap: 10,
+  },
+  searchClearButton: {
+    padding: 2,
+    marginLeft: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   searchPlaceholder: {
     flex: 1,
@@ -3843,11 +3768,11 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   sortButtonText: {
     fontSize: 13,
     fontWeight: '700',
-    color: COLORS.onSurface,
+    color: isDark ? '#A0A0B0' : '#505060',
     letterSpacing: 0.3,
   },
   sortButtonTextActive: {
-    color: COLORS.text,
+    color: '#FFFFFF',
     fontWeight: '700',
   },
 
@@ -4371,14 +4296,14 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     paddingHorizontal: 40,
   },
   emptyStateTitle: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '700',
     color: COLORS.onSurface,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateText: {
-    fontSize: 9,
+    fontSize: 12,
     color: COLORS.onSurfaceVariant,
     textAlign: 'center',
   },
@@ -4458,24 +4383,24 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   popularSearchItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 13,
+    paddingVertical: 16,
     paddingHorizontal: 16,
-    marginVertical: 3,
-    borderRadius: 10,
+    marginVertical: 2,
+    borderRadius: 12,
   },
   popularSearchRank: {
-    width: 26,
-    fontSize: FONT_SIZES.caption,
+    width: 28,
+    fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 22,
   },
   popularSearchText: {
-    marginLeft: 12,
-    fontSize: FONT_SIZES.bodySmall,
+    marginLeft: 16,
+    fontSize: 15,
     fontWeight: '500',
-    lineHeight: 20,
-    letterSpacing: -0.1,
+    lineHeight: 22,
+    letterSpacing: -0.2,
   },
   });
 };
