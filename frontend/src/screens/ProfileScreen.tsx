@@ -272,6 +272,11 @@ const ProfileScreen: React.FC = () => {
     }
   }, [calculateConsecutiveDays]);
 
+  // Toast helper (loadAllData보다 먼저 정의)
+  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
+    setToast({ visible: true, message, type });
+  }, []);
+
   // 🔥 트래픽 최적화: 병렬 API 호출 및 중복 제거 + 💾 캐싱
   const loadAllData = useCallback(async (forceRefresh = false) => {
     if (!user || !isAuthenticated) return;
@@ -386,11 +391,6 @@ const ProfileScreen: React.FC = () => {
       setInitialLoad(false);
     }
   }, [isFocused, initialLoad, loadAllData]);
-
-  // Toast helper
-  const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
-    setToast({ visible: true, message, type });
-  }, []);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -1517,10 +1517,10 @@ const styles = StyleSheet.create({
     paddingRight: 8,
   },
   mainTitle: {
-    fontSize: FONT_SIZES.h1,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    lineHeight: 30,
+    fontSize: 26, // FONT_SIZES.h1(24) + 2 (가독성 향상, lazy init 호환)
+    fontWeight: '800',
+    letterSpacing: -0.4,
+    lineHeight: 34,
     textAlign: 'left',
     flex: 1,
   },
@@ -1561,9 +1561,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   subtitle: {
-    fontSize: FONT_SIZES.body,
+    fontSize: FONT_SIZES.bodyLarge, // 15 → 16 (가독성 향상)
     fontWeight: '600',
     letterSpacing: -0.2,
+    lineHeight: 22,
   },
   heartIcon: {
     fontSize: FONT_SIZES.bodyLarge,
@@ -1622,19 +1623,21 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   userName: {
-    fontSize: FONT_SIZES.h4,
+    fontSize: FONT_SIZES.h3, // 17 → 18 (사용자명 강조)
     fontWeight: '700',
     marginBottom: 6,
-    letterSpacing: 0,
+    letterSpacing: -0.2,
     fontFamily: 'System',
+    lineHeight: 26,
   },
   userHandle: {
-    fontSize: FONT_SIZES.bodySmall,
+    fontSize: FONT_SIZES.body, // 14 → 15 (핸들명 가독성)
     marginBottom: 3,
     fontWeight: '500',
+    lineHeight: 21,
   },
   userEmail: {
-    fontSize: FONT_SIZES.bodySmall,
+    fontSize: FONT_SIZES.body, // 14 → 15 (이메일 가독성)
     fontWeight: '500',
     lineHeight: 21,
   },
@@ -1665,11 +1668,12 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   cardTitle: {
-    fontSize: FONT_SIZES.bodyLarge,
+    fontSize: FONT_SIZES.h4, // 16 → 17 (섹션 제목 강화)
     fontWeight: '700',
     marginBottom: 14,
     textAlign: 'left',
-    letterSpacing: 0,
+    letterSpacing: -0.2,
+    lineHeight: 24,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -1683,18 +1687,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statNumber: {
-    fontSize: FONT_SIZES.h3,
+    fontSize: FONT_SIZES.h2, // 18 → 20 (통계 숫자 강조)
     fontWeight: '700',
     marginTop: 6,
     marginBottom: 4,
     textAlign: 'center',
-    letterSpacing: 0,
+    letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: FONT_SIZES.small,
+    fontSize: FONT_SIZES.bodySmall, // 13 → 14 (통계 라벨 가독성)
     fontWeight: '600',
     textAlign: 'center',
-    letterSpacing: 0.3,
+    letterSpacing: 0,
+    lineHeight: 20,
   },
   settingsCard: {
     borderRadius: 18,
@@ -1728,10 +1733,10 @@ const styles = StyleSheet.create({
   },
   settingText: {
     flex: 1,
-    fontSize: FONT_SIZES.body,
+    fontSize: FONT_SIZES.bodyLarge, // 15 → 16 (설정 항목 가독성)
     fontWeight: '600',
     letterSpacing: -0.2,
-    lineHeight: 20,
+    lineHeight: 22,
     textAlignVertical: 'center',
   },
   settingIconContainer: {
@@ -1749,7 +1754,8 @@ const styles = StyleSheet.create({
   logoutText: {
     flex: 1,
     fontSize: FONT_SIZES.bodyLarge,
-    fontWeight: '500',
+    fontWeight: '600',
+    lineHeight: 22,
   },
   modalContainer: {
     position: 'absolute',
@@ -1781,10 +1787,11 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: FONT_SIZES.h3,
+    fontSize: FONT_SIZES.h2, // 18 → 20 (모달 제목 강조)
     fontWeight: '700',
-    letterSpacing: 0.1,
+    letterSpacing: -0.2,
     flex: 1,
+    lineHeight: 28,
   },
   closeButton: {
     padding: 8,
@@ -1814,17 +1821,18 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   quoteLabel: {
-    fontSize: FONT_SIZES.caption,
+    fontSize: FONT_SIZES.bodySmall, // 13 → 14 (라벨 가독성)
     fontWeight: '600',
     flex: 1,
+    lineHeight: 20,
   },
   quoteText: {
-    fontSize: FONT_SIZES.body,
+    fontSize: FONT_SIZES.bodyLarge, // 15 → 16 (명언 강조)
     fontStyle: 'italic',
-    lineHeight: 24,
+    lineHeight: 26,
     fontWeight: '500',
     textAlign: 'left',
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   emotionTagsCard: {
     borderRadius: 18,
@@ -1853,9 +1861,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   emotionSubtitle: {
-    fontSize: FONT_SIZES.bodySmall,
+    fontSize: FONT_SIZES.body, // 14 → 15 (서브타이틀 가독성)
     fontWeight: '500',
     marginLeft: 'auto',
+    lineHeight: 21,
   },
   simpleEmotionContainer: {
     gap: 0,
@@ -1895,21 +1904,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   simpleEmotionName: {
-    fontSize: FONT_SIZES.bodySmall,
+    fontSize: FONT_SIZES.body, // 14 → 15 (감정명 가독성)
     fontWeight: '600',
-    letterSpacing: 0.2,
+    letterSpacing: 0,
+    lineHeight: 21,
   },
   topEmotionName: {
-    fontSize: FONT_SIZES.body,
+    fontSize: FONT_SIZES.bodyLarge, // 15 → 16 (상위 감정명 강조)
     fontWeight: '700',
+    lineHeight: 22,
   },
   simpleEmotionCount: {
-    fontSize: FONT_SIZES.caption,
+    fontSize: FONT_SIZES.bodySmall, // 13 → 14 (횟수 가독성)
     fontWeight: '500',
+    lineHeight: 20,
   },
   topEmotionCount: {
-    fontSize: FONT_SIZES.body,
+    fontSize: FONT_SIZES.bodyLarge, // 15 → 16 (상위 횟수 강조)
     fontWeight: '600',
+    lineHeight: 22,
   },
   rankBadge: {
     width: 26,
@@ -1925,9 +1938,10 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   rankText: {
-    fontSize: FONT_SIZES.bodySmall,
+    fontSize: FONT_SIZES.body, // 14 → 15 (순위 텍스트 강조)
     fontWeight: '700',
     color: '#FFFFFF',
+    lineHeight: 21,
   },
   // 감정 통계 하단 정보
   emotionStats: {
@@ -1944,12 +1958,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emotionStatLabel: {
-    fontSize: FONT_SIZES.caption,
+    fontSize: FONT_SIZES.bodySmall, // 13 → 14 (라벨 가독성)
     fontWeight: '500',
+    lineHeight: 20,
   },
   statValue: {
-    fontSize: FONT_SIZES.bodySmall,
+    fontSize: FONT_SIZES.body, // 14 → 15 (값 강조)
     fontWeight: '600',
+    lineHeight: 21,
   },
   chartCard: {
     borderRadius: 12,

@@ -40,17 +40,24 @@ const setCachedData = (key: string, data: any): void => {
  * 트래픽 최적화: 300+ API 호출을 1회로 축소
  */
 export const getReviewSummary = async (req: AuthRequest, res: Response) => {
+  const startTime = Date.now();
   try {
-    console.log('📊 [getReviewSummary] API 호출됨');
     const user_id = req.user?.user_id;
     const { period = 'week' } = req.query;
-    console.log('📊 [getReviewSummary] user_id:', user_id, 'period:', period);
 
     if (!user_id) {
       return res.status(401).json({
         status: 'error',
         message: '인증이 필요합니다'
       });
+    }
+
+    // 서버 캐시 확인 (사용자별 + 기간별)
+    const cacheKey = `review_summary_${user_id}_${period}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) {
+      console.log(`📊 [getSummary] 캐시 히트 - ${Date.now() - startTime}ms`);
+      return res.json(cached);
     }
 
     // 기간 계산
@@ -282,8 +289,8 @@ export const getReviewSummary = async (req: AuthRequest, res: Response) => {
       }
     }
 
-    // 응답
-    res.json({
+    // 응답 데이터 생성
+    const responseData = {
       status: 'success',
       data: {
         posts: postsData,
@@ -317,7 +324,12 @@ export const getReviewSummary = async (req: AuthRequest, res: Response) => {
         period,
         timestamp: new Date().toISOString()
       }
-    });
+    };
+
+    // 캐시 저장 후 응답
+    setCachedData(cacheKey, responseData);
+    console.log(`📊 [getSummary] 완료 - ${Date.now() - startTime}ms`);
+    res.json(responseData);
 
   } catch (error) {
     console.error('❌ [getReviewSummary] 리뷰 요약 로드 오류:', error);
@@ -826,9 +838,9 @@ export const getUserBadges = async (req: AuthRequest, res: Response) => {
     for (const [type, name, icon] of badgesToEarn) {
       try {
         await db.sequelize.query(
-          `INSERT INTO user_achievements (user_id, achievement_type, achievement_name, achievement_icon)
-           VALUES (?, ?, ?, ?)`,
-          { replacements: [user_id, type, name, icon] }
+          `INSERT INTO user_achievements (user_id, achievement_type, achievement_name, achievement_icon, badge_type, badge_name)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          { replacements: [user_id, type, name, icon, type, name] }
         );
       } catch (insertError) {
         console.log('배지 부여 실패:', type);

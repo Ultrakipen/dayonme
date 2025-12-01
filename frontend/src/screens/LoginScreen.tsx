@@ -232,12 +232,27 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       await login({ email, password, rememberMe });
 
       // 로그인 성공 후 Main으로 이동
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        })
-      );
+      // Auth가 모달로 열리므로 부모 네비게이터를 통해 reset 해야 함
+      console.log('🚀 로그인 성공 - Main으로 화면 전환 시도');
+      const parentNav = navigation.getParent();
+      if (parentNav) {
+        parentNav.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          })
+        );
+        console.log('✅ 부모 네비게이터로 Main 전환 완료');
+      } else {
+        // 부모가 없으면 현재 네비게이터 사용
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          })
+        );
+        console.log('✅ 현재 네비게이터로 Main 전환 완료');
+      }
     } catch (error: any) {
       // 보안: 서버 에러 메시지를 직접 노출하지 않고 일반화된 메시지 사용
       const status = error?.response?.status;
@@ -264,12 +279,22 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       await checkAuthStatus();
 
       // 소셜 로그인 성공 후 Main으로 이동
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        })
-      );
+      const parentNav = navigation.getParent();
+      if (parentNav) {
+        parentNav.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          })
+        );
+      } else {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          })
+        );
+      }
     } catch (error: any) {
       console.error('네이버 로그인 오류:', error);
       showAlert.error('로그인 실패', '네이버 로그인 중 오류가 발생했습니다.');
@@ -287,12 +312,22 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       await checkAuthStatus();
 
       // 소셜 로그인 성공 후 Main으로 이동
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        })
-      );
+      const parentNav = navigation.getParent();
+      if (parentNav) {
+        parentNav.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          })
+        );
+      } else {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'Main' }],
+          })
+        );
+      }
     } catch (error: any) {
       console.error('카카오 로그인 오류:', error);
       showAlert.error('로그인 실패', '카카오 로그인 중 오류가 발생했습니다.');

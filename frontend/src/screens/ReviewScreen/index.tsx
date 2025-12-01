@@ -39,7 +39,7 @@ const MicroJournal = lazy(() => import('./sections/MicroJournal').then(m => ({ d
 
 // 캐시 키
 const CACHE_KEY = '@review_summary_cache';
-const CACHE_EXPIRY = 5 * 60 * 1000; // 5분
+const CACHE_EXPIRY = 10 * 60 * 1000; // 10분 (트래픽 최적화)
 
 // TypeScript 타입 정의
 interface EmotionStat {
@@ -85,7 +85,7 @@ const EmotionDistributionCard: React.FC<{
 }> = React.memo(({ emotionStats, periodText }) => {
   const { colors } = useModernTheme();
   const scale = getScale(360, 0.9, 1.3);
-  const styles = getStyles();
+  const styles = getStyles(scale);
 
   if (!emotionStats?.length) return null;
 
@@ -130,7 +130,7 @@ const ReviewScreen: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
 
   const scale = getScale(360, 0.8, 1.5);
-  const styles = getStyles();
+  const styles = useMemo(() => getStyles(scale), [scale]);
 
   // 캐시에서 데이터 로드
   const loadFromCache = useCallback(async (periodKey: string): Promise<ReviewSummary | null> => {
@@ -143,7 +143,7 @@ const ReviewScreen: React.FC = () => {
         }
       }
     } catch (err) {
-      console.error('캐시 로드 실패:', err);
+      if (__DEV__) console.warn('캐시 로드 실패:', err);
     }
     return null;
   }, []);
@@ -156,7 +156,7 @@ const ReviewScreen: React.FC = () => {
         timestamp: Date.now()
       }));
     } catch (err) {
-      console.error('캐시 저장 실패:', err);
+      if (__DEV__) console.warn('캐시 저장 실패:', err);
     }
   }, []);
 
@@ -186,7 +186,7 @@ const ReviewScreen: React.FC = () => {
       await saveToCache(period, data.data);
     } catch (err) {
       setError('데이터를 불러오는데 실패했습니다');
-      console.error('요약 로드 실패:', err);
+      if (__DEV__) console.warn('요약 로드 실패:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -356,13 +356,6 @@ const ReviewScreen: React.FC = () => {
     );
   }, [summary, period, periodText]);
 
-  // FlatList 최적화 설정
-  const getItemLayout = useCallback((_: any, index: number) => ({
-    length: 200, // 예상 아이템 높이
-    offset: 200 * index,
-    index,
-  }), []);
-
   const keyExtractor = useCallback((item: SectionItem) => item.id, []);
 
   // 비로그인 사용자 UI
@@ -414,7 +407,7 @@ const ReviewScreen: React.FC = () => {
                 }
               }}
             >
-              <Text style={[styles.guestSignupButtonText, { fontSize: FONT_SIZES.body * scale, color: colors.background }]}>시작하기</Text>
+              <Text style={[styles.guestSignupButtonText, { color: colors.background }]}>시작하기</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -516,194 +509,202 @@ const ReviewScreen: React.FC = () => {
   );
 };
 
-// 반응형 스케일 계산 (lazy)
-let _styles: any = null;
-const getStyles = () => {
-  if (!_styles) {
-    const scale = getScale();
-    _styles = StyleSheet.create({
-      container: {
-        flex: 1,
-      },
-      header: {
-        paddingTop: 50 * scale,
-        paddingBottom: 12 * scale,
-      },
-      headerTitle: {
-        fontSize: FONT_SIZES.h1 * scale,
-        fontWeight: '700',
-        marginBottom: 2 * scale,
-      },
-      headerSubtitle: {
-        fontSize: FONT_SIZES.caption * scale,
-        marginBottom: 12 * scale,
-      },
-      periodSelector: {
-        flexDirection: 'row',
-        gap: 8 * scale,
-      },
-      periodButton: {
-        paddingHorizontal: 14 * scale,
-        paddingVertical: 6 * scale,
-        borderRadius: 16 * scale,
-        borderWidth: 1,
-      },
-      periodText: {
-        fontSize: FONT_SIZES.caption * scale,
-        fontWeight: '600',
-      },
-      loadingContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-      },
-      content: {
-        paddingHorizontal: 20 * scale,
-      },
-      cardTitle: {
-        fontSize: FONT_SIZES.h4 * scale,
-        fontWeight: '700',
-        marginBottom: 12 * scale,
-      },
-      emotionRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 12 * scale,
-      },
-      emotionIcon: {
-        fontSize: FONT_SIZES.h2 * scale,
-        marginRight: 8 * scale,
-      },
-      emotionName: {
-        fontSize: FONT_SIZES.body * scale,
-        fontWeight: '600',
-        width: 60 * scale,
-      },
-      emotionBar: {
-        flex: 1,
-        height: 8,
-        borderRadius: 4,
-        marginHorizontal: 8,
-      },
-      emotionBarFill: {
-        height: '100%',
-        borderRadius: 4 * scale,
-      },
-      emotionCount: {
-        fontSize: FONT_SIZES.bodySmall * scale,
-        width: 40 * scale,
-        textAlign: 'right',
-      },
-      // 비로그인 사용자 UI 스타일
-      guestHeader: {
-        paddingTop: 50 * scale,
-        paddingHorizontal: 20 * scale,
-        paddingBottom: 16 * scale,
-      },
-      guestHeaderTitle: {
-        fontSize: FONT_SIZES.h1 * scale,
-        fontWeight: '700',
-      },
-      guestContent: {
-        flex: 1,
-        justifyContent: 'center',
-        paddingHorizontal: 20 * scale,
-        paddingBottom: 100 * scale,
-      },
-      guestCard: {
-        borderRadius: 24 * scale,
-        padding: 28 * scale,
-        alignItems: 'center',
-        shadowOffset: { width: 0, height: 4 * scale },
-        shadowOpacity: 0.08,
-        shadowRadius: 12 * scale,
-        elevation: 8,
-      },
-      iconContainer: {
-        width: 80 * scale,
-        height: 80 * scale,
-        borderRadius: 40 * scale,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 20 * scale,
-      },
-      guestIcon: {
-        fontSize: 40 * scale,
-      },
-      guestTitle: {
-        fontSize: FONT_SIZES.h2 * scale,
-        fontWeight: '700',
-        marginBottom: 10 * scale,
-        textAlign: 'center',
-      },
-      guestDescription: {
-        fontSize: FONT_SIZES.body * scale,
-        lineHeight: 22 * scale,
-        textAlign: 'center',
-        marginBottom: 24 * scale,
-      },
-      featureList: {
-        width: '100%',
-        marginBottom: 28 * scale,
-      },
-      featureItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 10 * scale,
-        paddingLeft: 8 * scale,
-      },
-      featureDot: {
-        fontSize: FONT_SIZES.body * scale,
-        marginRight: 8 * scale,
-        fontWeight: '700',
-      },
-      featureText: {
-        fontSize: FONT_SIZES.bodySmall * scale,
-        lineHeight: 20 * scale,
-      },
-      guestSignupButton: {
-        width: '100%',
-        paddingVertical: 16 * scale,
-        borderRadius: 14 * scale,
-        alignItems: 'center',
-        marginBottom: 12 * scale,
-        shadowOffset: { width: 0, height: 4 * scale },
-        shadowOpacity: 0.3,
-        shadowRadius: 8 * scale,
-        elevation: 6,
-      },
-      guestSignupButtonText: {
-        fontWeight: '700',
-        letterSpacing: 0.5,
-      },
-      guestLoginButton: {
-        paddingVertical: 12 * scale,
-      },
-      guestLoginButtonText: {
-        textAlign: 'center',
-      },
-      errorContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-      },
-      errorText: {
-        textAlign: 'center',
-        marginBottom: 16,
-      },
-      retryButton: {
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        borderRadius: 8,
-      },
-      retryButtonText: {
-        color: '#FFFFFF',
-        fontWeight: '600',
-      },
-    });
+// 반응형 스타일 생성 함수
+const createStyles = (scale: number) => StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    paddingTop: 50 * scale,
+    paddingBottom: 12 * scale,
+  },
+  headerTitle: {
+    fontSize: FONT_SIZES.h1 * scale,
+    fontWeight: '700',
+    marginBottom: 2 * scale,
+  },
+  headerSubtitle: {
+    fontSize: FONT_SIZES.caption * scale,
+    marginBottom: 12 * scale,
+  },
+  periodSelector: {
+    flexDirection: 'row',
+    gap: 8 * scale,
+  },
+  periodButton: {
+    paddingHorizontal: 14 * scale,
+    paddingVertical: 6 * scale,
+    borderRadius: 16 * scale,
+    borderWidth: 1,
+  },
+  periodText: {
+    fontSize: FONT_SIZES.caption * scale,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  content: {
+    paddingHorizontal: 20 * scale,
+  },
+  cardTitle: {
+    fontSize: FONT_SIZES.h4 * scale,
+    fontWeight: '700',
+    marginBottom: 12 * scale,
+  },
+  emotionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12 * scale,
+  },
+  emotionIcon: {
+    fontSize: FONT_SIZES.h2 * scale,
+    marginRight: 8 * scale,
+  },
+  emotionName: {
+    fontSize: FONT_SIZES.body * scale,
+    fontWeight: '600',
+    width: 60 * scale,
+  },
+  emotionBar: {
+    flex: 1,
+    height: 8 * scale,
+    borderRadius: 4 * scale,
+    marginHorizontal: 8 * scale,
+  },
+  emotionBarFill: {
+    height: '100%',
+    borderRadius: 4 * scale,
+  },
+  emotionCount: {
+    fontSize: FONT_SIZES.bodySmall * scale,
+    width: 40 * scale,
+    textAlign: 'right',
+  },
+  // 비로그인 사용자 UI 스타일
+  guestHeader: {
+    paddingTop: 50 * scale,
+    paddingHorizontal: 20 * scale,
+    paddingBottom: 16 * scale,
+  },
+  guestHeaderTitle: {
+    fontSize: FONT_SIZES.h1 * scale,
+    fontWeight: '700',
+  },
+  guestContent: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20 * scale,
+    paddingBottom: 100 * scale,
+  },
+  guestCard: {
+    borderRadius: 24 * scale,
+    padding: 28 * scale,
+    alignItems: 'center',
+    shadowOffset: { width: 0, height: 4 * scale },
+    shadowOpacity: 0.08,
+    shadowRadius: 12 * scale,
+    elevation: 8,
+  },
+  iconContainer: {
+    width: 80 * scale,
+    height: 80 * scale,
+    borderRadius: 40 * scale,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20 * scale,
+  },
+  guestIcon: {
+    fontSize: 40 * scale,
+  },
+  guestTitle: {
+    fontSize: FONT_SIZES.h2 * scale,
+    fontWeight: '700',
+    marginBottom: 10 * scale,
+    textAlign: 'center',
+  },
+  guestDescription: {
+    fontSize: FONT_SIZES.body * scale,
+    lineHeight: 22 * scale,
+    textAlign: 'center',
+    marginBottom: 24 * scale,
+  },
+  featureList: {
+    width: '100%',
+    marginBottom: 28 * scale,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10 * scale,
+    paddingLeft: 8 * scale,
+  },
+  featureDot: {
+    fontSize: FONT_SIZES.body * scale,
+    marginRight: 8 * scale,
+    fontWeight: '700',
+  },
+  featureText: {
+    fontSize: FONT_SIZES.bodySmall * scale,
+    lineHeight: 20 * scale,
+  },
+  guestSignupButton: {
+    width: '100%',
+    paddingVertical: 16 * scale,
+    borderRadius: 14 * scale,
+    alignItems: 'center',
+    marginBottom: 12 * scale,
+    shadowOffset: { width: 0, height: 4 * scale },
+    shadowOpacity: 0.3,
+    shadowRadius: 8 * scale,
+    elevation: 6,
+  },
+  guestSignupButtonText: {
+    fontSize: FONT_SIZES.body * scale,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  guestLoginButton: {
+    paddingVertical: 12 * scale,
+  },
+  guestLoginButtonText: {
+    fontSize: FONT_SIZES.bodySmall * scale,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20 * scale,
+  },
+  errorText: {
+    fontSize: FONT_SIZES.body * scale,
+    textAlign: 'center',
+    marginBottom: 16 * scale,
+  },
+  retryButton: {
+    paddingHorizontal: 24 * scale,
+    paddingVertical: 12 * scale,
+    borderRadius: 8 * scale,
+  },
+  retryButtonText: {
+    fontSize: FONT_SIZES.body * scale,
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+});
+
+// 스타일 캐싱 (scale 기반)
+const stylesCache = new Map<number, ReturnType<typeof createStyles>>();
+const getStyles = (scale?: number) => {
+  const s = scale ?? getScale();
+  const roundedScale = Math.round(s * 100) / 100;
+  if (!stylesCache.has(roundedScale)) {
+    stylesCache.set(roundedScale, createStyles(roundedScale));
   }
-  return _styles;
+  return stylesCache.get(roundedScale)!;
 };
 
 export default ReviewScreen;
