@@ -272,17 +272,50 @@ export const createPost = async (req: AuthRequest, res: Response) => {
 
     // emotion_id가 있는 경우 감정 연결 생성
     if (emotion_id) {
-      await db.MyDayEmotion.create({
-        post_id: newPost.get('post_id'),
-        emotion_id: emotion_id
-      }, { transaction });
+      try {
+        // 감정이 실제 존재하는지 확인
+        const emotionExists = await db.Emotion.findByPk(emotion_id, { transaction });
+        if (emotionExists) {
+          await db.MyDayEmotion.create({
+            post_id: newPost.get('post_id'),
+            emotion_id: emotion_id
+          }, { transaction });
+          console.log('✅ 감정 연결 생성 완료:', { post_id: newPost.get('post_id'), emotion_id });
+        } else {
+          console.warn('⚠️ 감정 ID가 DB에 존재하지 않음:', emotion_id, '- 기본 감정(1)으로 대체');
+          // 기본 감정(1)으로 대체 시도
+          const defaultEmotion = await db.Emotion.findByPk(1, { transaction });
+          if (defaultEmotion) {
+            await db.MyDayEmotion.create({
+              post_id: newPost.get('post_id'),
+              emotion_id: 1
+            }, { transaction });
+          }
+        }
+      } catch (emotionError) {
+        console.warn('⚠️ 감정 연결 생성 실패 (게시물 작성은 계속):', emotionError);
+      }
     }
 
-    // 사용자 통계 업데이트 - 올바른 모델명 사용
-    await db.UserStats.increment('my_day_post_count', {
-      where: { user_id },
-      transaction
-    });
+    // 사용자 통계 업데이트 - findOrCreate로 레코드 없는 경우 처리
+    try {
+      const [userStats, created] = await db.UserStats.findOrCreate({
+        where: { user_id },
+        defaults: { user_id, my_day_post_count: 1 },
+        transaction
+      });
+
+      if (!created) {
+        await db.UserStats.increment('my_day_post_count', {
+          where: { user_id },
+          transaction
+        });
+      }
+      console.log('✅ 사용자 통계 업데이트 완료:', { user_id, created });
+    } catch (statsError) {
+      // 통계 업데이트 실패해도 게시물 작성은 계속 진행
+      console.warn('⚠️ 사용자 통계 업데이트 실패 (게시물 작성은 계속):', statsError);
+    }
 
     await transaction.commit();
     console.log('트랜잭션 커밋 완료');
@@ -304,8 +337,15 @@ export const createPost = async (req: AuthRequest, res: Response) => {
     if (transaction) {
       await transaction.rollback();
     }
-    
-    console.error('게시물 생성 오류:', error);
+
+    // 상세 오류 로깅
+    console.error('❌ 게시물 생성 오류:', {
+      errorMessage: error instanceof Error ? error.message : '알 수 없는 오류',
+      errorName: error instanceof Error ? error.name : 'Unknown',
+      errorStack: error instanceof Error ? error.stack?.split('\n').slice(0, 3).join('\n') : '',
+      user_id: req.user?.user_id,
+      content_length: req.body?.content?.length
+    });
 
     // 외래키 제약 조건 오류 처리
     if (typeof error === 'object' && error !== null && 'name' in error) {
