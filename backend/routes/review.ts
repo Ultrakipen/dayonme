@@ -21,7 +21,16 @@ import {
   getNightFragments,
   getDailyComfortQuote,
   getEmotionEcho,
-  getEmotionColorPalette
+  getEmotionColorPalette,
+  getAIEmotionAnalysis,
+  getWeeklyGoal,
+  setWeeklyGoal,
+  getPersonalBest,
+  getMoodPlaylist,
+  getAnonymousQA,
+  createAnonymousQuestion,
+  createAnonymousAnswer,
+  likeAnonymousQuestion
 } from '../controllers/reviewController';
 
 const router = Router();
@@ -104,6 +113,40 @@ router.get('/emotion-echo', authMiddleware, getEmotionEcho);
 // 감정 색상 팔레트
 // GET /api/review/emotion-color-palette
 router.get('/emotion-color-palette', authMiddleware, getEmotionColorPalette);
+
+// ==================== MZ 트렌드 신규 API ====================
+
+// AI 감정 분석
+// GET /api/review/ai-analysis
+router.get('/ai-analysis', authMiddleware, getAIEmotionAnalysis);
+
+// 주간 목표
+// GET /api/review/weekly-goal
+router.get('/weekly-goal', authMiddleware, getWeeklyGoal);
+
+// POST /api/review/weekly-goal
+router.post('/weekly-goal', authMiddleware, setWeeklyGoal);
+
+// 나의 최고 기록
+// GET /api/review/personal-best?period=week|month|year
+router.get('/personal-best', authMiddleware, getPersonalBest);
+
+// 감정 맞춤 플레이리스트
+// GET /api/review/mood-playlist
+router.get('/mood-playlist', authMiddleware, getMoodPlaylist);
+
+// 익명 Q&A
+// GET /api/review/anonymous-qa?limit=10&offset=0
+router.get('/anonymous-qa', authMiddleware, getAnonymousQA);
+
+// POST /api/review/anonymous-qa/question
+router.post('/anonymous-qa/question', authMiddleware, createAnonymousQuestion);
+
+// POST /api/review/anonymous-qa/:questionId/answer
+router.post('/anonymous-qa/:questionId/answer', authMiddleware, createAnonymousAnswer);
+
+// POST /api/review/anonymous-qa/:questionId/like
+router.post('/anonymous-qa/:questionId/like', authMiddleware, likeAnonymousQuestion);
 
 export default router;
 

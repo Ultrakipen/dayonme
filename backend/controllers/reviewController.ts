@@ -1946,3 +1946,623 @@ export const getReviewBatchData = async (req: AuthRequest, res: Response) => {
     });
   }
 };
+
+/**
+ * AI 감정 분석 - 사용자의 감정 패턴 분석 및 인사이트 제공
+ */
+export const getAIEmotionAnalysis = async (req: AuthRequest, res: Response) => {
+  try {
+    const user_id = req.user?.user_id;
+    const { period = 'week' } = req.query;
+
+    if (!user_id) {
+      return res.status(401).json({ status: 'error', message: '인증이 필요합니다' });
+    }
+
+    const cacheKey = `ai_analysis_${user_id}_${period}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) {
+      return res.json(cached);
+    }
+
+    // 기간 계산
+    const endDate = new Date();
+    const startDate = new Date();
+    switch (period) {
+      case 'week': startDate.setDate(endDate.getDate() - 7); break;
+      case 'month': startDate.setDate(endDate.getDate() - 30); break;
+      case 'year': startDate.setDate(endDate.getDate() - 365); break;
+    }
+
+    // 감정 데이터 조회
+    const emotionData = await db.sequelize.query<any>(
+      `SELECT
+        e.name, e.icon, e.temperature, e.color,
+        COUNT(*) as count,
+        DATE(p.created_at) as date
+       FROM my_day_posts p
+       JOIN my_day_emotions pe ON p.post_id = pe.post_id
+       JOIN emotions e ON pe.emotion_id = e.emotion_id
+       WHERE p.user_id = ? AND p.created_at BETWEEN ? AND ?
+       GROUP BY e.emotion_id, DATE(p.created_at)
+       ORDER BY date ASC`,
+      { replacements: [user_id, startDate, endDate], type: QueryTypes.SELECT }
+    );
+
+    if (!emotionData.length) {
+      return res.json({
+        status: 'success',
+        data: {
+          summary: '아직 분석할 감정 기록이 부족해요. 꾸준히 기록해주세요!',
+          emotionTrend: 'stable',
+          suggestion: '매일 감정을 기록하면 더 정확한 분석이 가능해요.',
+          keywords: [],
+          confidence: 0
+        }
+      });
+    }
+
+    // 감정 트렌드 분석
+    const emotionCounts: Record<string, number> = {};
+    const temperatureHistory: number[] = [];
+    const keywords: string[] = [];
+
+    emotionData.forEach((row: any) => {
+      emotionCounts[row.name] = (emotionCounts[row.name] || 0) + Number(row.count);
+      temperatureHistory.push(Number(row.temperature || 36.5));
+      if (!keywords.includes(row.name)) keywords.push(row.name);
+    });
+
+    const sortedEmotions = Object.entries(emotionCounts)
+      .sort((a, b) => b[1] - a[1]);
+
+    const topEmotion = sortedEmotions[0]?.[0] || '평온';
+    const totalCount = Object.values(emotionCounts).reduce((a, b) => a + b, 0);
+
+    // 트렌드 계산 (전반부 vs 후반부 비교)
+    const midPoint = Math.floor(temperatureHistory.length / 2);
+    const firstHalf = temperatureHistory.slice(0, midPoint);
+    const secondHalf = temperatureHistory.slice(midPoint);
+
+    const firstAvg = firstHalf.length ? firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length : 36.5;
+    const secondAvg = secondHalf.length ? secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length : 36.5;
+
+    let emotionTrend: 'improving' | 'stable' | 'declining' = 'stable';
+    if (secondAvg - firstAvg > 0.3) emotionTrend = 'improving';
+    else if (firstAvg - secondAvg > 0.3) emotionTrend = 'declining';
+
+    // AI 스타일 분석 메시지 생성
+    const periodLabel = period === 'week' ? '이번 주' : period === 'month' ? '이번 달' : '올해';
+    let summary = '';
+    let suggestion = '';
+
+    const positiveEmotions = ['행복', '기쁨', '희망', '설렘', '감사', '평온', '사랑'];
+    const positiveRatio = sortedEmotions
+      .filter(([name]) => positiveEmotions.includes(name))
+      .reduce((sum, [, count]) => sum + count, 0) / totalCount * 100;
+
+    if (positiveRatio >= 70) {
+      summary = `${periodLabel} 당신은 대체로 긍정적인 감정 상태를 유지했어요. 특히 '${topEmotion}'의 감정이 가장 많이 나타났네요. 이 좋은 에너지를 계속 유지해보세요!`;
+      suggestion = '현재의 긍정적인 상태를 기록으로 남기면, 힘들 때 다시 읽어보며 힘을 얻을 수 있어요.';
+    } else if (positiveRatio >= 40) {
+      summary = `${periodLabel} 당신은 다양한 감정을 경험했어요. '${topEmotion}'의 감정이 자주 나타났고, 감정의 변화가 자연스럽게 흘러갔어요.`;
+      suggestion = '다양한 감정을 느끼는 것은 건강한 신호예요. 각 감정을 소중히 여기며 기록해보세요.';
+    } else {
+      summary = `${periodLabel} 당신에게는 조금 힘든 시간이었을 수 있어요. '${topEmotion}'의 감정이 많이 나타났네요. 당신의 감정은 모두 소중해요.`;
+      suggestion = '힘든 감정도 기록하면 마음이 정리될 수 있어요. 작은 긍정적인 순간도 찾아 기록해보세요.';
+    }
+
+    // 신뢰도 계산 (데이터 양 기반)
+    const confidence = Math.min(Math.round((totalCount / 20) * 100), 95);
+
+    const response = {
+      status: 'success',
+      data: {
+        summary,
+        emotionTrend,
+        suggestion,
+        keywords: keywords.slice(0, 5),
+        confidence
+      }
+    };
+
+    setCachedData(cacheKey, response);
+    res.json(response);
+
+  } catch (error) {
+    console.error('AI 감정 분석 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
+    res.status(500).json({ status: 'error', message: 'AI 감정 분석에 실패했습니다' });
+  }
+};
+
+/**
+ * 주간 목표 조회
+ */
+export const getWeeklyGoal = async (req: AuthRequest, res: Response) => {
+  try {
+    const user_id = req.user?.user_id;
+
+    if (!user_id) {
+      return res.status(401).json({ status: 'error', message: '인증이 필요합니다' });
+    }
+
+    // 현재 주의 목표 조회
+    const goal = await db.sequelize.query<any>(
+      `SELECT * FROM weekly_goals
+       WHERE user_id = ? AND end_date >= CURDATE()
+       ORDER BY created_at DESC LIMIT 1`,
+      { replacements: [user_id], type: QueryTypes.SELECT }
+    );
+
+    if (!goal.length) {
+      return res.json({ status: 'success', data: null });
+    }
+
+    res.json({
+      status: 'success',
+      data: goal[0]
+    });
+
+  } catch (error) {
+    console.error('주간 목표 조회 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
+    // 테이블 없는 경우에도 정상 응답
+    res.json({ status: 'success', data: null });
+  }
+};
+
+/**
+ * 주간 목표 설정
+ */
+export const setWeeklyGoal = async (req: AuthRequest, res: Response) => {
+  try {
+    const user_id = req.user?.user_id;
+    const { goal, targetCount, startDate, endDate } = req.body;
+
+    if (!user_id) {
+      return res.status(401).json({ status: 'error', message: '인증이 필요합니다' });
+    }
+
+    if (!goal || !targetCount) {
+      return res.status(400).json({ status: 'error', message: '목표와 목표 횟수를 입력해주세요' });
+    }
+
+    // 테이블 생성 (없으면)
+    await db.sequelize.query(`
+      CREATE TABLE IF NOT EXISTS weekly_goals (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        goal VARCHAR(200) NOT NULL,
+        target_count INT NOT NULL DEFAULT 5,
+        current_count INT NOT NULL DEFAULT 0,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        completed BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_user_goals (user_id, end_date)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // 기존 목표 삭제
+    await db.sequelize.query(
+      `DELETE FROM weekly_goals WHERE user_id = ? AND end_date >= CURDATE()`,
+      { replacements: [user_id] }
+    );
+
+    // 새 목표 추가
+    await db.sequelize.query(
+      `INSERT INTO weekly_goals (user_id, goal, target_count, start_date, end_date)
+       VALUES (?, ?, ?, ?, ?)`,
+      { replacements: [user_id, goal, targetCount, startDate, endDate] }
+    );
+
+    res.json({
+      status: 'success',
+      data: { goal, targetCount, currentCount: 0, startDate, endDate, completed: false }
+    });
+
+  } catch (error) {
+    console.error('주간 목표 설정 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
+    res.status(500).json({ status: 'error', message: '주간 목표 설정에 실패했습니다' });
+  }
+};
+
+/**
+ * 개인 최고 기록 조회
+ */
+export const getPersonalBest = async (req: AuthRequest, res: Response) => {
+  try {
+    const user_id = req.user?.user_id;
+    const { period = 'week' } = req.query;
+
+    if (!user_id) {
+      return res.status(401).json({ status: 'error', message: '인증이 필요합니다' });
+    }
+
+    const cacheKey = `personal_best_${user_id}_${period}`;
+    const cached = getCachedData(cacheKey);
+    if (cached) return res.json(cached);
+
+    // 현재 스트릭
+    const streakResult = await db.sequelize.query<any>(
+      `SELECT current_streak, longest_streak FROM user_streaks WHERE user_id = ?`,
+      { replacements: [user_id], type: QueryTypes.SELECT }
+    );
+    const currentStreak = streakResult[0]?.current_streak || 0;
+    const bestStreak = streakResult[0]?.longest_streak || 0;
+
+    // 이번 주 게시물 수
+    const weekPostsResult = await db.sequelize.query<any>(
+      `SELECT COUNT(*) as count FROM my_day_posts
+       WHERE user_id = ? AND created_at >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)`,
+      { replacements: [user_id], type: QueryTypes.SELECT }
+    );
+    const currentWeekPosts = weekPostsResult[0]?.count || 0;
+
+    // 역대 최고 주간 게시물
+    const bestWeekResult = await db.sequelize.query<any>(
+      `SELECT MAX(weekly_count) as max_count FROM (
+        SELECT YEARWEEK(created_at) as week, COUNT(*) as weekly_count
+        FROM my_day_posts WHERE user_id = ?
+        GROUP BY YEARWEEK(created_at)
+      ) as weekly_stats`,
+      { replacements: [user_id], type: QueryTypes.SELECT }
+    );
+    const bestWeekPosts = bestWeekResult[0]?.max_count || 0;
+
+    // 이번 달 좋아요 수
+    const monthLikesResult = await db.sequelize.query<any>(
+      `SELECT COUNT(*) as count FROM my_day_likes
+       WHERE post_id IN (SELECT post_id FROM my_day_posts WHERE user_id = ?)
+       AND created_at >= DATE_FORMAT(CURDATE(), '%Y-%m-01')`,
+      { replacements: [user_id], type: QueryTypes.SELECT }
+    );
+    const currentMonthLikes = monthLikesResult[0]?.count || 0;
+
+    // 역대 최고 월간 좋아요
+    const bestMonthLikesResult = await db.sequelize.query<any>(
+      `SELECT MAX(monthly_likes) as max_likes FROM (
+        SELECT DATE_FORMAT(l.created_at, '%Y-%m') as month, COUNT(*) as monthly_likes
+        FROM my_day_likes l
+        JOIN my_day_posts p ON l.post_id = p.post_id
+        WHERE p.user_id = ?
+        GROUP BY DATE_FORMAT(l.created_at, '%Y-%m')
+      ) as monthly_stats`,
+      { replacements: [user_id], type: QueryTypes.SELECT }
+    );
+    const bestMonthLikes = bestMonthLikesResult[0]?.max_likes || 0;
+
+    // 긍정 비율
+    const positiveEmotions = ['행복', '기쁨', '희망', '설렘', '감사', '평온', '사랑'];
+    const positiveRatioResult = await db.sequelize.query<any>(
+      `SELECT
+        COUNT(CASE WHEN e.name IN (?) THEN 1 END) * 100.0 / NULLIF(COUNT(*), 0) as ratio
+       FROM my_day_posts p
+       JOIN my_day_emotions pe ON p.post_id = pe.post_id
+       JOIN emotions e ON pe.emotion_id = e.emotion_id
+       WHERE p.user_id = ? AND p.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
+      { replacements: [positiveEmotions.join("','"), user_id], type: QueryTypes.SELECT }
+    );
+    const currentPositiveRatio = Math.round(positiveRatioResult[0]?.ratio || 0);
+
+    // 역대 최고 긍정 비율 (주간 기준)
+    const bestPositiveResult = await db.sequelize.query<any>(
+      `SELECT MAX(positive_ratio) as max_ratio FROM (
+        SELECT YEARWEEK(p.created_at) as week,
+          COUNT(CASE WHEN e.name IN ('행복','기쁨','희망','설렘','감사','평온','사랑') THEN 1 END) * 100.0 / COUNT(*) as positive_ratio
+        FROM my_day_posts p
+        JOIN my_day_emotions pe ON p.post_id = pe.post_id
+        JOIN emotions e ON pe.emotion_id = e.emotion_id
+        WHERE p.user_id = ?
+        GROUP BY YEARWEEK(p.created_at)
+        HAVING COUNT(*) >= 3
+      ) as weekly_ratios`,
+      { replacements: [user_id], type: QueryTypes.SELECT }
+    );
+    const bestPositiveRatio = Math.round(bestPositiveResult[0]?.max_ratio || 0);
+
+    // 최근 달성 배지
+    const achievementsResult = await db.sequelize.query<any>(
+      `SELECT achievement_type as type, achievement_name as title, earned_at,
+        CASE WHEN earned_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN TRUE ELSE FALSE END as isNew
+       FROM user_achievements WHERE user_id = ? ORDER BY earned_at DESC LIMIT 5`,
+      { replacements: [user_id], type: QueryTypes.SELECT }
+    );
+
+    const response = {
+      status: 'success',
+      data: {
+        currentStreak,
+        bestStreak,
+        currentWeekPosts,
+        bestWeekPosts,
+        currentMonthLikes,
+        bestMonthLikes,
+        currentPositiveRatio,
+        bestPositiveRatio,
+        achievements: achievementsResult.map((a: any) => ({
+          type: a.type,
+          title: a.title,
+          isNew: !!a.isNew
+        }))
+      }
+    };
+
+    setCachedData(cacheKey, response);
+    res.json(response);
+
+  } catch (error) {
+    console.error('개인 최고 기록 조회 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
+    res.json({
+      status: 'success',
+      data: {
+        currentStreak: 0, bestStreak: 0,
+        currentWeekPosts: 0, bestWeekPosts: 0,
+        currentMonthLikes: 0, bestMonthLikes: 0,
+        currentPositiveRatio: 0, bestPositiveRatio: 0,
+        achievements: []
+      }
+    });
+  }
+};
+
+/**
+ * 감정 맞춤 플레이리스트
+ */
+export const getMoodPlaylist = async (req: AuthRequest, res: Response) => {
+  try {
+    const user_id = req.user?.user_id;
+
+    if (!user_id) {
+      return res.status(401).json({ status: 'error', message: '인증이 필요합니다' });
+    }
+
+    // 사용자의 최근 감정 조회
+    const recentEmotion = await db.sequelize.query<any>(
+      `SELECT e.name, e.icon FROM my_day_posts p
+       JOIN my_day_emotions pe ON p.post_id = pe.post_id
+       JOIN emotions e ON pe.emotion_id = e.emotion_id
+       WHERE p.user_id = ? ORDER BY p.created_at DESC LIMIT 1`,
+      { replacements: [user_id], type: QueryTypes.SELECT }
+    );
+
+    const emotion = recentEmotion[0]?.name || '평온';
+    const emotionIcon = recentEmotion[0]?.icon || '😊';
+
+    // 감정별 플레이리스트 매핑
+    const playlistMap: Record<string, any[]> = {
+      '행복': [
+        { id: '1', name: 'Happy Vibes', description: '기분 좋은 하루를 위한 음악', spotifyUrl: 'https://open.spotify.com/playlist/37i9dQZF1DXdPec7aLTmlC' },
+        { id: '2', name: 'Good Energy', description: '긍정 에너지 팝송', spotifyUrl: 'https://open.spotify.com/playlist/37i9dQZF1DX3rxVfibe1L0' },
+      ],
+      '슬픔': [
+        { id: '3', name: 'Sad Songs', description: '마음을 어루만지는 노래', spotifyUrl: 'https://open.spotify.com/playlist/37i9dQZF1DX7qK8ma5wgG1' },
+        { id: '4', name: 'Healing', description: '치유의 멜로디', spotifyUrl: 'https://open.spotify.com/playlist/37i9dQZF1DX3YSRoSdA634' },
+      ],
+      '불안': [
+        { id: '5', name: 'Calm Down', description: '마음을 진정시키는 음악', spotifyUrl: 'https://open.spotify.com/playlist/37i9dQZF1DWXe9gFZP0gtP' },
+        { id: '6', name: 'Deep Focus', description: '집중과 안정', spotifyUrl: 'https://open.spotify.com/playlist/37i9dQZF1DWZeKCadgRdKQ' },
+      ],
+      '평온': [
+        { id: '7', name: 'Peaceful Piano', description: '평화로운 피아노', spotifyUrl: 'https://open.spotify.com/playlist/37i9dQZF1DX4sWSpwq3LiO' },
+        { id: '8', name: 'Chill Vibes', description: '편안한 휴식', spotifyUrl: 'https://open.spotify.com/playlist/37i9dQZF1DWZqd5JICZI0u' },
+      ],
+    };
+
+    const playlists = playlistMap[emotion] || playlistMap['평온'];
+
+    res.json({
+      status: 'success',
+      data: {
+        currentEmotion: emotion,
+        emotionIcon,
+        playlists
+      }
+    });
+
+  } catch (error) {
+    console.error('플레이리스트 조회 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
+    res.status(500).json({ status: 'error', message: '플레이리스트를 불러오는데 실패했습니다' });
+  }
+};
+
+/**
+ * 익명 Q&A 목록 조회
+ */
+export const getAnonymousQA = async (req: AuthRequest, res: Response) => {
+  try {
+    const user_id = req.user?.user_id;
+    const { limit = 10, offset = 0 } = req.query;
+
+    if (!user_id) {
+      return res.status(401).json({ status: 'error', message: '인증이 필요합니다' });
+    }
+
+    // 테이블 생성
+    await db.sequelize.query(`
+      CREATE TABLE IF NOT EXISTS anonymous_qa (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        question VARCHAR(300) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_qa_user (user_id),
+        INDEX idx_qa_date (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await db.sequelize.query(`
+      CREATE TABLE IF NOT EXISTS anonymous_qa_answers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        question_id INT NOT NULL,
+        user_id INT NOT NULL,
+        content VARCHAR(500) NOT NULL,
+        like_count INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_answer_question (question_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await db.sequelize.query(`
+      CREATE TABLE IF NOT EXISTS anonymous_qa_likes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        question_id INT NOT NULL,
+        user_id INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_like (question_id, user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // 질문 목록 조회
+    const questions = await db.sequelize.query<any>(
+      `SELECT q.id, q.question, q.created_at,
+        (SELECT COUNT(*) FROM anonymous_qa_answers WHERE question_id = q.id) as answerCount,
+        (SELECT COUNT(*) FROM anonymous_qa_likes WHERE question_id = q.id) as likeCount,
+        EXISTS(SELECT 1 FROM anonymous_qa_likes WHERE question_id = q.id AND user_id = ?) as isLiked,
+        (SELECT content FROM anonymous_qa_answers WHERE question_id = q.id ORDER BY like_count DESC LIMIT 1) as topAnswerContent,
+        (SELECT like_count FROM anonymous_qa_answers WHERE question_id = q.id ORDER BY like_count DESC LIMIT 1) as topAnswerLikes
+       FROM anonymous_qa q
+       ORDER BY q.created_at DESC
+       LIMIT ? OFFSET ?`,
+      { replacements: [user_id, Number(limit), Number(offset)], type: QueryTypes.SELECT }
+    );
+
+    const totalResult = await db.sequelize.query<any>(
+      `SELECT COUNT(*) as count FROM anonymous_qa`,
+      { type: QueryTypes.SELECT }
+    );
+
+    res.json({
+      status: 'success',
+      data: {
+        questions: questions.map((q: any) => ({
+          id: q.id,
+          question: q.question,
+          answerCount: q.answerCount || 0,
+          likeCount: q.likeCount || 0,
+          isLiked: !!q.isLiked,
+          createdAt: q.created_at,
+          topAnswer: q.topAnswerContent ? {
+            content: q.topAnswerContent,
+            likeCount: q.topAnswerLikes || 0
+          } : null
+        })),
+        totalCount: totalResult[0]?.count || 0
+      }
+    });
+
+  } catch (error) {
+    console.error('익명 Q&A 조회 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
+    res.json({
+      status: 'success',
+      data: { questions: [], totalCount: 0 }
+    });
+  }
+};
+
+/**
+ * 익명 질문 등록
+ */
+export const createAnonymousQuestion = async (req: AuthRequest, res: Response) => {
+  try {
+    const user_id = req.user?.user_id;
+    const { question } = req.body;
+
+    if (!user_id) {
+      return res.status(401).json({ status: 'error', message: '인증이 필요합니다' });
+    }
+
+    if (!question || question.trim().length === 0) {
+      return res.status(400).json({ status: 'error', message: '질문을 입력해주세요' });
+    }
+
+    if (question.length > 200) {
+      return res.status(400).json({ status: 'error', message: '질문은 200자 이내로 입력해주세요' });
+    }
+
+    await db.sequelize.query(
+      `INSERT INTO anonymous_qa (user_id, question) VALUES (?, ?)`,
+      { replacements: [user_id, question.trim()] }
+    );
+
+    res.json({
+      status: 'success',
+      message: '질문이 등록되었습니다'
+    });
+
+  } catch (error) {
+    console.error('질문 등록 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
+    res.status(500).json({ status: 'error', message: '질문 등록에 실패했습니다' });
+  }
+};
+
+/**
+ * 익명 답변 등록
+ */
+export const createAnonymousAnswer = async (req: AuthRequest, res: Response) => {
+  try {
+    const user_id = req.user?.user_id;
+    const { questionId } = req.params;
+    const { content } = req.body;
+
+    if (!user_id) {
+      return res.status(401).json({ status: 'error', message: '인증이 필요합니다' });
+    }
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ status: 'error', message: '답변을 입력해주세요' });
+    }
+
+    await db.sequelize.query(
+      `INSERT INTO anonymous_qa_answers (question_id, user_id, content) VALUES (?, ?, ?)`,
+      { replacements: [questionId, user_id, content.trim()] }
+    );
+
+    res.json({
+      status: 'success',
+      message: '답변이 등록되었습니다'
+    });
+
+  } catch (error) {
+    console.error('답변 등록 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
+    res.status(500).json({ status: 'error', message: '답변 등록에 실패했습니다' });
+  }
+};
+
+/**
+ * 익명 Q&A 좋아요
+ */
+export const likeAnonymousQuestion = async (req: AuthRequest, res: Response) => {
+  try {
+    const user_id = req.user?.user_id;
+    const { questionId } = req.params;
+
+    if (!user_id) {
+      return res.status(401).json({ status: 'error', message: '인증이 필요합니다' });
+    }
+
+    // 이미 좋아요 했는지 확인
+    const existing = await db.sequelize.query<any>(
+      `SELECT id FROM anonymous_qa_likes WHERE question_id = ? AND user_id = ?`,
+      { replacements: [questionId, user_id], type: QueryTypes.SELECT }
+    );
+
+    if (existing.length > 0) {
+      // 좋아요 취소
+      await db.sequelize.query(
+        `DELETE FROM anonymous_qa_likes WHERE question_id = ? AND user_id = ?`,
+        { replacements: [questionId, user_id] }
+      );
+      res.json({ status: 'success', message: '좋아요가 취소되었습니다', liked: false });
+    } else {
+      // 좋아요 추가
+      await db.sequelize.query(
+        `INSERT INTO anonymous_qa_likes (question_id, user_id) VALUES (?, ?)`,
+        { replacements: [questionId, user_id] }
+      );
+      res.json({ status: 'success', message: '좋아요가 추가되었습니다', liked: true });
+    }
+
+  } catch (error) {
+    console.error('좋아요 처리 오류:', error instanceof Error ? error.message : '알 수 없는 오류');
+    res.status(500).json({ status: 'error', message: '좋아요 처리에 실패했습니다' });
+  }
+};
