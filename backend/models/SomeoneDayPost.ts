@@ -10,6 +10,7 @@ interface SomeoneDayPostAttributes {
  summary?: string;
  image_url?: string | null;
  is_anonymous: boolean;
+ anonymous_emotion_id?: number | null; // 익명 게시물용 감정 ID
  character_count?: number;
  like_count: number;
  comment_count: number;
@@ -35,6 +36,7 @@ class SomeoneDayPost extends Model<SomeoneDayPostAttributes> {
  public summary?: string;
  public image_url?: string | null;
  public is_anonymous!: boolean;
+ public anonymous_emotion_id?: number | null;
  public character_count?: number;
  public like_count!: number;
  public comment_count!: number;
@@ -95,6 +97,12 @@ public static initialize(sequelize: Sequelize) {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false
+      },
+      anonymous_emotion_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+        comment: '익명 게시물용 감정 ID (1-20)'
       },
       character_count: {
         type: DataTypes.INTEGER,

@@ -47,6 +47,9 @@ import UserStats from './UserStats';
 import UserIntention from './UserIntention';
 import Bookmark from './Bookmark';
 import Notice from './Notice';
+import ChallengeCompletion from './ChallengeCompletion';
+import ChallengeEncouragement from './ChallengeEncouragement';
+import EmotionReport from './EmotionReport';
 
 // Sequelize 설정
 const sequelizeConfig = config.database.dialect === 'sqlite' 
@@ -130,6 +133,9 @@ export class Database {
   public SomeoneDayReaction!: typeof SomeoneDayReaction;
   public Bookmark!: typeof Bookmark;
   public Notice!: typeof Notice;
+  public ChallengeCompletion!: typeof ChallengeCompletion;
+  public ChallengeEncouragement!: typeof ChallengeEncouragement;
+  public EmotionReport!: typeof EmotionReport;
 
   constructor(sequelizeInstance: Sequelize) {
     if (!sequelizeInstance) {
@@ -186,6 +192,9 @@ export class Database {
       this.SomeoneDayReaction = SomeoneDayReaction.initModel(this.sequelize);
       this.Bookmark = Bookmark.initialize(this.sequelize);
       this.Notice = Notice.initialize(this.sequelize);
+      this.ChallengeCompletion = ChallengeCompletion.initialize(this.sequelize);
+      this.ChallengeEncouragement = ChallengeEncouragement.initialize(this.sequelize);
+      this.EmotionReport = EmotionReport.initialize(this.sequelize);
 
       console.log('모든 모델이 성공적으로 초기화되었습니다');
     } catch (error) {
@@ -239,7 +248,10 @@ export class Database {
         ReactionType: this.ReactionType,
         MyDayReaction: this.MyDayReaction,
         SomeoneDayReaction: this.SomeoneDayReaction,
-        Bookmark: this.Bookmark
+        Bookmark: this.Bookmark,
+        ChallengeCompletion: this.ChallengeCompletion,
+        ChallengeEncouragement: this.ChallengeEncouragement,
+        EmotionReport: this.EmotionReport
       };
 
       Object.values(models).forEach((model: any) => {
@@ -330,7 +342,10 @@ export {
   MyDayReaction,
   SomeoneDayReaction,
   Bookmark,
-  Notice
+  Notice,
+  ChallengeCompletion,
+  ChallengeEncouragement,
+  EmotionReport
 };
 
 export default db;

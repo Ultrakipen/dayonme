@@ -221,13 +221,11 @@ export const createPost = async (req: AuthRequest, res: Response) => {
     
     // emotion_id가 있는 경우에만 감정 유효성 검사
     if (emotion_id) {
-      // 🔧 TEMPORARY FIX: 새로운 감정 ID들 (1-17)은 직접 허용
-      const validEmotionIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
-      
-      if (validEmotionIds.includes(emotion_id)) {
-        console.log(`✅ 새로운 감정 ID ${emotion_id} 허용 (임시 수정)`);
+      // 감정 ID 1-20 허용 (DB에 20개 감정 모두 존재)
+      if (emotion_id >= 1 && emotion_id <= 20) {
+        console.log(`✅ 감정 ID ${emotion_id} 허용`);
       } else {
-        // 기존 데이터베이스 검증 로직 (구식 감정 ID들용)
+        // 범위 외 ID는 DB 검증
         const emotion = await db.Emotion.findByPk(emotion_id, { transaction });
         if (!emotion) {
           await transaction.rollback();
@@ -1419,10 +1417,9 @@ export const updatePost = async (req: AuthRequestGeneric<CreatePostBody, never, 
 
     // emotion_id 유효성 검사 (제공된 경우만)
     if (emotion_id) {
-      const validEmotionIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
-      
-      if (validEmotionIds.includes(emotion_id)) {
-        console.log(`✅ 새로운 감정 ID ${emotion_id} 허용 (임시 수정)`);
+      // 감정 ID 1-20 허용 (DB에 20개 감정 모두 존재)
+      if (emotion_id >= 1 && emotion_id <= 20) {
+        console.log(`✅ 감정 ID ${emotion_id} 허용`);
       } else {
         const emotion = await db.Emotion.findByPk(emotion_id, { transaction });
         if (!emotion) {

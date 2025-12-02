@@ -13,6 +13,7 @@ interface ComfortWallPost {
   title: string;
   content: string;
   is_anonymous?: boolean;
+  anonymous_emotion_id?: number | null; // 익명 게시물용 감정 ID (1-20)
   image_url?: string;
   images?: string[];
   emotion_ids?: number[];
@@ -98,7 +99,7 @@ const comfortWallController = {
   ) => {
     const transaction = await db.sequelize.transaction();
     try {
-      const { title, content, is_anonymous, image_url, images, emotion_ids, tag_ids, tags } = req.body;
+      const { title, content, is_anonymous, anonymous_emotion_id, image_url, images, emotion_ids, tag_ids, tags } = req.body;
       const user_id = req.user?.user_id;
     
       if (!user_id) {
@@ -152,6 +153,13 @@ const comfortWallController = {
         console.log('📷 단일 이미지 저장');
       }
 
+      // 익명 게시물인데 감정이 선택되지 않은 경우 랜덤 배정
+      let finalEmotionId = anonymous_emotion_id;
+      if (is_anonymous && !finalEmotionId) {
+        finalEmotionId = Math.floor(Math.random() * 20) + 1; // 1-20 랜덤
+        console.log('🎲 익명 감정 랜덤 배정:', finalEmotionId);
+      }
+
       // 실제 환경에서 게시물 생성
       const post = await db.SomeoneDayPost.create({
         user_id,
@@ -159,6 +167,7 @@ const comfortWallController = {
         content: content.trim(),
         summary: content.substring(0, 200),
         is_anonymous: is_anonymous || false,
+        anonymous_emotion_id: is_anonymous ? finalEmotionId : null,
         image_url: finalImageUrl,
         character_count: content.length,
         like_count: 0,
@@ -218,7 +227,8 @@ const comfortWallController = {
         status: 'success',
         message: "위로와 공감 게시물이 성공적으로 생성되었습니다.",
         data: {
-          post_id: post.get('post_id')
+          post_id: post.get('post_id'),
+          anonymous_emotion_id: post.get('anonymous_emotion_id')
         }
       });
     } catch (error) {
@@ -2085,7 +2095,7 @@ const comfortWallController = {
   ) => {
     const transaction = await db.sequelize.transaction();
     try {
-      const { title, content, is_anonymous, image_url, images, tag_ids, tags } = req.body;
+      const { title, content, is_anonymous, anonymous_emotion_id, image_url, images, tag_ids, tags } = req.body;
       const postId = Number(req.params.id);
       const user_id = req.user?.user_id;
 
@@ -2144,12 +2154,21 @@ const comfortWallController = {
         console.log('📷 수정 - 단일 이미지 저장');
       }
 
+      // 익명 감정 ID 처리
+      let finalEmotionId = anonymous_emotion_id;
+      if (is_anonymous && !finalEmotionId) {
+        // 익명이고 감정이 없으면 기존 값 유지 또는 랜덤 배정
+        const existingEmotionId = post.get('anonymous_emotion_id');
+        finalEmotionId = existingEmotionId || Math.floor(Math.random() * 20) + 1;
+      }
+
       // 게시물 업데이트
       await post.update({
         title: title.trim(),
         content: content.trim(),
         summary: content.substring(0, 200),
         is_anonymous: is_anonymous || false,
+        anonymous_emotion_id: is_anonymous ? finalEmotionId : null,
         image_url: finalImageUrl,
         character_count: content.length,
         updated_at: new Date()
