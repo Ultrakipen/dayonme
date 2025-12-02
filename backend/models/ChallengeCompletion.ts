@@ -99,11 +99,7 @@ class ChallengeCompletion extends Model<ChallengeCompletionAttributes> {
         sequelize,
         tableName: 'challenge_completions',
         timestamps: false,
-        indexes: [
-          { fields: ['user_id', 'challenge_id'] },
-          { fields: ['completion_type'] },
-          { fields: ['completed_at'] },
-        ],
+        // 인덱스는 마이그레이션으로 수동 생성 (DB 유저 ALTER 권한 없음)
       }
     );
   }

@@ -76,12 +76,7 @@ class ChallengeEncouragement extends Model<ChallengeEncouragementAttributes> {
         sequelize,
         tableName: 'challenge_encouragements',
         timestamps: false,
-        indexes: [
-          { fields: ['challenge_id'] },
-          { fields: ['receiver_id', 'is_read'] },
-          { fields: ['sender_id'] },
-          { fields: ['sent_at'] },
-        ],
+        // 인덱스는 마이그레이션으로 수동 생성 (DB 유저 ALTER 권한 없음)
       }
     );
   }

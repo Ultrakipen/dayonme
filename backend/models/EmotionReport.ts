@@ -146,10 +146,7 @@ class EmotionReport extends Model<EmotionReportAttributes> {
         sequelize,
         tableName: 'emotion_reports',
         timestamps: false,
-        indexes: [
-          { fields: ['user_id', 'report_type'] },
-          { fields: ['generated_at'] },
-        ],
+        // 인덱스는 마이그레이션으로 수동 생성 (DB 유저 ALTER 권한 없음)
       }
     );
   }
