@@ -522,8 +522,8 @@ export const getPosts = async (req: AuthRequestGeneric<never, PostQuery>, res: R
           }
 
           // Sequelize underscored: true일 때 created_at/updated_at 필드 확실하게 가져오기
-          const createdAtValue = post.createdAt || postData.created_at || postData.createdAt || new Date();
-          const updatedAtValue = post.updatedAt || postData.updated_at || postData.updatedAt || createdAtValue;
+          const createdAtValue = post.get('created_at') || postData.created_at || new Date();
+          const updatedAtValue = post.get('updated_at') || postData.updated_at || createdAtValue;
 
           const result = {
             ...postData,
