@@ -5,6 +5,7 @@ import { useModernTheme } from '../../../hooks/useModernTheme';
 import reviewService from '../../../services/api/reviewService';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
+import { TwemojiImage } from '../../../components/common/TwemojiImage';
 
 interface StreakData {
   currentStreak: number;
@@ -81,7 +82,7 @@ export const StreakBadge: React.FC = React.memo(() => {
       <View style={styles.container}>
         <Animated.View style={[styles.iconNumberContainer, { opacity, marginRight: 12 * scale }]}>
           <Animated.View style={[styles.fireIcon, { transform: [{ scale: scale1 }], marginRight: 6 * scale }]}>
-            <Text style={{ fontSize: 32 * scale }}>{streak.currentStreak > 0 ? '🔥' : '😴'}</Text>
+            <TwemojiImage emoji={streak.currentStreak > 0 ? '🔥' : '😴'} size={32 * scale} />
           </Animated.View>
           <Text style={[styles.streakNumber, { color: colors.primary, fontSize: 26 * scale }]}>
             {streak.currentStreak}일
@@ -92,9 +93,12 @@ export const StreakBadge: React.FC = React.memo(() => {
           <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.bodyLarge * scale, marginBottom: 2 * scale, lineHeight: 20 * scale }]}>
             {streak.currentStreak > 0 ? '연속 기록중!' : '오늘 기록을 시작하세요'}
           </Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale, lineHeight: 18 * scale }]}>
-            최장 기록: {streak.longestStreak}일 🏆
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale, lineHeight: 18 * scale }]}>
+              최장 기록: {streak.longestStreak}일
+            </Text>
+            <TwemojiImage emoji="🏆" size={FONT_SIZES.caption * scale} style={{ marginLeft: 4 * scale }} />
+          </View>
         </View>
       </View>
 

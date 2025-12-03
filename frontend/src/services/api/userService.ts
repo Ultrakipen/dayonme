@@ -440,17 +440,42 @@ const userService = {
     try {
       console.log('🔄 알림 설정 조회 중...');
       const response = await apiClient.get<ApiResponse<any>>('/users/notification-settings');
-      
+
       if (response.data.status === 'success') {
         console.log('✅ 알림 설정 조회 성공');
       }
-      
+
       return response.data;
     } catch (error: any) {
       console.error('❌ 알림 설정 조회 오류:', error);
-      throw error.response?.data || { 
-        status: 'error', 
-        message: '알림 설정을 가져올 수 없습니다.' 
+      throw error.response?.data || {
+        status: 'error',
+        message: '알림 설정을 가져올 수 없습니다.'
+      };
+    }
+  },
+
+  // 프라이버시 설정 업데이트 (백엔드 /api/users/profile)
+  updatePrivacySettings: async (settings: {
+    show_profile?: boolean;
+    show_posts?: boolean;
+  }): Promise<ApiResponse<void>> => {
+    try {
+      console.log('🔄 프라이버시 설정 업데이트 중...', settings);
+      const response = await apiClient.put<ApiResponse<void>>('/users/profile', {
+        privacy_settings: settings
+      });
+
+      if (response.data.status === 'success') {
+        console.log('✅ 프라이버시 설정 업데이트 성공');
+      }
+
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ 프라이버시 설정 업데이트 오류:', error);
+      throw error.response?.data || {
+        status: 'error',
+        message: '프라이버시 설정 업데이트에 실패했습니다.'
       };
     }
   },

@@ -154,8 +154,8 @@ export const usePostsQuery = ({ isAuthenticated, processComments }: FetchPostsPa
         throw error;
       }
     },
-    staleTime: 5 * 60 * 1000, // 5분
-    gcTime: 30 * 60 * 1000, // 30분
+    staleTime: 0, // 항상 stale - invalidateQueries 시 즉시 refetch
+    gcTime: 10 * 60 * 1000, // 10분
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     retry: 2, // 실패 시 2번 재시도

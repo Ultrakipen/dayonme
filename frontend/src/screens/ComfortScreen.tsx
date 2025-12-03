@@ -21,6 +21,7 @@ import {
   Share,
   useWindowDimensions,
   Text as RNText,
+  DeviceEventEmitter,
 } from 'react-native';
 import {
   Text,
@@ -57,6 +58,7 @@ import ClickableAvatar from '../components/ClickableAvatar';
 import EmotionLoginPromptModal from '../components/EmotionLoginPromptModal';
 import { TYPOGRAPHY, ACCESSIBLE_COLORS } from '../utils/typography';
 import { COLORS } from '../constants/designSystem';
+import { EMOTION_AVATARS as SHARED_EMOTION_AVATARS } from '../constants/emotions';
 import { sanitizeInput, logger } from '../utils/security';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { FONT_SIZES } from '../constants';
@@ -97,44 +99,29 @@ const getCardGap = () => _CARD_GAP ?? (_CARD_GAP = 12);
 const getFixedCardHeight = () => _FIXED_CARD_HEIGHT ?? (_FIXED_CARD_HEIGHT = 250);
 const getImageCardHeight = () => _IMAGE_CARD_HEIGHT ?? (_IMAGE_CARD_HEIGHT = 300);
 
-// 랜덤 감정 아바타와 단어 데이터
-const EMOTION_AVATARS = [
-  { label: '기쁨이', emoji: '😊', color: '#FFD700' },
-  { label: '행복이', emoji: '😄', color: '#FFA500' },
-  { label: '슬픔이', emoji: '😢', color: '#4682B4' },
-  { label: '우울이', emoji: '😞', color: '#708090' },
-  { label: '지루미', emoji: '😑', color: '#A9A9A9' },
-  { label: '버럭이', emoji: '😠', color: '#FF4500' },
-  { label: '불안이', emoji: '😰', color: '#DDA0DD' },
-  { label: '걱정이', emoji: '😟', color: '#FFA07A' },
-  { label: '감동이', emoji: '🥺', color: '#FF6347' },
-  { label: '황당이', emoji: '🤨', color: '#20B2AA' },
-  { label: '당황이', emoji: '😲', color: '#FF8C00' },
-  { label: '짜증이', emoji: '😤', color: '#DC143C' },
-  { label: '무섭이', emoji: '😨', color: '#9370DB' },
-  { label: '추억이', emoji: '🥰', color: '#87CEEB' },
-  { label: '설렘이', emoji: '🤗', color: '#FF69B4' },
-  { label: '편안이', emoji: '😌', color: '#98FB98' },
-  { label: '궁금이', emoji: '🤔', color: '#DAA520' },
-  { label: '사랑이', emoji: '❤️', color: '#E91E63' },
-  { label: '아픔이', emoji: '🤕', color: '#8B4513' },
-  { label: '욕심이', emoji: '🤑', color: '#32CD32' }
-];
+// 공유 감정 데이터 사용 (emotions.ts와 일치)
+const EMOTION_AVATARS = SHARED_EMOTION_AVATARS;
 
 // 랜덤 감정 아바타 선택 함수
-// PostDetailScreen과 동일한 방식으로 통일하여 일관성 확보
-const getRandomEmotion = (userId: number, postId: number, commentId: number = 0) => {
+// anonymous_emotion_id가 있으면 저장된 감정 사용, 없으면 시드 기반 랜덤
+const getRandomEmotion = (userId: number, postId: number, commentId: number = 0, anonymousEmotionId?: number | null) => {
+  // 저장된 익명 감정이 있으면 해당 감정 반환 (id로 찾기)
+  if (anonymousEmotionId && anonymousEmotionId >= 1 && anonymousEmotionId <= 20) {
+    const emotion = EMOTION_AVATARS.find(e => e.id === anonymousEmotionId);
+    if (emotion) return emotion;
+  }
+
   // 더 복잡한 시드 생성으로 다양성 확보
   const userSeed = userId || 1;
   const postSeed = postId || 1;
   const commentSeed = commentId || 0;
-  
+
   // 다양한 수학적 연산으로 시드 생성
   const seed1 = (userSeed * 17 + postSeed * 37 + commentSeed * 7) % 1000;
   const seed2 = (userSeed * 23 + postSeed * 41 + commentSeed * 11) % 500;
   const seed3 = (userSeed + postSeed + commentSeed) * 13;
   const finalSeed = (seed1 + seed2 + seed3) % EMOTION_AVATARS.length;
-  
+
   return EMOTION_AVATARS[finalSeed];
 };
 
@@ -296,6 +283,7 @@ interface ComfortPost {
   content: string;
   user_id: number;
   is_anonymous: boolean;
+  anonymous_emotion_id?: number | null; // 익명 게시물용 감정 ID
   like_count: number;
   comment_count: number;
   created_at: string;
@@ -369,7 +357,7 @@ const HighlightedText: React.FC<{
             {part}
           </Text>
         ) : (
-          <Text key={index}>{part}</Text>
+          <Text key={index} style={style}>{part}</Text>
         )
       )}
     </Text>
@@ -2015,9 +2003,49 @@ const ComfortScreen: React.FC = () => {
       // 메뉴 상태 초기화
       setMenuVisible({});
 
-      // route params에서 refresh 확인
+      // route params에서 refresh와 newPost 확인
       const params = route.params as any;
       const shouldRefresh = params?.refresh === true;
+      const newPost = params?.newPost;
+
+      // Optimistic Update: newPost가 있으면 즉시 목록에 추가
+      if (newPost && newPost.post_id) {
+        console.log('✨ [ComfortScreen] Optimistic Update - 새 게시물 추가:', {
+          post_id: newPost.post_id,
+          anonymous_emotion_id: newPost.anonymous_emotion_id,
+          title: newPost.title?.substring(0, 20)
+        });
+
+        // 현재 사용자 정보 추가
+        const postWithUser = {
+          ...newPost,
+          user_id: user?.user_id || newPost.user_id,
+          user: newPost.is_anonymous ? undefined : {
+            nickname: user?.nickname || '사용자',
+            profile_image_url: user?.profile_image_url
+          }
+        };
+
+        // 중복 체크 후 목록 맨 앞에 추가
+        setPosts((prevPosts: ComfortPost[]) => {
+          const exists = prevPosts.some((p: ComfortPost) => p.post_id === newPost.post_id);
+          if (exists) {
+            console.log('⚠️ [ComfortScreen] 이미 존재하는 게시물, 업데이트');
+            return prevPosts.map((p: ComfortPost) =>
+              p.post_id === newPost.post_id ? postWithUser : p
+            );
+          }
+          console.log('✅ [ComfortScreen] 새 게시물 목록 맨 앞에 추가');
+          return [postWithUser, ...prevPosts];
+        });
+
+        // 새 게시물 하이라이트
+        setHighlightedPostId(newPost.post_id);
+        setTimeout(() => setHighlightedPostId(null), 3000);
+
+        // params 초기화 (다음 포커스에서 중복 추가 방지)
+        navigation.setParams({ newPost: undefined, showSuccess: false } as never);
+      }
 
       // refresh가 명시적으로 true일 때만 새로고침, 그렇지 않으면 캐시된 데이터 사용
       if (shouldRefresh) {
@@ -2030,8 +2058,22 @@ const ComfortScreen: React.FC = () => {
         console.log('🔄 [ComfortScreen] 초기 데이터 로드');
         loadData();
       }
-    }, [route.params, posts.length, navigation])
+    }, [route.params, posts.length, navigation, user])
   );
+
+  // 게시물 수정 이벤트 수신 - 목록 즉시 새로고침
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('homeScreenRefresh', (event) => {
+      if (event?.postUpdated) {
+        console.log('🔄 [ComfortScreen] 게시물 수정 감지 - 목록 새로고침');
+        loadData(true); // 강제 새로고침
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [loadData]);
 
   // 프로필 이미지 컴포넌트 - 필터 변경과 무관하게 유지
   const HeaderProfileImage = useMemo(() => {
@@ -2233,26 +2275,26 @@ const ComfortScreen: React.FC = () => {
       onPress={() => handleMyRecentPostPress(post)}
       activeOpacity={0.8}
     >
-      <View style={styles.myRecentCardGradient}>
-        <HighlightedText 
+      <View style={[styles.myRecentCardGradient, { backgroundColor: COLORS.surface }]}>
+        <HighlightedText
           text={post.title || ''}
           highlight={searchQueryRef.current}
-          style={styles.myRecentCardTitle}
+          style={[styles.myRecentCardTitle, { color: COLORS.onSurface }]}
           numberOfLines={1}
         />
-        
-        <Text style={styles.myRecentCardContent} numberOfLines={2}>
+
+        <Text style={[styles.myRecentCardContent, { color: COLORS.onSurface }]} numberOfLines={2}>
           {post.content || '본문 내용이 없습니다.'}
         </Text>
-        
+
         {post.tags && post.tags.length > 0 && (
           <View style={styles.myRecentSimpleTags}>
             {post.tags.slice(0, UI_CONSTANTS.TAGS_PREVIEW_LIMIT).map((tag: string | { name: string }, index: number) => {
               const tagName = typeof tag === 'string' ? tag : (tag?.name || '');
               if (!tagName) return null;
-              
+
               return (
-                <TouchableOpacity 
+                <TouchableOpacity
                   key={`myrecent-${index}`}
                   activeOpacity={0.7}
                   onPress={() => handleTagSelect(tagName)}
@@ -2266,23 +2308,23 @@ const ComfortScreen: React.FC = () => {
                   </TouchableOpacity>
                 );
               }).filter(Boolean)}
-              
+
               {post.tags.length > 3 && (
-                <Text style={styles.myRecentSimpleTagMoreText}>
+                <Text style={[styles.myRecentSimpleTagMoreText, { color: COLORS.onSurfaceVariant }]}>
                   +{post.tags.length - 3}
                 </Text>
               )}
           </View>
         )}
-        
+
         <View style={styles.myRecentCardFooter}>
           <View style={styles.myRecentCardStats}>
             <MaterialCommunityIcons name="heart" size={12} color={COLORS.error} />
-            <Text style={styles.myRecentCardStatText}>{post.like_count}</Text>
+            <Text style={[styles.myRecentCardStatText, { color: COLORS.onSurfaceVariant }]}>{post.like_count}</Text>
           </View>
           <View style={styles.myRecentCardStats}>
             <MaterialCommunityIcons name="comment-outline" size={12} color={COLORS.onSurfaceVariant} />
-            <Text style={styles.myRecentCardStatText}>{post.comment_count}</Text>
+            <Text style={[styles.myRecentCardStatText, { color: COLORS.onSurfaceVariant }]}>{post.comment_count}</Text>
           </View>
         </View>
       </View>
@@ -2298,16 +2340,20 @@ const ComfortScreen: React.FC = () => {
       isMenuVisible={menuVisible[item.post_id] || false}
       isBookmarked={bookmarkedPosts.has(item.post_id)}
       isLiked={likedPosts.has(item.post_id)}
+      isDarkMode={isDark}
+      themeColors={COLORS}
+      cardStyles={styles}
     />
-  ), [highlightedPostId, menuVisible, bookmarkedPosts, likedPosts]);
+  ), [highlightedPostId, menuVisible, bookmarkedPosts, likedPosts, isDark, COLORS, styles]);
 
   // 인스타그램 스타일 게시물 카드 (2개씩 배치)
-  const InstagramStylePostCard = React.memo(({ item, index, highlightedPostId, isMenuVisible, isBookmarked, isLiked }: { item: ComfortPost; index: number; highlightedPostId: number | null; isMenuVisible: boolean; isBookmarked: boolean; isLiked: boolean }) => {
+  const InstagramStylePostCard = React.memo(({ item, index, highlightedPostId, isMenuVisible, isBookmarked, isLiked, isDarkMode, themeColors, cardStyles }: { item: ComfortPost; index: number; highlightedPostId: number | null; isMenuVisible: boolean; isBookmarked: boolean; isLiked: boolean; isDarkMode: boolean; themeColors: typeof COLORS; cardStyles: typeof styles }) => {
     const isMyPost = user?.user_id === item.user_id;
     const hasImage = (item.image_url || (item.images && item.images.length > 0));
 
     // randomEmotion과 timeAgo를 useMemo로 메모이제이션하여 불필요한 재계산 방지
-    const randomEmotion = useMemo(() => getRandomEmotion(item.user_id, item.post_id), [item.user_id, item.post_id]);
+    // anonymous_emotion_id가 있으면 저장된 감정 사용
+    const randomEmotion = useMemo(() => getRandomEmotion(item.user_id, item.post_id, 0, item.anonymous_emotion_id), [item.user_id, item.post_id, item.anonymous_emotion_id]);
     const timeAgo = useMemo(() => getTimeAgo(item.created_at), [item.created_at]);
     const isHighlighted = highlightedPostId === item.post_id;
     
@@ -2373,7 +2419,7 @@ const ComfortScreen: React.FC = () => {
     
     return (
       <TouchableOpacity
-        style={[styles.instagramCard]}
+        style={[cardStyles.instagramCard]}
         onPress={() => {
           console.log('🔗 Instagram PostCard 클릭됨:', { postId: item.post_id, title: item.title });
           handlePostPress(item);
@@ -2384,7 +2430,8 @@ const ComfortScreen: React.FC = () => {
         accessibilityHint="탭하여 게시물 상세 보기"
       >
           <Animated.View style={[
-            styles.instagramCardContainer,
+            cardStyles.instagramCardContainer,
+            { backgroundColor: themeColors.surface },
           isHighlighted && {
             borderWidth: highlightAnim.interpolate({
               inputRange: [0, 1],
@@ -2392,7 +2439,7 @@ const ComfortScreen: React.FC = () => {
             }),
             borderColor: highlightAnim.interpolate({
               inputRange: [0, 1],
-              outputRange: [COLORS.outline + '40', COLORS.primary],
+              outputRange: [themeColors.outline + '40', themeColors.primary],
             }),
             shadowOpacity: highlightAnim.interpolate({
               inputRange: [0, 1],
@@ -2411,8 +2458,8 @@ const ComfortScreen: React.FC = () => {
           }
         ]}>
           {/* 헤더 */}
-          <View style={styles.instagramCardHeader}>
-            <View style={styles.instagramAuthor}>
+          <View style={cardStyles.instagramCardHeader}>
+            <View style={cardStyles.instagramAuthor}>
               {/* Profile image or avatar */}
               {/* 프로필 사진 또는 감정 이모지 */}
               <ClickableAvatar
@@ -2422,19 +2469,20 @@ const ComfortScreen: React.FC = () => {
                 isAnonymous={item.is_anonymous}
                 avatarUrl={item.user?.profile_image_url}
                 avatarText={randomEmotion.emoji}
+                avatarEmojiCode={randomEmotion.emojiCode}
                 avatarColor={randomEmotion.color}
                 size={44}
               />
-              <View style={styles.instagramAuthorInfo}>
+              <View style={cardStyles.instagramAuthorInfo}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={styles.instagramAuthorName}>
+                  <Text style={[cardStyles.instagramAuthorName, { color: themeColors.onSurface }]}>
                     {item.is_anonymous ? randomEmotion.label : item.user?.nickname || '사용자'}
                   </Text>
                   {isMyPost && item.is_anonymous && (
-                    <Text style={styles.authorBadge}> [나]</Text>
+                    <Text style={[cardStyles.authorBadge, { color: themeColors.onSurfaceVariant }]}> [나]</Text>
                   )}
                 </View>
-                <Text style={styles.instagramPostDate}>
+                <Text style={[cardStyles.instagramPostDate, { color: themeColors.onSurfaceVariant }]}>
                   {timeAgo}
                 </Text>
               </View>
@@ -2444,10 +2492,10 @@ const ComfortScreen: React.FC = () => {
             {user && (
               <TouchableOpacity
                 onPress={() => toggleMenu(item.post_id)}
-                style={styles.instagramMenuButton}
+                style={cardStyles.instagramMenuButton}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <MaterialCommunityIcons name="dots-horizontal" size={18} color={COLORS.onSurfaceVariant} />
+                <MaterialCommunityIcons name="dots-horizontal" size={18} color={themeColors.onSurfaceVariant} />
               </TouchableOpacity>
             )}
 
@@ -2458,38 +2506,38 @@ const ComfortScreen: React.FC = () => {
               animationType="slide"
               onRequestClose={() => toggleMenu(item.post_id)}
             >
-              <View style={styles.bottomSheetOverlay}>
+              <View style={cardStyles.bottomSheetOverlay}>
                 <TouchableOpacity
-                  style={styles.bottomSheetBackdrop}
+                  style={cardStyles.bottomSheetBackdrop}
                   activeOpacity={1}
                   onPress={() => toggleMenu(item.post_id)}
                 />
-                <View style={styles.bottomSheetContainer}>
-                  <View style={styles.bottomSheetHandle} />
+                <View style={[cardStyles.bottomSheetContainer, { backgroundColor: themeColors.surface }]}>
+                  <View style={cardStyles.bottomSheetHandle} />
 
                   <TouchableOpacity
-                    style={styles.bottomSheetItem}
+                    style={cardStyles.bottomSheetItem}
                     onPress={() => handleShare(item.post_id, item.content, item.nickname)}
                   >
-                    <MaterialCommunityIcons name="share-outline" size={22} color={COLORS.text} />
-                    <Text style={styles.bottomSheetItemText}>공유하기</Text>
+                    <MaterialCommunityIcons name="share-outline" size={22} color={themeColors.text} />
+                    <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>공유하기</Text>
                   </TouchableOpacity>
 
                   {isMyPost && (
                     <>
                       <TouchableOpacity
-                        style={styles.bottomSheetItem}
+                        style={cardStyles.bottomSheetItem}
                         onPress={() => handleEditPost(item.post_id)}
                       >
-                        <MaterialCommunityIcons name="pencil" size={22} color={COLORS.text} />
-                        <Text style={styles.bottomSheetItemText}>수정하기</Text>
+                        <MaterialCommunityIcons name="pencil" size={22} color={themeColors.text} />
+                        <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>수정하기</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        style={styles.bottomSheetItem}
+                        style={cardStyles.bottomSheetItem}
                         onPress={() => handleDeletePost(item.post_id)}
                       >
-                        <MaterialCommunityIcons name="delete" size={22} color={COLORS.error} />
-                        <Text style={[styles.bottomSheetItemText, { color: COLORS.error }]}>삭제하기</Text>
+                        <MaterialCommunityIcons name="delete" size={22} color={themeColors.error} />
+                        <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.error }]}>삭제하기</Text>
                       </TouchableOpacity>
                     </>
                   )}
@@ -2497,27 +2545,27 @@ const ComfortScreen: React.FC = () => {
                   {!isMyPost && (
                     <>
                       <TouchableOpacity
-                        style={styles.bottomSheetItem}
+                        style={cardStyles.bottomSheetItem}
                         onPress={() => handleBlockPost(item.post_id)}
                       >
-                        <MaterialCommunityIcons name="block-helper" size={22} color={COLORS.text} />
-                        <Text style={styles.bottomSheetItemText}>게시물 차단</Text>
+                        <MaterialCommunityIcons name="block-helper" size={22} color={themeColors.text} />
+                        <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>게시물 차단</Text>
                       </TouchableOpacity>
                       {!item.is_anonymous && (
                         <TouchableOpacity
-                          style={styles.bottomSheetItem}
+                          style={cardStyles.bottomSheetItem}
                           onPress={() => handleBlockUser(item.post_id, item.user_id, item.user?.nickname || '사용자')}
                         >
-                          <MaterialCommunityIcons name="account-cancel" size={22} color={COLORS.text} />
-                          <Text style={styles.bottomSheetItemText}>사용자 차단</Text>
+                          <MaterialCommunityIcons name="account-cancel" size={22} color={themeColors.text} />
+                          <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>사용자 차단</Text>
                         </TouchableOpacity>
                       )}
                       <TouchableOpacity
-                        style={styles.bottomSheetItem}
+                        style={cardStyles.bottomSheetItem}
                         onPress={() => handleReportPost(item.post_id)}
                       >
-                        <MaterialCommunityIcons name="flag" size={22} color={COLORS.warning} />
-                        <Text style={[styles.bottomSheetItemText, { color: COLORS.warning }]}>신고하기</Text>
+                        <MaterialCommunityIcons name="flag" size={22} color={themeColors.warning} />
+                        <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.warning }]}>신고하기</Text>
                       </TouchableOpacity>
                     </>
                   )}
@@ -2527,18 +2575,18 @@ const ComfortScreen: React.FC = () => {
           </View>
 
           {/* 컨텐츠 영역 */}
-          <View style={styles.instagramContent}>
+          <View style={cardStyles.instagramContent}>
             {/* 제목 */}
-            <HighlightedText 
+            <HighlightedText
               text={optimizedTitle}
               highlight={searchQuery}
-              style={styles.instagramTitle}
+              style={[cardStyles.instagramTitle, { color: themeColors.onSurface }]}
               numberOfLines={1}
             />
 
             {/* 이미지 또는 확장된 내용 */}
             {hasImage ? (
-              <View style={styles.instagramImageContainer}>
+              <View style={cardStyles.instagramImageContainer}>
                 {(() => {
                   // 이미지 배열 준비 (여러 이미지 지원)
                   const imageUrls = item.images && item.images.length > 0
@@ -2564,7 +2612,7 @@ const ComfortScreen: React.FC = () => {
               </View>
             ) : (
               <Text
-                style={styles.instagramContentText}
+                style={[cardStyles.instagramContentText, { color: themeColors.onSurfaceVariant }]}
                 numberOfLines={4}
               >
                 {optimizedContent}
@@ -2573,18 +2621,18 @@ const ComfortScreen: React.FC = () => {
 
             {/* 이미지가 있는 경우의 축약된 내용 */}
             {hasImage && (
-              <HighlightedText 
+              <HighlightedText
                 text={optimizedContent}
                 highlight={searchQuery}
-                style={styles.instagramContentTextWithImage}
+                style={[cardStyles.instagramContentTextWithImage, { color: themeColors.onSurfaceVariant }]}
                 numberOfLines={2}
               />
             )}
           </View>
 
-          
+
           {/* 공간 확보를 위한 플렉스 영역 */}
-          <View style={styles.instagramSpacer} />
+          <View style={cardStyles.instagramSpacer} />
 
           {/* 태그 - 액션 버튼 바로 상단에 위치 (배경 없는 간단한 스타일) */}
           {(() => {
@@ -2592,11 +2640,11 @@ const ComfortScreen: React.FC = () => {
 
             if (tagsToShow && Array.isArray(tagsToShow) && tagsToShow.length > 0) {
               return (
-                <View style={styles.instagramSimpleTagsAboveActions}>
+                <View style={cardStyles.instagramSimpleTagsAboveActions}>
                   {tagsToShow.slice(0, UI_CONSTANTS.TAGS_FILTER_LIMIT).map((tag, index) => {
                     const tagName = typeof tag === 'string' ? tag : (tag?.name || '');
                     if (!tagName) return null;
-                    
+
                     return (
                       <TouchableOpacity
                         key={`${item.post_id}-simple-tag-${index}`}
@@ -2604,17 +2652,17 @@ const ComfortScreen: React.FC = () => {
                         activeOpacity={0.7}
                       >
                         <Text style={[
-                          styles.instagramSimpleTagText,
-                          selectedTag === tagName && styles.instagramSimpleTagTextSelected,
+                          cardStyles.instagramSimpleTagText,
+                          selectedTag === tagName && cardStyles.instagramSimpleTagTextSelected,
                         ]}>
                           #{tagName}
                         </Text>
                       </TouchableOpacity>
                     );
                   }).filter(Boolean)}
-                  
+
                   {tagsToShow.length > 4 && (
-                    <Text style={styles.instagramSimpleTagMoreText}>
+                    <Text style={[cardStyles.instagramSimpleTagMoreText, { color: themeColors.onSurfaceVariant }]}>
                       +{tagsToShow.length - 4}
                     </Text>
                   )}
@@ -2625,9 +2673,9 @@ const ComfortScreen: React.FC = () => {
           })()}
 
           {/* 상호작용 버튼 */}
-          <View style={styles.instagramActions}>
+          <View style={cardStyles.instagramActions}>
             <TouchableOpacity
-              style={styles.instagramActionButton}
+              style={cardStyles.instagramActionButton}
               onPress={() => {
                 animateHeart();
                 handleLike(item.post_id);
@@ -2640,27 +2688,27 @@ const ComfortScreen: React.FC = () => {
                 <MaterialCommunityIcons
                   name={isLiked ? "heart" : "heart-outline"}
                   size={17}
-                  color={isLiked ? COLORS.error : COLORS.onSurfaceVariant}
+                  color={isLiked ? themeColors.error : themeColors.onSurfaceVariant}
                 />
               </Animated.View>
-              <Text style={styles.instagramActionText}>
+              <Text style={[cardStyles.instagramActionText, { color: themeColors.onSurfaceVariant }]}>
                 {item.like_count || 0}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.instagramActionButton}
+              style={cardStyles.instagramActionButton}
               onPress={() => handlePostPress(item)}
               accessible={true}
               accessibilityLabel={`댓글 ${item.comment_count || 0}개`}
               accessibilityHint="탭하여 댓글 보기"
             >
-              <MaterialCommunityIcons name="comment-outline" size={17} color={COLORS.onSurfaceVariant} />
-              <Text style={styles.instagramActionText}>
+              <MaterialCommunityIcons name="comment-outline" size={17} color={themeColors.onSurfaceVariant} />
+              <Text style={[cardStyles.instagramActionText, { color: themeColors.onSurfaceVariant }]}>
                 {item.comment_count || 0}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.instagramActionButton}
+              style={cardStyles.instagramActionButton}
               onPress={() => handleBookmark(item.post_id)}
               accessible={true}
               accessibilityLabel={isBookmarked ? "북마크됨" : "북마크하기"}
@@ -2669,7 +2717,7 @@ const ComfortScreen: React.FC = () => {
               <MaterialCommunityIcons
                 name={isBookmarked ? "bookmark" : "bookmark-outline"}
                 size={17}
-                color={isBookmarked ? COLORS.primary : COLORS.onSurfaceVariant}
+                color={isBookmarked ? themeColors.primary : themeColors.onSurfaceVariant}
               />
             </TouchableOpacity>
           </View>
@@ -2689,7 +2737,8 @@ const ComfortScreen: React.FC = () => {
            prevProps.isMenuVisible === nextProps.isMenuVisible &&
            prevProps.isBookmarked === nextProps.isBookmarked &&
            prevProps.isLiked === nextProps.isLiked &&
-           prevProps.index === nextProps.index;
+           prevProps.index === nextProps.index &&
+           prevProps.isDarkMode === nextProps.isDarkMode;
 
     // 디버깅: 재렌더링되는 경우 어떤 prop이 변경되었는지 로깅
     if (!shouldSkipRerender) {
@@ -3306,7 +3355,8 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     letterSpacing: -0.2,
   },
   headerRight: {
-    marginLeft: 16,
+    marginLeft: 20,
+    marginRight: 10,
   },
   headerIconButton: {
     width: 44,

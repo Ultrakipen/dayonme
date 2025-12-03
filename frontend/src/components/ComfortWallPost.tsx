@@ -94,7 +94,7 @@ const ComfortWallPost: React.FC<ComfortWallPostProps> = ({
     if (onPostPress) {
       onPostPress();
     } else {
-      navigation.navigate('PostDetail', { postId: post.post_id });
+      navigation.navigate('PostDetail', { postId: post.post_id, postType: 'comfort' });
     }
   };
 
@@ -112,7 +112,7 @@ const ComfortWallPost: React.FC<ComfortWallPostProps> = ({
     if (onCommentPress) {
       onCommentPress();
     } else {
-      navigation.navigate('PostDetail', { postId: post.post_id });
+      navigation.navigate('PostDetail', { postId: post.post_id, postType: 'comfort' });
     }
   };
 

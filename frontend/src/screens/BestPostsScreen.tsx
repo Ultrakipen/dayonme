@@ -30,6 +30,7 @@ import ImageCarousel from '../components/ImageCarousel';
 import ClickableNickname from '../components/ClickableNickname';
 import ClickableAvatar from '../components/ClickableAvatar';
 import { PostSkeletonList } from '../components/SkeletonCard';
+import { EMOTION_AVATARS } from '../constants/emotions';
 
 // React Native 0.80 호환성: 기본값만 정의 (모듈 레벨에서 normalize 호출 금지)
 const DEFAULT_GRID_PADDING = 12;
@@ -41,31 +42,15 @@ const getGridPadding = () => normalizeSpace(DEFAULT_GRID_PADDING);
 const getColumnGap = () => normalizeSpace(DEFAULT_COLUMN_GAP);
 
 
-// 랜덤 감정 아바타 데이터
-const EMOTION_AVATARS = [
-  { label: '기쁨이', emoji: '😊', color: '#FFD700' },
-  { label: '행복이', emoji: '😄', color: '#FFA500' },
-  { label: '슬픔이', emoji: '😢', color: '#4682B4' },
-  { label: '우울이', emoji: '😞', color: '#708090' },
-  { label: '지루미', emoji: '😑', color: '#A9A9A9' },
-  { label: '버럭이', emoji: '😠', color: '#FF4500' },
-  { label: '불안이', emoji: '😰', color: '#DDA0DD' },
-  { label: '걱정이', emoji: '😟', color: '#FFA07A' },
-  { label: '감동이', emoji: '🥺', color: '#FF6347' },
-  { label: '황당이', emoji: '🤨', color: '#20B2AA' },
-  { label: '당황이', emoji: '😲', color: '#FF8C00' },
-  { label: '짜증이', emoji: '😤', color: '#DC143C' },
-  { label: '무섭이', emoji: '😨', color: '#9370DB' },
-  { label: '추억이', emoji: '🥰', color: '#87CEEB' },
-  { label: '설렘이', emoji: '🤗', color: '#FF69B4' },
-  { label: '편안이', emoji: '😌', color: '#98FB98' },
-  { label: '궁금이', emoji: '🤔', color: '#DAA520' },
-  { label: '사랑이', emoji: '❤️', color: '#E91E63' },
-  { label: '아픔이', emoji: '🤕', color: '#8B4513' },
-  { label: '욕심이', emoji: '🤑', color: '#32CD32' },
-];
+// 감정 데이터는 emotions.ts에서 import (일관성 유지)
 
-const getRandomEmotion = (userId: number, postId: number) => {
+const getRandomEmotion = (userId: number, postId: number, anonymousEmotionId?: number | null) => {
+  // 저장된 익명 감정이 있으면 해당 감정 반환
+  if (anonymousEmotionId && anonymousEmotionId >= 1 && anonymousEmotionId <= 20) {
+    const emotion = EMOTION_AVATARS.find(e => e.id === anonymousEmotionId);
+    if (emotion) return emotion;
+  }
+
   const userSeed = userId || 1;
   const postSeed = postId || 1;
   const seed1 = (userSeed * 17 + postSeed * 37) % 1000;
@@ -106,6 +91,7 @@ interface BestPost {
   content: string;
   user_id: number;
   is_anonymous: boolean;
+  anonymous_emotion_id?: number | null;
   like_count: number;
   comment_count: number;
   created_at: string;
@@ -316,7 +302,7 @@ const BestPostsScreen: React.FC = () => {
 
   // 게시물 카드 렌더링
   const renderPost = useCallback(({ item: post }: { item: BestPost }) => {
-    const emotion = getRandomEmotion(post.user_id, post.post_id);
+    const emotion = getRandomEmotion(post.user_id, post.post_id, post.anonymous_emotion_id);
     const hasImages = post.images && post.images.length > 0;
     // TODO: 썸네일 API 구현 시 원본 대신 썸네일 사용으로 트래픽 최적화
     const imageUrls = hasImages ? post.images!.map(normalizeImageUrl) : [];

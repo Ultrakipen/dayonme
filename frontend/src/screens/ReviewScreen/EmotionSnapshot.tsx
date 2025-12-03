@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, useWindowDimensions, Alert, ScrollView } from 'react-native';
 import { Card } from '../../components/common/Card';
 import { useModernTheme } from '../../hooks/useModernTheme';
@@ -6,9 +6,6 @@ import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
 import LinearGradient from 'react-native-linear-gradient';
 import { FONT_SIZES } from '../../constants';
-
-const TEMPLATE_WIDTH = 1080;
-const TEMPLATE_HEIGHT = 1920;
 
 interface Template {
   id: number;
@@ -47,6 +44,9 @@ export const EmotionSnapshot: React.FC<Props> = ({ emotionData }) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0]);
   const viewShotRef = useRef<ViewShot>(null);
+
+  // 반응형 스타일 생성 (useMemo로 캐싱)
+  const styles = useMemo(() => createStyles(scale, SCREEN_HEIGHT), [scale, SCREEN_HEIGHT]);
 
   const handleCapture = async () => {
     try {
@@ -189,7 +189,8 @@ export const EmotionSnapshot: React.FC<Props> = ({ emotionData }) => {
   );
 };
 
-const styles = StyleSheet.create({
+// 반응형 스타일 생성 함수 (React Native 0.80 호환)
+const createStyles = (scale: number, screenHeight: number) => StyleSheet.create({
   title: {
     fontSize: FONT_SIZES.h4 * scale,
     fontWeight: '700',
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
   modalContent: {
     borderRadius: 20 * scale,
     padding: 20 * scale,
-    maxHeight: SCREEN_HEIGHT * 0.9,
+    maxHeight: screenHeight * 0.9,
   },
   modalTitle: {
     fontSize: FONT_SIZES.h2 * scale,
@@ -245,7 +246,6 @@ const styles = StyleSheet.create({
   },
   templateOverlay: {
     backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    backdropFilter: 'blur(10px)',
     borderRadius: 12 * scale,
     padding: 8 * scale,
   },

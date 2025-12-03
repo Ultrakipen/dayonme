@@ -5,6 +5,7 @@ import { Card } from '../../../components/common/Card';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
 import reviewService from '../../../services/api/reviewService';
+import { TwemojiImage } from '../../../components/common/TwemojiImage';
 
 interface ResonanceData {
   similarUsers: number;
@@ -91,12 +92,15 @@ export const AnonymousResonance: React.FC = React.memo(() => {
   return (
     <Card accessible={true} accessibilityLabel="익명 공명">
       <View style={styles.header}>
-        <Text
-          style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}
-          accessibilityRole="header"
-        >
-          🌊 익명의 공명
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TwemojiImage emoji="🌊" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text
+            style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}
+            accessibilityRole="header"
+          >
+            익명의 공명
+          </Text>
+        </View>
         <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
           당신은 혼자가 아니에요
         </Text>
@@ -133,7 +137,7 @@ export const AnonymousResonance: React.FC = React.memo(() => {
         accessible={true}
         accessibilityLabel={`가장 많이 공유하는 감정: ${data.topSharedEmotion}`}
       >
-        <Text style={styles.sharedEmoji}>{data.topSharedEmoji}</Text>
+        <TwemojiImage emoji={data.topSharedEmoji} size={32 * scale} style={{ marginRight: 12 * scale }} />
         <Text style={[styles.sharedText, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>
           가장 많이 공유하는 감정: <Text style={{ fontWeight: '700' }}>{data.topSharedEmotion}</Text>
         </Text>
@@ -145,7 +149,7 @@ export const AnonymousResonance: React.FC = React.memo(() => {
         accessible={true}
         accessibilityLabel={`이들 중 ${data.positiveTransitionRate}%는 평균 ${data.avgDaysToPositive}일 내에 긍정으로 전환`}
       >
-        <Text style={[styles.hopeIcon, { fontSize: 20 * scale }]}>💚</Text>
+        <TwemojiImage emoji="💚" size={20 * scale} style={{ marginRight: 12 * scale }} />
         <View style={styles.hopeTextContainer}>
           <Text style={[styles.hopeText, { color: '#4caf50', fontSize: FONT_SIZES.body * scale }]}>
             이들 중 <Text style={{ fontWeight: '800' }}>{data.positiveTransitionRate}%</Text>는

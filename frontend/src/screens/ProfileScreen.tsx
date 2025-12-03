@@ -21,6 +21,7 @@ import ImagePicker from '../components/common/ImagePicker';
 import Button from '../components/Button';
 import userService from '../services/api/userService';
 import myDayService, { type UserEmotionStats } from '../services/api/myDayService';
+import reviewService from '../services/api/reviewService';
  import uploadService from '../services/api/uploadService';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -31,7 +32,7 @@ import Toast from '../components/common/Toast';
 import { sanitizeText, escapeHtml } from '../utils/sanitize';
 import { performanceMonitor } from '../utils/performanceMonitor';
 import { normalizeSpace, normalizeIcon, normalizeTouchable } from '../utils/responsive';
-import { FONT_SIZES } from '../constants';
+import { FONT_SIZES, APP_VERSION } from '../constants';
 import { CACHE_CONFIG, PERFORMANCE } from '../utils/constants';
 
 interface UserStats {
@@ -167,6 +168,7 @@ const ProfileScreen: React.FC = () => {
   const [cacheTimestamp, setCacheTimestamp] = useState<number>(0);
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [emotionTags, setEmotionTags] = useState<EmotionTag[]>([]);
+  const [badges, setBadges] = useState<Array<{id: string; icon: string; name: string; unlocked: boolean}>>([]);
   const [favoriteQuote, setFavoriteQuote] = useState(user?.favorite_quote || '꿈을 포기하지 마세요. 당신은 충분히 가치 있는 사람입니다. ✨');
   const [showQuoteEditor, setShowQuoteEditor] = useState(false);
   const [tempQuote, setTempQuote] = useState(favoriteQuote);
@@ -299,11 +301,12 @@ const ProfileScreen: React.FC = () => {
     try {
       performanceMonitor.start('ProfileScreen_loadAllData');
 
-      const [statsRes, emotionsRes, activityRes, challengeRes] = await Promise.all([
+      const [statsRes, emotionsRes, activityRes, challengeRes, badgesRes] = await Promise.all([
         performanceMonitor.measureAsync('API_getUserStats', () => userService.getUserStats()),
         performanceMonitor.measureAsync('API_getEmotionStats', () => myDayService.getUserEmotionStats()),
         performanceMonitor.measureAsync('API_getFirstActivity', () => userService.getFirstActivity()),
         performanceMonitor.measureAsync('API_getChallengeStats', () => userService.getChallengeStats()),
+        performanceMonitor.measureAsync('API_getBadges', () => reviewService.getUserBadges().catch(() => ({ status: 'error', data: { badges: [] } }))),
       ]);
 
       performanceMonitor.end('ProfileScreen_loadAllData');
@@ -341,6 +344,16 @@ const ProfileScreen: React.FC = () => {
           joinedChallenges: challengeRes.data.participated,
           completedChallenges: challengeRes.data.completed
         });
+      }
+
+      // 배지 데이터 설정
+      if (badgesRes?.status === 'success' && badgesRes.data?.badges) {
+        setBadges(badgesRes.data.badges.slice(0, 4).map((b: any) => ({
+          id: b.id?.toString() || b.achievement_id?.toString(),
+          icon: b.achievement_icon || '🏆',
+          name: b.achievement_name || '배지',
+          unlocked: true
+        })));
       }
 
       await loadWeeklyStats();
@@ -851,7 +864,7 @@ const ProfileScreen: React.FC = () => {
               onPress={() => navigation.navigate('Encouragement')}
               activeOpacity={0.7}
             >
-              <Icon name="heart" size={25} color="#E91E63" />
+              <Icon name="heart" size={20} color="#E91E63" />
               <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.encouragement_received_count || 0)}
               </RNText>
@@ -861,7 +874,7 @@ const ProfileScreen: React.FC = () => {
             </TouchableOpacity>
 
             <View style={styles.statItem}>
-              <Icon name="happy-outline" size={25} color={emotionColors.primary} />
+              <Icon name="happy-outline" size={20} color={emotionColors.primary} />
               <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_post_count)}
               </RNText>
@@ -871,7 +884,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={styles.statItem}>
-              <Icon name="heart-outline" size={25} color={emotionColors.error} />
+              <Icon name="heart-outline" size={20} color={emotionColors.error} />
               <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_like_received_count)}
               </RNText>
@@ -881,9 +894,9 @@ const ProfileScreen: React.FC = () => {
             </View>
           </View>
 
-          <View style={[styles.statsContainer, { marginTop: 8, justifyContent: 'center' }]}>
+          <View style={[styles.statsContainer, { marginTop: 4, justifyContent: 'center' }]}>
             <View style={styles.statItem}>
-              <Icon name="chatbubble-outline" size={25} color={emotionColors.warning} />
+              <Icon name="chatbubble-outline" size={20} color={emotionColors.warning} />
               <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_comment_received_count)}
               </RNText>
@@ -893,7 +906,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={styles.statItem}>
-              <Icon name="trophy-outline" size={25} color={emotionColors.gold} />
+              <Icon name="trophy-outline" size={20} color={emotionColors.gold} />
               <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.challenge_count)}
               </RNText>
@@ -949,9 +962,9 @@ const ProfileScreen: React.FC = () => {
 
         {/* 나만의 특별한 기록 */}
         <View style={[styles.recordsCard, { backgroundColor: theme.colors.card }]}>
-          <View style={styles.cardHeader}>
-            <Icon name="ribbon" size={22} color={emotionColors.primary} />
-            <RNText style={[styles.cardTitle, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>나만의 특별한 기록</RNText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+            <Icon name="ribbon" size={20} color={emotionColors.primary} style={{ marginRight: 8 }} />
+            <RNText style={{ fontSize: FONT_SIZES.h4, fontWeight: '700', color: isDark ? theme.colors.text.primary : emotionColors.text }}>나만의 특별한 기록</RNText>
           </View>
 
           <View style={styles.recordsList}>
@@ -996,6 +1009,26 @@ const ProfileScreen: React.FC = () => {
             </View>
           </View>
         </View>
+
+        {/* 나의 배지 */}
+        {badges.length > 0 && (
+          <View style={[styles.badgeCard, { backgroundColor: theme.colors.card }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <Icon name="medal-outline" size={20} color={emotionColors.gold} style={{ marginRight: 8 }} />
+              <RNText style={{ fontSize: FONT_SIZES.h4, fontWeight: '700', color: isDark ? theme.colors.text.primary : emotionColors.text }}>나의 배지</RNText>
+              <View style={{ flex: 1 }} />
+              <RNText style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: emotionColors.textSecondary }}>{badges.length}개 획득</RNText>
+            </View>
+            <View style={styles.badgeGrid}>
+              {badges.map((badge) => (
+                <View key={badge.id} style={[styles.badgeItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
+                  <RNText style={styles.badgeIcon}>{badge.icon}</RNText>
+                  <RNText style={[styles.badgeName, { color: isDark ? theme.colors.text.primary : '#333' }]} numberOfLines={1}>{badge.name}</RNText>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* 챌린지 현황 */}
         <View style={[styles.challengeCard, { backgroundColor: theme.colors.card }]}>
@@ -1121,216 +1154,80 @@ const ProfileScreen: React.FC = () => {
           </RNText>
 
           <View style={styles.settingsContainer}>
-            {/* 공지사항 */}
+            {/* 전체 설정 */}
             <TouchableOpacity
               style={[styles.settingItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}
-              onPress={() => navigation.navigate('Notice')}
+              onPress={() => navigation.navigate('Settings')}
               activeOpacity={0.7}
-              accessibilityLabel="공지사항"
-              accessibilityHint="공지사항을 확인합니다"
-            >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 149, 0, 0.1)' }]}>
-                <Icon name="megaphone-outline" size={22} color="#FF9500" />
-              </View>
-              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>공지사항</RNText>
-              <Icon name="chevron-forward" size={18} color={isDark ? emotionColors.textSecondary : '#999999'} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.settingItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}
-              onPress={() => {
-                navigation.navigate('AccountSettings');
-              }}
-              activeOpacity={0.7}
-              accessibilityLabel="계정 설정"
-              accessibilityHint="계정 설정 화면으로 이동합니다"
+              accessibilityLabel="전체 설정"
             >
               <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(102, 126, 234, 0.1)' }]}>
-                <Icon name="person-outline" size={22} color={emotionColors.primary} />
+                <Icon name="settings-outline" size={20} color={emotionColors.primary} />
               </View>
-              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>계정 설정</RNText>
-              <Icon name="chevron-forward" size={18} color={isDark ? emotionColors.textSecondary : '#999999'} />
+              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>전체 설정</RNText>
+              <Icon name="chevron-forward" size={16} color={isDark ? emotionColors.textSecondary : '#999999'} />
             </TouchableOpacity>
 
+            {/* 관심 글 */}
             <TouchableOpacity
               style={[styles.settingItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}
-              onPress={() => {
-                navigation.navigate('NotificationSettings');
-              }}
-              activeOpacity={0.7}
-              accessibilityLabel="알림 설정"
-              accessibilityHint="알림 설정 화면으로 이동합니다"
-            >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 149, 0, 0.1)' }]}>
-                <Icon name="notifications-outline" size={22} color={emotionColors.warning} />
-              </View>
-              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>알림 설정</RNText>
-              <Icon name="chevron-forward" size={18} color={isDark ? emotionColors.textSecondary : '#999999'} />
-            </TouchableOpacity>
-
-            {/* 관심 글 (북마크) */}
-            <TouchableOpacity
-              style={[styles.settingItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}
-              onPress={() => {
-                navigation.navigate('Bookmarks');
-              }}
+              onPress={() => navigation.navigate('Bookmarks')}
               activeOpacity={0.7}
               accessibilityLabel="관심 글"
-              accessibilityHint="북마크한 게시물을 확인합니다"
             >
               <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(236, 72, 153, 0.15)' : 'rgba(236, 72, 153, 0.1)' }]}>
-                <Icon name="bookmark-outline" size={22} color="#EC4899" />
+                <Icon name="bookmark-outline" size={20} color="#EC4899" />
               </View>
               <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>관심 글</RNText>
-              <Icon name="chevron-forward" size={18} color={isDark ? emotionColors.textSecondary : '#999999'} />
+              <Icon name="chevron-forward" size={16} color={isDark ? emotionColors.textSecondary : '#999999'} />
             </TouchableOpacity>
 
-            {/* 내 신고 내역 */}
+            {/* 차단 관리 */}
             <TouchableOpacity
               style={[styles.settingItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}
-              onPress={() => {
-                navigation.navigate('MyReports');
-              }}
+              onPress={() => navigation.navigate('BlockManagement')}
               activeOpacity={0.7}
-              accessibilityLabel="나의 신고 내역"
-              accessibilityHint="제출한 신고 내역을 확인합니다"
+              accessibilityLabel="차단 관리"
             >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(102, 126, 234, 0.1)' }]}>
-                <Icon name="flag-outline" size={22} color={emotionColors.primary} />
+              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(255, 59, 48, 0.15)' : 'rgba(255, 59, 48, 0.1)' }]}>
+                <Icon name="ban-outline" size={20} color={emotionColors.error} />
               </View>
-              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>나의 신고 내역</RNText>
-              <Icon name="chevron-forward" size={18} color={isDark ? emotionColors.textSecondary : '#999999'} />
+              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>차단 관리</RNText>
+              <Icon name="chevron-forward" size={16} color={isDark ? emotionColors.textSecondary : '#999999'} />
             </TouchableOpacity>
 
-
-            {/* 🔒 보안 강화: 역할 기반 권한 체크 */}
+            {/* 관리자 대시보드 */}
             {(user?.role === 'admin' || user?.is_admin) && (
               <TouchableOpacity
                 style={[styles.settingItem, { backgroundColor: isDark ? 'rgba(102, 126, 234, 0.08)' : 'rgba(102, 126, 234, 0.06)' }]}
-                onPress={() => {
-                  navigation.navigate('AdminDashboard');
-                }}
+                onPress={() => navigation.navigate('AdminDashboard')}
                 activeOpacity={0.7}
                 accessibilityLabel="관리자 대시보드"
-                accessibilityHint="신고 관리 및 통계를 확인합니다"
               >
                 <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(102, 126, 234, 0.2)' : 'rgba(102, 126, 234, 0.12)' }]}>
-                  <Icon name="shield-checkmark" size={22} color="#667EEA" />
+                  <Icon name="shield-checkmark" size={20} color="#667EEA" />
                 </View>
-                <RNText style={[styles.settingText, { color: '#667EEA', fontWeight: '700' }]}>관리자 대시보드</RNText>
-                <Icon name="chevron-forward" size={18} color="#667EEA" />
+                <RNText style={[styles.settingText, { color: '#667EEA', fontWeight: '700' }]}>관리자</RNText>
+                <Icon name="chevron-forward" size={16} color="#667EEA" />
               </TouchableOpacity>
             )}
 
-            <TouchableOpacity
-              style={[styles.settingItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}
-              onPress={() => {
-                navigation.navigate('BlockManagement');
-              }}
-              activeOpacity={0.7}
-              accessibilityLabel="차단 관리"
-              accessibilityHint="차단된 사용자와 콘텐츠를 관리합니다"
-            >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(255, 59, 48, 0.15)' : 'rgba(255, 59, 48, 0.1)' }]}>
-                <Icon name="ban-outline" size={22} color={emotionColors.error} />
-              </View>
-              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>차단 관리</RNText>
-              <Icon name="chevron-forward" size={18} color={isDark ? emotionColors.textSecondary : '#999999'} />
-            </TouchableOpacity>
-
+            {/* 로그아웃 */}
             <TouchableOpacity
               style={[styles.settingItem, styles.logoutItem, { backgroundColor: isDark ? 'rgba(255, 59, 48, 0.08)' : '#FFF5F5' }]}
               onPress={handleLogout}
               activeOpacity={0.7}
               accessibilityLabel="로그아웃"
-              accessibilityHint="앱에서 로그아웃합니다"
             >
               <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(255, 59, 48, 0.2)' : 'rgba(255, 59, 48, 0.12)' }]}>
-                <Icon name="log-out-outline" size={22} color={emotionColors.error} />
+                <Icon name="log-out-outline" size={20} color={emotionColors.error} />
               </View>
-              <RNText style={[styles.logoutText, { color: emotionColors.error, fontWeight: '600' }]}>로그아웃</RNText>
-              <Icon name="chevron-forward" size={18} color={isDark ? emotionColors.textSecondary : '#999999'} />
+              <RNText style={[styles.logoutText, { color: emotionColors.error }]}>로그아웃</RNText>
+              <Icon name="chevron-forward" size={16} color={isDark ? emotionColors.textSecondary : '#999999'} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* 고객지원 섹션 */}
-        <View style={[styles.settingsCard, { backgroundColor: theme.colors.card }]}>
-          <RNText style={[styles.cardTitle, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
-            고객지원 💬
-          </RNText>
-
-          <View style={styles.settingsContainer}>
-            <TouchableOpacity
-              style={[styles.settingItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}
-              onPress={() => navigation.navigate('FAQ')}
-              activeOpacity={0.7}
-              accessibilityLabel="자주 묻는 질문"
-            >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(102, 126, 234, 0.1)' }]}>
-                <Icon name="help-circle-outline" size={22} color={emotionColors.primary} />
-              </View>
-              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>자주 묻는 질문</RNText>
-              <Icon name="chevron-forward" size={18} color={isDark ? emotionColors.textSecondary : '#999999'} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.settingItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}
-              onPress={() => navigation.navigate('Contact')}
-              activeOpacity={0.7}
-              accessibilityLabel="문의하기"
-            >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(0, 186, 124, 0.15)' : 'rgba(0, 186, 124, 0.1)' }]}>
-                <Icon name="chatbubble-ellipses-outline" size={22} color={emotionColors.success} />
-              </View>
-              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>문의하기</RNText>
-              <Icon name="chevron-forward" size={18} color={isDark ? emotionColors.textSecondary : '#999999'} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.settingItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}
-              onPress={() => navigation.navigate('TermsOfService')}
-              activeOpacity={0.7}
-              accessibilityLabel="이용약관"
-            >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(255, 149, 0, 0.15)' : 'rgba(255, 149, 0, 0.1)' }]}>
-                <Icon name="document-text-outline" size={22} color="#FF9500" />
-              </View>
-              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>이용약관</RNText>
-              <Icon name="chevron-forward" size={18} color={isDark ? emotionColors.textSecondary : '#999999'} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.settingItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}
-              onPress={() => navigation.navigate('PrivacyPolicy')}
-              activeOpacity={0.7}
-              accessibilityLabel="개인정보 처리방침"
-            >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(236, 72, 153, 0.15)' : 'rgba(236, 72, 153, 0.1)' }]}>
-                <Icon name="shield-checkmark-outline" size={22} color="#EC4899" />
-              </View>
-              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>개인정보 처리방침</RNText>
-              <Icon name="chevron-forward" size={18} color={isDark ? emotionColors.textSecondary : '#999999'} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* 앱 정보 섹션 */}
-        <View style={[styles.settingsCard, { backgroundColor: theme.colors.card, marginBottom: 30 }]}>
-          <RNText style={[styles.cardTitle, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
-            앱 정보 ℹ️
-          </RNText>
-
-          <View style={styles.settingsContainer}>
-            <View style={[styles.settingItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(102, 126, 234, 0.1)' }]}>
-                <Icon name="information-circle-outline" size={22} color={emotionColors.primary} />
-              </View>
-              <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>버전</RNText>
-              <RNText style={[styles.settingText, { color: isDark ? emotionColors.textSecondary : '#999999' }]}>1.0.0</RNText>
-            </View>
-          </View>
-        </View>
       </ScrollView>
       </View>
 
@@ -1479,7 +1376,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 32,
+    paddingBottom: 24,
   },
   themeToggle: {
     position: 'absolute',
@@ -1490,11 +1387,11 @@ const styles = StyleSheet.create({
   enhancedHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingTop: Platform.OS === 'android' ? 30 : 48,
-    paddingBottom: 15,
-    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'android' ? 24 : 40,
+    paddingBottom: 6,
+    paddingHorizontal: 20,
     borderBottomWidth: 0,
-    marginBottom: 10,
+    marginBottom: 2,
     elevation: 0,
     shadowColor: 'transparent',
     shadowOffset: { width: 0, height: 0 },
@@ -1513,14 +1410,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
     paddingRight: 8,
   },
   mainTitle: {
-    fontSize: 26, // FONT_SIZES.h1(24) + 2 (가독성 향상, lazy init 호환)
+    fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.4,
-    lineHeight: 34,
+    lineHeight: 30,
     textAlign: 'left',
     flex: 1,
   },
@@ -1553,12 +1450,12 @@ const styles = StyleSheet.create({
   subtitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   pointDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   subtitle: {
     fontSize: FONT_SIZES.bodyLarge, // 15 → 16 (가독성 향상)
@@ -1571,10 +1468,10 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   profileCard: {
-    borderRadius: 18,
-    padding: 18,
-    marginHorizontal: 20,
-    marginTop: 10,
+    borderRadius: 16,
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 4,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -1656,10 +1553,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   statsCard: {
-    borderRadius: 18,
-    padding: 14,
-    marginHorizontal: 20,
-    marginTop: 12,
+    borderRadius: 16,
+    padding: 10,
+    marginHorizontal: 16,
+    marginTop: 6,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -1668,12 +1565,13 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   cardTitle: {
-    fontSize: FONT_SIZES.h4, // 16 → 17 (섹션 제목 강화)
+    fontSize: FONT_SIZES.h4,
     fontWeight: '700',
-    marginBottom: 14,
+    marginBottom: 6,
     textAlign: 'left',
     letterSpacing: -0.2,
-    lineHeight: 24,
+    lineHeight: 22,
+    flexShrink: 0,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -1683,29 +1581,29 @@ const styles = StyleSheet.create({
   },
   statItem: {
     alignItems: 'center',
-    minWidth: 60,
+    minWidth: 50,
     flex: 1,
   },
   statNumber: {
-    fontSize: FONT_SIZES.h2, // 18 → 20 (통계 숫자 강조)
+    fontSize: FONT_SIZES.h3,
     fontWeight: '700',
-    marginTop: 6,
-    marginBottom: 4,
+    marginTop: 2,
+    marginBottom: 1,
     textAlign: 'center',
     letterSpacing: -0.3,
   },
   statLabel: {
-    fontSize: FONT_SIZES.bodySmall, // 13 → 14 (통계 라벨 가독성)
+    fontSize: FONT_SIZES.caption,
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0,
-    lineHeight: 20,
+    lineHeight: 16,
   },
   settingsCard: {
-    borderRadius: 18,
-    padding: 18,
-    marginHorizontal: 20,
-    marginTop: 12,
+    borderRadius: 16,
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 6,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -1719,12 +1617,12 @@ const styles = StyleSheet.create({
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    gap: 14,
-    marginBottom: 10,
-    minHeight: 68,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    gap: 8,
+    marginBottom: 3,
+    minHeight: 40,
     elevation: 0.5,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -1740,14 +1638,14 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
   },
   settingIconContainer: {
-    width: 42,
-    height: 42,
-    borderRadius: 11,
+    width: 28,
+    height: 28,
+    borderRadius: 7,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoutItem: {
-    marginTop: 16,
+    marginTop: 4,
     borderTopWidth: 0,
     paddingTop: 0,
   },
@@ -1804,9 +1702,9 @@ const styles = StyleSheet.create({
   },
   // 새로 추가된 스타일들
   quoteContainer: {
-    borderRadius: 16,
-    padding: 12,
-    marginTop: 14,
+    borderRadius: 14,
+    padding: 10,
+    marginTop: 10,
     borderWidth: 0,
     elevation: 1,
     shadowColor: '#000000',
@@ -1835,10 +1733,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.1,
   },
   emotionTagsCard: {
-    borderRadius: 18,
-    padding: 18,
-    marginHorizontal: 20,
-    marginTop: 12,
+    borderRadius: 16,
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 6,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -1858,7 +1756,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   emotionSubtitle: {
     fontSize: FONT_SIZES.body, // 14 → 15 (서브타이틀 가독성)
@@ -1872,11 +1770,11 @@ const styles = StyleSheet.create({
   simpleEmotionTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
     borderWidth: 0,
-    marginBottom: 6,
+    marginBottom: 3,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -1945,12 +1843,12 @@ const styles = StyleSheet.create({
   },
   // 감정 통계 하단 정보
   emotionStats: {
-    marginTop: 16,
-    paddingTop: 16,
+    marginTop: 10,
+    paddingTop: 10,
     borderTopWidth: 0,
-    gap: 10,
-    borderRadius: 12,
-    padding: 16,
+    gap: 6,
+    borderRadius: 10,
+    padding: 12,
   },
   statRow: {
     flexDirection: 'row',
@@ -2066,10 +1964,10 @@ const styles = StyleSheet.create({
   },
   // 이번 주 활동 카드 스타일
   weeklyActivityCard: {
-    borderRadius: 18,
-    padding: 18,
-    marginHorizontal: 20,
-    marginTop: 12,
+    borderRadius: 16,
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 6,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -2080,8 +1978,9 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: 6,
+    marginBottom: 6,
+    flexWrap: 'nowrap',
   },
   cardSubtitle: {
     fontSize: FONT_SIZES.bodySmall,
@@ -2094,11 +1993,11 @@ const styles = StyleSheet.create({
   weeklyItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
     borderWidth: 0,
-    marginBottom: 6,
+    marginBottom: 3,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -2160,12 +2059,52 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.bodySmall,
     fontWeight: '600',
   },
+  // 배지 스타일
+  badgeCard: {
+    borderRadius: 16,
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 6,
+    elevation: 1,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+  },
+  badgeCount: {
+    fontSize: FONT_SIZES.bodySmall,
+    fontWeight: '500',
+    marginLeft: 'auto',
+  },
+  badgeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  badgeItem: {
+    width: '22%',
+    aspectRatio: 1,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+  },
+  badgeIcon: {
+    fontSize: 28,
+    marginBottom: 4,
+  },
+  badgeName: {
+    fontSize: FONT_SIZES.tiny,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   // 챌린지 현황 스타일
   challengeCard: {
-    borderRadius: 18,
-    padding: 18,
-    marginHorizontal: 20,
-    marginTop: 12,
+    borderRadius: 16,
+    padding: 12,
+    marginHorizontal: 16,
+    marginTop: 6,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -2176,12 +2115,12 @@ const styles = StyleSheet.create({
   challengeStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 16,
+    gap: 10,
   },
   challengeStatItem: {
     alignItems: 'center',
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 14,
+    padding: 10,
     flex: 1,
     borderWidth: 0,
     elevation: 1,
@@ -2191,12 +2130,12 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   challengeIconContainer: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   challengeStatNumber: {
     fontSize: FONT_SIZES.h3,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   challengeStatLabel: {
     fontSize: FONT_SIZES.small,

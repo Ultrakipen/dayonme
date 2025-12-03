@@ -1,6 +1,7 @@
 // src/components/EmotionSelector.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { getEmotionEmoji } from '../constants/emotions';
 
 interface Emotion {
   id: number;
@@ -8,46 +9,6 @@ interface Emotion {
   icon: string;
   color: string;
 }
-
-// 감정명을 실제 이모지로 매핑
-const getEmotionEmoji = (emotionName: string): string => {
-  const emojiMap: Record<string, string> = {
-    '행복': '😊',
-    '기쁨': '😄',
-    '감사': '🙏',
-    '위로': '🤗',
-    '감동': '🥺',
-    '슬픔': '😢',
-    '우울': '😞',
-    '불안': '😰',
-    '걱정': '😟',
-    '화남': '😠',
-    '버럭': '😤',
-    '지침': '😑',
-    '무서움': '😨',
-    '편함': '😌',
-    '궁금': '🤔',
-    '사랑': '❤️',
-    '아픔': '🤕',
-    '욕심': '🤑',
-    '추억': '🥰',
-    '설렘': '🤗',
-    '황당': '🤨',
-    '당황': '😲',
-    '지루함': '😑',
-    '고독': '😔',
-    '충격': '😱'
-  };
-  
-  // 정확한 매칭이 없으면 첫 글자나 부분 매칭 시도
-  for (const [key, emoji] of Object.entries(emojiMap)) {
-    if (emotionName.includes(key) || key.includes(emotionName)) {
-      return emoji;
-    }
-  }
-  
-  return emotionName.charAt(0); // 기본값으로 첫 글자 사용
-};
 
 interface EmotionSelectorProps {
   emotions: Emotion[];

@@ -21,6 +21,8 @@ import FAQScreen from '../screens/FAQScreen';
 import ContactScreen from '../screens/ContactScreen';
 import TermsOfServiceScreen from '../screens/TermsOfServiceScreen';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+import MyReportsScreen from '../screens/MyReportsScreen';
+import OpenSourceLicensesScreen from '../screens/OpenSourceLicensesScreen';
 
 const Stack = createNativeStackNavigator<ProfileStackParamList>();
 
@@ -28,13 +30,7 @@ const ProfileStack: React.FC = () => {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: {
-          backgroundColor: '#4a0e4e',
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        headerShown: false,
       }}
     >
       <Stack.Screen 
@@ -187,10 +183,20 @@ const ProfileStack: React.FC = () => {
       />
 
       <Stack.Screen
-        name="OpenSourceLicenses"
-        component={SettingsScreen} // 임시로 SettingsScreen 사용
+        name="MyReports"
+        component={MyReportsScreen}
         options={{
-          title: '오픈소스 라이선스'
+          title: '내 신고 내역',
+          headerShown: false
+        }}
+      />
+
+      <Stack.Screen
+        name="OpenSourceLicenses"
+        component={OpenSourceLicensesScreen}
+        options={{
+          title: '오픈소스 라이선스',
+          headerShown: false
         }}
       />
 

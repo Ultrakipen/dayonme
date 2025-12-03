@@ -112,28 +112,28 @@ interface LocalEmotion {
 const getTwemojiUrl = (code: string) =>
   `https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/${code}.png`;
 
-// 사용자 지정 감정 목록 (이모지와 색상 포함)
+// 사용자 지정 감정 목록 (이모지와 색상 포함) - DB/공통상수 순서와 일치
 const localEmotions: LocalEmotion[] = [
-  { label: '기쁨이', emoji: '😊', emojiCode: '1f60a', color: '#FFD700' },
-  { label: '행복이', emoji: '😄', emojiCode: '1f604', color: '#FFA500' },
-  { label: '슬픔이', emoji: '😢', emojiCode: '1f622', color: '#4682B4' },
-  { label: '우울이', emoji: '😞', emojiCode: '1f61e', color: '#708090' },
-  { label: '지루미', emoji: '😑', emojiCode: '1f611', color: '#A9A9A9' },
-  { label: '버럭이', emoji: '😠', emojiCode: '1f620', color: '#FF4500' },
-  { label: '불안이', emoji: '😰', emojiCode: '1f630', color: '#DDA0DD' },
-  { label: '걱정이', emoji: '😟', emojiCode: '1f61f', color: '#FFA07A' },
-  { label: '감동이', emoji: '🥺', emojiCode: '1f97a', color: '#FF6347' },
-  { label: '황당이', emoji: '🤨', emojiCode: '1f928', color: '#20B2AA' },
-  { label: '당황이', emoji: '😲', emojiCode: '1f632', color: '#FF8C00' },
-  { label: '짜증이', emoji: '😤', emojiCode: '1f624', color: '#DC143C' },
-  { label: '무섭이', emoji: '😨', emojiCode: '1f628', color: '#9370DB' },
-  { label: '추억이', emoji: '🥰', emojiCode: '1f970', color: '#87CEEB' },
-  { label: '설렘이', emoji: '🤗', emojiCode: '1f917', color: '#FF69B4' },
-  { label: '편안이', emoji: '😌', emojiCode: '1f60c', color: '#98FB98' },
-  { label: '궁금이', emoji: '🤔', emojiCode: '1f914', color: '#DAA520' },
-  { label: '사랑이', emoji: '❤️', emojiCode: '2764', color: '#E91E63' },
-  { label: '아픔이', emoji: '🤕', emojiCode: '1f915', color: '#8B4513' },
-  { label: '욕심이', emoji: '🤑', emojiCode: '1f911', color: '#32CD32' }
+  { label: '기쁨이', emoji: '😊', emojiCode: '1f60a', color: '#FFD700' },    // 1
+  { label: '행복이', emoji: '😄', emojiCode: '1f604', color: '#FFA500' },    // 2
+  { label: '슬픔이', emoji: '😢', emojiCode: '1f622', color: '#4682B4' },    // 3
+  { label: '우울이', emoji: '😞', emojiCode: '1f61e', color: '#708090' },    // 4
+  { label: '불안이', emoji: '😰', emojiCode: '1f630', color: '#DDA0DD' },    // 5
+  { label: '걱정이', emoji: '😟', emojiCode: '1f61f', color: '#FFA07A' },    // 6
+  { label: '버럭이', emoji: '😠', emojiCode: '1f620', color: '#FF4500' },    // 7
+  { label: '짜증이', emoji: '😤', emojiCode: '1f624', color: '#DC143C' },    // 8
+  { label: '감동이', emoji: '🥺', emojiCode: '1f97a', color: '#FF6347' },    // 9
+  { label: '황당이', emoji: '🤨', emojiCode: '1f928', color: '#20B2AA' },    // 10
+  { label: '당황이', emoji: '😲', emojiCode: '1f632', color: '#FF8C00' },    // 11
+  { label: '무섭이', emoji: '😨', emojiCode: '1f628', color: '#9370DB' },    // 12
+  { label: '편안이', emoji: '😌', emojiCode: '1f60c', color: '#98FB98' },    // 13
+  { label: '추억이', emoji: '🥰', emojiCode: '1f970', color: '#87CEEB' },    // 14
+  { label: '설렘이', emoji: '🤗', emojiCode: '1f917', color: '#FF69B4' },    // 15
+  { label: '지루미', emoji: '😑', emojiCode: '1f611', color: '#A9A9A9' },    // 16
+  { label: '궁금이', emoji: '🤔', emojiCode: '1f914', color: '#DAA520' },    // 17
+  { label: '사랑이', emoji: '❤️', emojiCode: '2764', color: '#F8BBD9' },    // 18
+  { label: '아픔이', emoji: '🤕', emojiCode: '1f915', color: '#8B4513' },    // 19
+  { label: '욕심이', emoji: '🤑', emojiCode: '1f911', color: '#32CD32' }     // 20
 ];
 
 // 기본 감정 색상 매핑 (백엔드에서 색상이 없을 경우 사용)
@@ -325,6 +325,9 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+
+  // 실제 전송된 감정 데이터 저장 (낙관적 업데이트용)
+  const submittedEmotionRef = useRef<any>(null);
 
   // 감정 데이터 로드
   useEffect(() => {
@@ -870,34 +873,27 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
       return;
     }
 
-    // 로컬 감정 ID를 백엔드 감정 ID로 매핑
-    let backendEmotionId = emotionToUse.emotion_id;
-    
-    // 로컬 감정 ID(1-20)를 백엔드 감정 ID(1-17)로 매핑
-    if (emotionToUse.emotion_id > 17) {
-      // 18번 이상은 1-17 범위로 순환 매핑
-      backendEmotionId = ((emotionToUse.emotion_id - 1) % 17) + 1;
-      console.log('🔄 감정 ID 매핑:', {
-        localId: emotionToUse.emotion_id,
-        mappedId: backendEmotionId,
-        localName: emotionToUse.name
-      });
-    }
-    
-    // 백엔드 감정 목록에서 해당 ID 찾기
-    const mappedBackendEmotion = emotions.find(emotion => emotion.emotion_id === backendEmotionId);
-    
-    if (!mappedBackendEmotion && emotions.length > 0) {
-      // 매핑된 감정을 찾지 못하면 첫 번째 감정으로 기본값 설정
-      backendEmotionId = emotions[0].emotion_id;
-      console.log('🔄 기본 감정으로 설정:', emotions[0]);
-    }
+    // 백엔드에 20개 감정이 모두 있으므로 ID 그대로 사용
+    const backendEmotionId = emotionToUse.emotion_id;
+
+    console.log('📤 감정 ID 전송:', {
+      emotionId: backendEmotionId,
+      emotionName: emotionToUse.name
+    });
 
     console.log('✅ 감정 선택 유효성 검사 통과:', {
       emotionId: emotionToUse.emotion_id,
       emotionName: emotionToUse.name,
       isAnonymous: isAnonymous
     });
+
+    // 전송할 감정 데이터를 ref에 저장 (낙관적 업데이트용)
+    submittedEmotionRef.current = {
+      emotion_id: emotionToUse.emotion_id,
+      name: emotionToUse.name,
+      icon: emotionToUse.icon || emotionToUse.emoji,
+      color: emotionToUse.color
+    };
 
     setIsSubmitting(true);
 
@@ -1059,11 +1055,22 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
       }
     }
 
-    // EventEmitter로 홈 화면 새로고침 이벤트 전송
+    // ref에 저장된 실제 전송된 감정 데이터 사용
+    const updatedEmotionData = submittedEmotionRef.current;
+
+    console.log('📡 homeScreenRefresh 이벤트 발행:', {
+      postId: editPostId,
+      updatedEmotion: updatedEmotionData,
+      isEditMode
+    });
+
+    // EventEmitter로 홈 화면 새로고침 이벤트 전송 (수정된 데이터 포함)
     DeviceEventEmitter.emit('homeScreenRefresh', {
       refresh: true,
       newPostCreated: !isEditMode,
       postUpdated: isEditMode,
+      postId: editPostId,
+      updatedEmotion: updatedEmotionData,
       timestamp: Date.now()
     });
 

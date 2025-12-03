@@ -84,6 +84,9 @@ export type ChallengeStackParamList = {
   UserProfile: { userId: number; nickname?: string }; // 다른 사용자 프로필 화면 추가
   NotificationScreen: undefined; // 알림 화면 추가
   ProfileMain: undefined; // 본인 프로필 화면 추가
+  EmotionReport: undefined; // 감정 리포트 화면
+  AnonymousEncouragement: { challengeId: number }; // 익명 응원 화면
+  CompletionCard: { completionId: number }; // 완주 카드 화면
 };
 
 // 프로필 스택 네비게이션 타입 - 계정/알림 설정 추가
@@ -100,6 +103,7 @@ export type ProfileStackParamList = {
   NotificationSettings: undefined; // 알림 설정 화면 추가
   Bookmarks: undefined; // 북마크 화면 추가
   Encouragement: undefined; // 받은 격려 메시지 화면 추가
+  MyReports: undefined; // 내 신고 내역 화면 추가
   ChangePassword: undefined;
   Notice: undefined;
   FAQ: undefined;

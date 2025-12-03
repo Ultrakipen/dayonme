@@ -1,11 +1,12 @@
 // src/screens/SettingsScreen.tsx
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { ScrollView, Alert, Linking, StyleSheet, useWindowDimensions, Platform, Vibration } from 'react-native';
 import { Text, List, Switch, Button, Dialog, Portal, RadioButton, IconButton, Snackbar } from 'react-native-paper';
 import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { Box } from '../components/ui';
-import { FONT_SIZES } from '../constants';
+import { FONT_SIZES, APP_VERSION } from '../constants';
+import userService from '../services/api/userService';
 
 const BASE_WIDTH = 360;
 
@@ -22,19 +23,11 @@ interface NotificationSettings {
 
 interface PrivacySettings {
   show_profile: boolean;
-  show_emotions: boolean;
   show_posts: boolean;
-  show_challenges: boolean;
-  allow_messages: boolean;
-  public_stats: boolean;
 }
 
 interface AppSettings {
   theme: 'light' | 'dark' | 'system';
-  language: 'ko' | 'en';
-  font_size: 'small' | 'medium' | 'large';
-  auto_backup: boolean;
-  analytics_enabled: boolean;
 }
 
 interface SettingsScreenProps {
@@ -65,27 +58,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
 
   const [privacySettings, setPrivacySettings] = useState<PrivacySettings>({
     show_profile: true,
-    show_emotions: true,
     show_posts: true,
-    show_challenges: true,
-    allow_messages: false,
-    public_stats: true
   });
 
   const [appSettings, setAppSettings] = useState<AppSettings>({
     theme: 'system',
-    language: 'ko',
-    font_size: 'medium',
-    auto_backup: true,
-    analytics_enabled: true
   });
 
   const [loading, setLoading] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
   const [showThemeDialog, setShowThemeDialog] = useState(false);
-  const [showLanguageDialog, setShowLanguageDialog] = useState(false);
-  const [showFontSizeDialog, setShowFontSizeDialog] = useState(false);
   const [showTimePickerDialog, setShowTimePickerDialog] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -108,7 +91,31 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      // API 호출 준비 중
+
+      // 프로필에서 알림 설정과 프라이버시 설정 로드
+      const profileResponse = await userService.getProfile();
+      if (profileResponse.status === 'success' && profileResponse.data) {
+        const { notification_settings, privacy_settings } = profileResponse.data;
+
+        // 알림 설정 적용
+        if (notification_settings) {
+          setNotificationSettings(prev => ({
+            ...prev,
+            like_notifications: notification_settings.like_notifications ?? true,
+            comment_notifications: notification_settings.comment_notifications ?? true,
+            challenge_notifications: notification_settings.challenge_notifications ?? true,
+            encouragement_notifications: notification_settings.encouragement_notifications ?? true,
+          }));
+        }
+
+        // 프라이버시 설정 적용
+        if (privacy_settings) {
+          setPrivacySettings({
+            show_profile: privacy_settings.show_profile ?? true,
+            show_posts: privacy_settings.show_posts ?? true,
+          });
+        }
+      }
     } catch (error) {
       console.error('설정 로드 오류:', error);
     } finally {
@@ -118,7 +125,23 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
 
   const saveSettings = useCallback(async (type: 'notification' | 'privacy' | 'app', settings: any) => {
     try {
-      // API 호출 준비 중
+      if (type === 'notification') {
+        // 알림 설정 저장
+        await userService.updateNotificationSettings({
+          like_notifications: settings.like_notifications,
+          comment_notifications: settings.comment_notifications,
+          challenge_notifications: settings.challenge_notifications,
+          encouragement_notifications: settings.encouragement_notifications,
+        });
+      } else if (type === 'privacy') {
+        // 프라이버시 설정 저장
+        await userService.updatePrivacySettings({
+          show_profile: settings.show_profile,
+          show_posts: settings.show_posts,
+        });
+      }
+      // app 타입은 테마 설정으로 이미 setThemePreference에서 처리됨
+
       setSnackbarMessage('설정이 저장되었습니다.');
       setSnackbarVisible(true);
     } catch (error) {
@@ -186,14 +209,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
     setShowDeleteAccountDialog(false);
   };
 
-  const handleExportData = async () => {
-    try {
-      Alert.alert('데이터 내보내기', '데이터 내보내기 기능을 준비 중입니다.');
-    } catch (error) {
-      Alert.alert('오류', '데이터 내보내기 중 오류가 발생했습니다.');
-    }
-  };
-
   const openExternalLink = (url: string) => {
     Linking.openURL(url).catch(() => {
       Alert.alert('오류', '링크를 열 수 없습니다.');
@@ -215,16 +230,16 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
     setShowTimePickerDialog(false);
   };
 
-  const colors = {
+  const colors = useMemo(() => ({
     background: theme.bg.primary,
     cardBackground: theme.bg.card,
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
     primary: isDark ? '#60a5fa' : '#3b82f6',
-  };
+  }), [theme, isDark]);
 
-  const getStyles = () => StyleSheet.create({
+  const styles = useMemo(() => StyleSheet.create({
     sectionContainer: {
       backgroundColor: colors.cardBackground,
       marginBottom: 20 * scale,
@@ -307,12 +322,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
       minWidth: 80 * scale,
       alignItems: 'center',
     },
-  });
-
-  const styles = getStyles();
+  }), [colors, scale, isDark, theme.bg.secondary]);
 
   return (
-    <Box className="flex-1" style={{ backgroundColor: colors.background }}>
+    <Box key={`theme-${preference}-${isDark}`} className="flex-1" style={{ backgroundColor: colors.background }}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Box style={{ height: 24 * scale }} />
 
@@ -321,7 +334,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             <List.Item
               title="전체 알림"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               right={() => (
                 <Switch
                   value={notificationSettings.push_enabled}
@@ -335,7 +348,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             <List.Item
               title="좋아요 알림"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               right={() => (
                 <Switch
                   value={notificationSettings.like_notifications}
@@ -350,7 +363,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             <List.Item
               title="댓글 알림"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               right={() => (
                 <Switch
                   value={notificationSettings.comment_notifications}
@@ -365,7 +378,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             <List.Item
               title="챌린지 알림"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               right={() => (
                 <Switch
                   value={notificationSettings.challenge_notifications}
@@ -380,7 +393,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             <List.Item
               title="격려 메시지 알림"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               right={() => (
                 <Switch
                   value={notificationSettings.encouragement_notifications}
@@ -397,7 +410,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
               description={notificationSettings.daily_reminder ? notificationSettings.daily_reminder_time : undefined}
               titleStyle={styles.itemTitle}
               descriptionStyle={styles.itemSubtitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               onPress={() => notificationSettings.daily_reminder && handleTimePickerOpen()}
               right={() => (
                 <Switch
@@ -413,7 +426,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             <List.Item
               title="주간 요약"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               right={() => (
                 <Switch
                   value={notificationSettings.weekly_summary}
@@ -431,7 +444,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             <List.Item
               title="프로필 공개"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               right={() => (
                 <Switch
                   value={privacySettings.show_profile}
@@ -443,23 +456,9 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             />
 
             <List.Item
-              title="감정 기록 공개"
-              titleStyle={styles.itemTitle}
-              style={styles.listItem}
-              right={() => (
-                <Switch
-                  value={privacySettings.show_emotions}
-                  onValueChange={(value: boolean) => updatePrivacySetting('show_emotions', value)}
-                  thumbColor={privacySettings.show_emotions ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
-                />
-              )}
-            />
-
-            <List.Item
               title="게시물 공개"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               right={() => (
                 <Switch
                   value={privacySettings.show_posts}
@@ -470,47 +469,6 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
               )}
             />
 
-            <List.Item
-              title="챌린지 참여 공개"
-              titleStyle={styles.itemTitle}
-              style={styles.listItem}
-              right={() => (
-                <Switch
-                  value={privacySettings.show_challenges}
-                  onValueChange={(value: boolean) => updatePrivacySetting('show_challenges', value)}
-                  thumbColor={privacySettings.show_challenges ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
-                />
-              )}
-            />
-
-            <List.Item
-              title="메시지 허용"
-              titleStyle={styles.itemTitle}
-              style={styles.listItem}
-              right={() => (
-                <Switch
-                  value={privacySettings.allow_messages}
-                  onValueChange={(value: boolean) => updatePrivacySetting('allow_messages', value)}
-                  thumbColor={privacySettings.allow_messages ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
-                />
-              )}
-            />
-
-            <List.Item
-              title="통계 공개"
-              titleStyle={styles.itemTitle}
-              style={styles.listItem}
-              right={() => (
-                <Switch
-                  value={privacySettings.public_stats}
-                  onValueChange={(value: boolean) => updatePrivacySetting('public_stats', value)}
-                  thumbColor={privacySettings.public_stats ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
-                />
-              )}
-            />
         </Box>
 
         <Box style={styles.sectionContainer}>
@@ -520,55 +478,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
               description={appSettings.theme === 'light' ? '라이트' : appSettings.theme === 'dark' ? '다크' : '시스템 설정'}
               titleStyle={styles.itemTitle}
               descriptionStyle={styles.itemSubtitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               onPress={() => setShowThemeDialog(true)}
             />
 
-            <List.Item
-              title="언어"
-              description={appSettings.language === 'ko' ? '한국어' : 'English'}
-              titleStyle={styles.itemTitle}
-              descriptionStyle={styles.itemSubtitle}
-              style={styles.listItem}
-              onPress={() => setShowLanguageDialog(true)}
-            />
-
-            <List.Item
-              title="글자 크기"
-              description={appSettings.font_size === 'small' ? '작게' : appSettings.font_size === 'large' ? '크게' : '보통'}
-              titleStyle={styles.itemTitle}
-              descriptionStyle={styles.itemSubtitle}
-              style={styles.listItem}
-              onPress={() => setShowFontSizeDialog(true)}
-            />
-
-            <List.Item
-              title="자동 백업"
-              titleStyle={styles.itemTitle}
-              style={styles.listItem}
-              right={() => (
-                <Switch
-                  value={appSettings.auto_backup}
-                  onValueChange={(value: boolean) => updateAppSetting('auto_backup', value)}
-                  thumbColor={appSettings.auto_backup ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
-                />
-              )}
-            />
-
-            <List.Item
-              title="사용 통계"
-              titleStyle={styles.itemTitle}
-              style={styles.listItem}
-              right={() => (
-                <Switch
-                  value={appSettings.analytics_enabled}
-                  onValueChange={(value: boolean) => updateAppSetting('analytics_enabled', value)}
-                  thumbColor={appSettings.analytics_enabled ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
-                />
-              )}
-            />
         </Box>
 
         <Box style={styles.sectionContainer}>
@@ -576,22 +489,15 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             <List.Item
               title="프로필 편집"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               onPress={() => navigation.navigate('ProfileEdit')}
             />
 
             <List.Item
               title="비밀번호 변경"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               onPress={() => navigation.navigate('ChangePassword')}
-            />
-
-            <List.Item
-              title="데이터 내보내기"
-              titleStyle={styles.itemTitle}
-              style={styles.listItem}
-              onPress={handleExportData}
             />
 
             <Box style={{ height: 8 * scale, backgroundColor: colors.background }} />
@@ -599,14 +505,14 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
             <List.Item
               title="로그아웃"
               titleStyle={[styles.itemTitle, { color: '#FF6B6B' }]}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               onPress={() => setShowLogoutDialog(true)}
             />
 
             <List.Item
               title="계정 삭제"
               titleStyle={[styles.itemTitle, { color: '#FF6B6B' }]}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               onPress={() => setShowDeleteAccountDialog(true)}
             />
         </Box>
@@ -614,31 +520,38 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
         <Box style={styles.sectionContainer}>
           <Text style={styles.sectionHeader}>지원</Text>
             <List.Item
+              title="공지사항"
+              titleStyle={styles.itemTitle}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
+              onPress={() => navigation.navigate('Notice')}
+            />
+
+            <List.Item
               title="자주 묻는 질문"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               onPress={() => navigation.navigate('FAQ')}
             />
 
             <List.Item
               title="문의하기"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
               onPress={() => navigation.navigate('Contact')}
             />
 
             <List.Item
               title="이용약관"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
-              onPress={() => openExternalLink('https://example.com/terms')}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
+              onPress={() => navigation.navigate('TermsOfService')}
             />
 
             <List.Item
               title="개인정보처리방침"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
-              onPress={() => openExternalLink('https://example.com/privacy')}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
+              onPress={() => navigation.navigate('PrivacyPolicy')}
             />
         </Box>
 
@@ -646,17 +559,17 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
           <Text style={styles.sectionHeader}>정보</Text>
             <List.Item
               title="버전"
-              description="1.0.0"
+              description={APP_VERSION}
               titleStyle={styles.itemTitle}
               descriptionStyle={styles.itemSubtitle}
-              style={styles.listItem}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
             />
 
             <List.Item
-              title="평가하기"
+              title="오픈소스 라이선스"
               titleStyle={styles.itemTitle}
-              style={styles.listItem}
-              onPress={() => openExternalLink('https://apps.apple.com')}
+              style={[styles.listItem, { backgroundColor: colors.cardBackground }]}
+              onPress={() => navigation.navigate('OpenSourceLicenses')}
             />
         </Box>
 
@@ -664,19 +577,20 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
       </ScrollView>
 
       <Portal>
-        <Dialog visible={showThemeDialog} onDismiss={() => setShowThemeDialog(false)}>
-          <Dialog.Title style={styles.dialogTitle}>테마 선택</Dialog.Title>
+        <Dialog visible={showThemeDialog} onDismiss={() => setShowThemeDialog(false)} style={{ backgroundColor: colors.cardBackground }}>
+          <Dialog.Title style={[styles.dialogTitle, { color: colors.text }]}>테마 선택</Dialog.Title>
           <Dialog.Content>
             <RadioButton.Group
               onValueChange={(value: string) => {
                 setThemePreference(value as 'light' | 'dark' | 'system');
                 updateAppSetting('theme', value);
+                setShowThemeDialog(false);
               }}
               value={preference}
             >
-              <RadioButton.Item label="라이트 모드" value="light" labelStyle={styles.radioLabel} />
-              <RadioButton.Item label="다크 모드" value="dark" labelStyle={styles.radioLabel} />
-              <RadioButton.Item label="시스템 설정 따르기" value="system" labelStyle={styles.radioLabel} />
+              <RadioButton.Item label="라이트 모드" value="light" labelStyle={[styles.radioLabel, { color: colors.text }]} />
+              <RadioButton.Item label="다크 모드" value="dark" labelStyle={[styles.radioLabel, { color: colors.text }]} />
+              <RadioButton.Item label="시스템 설정 따르기" value="system" labelStyle={[styles.radioLabel, { color: colors.text }]} />
             </RadioButton.Group>
           </Dialog.Content>
           <Dialog.Actions>
@@ -686,45 +600,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
       </Portal>
 
       <Portal>
-        <Dialog visible={showLanguageDialog} onDismiss={() => setShowLanguageDialog(false)}>
-          <Dialog.Title style={styles.dialogTitle}>언어 선택</Dialog.Title>
-          <Dialog.Content>
-            <RadioButton.Group
-              onValueChange={(value) => updateAppSetting('language', value)}
-              value={appSettings.language}
-            >
-              <RadioButton.Item label="한국어" value="ko" labelStyle={styles.radioLabel} />
-              <RadioButton.Item label="English" value="en" labelStyle={styles.radioLabel} />
-            </RadioButton.Group>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setShowLanguageDialog(false)} labelStyle={styles.buttonLabel}>확인</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-
-      <Portal>
-        <Dialog visible={showFontSizeDialog} onDismiss={() => setShowFontSizeDialog(false)}>
-          <Dialog.Title style={styles.dialogTitle}>글자 크기 선택</Dialog.Title>
-          <Dialog.Content>
-            <RadioButton.Group
-              onValueChange={(value) => updateAppSetting('font_size', value)}
-              value={appSettings.font_size}
-            >
-              <RadioButton.Item label="작게" value="small" labelStyle={styles.radioLabel} />
-              <RadioButton.Item label="보통" value="medium" labelStyle={styles.radioLabel} />
-              <RadioButton.Item label="크게" value="large" labelStyle={styles.radioLabel} />
-            </RadioButton.Group>
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setShowFontSizeDialog(false)} labelStyle={styles.buttonLabel}>확인</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
-
-      <Portal>
-        <Dialog visible={showTimePickerDialog} onDismiss={() => setShowTimePickerDialog(false)}>
-          <Dialog.Title style={styles.dialogTitle}>리마인더 시간 설정</Dialog.Title>
+        <Dialog visible={showTimePickerDialog} onDismiss={() => setShowTimePickerDialog(false)} style={{ backgroundColor: colors.cardBackground }}>
+          <Dialog.Title style={[styles.dialogTitle, { color: colors.text }]}>리마인더 시간 설정</Dialog.Title>
           <Dialog.Content>
             <Box style={styles.timePickerRow}>
               <Box style={styles.timePickerButton}>
@@ -770,10 +647,10 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
       </Portal>
 
       <Portal>
-        <Dialog visible={showLogoutDialog} onDismiss={() => setShowLogoutDialog(false)}>
-          <Dialog.Title style={styles.dialogTitle}>로그아웃</Dialog.Title>
+        <Dialog visible={showLogoutDialog} onDismiss={() => setShowLogoutDialog(false)} style={{ backgroundColor: colors.cardBackground }}>
+          <Dialog.Title style={[styles.dialogTitle, { color: colors.text }]}>로그아웃</Dialog.Title>
           <Dialog.Content>
-            <Text style={styles.dialogText}>정말로 로그아웃 하시겠습니까?</Text>
+            <Text style={[styles.dialogText, { color: colors.text }]}>정말로 로그아웃 하시겠습니까?</Text>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setShowLogoutDialog(false)} labelStyle={styles.buttonLabel}>취소</Button>
@@ -783,13 +660,13 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
       </Portal>
 
       <Portal>
-        <Dialog visible={showDeleteAccountDialog} onDismiss={() => setShowDeleteAccountDialog(false)}>
-          <Dialog.Title style={styles.dialogTitle}>계정 삭제</Dialog.Title>
+        <Dialog visible={showDeleteAccountDialog} onDismiss={() => setShowDeleteAccountDialog(false)} style={{ backgroundColor: colors.cardBackground }}>
+          <Dialog.Title style={[styles.dialogTitle, { color: colors.text }]}>계정 삭제</Dialog.Title>
           <Dialog.Content>
             <Text style={[styles.dialogText, { fontWeight: '700', color: '#FF6B6B', marginBottom: 8 * scale }]}>
               정말로 계정을 삭제하시겠습니까?
             </Text>
-            <Text style={[styles.dialogText, { color: '#737373', lineHeight: 20 * scale }]}>
+            <Text style={[styles.dialogText, { color: colors.textSecondary, lineHeight: 20 * scale }]}>
               이 작업은 되돌릴 수 없으며, 모든 데이터가 영구적으로 삭제됩니다.
             </Text>
           </Dialog.Content>

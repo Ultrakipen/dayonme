@@ -4,6 +4,7 @@ import { Card } from '../../../components/common/Card';
 import { useModernTheme } from '../../../hooks/useModernTheme';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
+import { TwemojiImage } from '../../../components/common/TwemojiImage';
 
 interface DayData {
   date: string;
@@ -80,7 +81,10 @@ export const EmotionHeatmap: React.FC<Props> = React.memo(({ data, period = 'wee
   return (
     <Card accessible={true} accessibilityLabel="활동 캘린더">
       <View style={[styles.header, { marginBottom: 16 * scale }]}>
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale, marginBottom: 12 * scale }]}>📅 활동 캘린더</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 * scale }}>
+          <TwemojiImage emoji="📅" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>활동 캘린더</Text>
+        </View>
         <View style={[styles.statsRow, { gap: 12 * scale }]}>
           <View style={styles.statBadge} accessible={true} accessibilityLabel={`총 ${totalRecords}개 기록`}>
             <Text style={[styles.statValue, { color: colors.primary, fontSize: FONT_SIZES.h1 * scale }]}>{totalRecords}</Text>

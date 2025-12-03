@@ -7,6 +7,7 @@ import reviewService from '../../../services/api/reviewService';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TwemojiImage } from '../../../components/common/TwemojiImage';
 
 // 캐시 설정
 const CACHE_KEY = '@realtime_activity_cache';
@@ -219,9 +220,12 @@ export const RealTimeActivity: React.FC = React.memo(() => {
           <Text style={[styles.liveText, { color: colors.text, fontSize: FONT_SIZES.small * scale }]}>LIVE</Text>
         </View>
 
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale, lineHeight: 24 * scale }]}>
-          💫 지금 이 순간
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TwemojiImage emoji="💫" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale, lineHeight: 24 * scale }]}>
+            지금 이 순간
+          </Text>
+        </View>
 
         <View style={[styles.statsContainer, { gap: 12 * scale }]}>
           <View style={styles.statItem} accessible={true} accessibilityLabel={`현재 ${data.activeNow}명이 ${data.topEmotion.name} 감정을 기록 중입니다`}>

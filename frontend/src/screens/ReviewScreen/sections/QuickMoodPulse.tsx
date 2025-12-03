@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useModernTheme } from '../../../hooks/useModernTheme';
 import { Card } from '../../../components/common/Card';
@@ -6,6 +6,7 @@ import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
 import reviewService from '../../../services/api/reviewService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TwemojiImage } from '../../../components/common/TwemojiImage';
 
 interface MoodOption {
   emoji: string;
@@ -106,12 +107,15 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
   return (
     <Card accessible={true} accessibilityLabel="빠른 기분 체크">
       <View style={styles.header}>
-        <Text
-          style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}
-          accessibilityRole="header"
-        >
-          ⚡ 지금 기분은?
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TwemojiImage emoji="⚡" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text
+            style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}
+            accessibilityRole="header"
+          >
+            지금 기분은?
+          </Text>
+        </View>
         <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
           {selectedMood !== null
             ? '같은 감정 클릭 시 취소 · 다른 감정 선택 가능'
@@ -142,14 +146,14 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
             >
-              <Animated.Text
+              <Animated.View
                 style={[
-                  styles.moodEmoji,
+                  styles.moodEmojiContainer,
                   isSelected && { transform: [{ scale: scaleAnim }] }
                 ]}
               >
-                {mood.emoji}
-              </Animated.Text>
+                <TwemojiImage emoji={mood.emoji} size={40 * scale} />
+              </Animated.View>
               <Text style={[
                 styles.moodLabel,
                 {
@@ -171,9 +175,14 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
           accessible={true}
           accessibilityLabel={`전 세계 ${globalStats}명이 지금 활동 중`}
         >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <TwemojiImage emoji="💬" size={FONT_SIZES.body * scale} style={{ marginRight: 6 * scale }} />
+            <Text style={[styles.statsText, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>
+              지금 전 세계 <Text style={{ color: '#2196f3', fontWeight: '700' }}>{globalStats.toLocaleString()}명</Text>이
+            </Text>
+          </View>
           <Text style={[styles.statsText, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>
-            💬 지금 전 세계 <Text style={{ color: '#2196f3', fontWeight: '700' }}>{globalStats.toLocaleString()}명</Text>이
-            {'\n'}함께 감정을 기록하고 있어요
+            함께 감정을 기록하고 있어요
           </Text>
         </View>
       )}
@@ -210,10 +219,10 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     overflow: 'visible',
   },
-  moodEmoji: {
-    fontSize: 28,
+  moodEmojiContainer: {
     marginBottom: 4,
-    lineHeight: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   moodLabel: {
     textAlign: 'center',

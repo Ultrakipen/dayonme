@@ -6,6 +6,7 @@ import { BadgeCollection } from './BadgeCollection';
 import reviewService from '../../../services/api/reviewService';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
+import { TwemojiImage } from '../../../components/common/TwemojiImage';
 
 interface Badge {
   id: string;
@@ -82,7 +83,10 @@ export const BadgePreview: React.FC = React.memo(() => {
   return (
     <Card accessible={true} accessibilityLabel="나의 배지 섹션">
       <View style={[styles.header, { marginBottom: 16 * scale }]}>
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>🏆 나의 배지</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TwemojiImage emoji="🏆" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>나의 배지</Text>
+        </View>
         <TouchableOpacity
           onPress={handleViewAll}
           activeOpacity={0.7}
@@ -112,9 +116,10 @@ export const BadgePreview: React.FC = React.memo(() => {
               },
               !badge.unlocked && styles.badgeLocked
             ]}>
-              <Text style={[{ fontSize: 32 * scale }, !badge.unlocked && { fontSize: FONT_SIZES.h1 * scale }]}>
-                {badge.unlocked ? badge.icon : '🔒'}
-              </Text>
+              <TwemojiImage
+                emoji={badge.unlocked ? badge.icon : '🔒'}
+                size={badge.unlocked ? 32 * scale : FONT_SIZES.h1 * scale}
+              />
             </View>
             <Text style={[styles.badgeName, { color: colors.text, fontSize: FONT_SIZES.small * scale }]} numberOfLines={1}>
               {badge.name}

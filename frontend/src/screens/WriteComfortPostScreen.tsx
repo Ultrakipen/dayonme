@@ -1,5 +1,5 @@
 // src/screens/WriteComfortPostScreen.tsx
-import React, { useState, useCallback, useMemo, useEffect, memo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, memo, useRef } from 'react';
 import {
   ScrollView,
   View,
@@ -11,6 +11,7 @@ import {
   Platform,
   Modal,
   useWindowDimensions,
+  DeviceEventEmitter,
 } from 'react-native';
 import {
   TextInput,
@@ -23,6 +24,7 @@ import { StyledText, StyledButton, StyledCard } from '../components/ModernUI';
 import TagSearchInput from '../components/TagSearchInput';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useModernTheme } from '../contexts/ModernThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { launchImageLibrary, launchCamera, ImagePickerResponse, MediaType, PhotoQuality } from 'react-native-image-picker';
 import comfortWallService from '../services/api/comfortWallService';
 import postService from '../services/api/postService';
@@ -32,6 +34,7 @@ import ConfirmationModal from '../components/ui/ConfirmationModal';
 import ImageCarousel from '../components/ImageCarousel';
 import { API_CONFIG } from '../config/api';
 import { FONT_SIZES } from '../constants';
+import { EMOTION_AVATARS, getTwemojiUrl } from '../constants/emotions';
 
 interface Tag {
   tag_id: number;
@@ -46,6 +49,7 @@ interface WriteComfortPostScreenProps {
 const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ navigation, route }) => {
   const paperTheme = useTheme();
   const { theme, isDark } = useModernTheme();
+  const { user } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
 
   const colors = {
@@ -156,9 +160,11 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(true);
+  const [selectedEmotionId, setSelectedEmotionId] = useState<number | null>(null); // 익명 감정 선택
+  const selectedEmotionIdRef = useRef<number | null>(null); // 최신 값 추적용
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
-  
+
   // 이미지 기능 활성화 (카메라는 작동함)
   const [imageFeatureEnabled, setImageFeatureEnabled] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -171,8 +177,10 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
   // 성공 모달 확인 핸들러
   const handleSuccessConfirm = useCallback(() => {
     setShowSuccessModal(false);
+    // 수정 완료 이벤트 발생 - PostDetail에서 즉시 새로고침
+    DeviceEventEmitter.emit('homeScreenRefresh', { postUpdated: true, postId });
     navigation.goBack();
-  }, [navigation]);
+  }, [navigation, postId]);
 
   // 애니메이션 값들 (필수 애니메이션만 유지)
   const fadeAnim = useMemo(() => new Animated.Value(0), []);
@@ -229,7 +237,18 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
         setTitle(post.title || '');
         setContent(post.content || '');
         setIsAnonymous(post.is_anonymous || false);
-        
+
+        // 익명 감정 ID 설정 (수정 모드에서 기존 감정 유지)
+        if (__DEV__) console.log('📝 [loadExistingPost] 감정 ID 확인:', {
+          is_anonymous: post.is_anonymous,
+          anonymous_emotion_id: post.anonymous_emotion_id
+        });
+        if (post.is_anonymous && post.anonymous_emotion_id) {
+          setSelectedEmotionId(post.anonymous_emotion_id);
+          selectedEmotionIdRef.current = post.anonymous_emotion_id; // ref도 업데이트
+          if (__DEV__) console.log('📝 [loadExistingPost] 감정 ID 설정됨:', post.anonymous_emotion_id);
+        }
+
         // 태그 설정
         if (post.tags && Array.isArray(post.tags)) {
           const tags = post.tags.map((tagName: string, index: number) => ({
@@ -617,10 +636,14 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
       const trimmedTitle = title.trim();
       const trimmedContent = content.trim();
 
+      // ref에서 최신 감정 ID 가져오기 (클로저 문제 해결)
+      const currentEmotionId = selectedEmotionIdRef.current;
+
       const postData = {
         title: trimmedTitle,
         content: trimmedContent,
         is_anonymous: isAnonymous,
+        anonymous_emotion_id: isAnonymous ? currentEmotionId : null, // 익명일 때만 감정 전송
         tags: selectedTags.map(tag => tag.name),
         images: uploadedImageUrls
       };
@@ -646,13 +669,18 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             title: postData.title,
             content: postData.content,
             is_anonymous: postData.is_anonymous || true,
+            anonymous_emotion_id: response.data.data?.anonymous_emotion_id || selectedEmotionId,
             like_count: 0,
             comment_count: 0,
             created_at: new Date().toISOString(),
             tags: selectedTags.map(tag => tag.name),
             images: uploadedImageUrls,
             comments: [],
-            user_id: 1 // 임시 사용자 ID
+            user_id: user?.user_id || 0,
+            user: postData.is_anonymous ? undefined : {
+              nickname: user?.nickname || '사용자',
+              profile_image_url: user?.profile_image_url
+            }
           };
 
           // ComfortMain에 새 게시물 전달하면서 뒤로 가기
@@ -1371,7 +1399,14 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               </StyledText>
             </VStack>
             <TouchableOpacity
-              onPress={() => setIsAnonymous(!isAnonymous)}
+              onPress={() => {
+                const newValue = !isAnonymous;
+                setIsAnonymous(newValue);
+                // 실명으로 전환 시 감정 선택 초기화
+                if (!newValue) {
+                  setSelectedEmotionId(null);
+                }
+              }}
               style={{
                 width: scale(56),
                 height: scale(32),
@@ -1409,6 +1444,116 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             </TouchableOpacity>
           </HStack>
         </View>
+
+        {/* 익명 감정 선택 섹션 - 익명일 때만 표시 */}
+        {isAnonymous && (
+          <View style={{
+            marginHorizontal: scale(16),
+            marginVertical: scale(10),
+            backgroundColor: theme.colors.card,
+            borderRadius: scale(20),
+            padding: scale(20),
+            borderWidth: 0,
+            shadowColor: isDark ? '#000000' : '#000000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: isDark ? 0.3 : 0.08,
+            shadowRadius: 8,
+            elevation: 4,
+          }}>
+            <VStack spacing="sm">
+              <View style={{ marginBottom: scale(12) }}>
+                <StyledText
+                  variant="label"
+                  style={{
+                    fontSize: scale(16),
+                    fontWeight: '700',
+                    color: theme.text.primary,
+                    letterSpacing: -0.2,
+                    marginBottom: scale(6)
+                  }}
+                >
+                  익명 캐릭터 선택
+                </StyledText>
+                <StyledText
+                  variant="caption"
+                  style={{
+                    fontSize: scale(14),
+                    color: theme.text.secondary,
+                    fontWeight: '400',
+                    lineHeight: scale(18)
+                  }}
+                >
+                  {selectedEmotionId
+                    ? `${EMOTION_AVATARS.find(e => e.id === selectedEmotionId)?.label || ''}(으)로 활동해요`
+                    : '선택하지 않으면 랜덤으로 배정돼요'}
+                </StyledText>
+              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingVertical: scale(4) }}
+              >
+                <View style={{ flexDirection: 'row', gap: scale(10) }}>
+                  {EMOTION_AVATARS.map((emotion) => {
+                    const isSelected = selectedEmotionId === emotion.id;
+                    return (
+                      <TouchableOpacity
+                        key={emotion.id}
+                        onPress={() => {
+                          const newId = isSelected ? null : emotion.id;
+                          if (__DEV__) console.log('🎭 감정 선택:', { 이전: selectedEmotionId, 새값: newId, 감정: emotion.label });
+                          setSelectedEmotionId(newId);
+                          selectedEmotionIdRef.current = newId; // ref도 업데이트
+                        }}
+                        style={{
+                          alignItems: 'center',
+                          paddingVertical: scale(10),
+                          paddingHorizontal: scale(8),
+                          borderRadius: scale(16),
+                          backgroundColor: isSelected
+                            ? (isDark ? `${emotion.color}30` : `${emotion.color}20`)
+                            : 'transparent',
+                          borderWidth: isSelected ? 2 : 1,
+                          borderColor: isSelected
+                            ? emotion.color
+                            : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'),
+                          minWidth: scale(64),
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <View style={{
+                          width: scale(44),
+                          height: scale(44),
+                          borderRadius: scale(22),
+                          backgroundColor: isSelected ? `${emotion.color}40` : `${emotion.color}20`,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          marginBottom: scale(6),
+                        }}>
+                          <Image
+                            source={{ uri: getTwemojiUrl(emotion.emojiCode) }}
+                            style={{ width: scale(28), height: scale(28) }}
+                            resizeMode="contain"
+                          />
+                        </View>
+                        <StyledText
+                          style={{
+                            fontSize: scale(12),
+                            fontWeight: isSelected ? '700' : '500',
+                            color: isSelected ? emotion.color : theme.text.secondary,
+                            textAlign: 'center',
+                          }}
+                        >
+                          {emotion.shortName}
+                        </StyledText>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            </VStack>
+          </View>
+        )}
 
         {/* 안내 메시지 */}
         <View style={{

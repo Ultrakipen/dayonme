@@ -6,6 +6,7 @@ export interface ComfortWallPostData {
   title: string;
   content: string;
   is_anonymous?: boolean;
+  anonymous_emotion_id?: number | null; // 익명 게시물용 감정 ID (1-20)
   tag_ids?: number[];
   tags?: string[];
   images?: string[];

@@ -92,10 +92,10 @@ const postService = {
     }
   },
 
-  // 게시물 단일 조회
+  // 게시물 단일 조회 (MyDay 엔드포인트 사용)
   getPostById: async (postId: number) => {
     try {
-      const response = await apiClient.get(`/posts/${postId}`);
+      const response = await apiClient.get(`/my-day/posts/${postId}`);
       return response.data;
     } catch (error: any) {
       console.error('게시물 조회 오류:', error);

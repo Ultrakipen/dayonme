@@ -274,7 +274,7 @@ const ChallengeScreenFixed = ({ route }: any) => {
 
       showAlert.show('신고 완료', '신고가 접수되었습니다.');
     } catch (error: any) {
-      console.error('신고 오류:', error);
+      if (__DEV__) console.error('신고 오류:', error);
 
       // 중복 신고 에러 처리
       if (error?.response?.data?.code === 'ALREADY_REPORTED') {
@@ -416,7 +416,7 @@ const ChallengeScreenFixed = ({ route }: any) => {
         }
       }
     } catch (error) {
-      console.error('❌ 챌린지 로드 실패:', error);
+      if (__DEV__) console.error('❌ 챌린지 로드 실패:', error);
       showAlert.show('오류', '챌린지를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
@@ -2055,7 +2055,8 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   headerRight: {
-    marginLeft: 16,
+    marginLeft: 20,
+    marginRight: 10,
   },
   headerIconButton: {
     width: 44,

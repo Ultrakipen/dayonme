@@ -72,6 +72,10 @@ export {
   verticalSpacing,
 } from './spacing';
 
+// 앱 버전 정보
+export const APP_VERSION = '1.0.0';
+export const APP_BUILD = '1';
+
 // API 엔드포인트
 export const API_ENDPOINTS = {
   AUTH: {

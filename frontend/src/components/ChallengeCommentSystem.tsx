@@ -27,6 +27,9 @@ import { normalizeImageUrl, isValidImageUrl } from '../utils/imageUtils';
 import { sanitizeText, sanitizeComment } from '../utils/sanitize';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../styles/challengeDesignSystem';
 import BottomSheet from './BottomSheet';
+import { EMOTION_AVATARS, getTwemojiUrl } from '../constants/emotions';
+import { useAuth } from '../contexts/AuthContext';
+import reportService from '../services/api/reportService';
 
 // 다크모드를 지원하는 Text 컴포넌트
 const Text: React.FC<any> = ({ style, ...props }) => {
@@ -121,7 +124,7 @@ const anonymousEmotions = [
   { label: '설렘이', icon: 'heart-multiple', color: '#FF69B4' },
   { label: '편안이', icon: 'emoticon-kiss', color: '#98FB98' },
   { label: '궁금이', icon: 'emoticon-outline', color: '#DAA520' },
-  { label: '사랑이', icon: 'heart', color: '#E91E63' },
+  { label: '사랑이', icon: 'heart', color: '#E8D5F2' },
   { label: '아픔이', icon: 'medical-bag', color: '#8B4513' },
   { label: '희망이', icon: 'star', color: '#FFD700' },
 ];
@@ -176,6 +179,8 @@ interface ChallengeCommentSystemProps {
   onUpdateComment: (commentId: number, content: string) => Promise<void>;
   onDeleteComment: (commentId: number) => Promise<void>;
   onLikeComment: (commentId: number) => Promise<void>;
+  onEditEmotionRecord?: (record: EmotionRecord) => void; // 감정 기록 수정 (모달 열기)
+  onDeleteEmotionRecord?: (emotionId: number) => Promise<void>; // 감정 기록 삭제
   isLoading?: boolean;
 }
 
@@ -211,34 +216,148 @@ const getAnonymousName = async (challengeId: number, userId: number, commentId?:
 const EmotionRecordCard: React.FC<{
   record: EmotionRecord;
   isDarkMode: boolean;
+  currentUserId?: number;
   onPress?: () => void;
-}> = ({ record, isDarkMode, onPress }) => {
+  onEdit?: (record: EmotionRecord) => void;
+  onDelete?: (emotionId: number) => void;
+  isAuthenticated?: boolean;
+}> = ({ record, isDarkMode, currentUserId, onPress, onEdit, onDelete, isAuthenticated = true }) => {
   const { theme } = useModernTheme();
-  const getEmotionEmoji = (emotionName: string): string => {
-    const emojiMap: { [key: string]: string } = {
-      '기쁨이': '😊', '기쁨': '😊',
-      '행복이': '😄', '행복': '😄',
-      '슬픔이': '😢', '슬픔': '😢',
-      '우울이': '😞', '우울': '😞',
-      '지루미': '😑', '지루함': '😑',
-      '버럭이': '😠', '분노': '😠', '화남': '😠',
-      '불안이': '😰', '불안': '😰',
-      '걱정이': '😟', '걱정': '😟',
-      '감동이': '🥺', '감동': '🥺',
-      '황당이': '🤨', '황당': '🤨',
-      '당황이': '😲', '당황': '😲',
-      '짜증이': '😤', '짜증': '😤',
-      '무섭이': '😨', '무서움': '😨',
-      '추억이': '🥰', '추억': '🥰',
-      '설렘이': '🤗', '설렘': '🤗',
-      '편안이': '😌', '편안함': '😌', '평온': '😌',
-      '궁금이': '🤔', '궁금함': '🤔',
-      '사랑이': '❤️', '사랑': '❤️',
-      '아픔이': '🤕', '아픔': '🤕',
-      '욕심이': '🤑', '욕심': '🤑',
-      '놀람': '😲'
-    };
-    return emojiMap[emotionName] || '😊';
+  const [bottomSheetVisible, setBottomSheetVisible] = useState(false);
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [reportConfirmVisible, setReportConfirmVisible] = useState(false);
+  const [reportSuccessVisible, setReportSuccessVisible] = useState(false);
+
+  // 본인 기록 여부 확인
+  const isOwner = record.user_id === currentUserId;
+
+  // 더보기 버튼 핸들러
+  const handleMorePress = () => {
+    setBottomSheetVisible(true);
+  };
+
+  // BottomSheet actions 구성
+  const getBottomSheetActions = () => {
+    if (isOwner) {
+      return [
+        {
+          id: 'edit',
+          title: '수정',
+          icon: 'pencil-outline',
+          onPress: () => {
+            setBottomSheetVisible(false);
+            setTimeout(() => onEdit?.(record), 300);
+          },
+        },
+        {
+          id: 'delete',
+          title: '삭제',
+          icon: 'delete-outline',
+          destructive: true,
+          onPress: () => setDeleteConfirmVisible(true),
+        },
+      ];
+    } else {
+      return [
+        {
+          id: 'report',
+          title: '신고',
+          icon: 'alert-circle-outline',
+          destructive: true,
+          onPress: () => setReportConfirmVisible(true),
+        },
+      ];
+    }
+  };
+
+  // 삭제 확인 actions
+  const deleteConfirmActions = [
+    {
+      id: 'confirm-delete',
+      title: '삭제',
+      icon: 'delete-outline',
+      destructive: true,
+      onPress: () => {
+        onDelete?.(record.challenge_emotion_id);
+        setDeleteConfirmVisible(false);
+      },
+    },
+  ];
+
+  // 감정 기록 신고 API 호출 함수
+  const handleReportEmotionRecord = async (reportType: string) => {
+    try {
+      await reportService.submitReport({
+        item_type: 'challenge_emotion',
+        item_id: record.challenge_emotion_id,
+        report_type: reportType,
+        reason: reportType,
+        details: `챌린지 감정 기록 신고: ${record.note?.substring(0, 100) || record.emotion_name}`
+      });
+      setReportConfirmVisible(false);
+      setReportSuccessVisible(true);
+    } catch (error: any) {
+      setReportConfirmVisible(false);
+      if (error?.response?.data?.code === 'ALREADY_REPORTED') {
+        Alert.alert('알림', '이미 신고한 감정 기록입니다.');
+      } else {
+        Alert.alert('오류', '신고 처리 중 문제가 발생했습니다.');
+      }
+    }
+  };
+
+  // 신고 확인 actions
+  const reportConfirmActions = [
+    {
+      id: 'spam',
+      title: '스팸/도배',
+      icon: 'alert-circle-outline',
+      destructive: true,
+      onPress: () => handleReportEmotionRecord('spam'),
+    },
+    {
+      id: 'inappropriate',
+      title: '부적절한 내용',
+      icon: 'alert-circle-outline',
+      destructive: true,
+      onPress: () => handleReportEmotionRecord('inappropriate'),
+    },
+    {
+      id: 'harassment',
+      title: '괴롭힘/욕설',
+      icon: 'alert-circle-outline',
+      destructive: true,
+      onPress: () => handleReportEmotionRecord('harassment'),
+    },
+    {
+      id: 'other',
+      title: '기타',
+      icon: 'alert-circle-outline',
+      destructive: true,
+      onPress: () => handleReportEmotionRecord('other'),
+    },
+  ];
+
+  // 신고 완료 actions
+  const reportSuccessActions = [
+    {
+      id: 'ok',
+      title: '확인',
+      icon: 'check-circle-outline',
+      onPress: () => setReportSuccessVisible(false),
+    },
+  ];
+  // Twemoji URL을 반환하는 함수
+  const getEmotionTwemojiUrl = (emotionName: string): string => {
+    // EMOTION_AVATARS에서 감정 찾기
+    const emotion = EMOTION_AVATARS.find(
+      e => e.label === emotionName || e.shortName === emotionName
+    );
+    if (emotion) {
+      return getTwemojiUrl(emotion.emojiCode);
+    }
+    // 기본값 (기쁨이)
+    return getTwemojiUrl('1f60a');
   };
 
   const CardContent = (
@@ -249,14 +368,16 @@ const EmotionRecordCard: React.FC<{
         borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
       }
     ]}>
-      {/* 감정 아바타 (이모지) */}
+      {/* 감정 아바타 (Twemoji 고해상도 이미지) */}
       <View style={[
         styles.emotionRecordAvatar,
         { backgroundColor: record.emotion_color || '#FFD700' }
       ]}>
-        <Text style={styles.emotionRecordEmoji}>
-          {getEmotionEmoji(record.emotion_name)}
-        </Text>
+        <Image
+          source={{ uri: getEmotionTwemojiUrl(record.emotion_name) }}
+          style={styles.emotionRecordEmoji}
+          resizeMode="contain"
+        />
       </View>
 
       {/* 감정 정보 */}
@@ -268,12 +389,28 @@ const EmotionRecordCard: React.FC<{
           ]}>
             {record.nickname}
           </Text>
-          <Text style={[
-            styles.emotionRecordTime,
-            { color: theme.text.secondary }
-          ]}>
-            {getRelativeTime(record.date)}
-          </Text>
+          <View style={styles.emotionRecordHeaderRight}>
+            <Text style={[
+              styles.emotionRecordTime,
+              { color: theme.text.secondary }
+            ]}>
+              {getRelativeTime(record.date)}
+            </Text>
+            {/* 더보기 버튼 - 로그인 사용자만 */}
+            {isAuthenticated && (
+              <TouchableOpacity
+                style={styles.emotionRecordMoreButton}
+                onPress={handleMorePress}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <MaterialCommunityIcons
+                  name="dots-horizontal"
+                  size={Math.max(scaleSize(20), 18)}
+                  color={theme.text.secondary}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* 감정 이야기 */}
@@ -302,23 +439,64 @@ const EmotionRecordCard: React.FC<{
     </View>
   );
 
-  if (onPress) {
-    return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
-        {CardContent}
-      </TouchableOpacity>
-    );
-  }
+  const CardWithBottomSheets = (
+    <>
+      {onPress ? (
+        <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+          {CardContent}
+        </TouchableOpacity>
+      ) : CardContent}
 
-  return CardContent;
+      {/* BottomSheet for emotion record options */}
+      <BottomSheet
+        visible={bottomSheetVisible}
+        onClose={() => setBottomSheetVisible(false)}
+        actions={getBottomSheetActions()}
+      />
+
+      {/* BottomSheet for delete confirmation */}
+      <BottomSheet
+        visible={deleteConfirmVisible}
+        onClose={() => setDeleteConfirmVisible(false)}
+        title="감정 기록 삭제"
+        subtitle="정말로 이 감정 기록을 삭제하시겠습니까?"
+        actions={deleteConfirmActions}
+      />
+
+      {/* BottomSheet for report confirmation */}
+      <BottomSheet
+        visible={reportConfirmVisible}
+        onClose={() => setReportConfirmVisible(false)}
+        title="신고 사유 선택"
+        subtitle="신고 사유를 선택해주세요"
+        actions={reportConfirmActions}
+      />
+
+      {/* BottomSheet for report success */}
+      <BottomSheet
+        visible={reportSuccessVisible}
+        onClose={() => setReportSuccessVisible(false)}
+        title="신고 완료"
+        subtitle={`신고가 접수되었습니다.\n관리자가 검토 후 조치하겠습니다.`}
+        actions={reportSuccessActions}
+      />
+    </>
+  );
+
+  return CardWithBottomSheets;
 };
 
 // EmotionRecordCard 메모이제이션
 const MemoizedEmotionRecordCard = React.memo(EmotionRecordCard, (prevProps, nextProps) => {
   return (
     prevProps.record.challenge_emotion_id === nextProps.record.challenge_emotion_id &&
+    prevProps.record.emotion_id === nextProps.record.emotion_id &&
+    prevProps.record.emotion_name === nextProps.record.emotion_name &&
+    prevProps.record.emotion_color === nextProps.record.emotion_color &&
     prevProps.record.note === nextProps.record.note &&
-    prevProps.isDarkMode === nextProps.isDarkMode
+    prevProps.isDarkMode === nextProps.isDarkMode &&
+    prevProps.currentUserId === nextProps.currentUserId &&
+    prevProps.isAuthenticated === nextProps.isAuthenticated
   );
 });
 
@@ -438,17 +616,57 @@ const CommentItem: React.FC<{
     },
   ];
 
+  // 신고 API 호출 함수
+  const handleReportComment = async (reportType: string) => {
+    try {
+      await reportService.submitReport({
+        item_type: 'challenge_comment',
+        item_id: comment.comment_id,
+        report_type: reportType,
+        reason: reportType,
+        details: `챌린지 댓글 신고: ${comment.content.substring(0, 100)}`
+      });
+      setReportConfirmVisible(false);
+      setReportSuccessVisible(true);
+    } catch (error: any) {
+      setReportConfirmVisible(false);
+      if (error?.response?.data?.code === 'ALREADY_REPORTED') {
+        Alert.alert('알림', '이미 신고한 댓글입니다.');
+      } else {
+        Alert.alert('오류', '신고 처리 중 문제가 발생했습니다.');
+      }
+    }
+  };
+
   // 신고 확인 BottomSheet actions
   const reportConfirmActions = [
     {
-      id: 'confirm-report',
-      title: '신고',
+      id: 'spam',
+      title: '스팸/도배',
       icon: 'alert-circle-outline',
       destructive: true,
-      onPress: () => {
-        setReportConfirmVisible(false);
-        setReportSuccessVisible(true);
-      },
+      onPress: () => handleReportComment('spam'),
+    },
+    {
+      id: 'inappropriate',
+      title: '부적절한 내용',
+      icon: 'alert-circle-outline',
+      destructive: true,
+      onPress: () => handleReportComment('inappropriate'),
+    },
+    {
+      id: 'harassment',
+      title: '괴롭힘/욕설',
+      icon: 'alert-circle-outline',
+      destructive: true,
+      onPress: () => handleReportComment('harassment'),
+    },
+    {
+      id: 'other',
+      title: '기타',
+      icon: 'alert-circle-outline',
+      destructive: true,
+      onPress: () => handleReportComment('other'),
     },
   ];
 
@@ -737,8 +955,8 @@ const CommentItem: React.FC<{
       <BottomSheet
         visible={reportConfirmVisible}
         onClose={() => setReportConfirmVisible(false)}
-        title="댓글 신고"
-        subtitle={`이 댓글을 신고하시겠습니까?\n신고 기능은 곧 추가될 예정입니다.`}
+        title="신고 사유 선택"
+        subtitle="신고 사유를 선택해주세요"
         actions={reportConfirmActions}
       />
 
@@ -785,10 +1003,12 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
   onUpdateComment,
   onDeleteComment,
   onLikeComment,
+  onEditEmotionRecord,
+  onDeleteEmotionRecord,
   isLoading = false
 }) => {
   const { theme, isDark: isDarkMode } = useModernTheme();
-  const { isAuthenticated } = require('../contexts/AuthContext').useAuth();
+  const { isAuthenticated } = useAuth();
   const [newComment, setNewComment] = useState('');
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyTargetName, setReplyTargetName] = useState<string | null>(null);
@@ -947,7 +1167,16 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
   // FlatList renderItem (성능 최적화)
   const renderItem = ({ item }: { item: { type: 'emotion' | 'comment'; data: EmotionRecord | ChallengeComment; key: string } }) => {
     if (item.type === 'emotion') {
-      return <MemoizedEmotionRecordCard record={item.data as EmotionRecord} isDarkMode={isDarkMode} />;
+      return (
+        <MemoizedEmotionRecordCard
+          record={item.data as EmotionRecord}
+          isDarkMode={isDarkMode}
+          currentUserId={currentUserId}
+          onEdit={onEditEmotionRecord}
+          onDelete={onDeleteEmotionRecord}
+          isAuthenticated={isAuthenticated}
+        />
+      );
     } else {
       return (
         <MemoizedCommentItem
@@ -1184,7 +1413,7 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
         data={displayedData}
         renderItem={renderItem}
         keyExtractor={(item) => item.key}
-        extraData={comments}
+        extraData={[emotionRecords, comments]}
         ListFooterComponent={renderFooter}
         ListEmptyComponent={renderEmpty}
         contentContainerStyle={contentContainerStyle}
@@ -1541,7 +1770,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   emotionRecordEmoji: {
-    fontSize: scaleFont(30),
+    width: scaleSize(30),
+    height: scaleSize(30),
   },
   emotionRecordContent: {
     flex: 1,
@@ -1561,6 +1791,14 @@ const styles = StyleSheet.create({
     fontSize: scaleFont(12),
     fontWeight: '500',
     letterSpacing: -0.1,
+  },
+  emotionRecordHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: scaleSize(8),
+  },
+  emotionRecordMoreButton: {
+    padding: scaleSize(4),
   },
   emotionRecordNote: {
     fontSize: scaleFont(14),

@@ -273,7 +273,6 @@ const ChallengeOptionsModal: React.FC<ChallengeOptionsModalProps> = ({
   onReport,
   onShare,
 }) => {
-  React.useEffect(() => { if (visible) console.log('📍 ChallengeOptionsModal visible:', visible, 'isCreator:', challenge?.creator?.user_id === currentUserId); }, [visible]);
   const isCreator = challenge?.creator?.user_id === currentUserId;
 
   // 커스텀 알럿 상태 관리

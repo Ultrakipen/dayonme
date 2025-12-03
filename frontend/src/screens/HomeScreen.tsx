@@ -1,5 +1,6 @@
 // src/screens/HomeScreen.tsx - Instagram Style with Original Structure
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ScrollView,
   FlatList,
@@ -61,6 +62,7 @@ import {
 } from '../utils/anonymousNickname';
 import { getDailyMessage, formatGreetingWithUsername } from '../utils/dailyMessages';
 import CompactPostCard, { resetEmotionUsage } from '../components/CompactPostCard';
+import { getEmotionEmoji } from '../constants/emotions';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import DailyQuoteCard from '../components/DailyQuoteCard';
 import { OptimizedImage } from '../components/OptimizedImage';
@@ -189,8 +191,10 @@ interface HomeScreenProps {
 }
 
 // 메인 컴포넌트
-const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
+const HomeScreen: React.FC<HomeScreenProps> = () => {
+    const navigation = useNavigation<any>();
     const route = useRoute();
+    const queryClient = useQueryClient();
     const { user, isAuthenticated, logout, updateUser } = useAuth();
     const insets = useSafeAreaInsets();
 
@@ -1162,28 +1166,53 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     // DeviceEventEmitter로 새 글 작성/수정 이벤트 리스닝
     useEffect(() => {
         const subscription = DeviceEventEmitter.addListener('homeScreenRefresh', (event) => {
-            devLog('📡 homeScreenRefresh 이벤트 수신:', event);
+            console.log('📡 [HomeScreen] homeScreenRefresh 이벤트 수신:', JSON.stringify(event));
 
-            if (event?.newPostCreated || event?.postUpdated) {
-                // 새 글 작성 또는 수정 시 데이터 새로고침
+            if (event?.postUpdated && event?.postId && event?.updatedEmotion) {
+                // 낙관적 업데이트: 캐시에서 해당 게시물의 감정을 즉시 변경
+                console.log('🔄 [HomeScreen] 낙관적 업데이트 시작:', event.postId, event.updatedEmotion);
+
+                queryClient.setQueryData(['posts', isAuthenticated], (oldData: any) => {
+                    console.log('📦 [HomeScreen] setQueryData 콜백 - oldData:', oldData ? 'exists' : 'null', oldData?.posts?.length);
+                    if (!oldData?.posts) {
+                        console.log('⚠️ [HomeScreen] oldData.posts가 없음');
+                        return oldData;
+                    }
+
+                    const updatedPosts = oldData.posts.map((post: any) => {
+                        if (post.post_id === event.postId) {
+                            console.log('✅ [HomeScreen] 게시물 찾음, 감정 업데이트:', post.post_id);
+                            return {
+                                ...post,
+                                emotions: [event.updatedEmotion],
+                                updated_at: new Date().toISOString()
+                            };
+                        }
+                        return post;
+                    });
+
+                    console.log('✅ [HomeScreen] 캐시 업데이트 완료');
+                    return { ...oldData, posts: updatedPosts };
+                });
+
                 setHasPostedToday(true);
-                setTimeout(() => {
-                    refetchPosts();
-                    loadMyRecentPosts();
-                    checkTodayPostVoid(true);
-                }, 100);
+            } else if (event?.newPostCreated || event?.postUpdated) {
+                // 새 글 작성 또는 감정 데이터 없는 수정 시 전체 새로고침
+                console.log('🔄 [HomeScreen] 전체 새로고침 시작');
+                setHasPostedToday(true);
+                queryClient.resetQueries({ queryKey: ['posts'] });
             }
 
             if (event?.userBlocked || event?.userUnblocked) {
                 // 차단/차단 해제 시 게시물 새로고침
-                refetchPosts();
+                queryClient.invalidateQueries({ queryKey: ['posts'] });
             }
         });
 
         return () => {
             subscription.remove();
         };
-    }, []);
+    }, [queryClient, isAuthenticated]);
 
     // 화면 포커스시 데이터 새로고침 (게시물 수정 후 돌아왔을 때)
     useFocusEffect(
@@ -1210,9 +1239,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                 checkTodayPost(true); // 오늘 글 작성 여부 강제 재확인
                 refreshUserData(); // 사용자 프로필 정보 새로고침
                 loadUnreadCount(); // 읽지 않은 알림 개수 로드
-                // 포커스 시에는 내 게시물은 로드하지 않음 (성능 최적화)
             }
-            // 게시물은 React Query가 캐싱 관리 (staleTime: 5분)
+            // 게시물은 낙관적 업데이트로 처리 (DeviceEventEmitter)
         }, [isAuthenticated, user?.profile_image_url])
     );
 
@@ -1618,60 +1646,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
         }
     };
 
-    // 감정에 따른 이모지 반환 헬퍼 함수 - 새로운 친근한 감정들
-    const getEmotionEmoji = (emotionName: string): string => {
-        const emojiMap: { [key: string]: string } = {
-            // 새로운 친근한 감정들
-            '기쁨이': '😊',
-            '행복이': '😄',
-            '슬픔이': '😢',
-            '우울이': '😞',
-            '지루미': '😑',
-            '버럭이': '😠',
-            '불안이': '😰',
-            '걱정이': '😟',
-            '감동이': '🥺',
-            '황당이': '🤨',
-            '당황이': '😲',
-            '짜증이': '😤',
-            '무섭이': '😨',
-            '추억이': '🥰',
-            '설렘이': '🤗',
-            '편안이': '😌',
-            '궁금이': '🤔',
-            '사랑이': '❤️',
-            '아픔이': '🤕',
-            '욕심이': '🤑',
-            // 기존 감정명 호환 (백엔드에서 기존 이름으로 올 수 있음)
-            '기쁨': '😊',
-            '행복': '😄',
-            '슬픔': '😢',
-            '우울': '😞',
-            '지루': '😑',
-            '화남': '😠',
-            '불안': '😰',
-            '걱정': '😟',
-            '감동': '🥺',
-            '사랑': '❤️',
-            '아픔': '🤕',
-            '욕심': '🤑',
-            '황당': '🤨',
-            '당황': '😲',
-            '짜증': '😤',
-            '무서': '😨',
-            '추억': '🥹',
-            '설렘': '🤗',
-            '편안': '😌',
-            '궁금': '🤔',
-            // 기존 호환성
-            '감사': '🙏',
-            '위로': '🤗',
-            '고독': '😔',
-            '충격': '😱',
-            '편함': '😌'
-        };
-        return emojiMap[emotionName] || '😊';
-    };
+    // getEmotionEmoji는 ../constants/emotions에서 import됨
 
     // 게시물 필터링 및 정렬
 
@@ -3098,7 +3073,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
             <FlatList
                 ref={scrollViewRef}
                 data={paginatedPosts}
-                extraData={posts.length}
+                extraData={[posts, bookmarkedPosts.size]}
                 keyExtractor={(item) => `post-${item.post_id}-${item.updated_at || item.created_at}`}
                 renderItem={renderFlatListItem}
                 getItemLayout={getItemLayout}
@@ -3236,10 +3211,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
                                     {isAuthenticated && (
                                         <Pressable
                                             onPress={() => {
-                                                if (navigation) {
-                                                    navigation.navigate('NotificationScreen');
-                                                }
+                                                console.log('🔔 알림 버튼 클릭됨');
+                                                navigation.navigate('NotificationScreen');
                                             }}
+                                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                            accessibilityRole="button"
+                                            accessibilityLabel="알림"
                                             style={{
                                                 borderRadius: 14,
                                                 backgroundColor: isDark ? '#78350f' : '#fef3c7',

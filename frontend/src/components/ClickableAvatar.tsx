@@ -1,6 +1,6 @@
 // src/components/ClickableAvatar.tsx
 import React, { useState, useMemo, useCallback } from 'react';
-import { TouchableOpacity, View, Text, StyleSheet, ViewStyle, Image } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet, ViewStyle } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -12,12 +12,17 @@ import EmotionLoginPromptModal from './EmotionLoginPromptModal';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
+// Twemoji CDN URL 생성 함수
+const getTwemojiUrl = (emojiCode: string): string =>
+  `https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/${emojiCode}.png`;
+
 interface ClickableAvatarProps {
   userId: number;
   nickname?: string;
   isAnonymous?: boolean;
   avatarUrl?: string | null;
   avatarText?: string;
+  avatarEmojiCode?: string; // Twemoji 코드 (예: '1f60a')
   avatarColor?: string;
   size?: number; // 기본 40
   containerStyle?: ViewStyle;
@@ -35,6 +40,7 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
   isAnonymous = false,
   avatarUrl,
   avatarText = '사',
+  avatarEmojiCode,
   avatarColor = '#9333ea',
   size = 40,
   containerStyle,
@@ -43,6 +49,7 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
   const navigation = useNavigation<NavigationProp>();
   const { user, isAuthenticated } = useAuth();
   const [imageError, setImageError] = useState(false);
+  const [twemojiError, setTwemojiError] = useState(false);
   const [loginPromptVisible, setLoginPromptVisible] = useState(false);
 
   // 본인 여부 확인
@@ -161,7 +168,25 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
     // 이미지 로드 성공
   }, []);
 
-  // 아바tar 내용 렌더링 (이미지 또는 텍스트) - 메모이제이션
+  // Twemoji 이미지 스타일 (메모이제이션) - 고해상도 지원
+  const twemojiStyle = useMemo(() => ({
+    width: size * 0.68,
+    height: size * 0.68,
+  }), [size]);
+
+  // Twemoji FastImage source (캐싱 최적화)
+  const twemojiSource = useMemo(() => avatarEmojiCode ? ({
+    uri: getTwemojiUrl(avatarEmojiCode),
+    priority: FastImage.priority.high,
+    cache: FastImage.cacheControl.immutable,
+  }) : null, [avatarEmojiCode]);
+
+  // Twemoji 로드 실패 핸들러
+  const handleTwemojiError = useCallback(() => {
+    setTwemojiError(true);
+  }, []);
+
+  // 아바타 내용 렌더링 (이미지 또는 텍스트) - 메모이제이션
   const renderAvatarContent = useCallback(() => {
     if (shouldShowImage) {
       return (
@@ -174,8 +199,20 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
         />
       );
     }
+    // Twemoji 코드가 있고 이모지이면 고해상도 Twemoji 이미지 사용
+    if (avatarEmojiCode && isEmoji && twemojiSource && !twemojiError) {
+      return (
+        <FastImage
+          source={twemojiSource}
+          style={twemojiStyle}
+          resizeMode={FastImage.resizeMode.contain}
+          onError={handleTwemojiError}
+        />
+      );
+    }
+    // 폴백: 일반 텍스트 이모지
     return <Text style={avatarTextStyle}>{avatarText}</Text>;
-  }, [shouldShowImage, imageSource, imageStyle, handleImageError, handleImageLoad, avatarText, avatarTextStyle]);
+  }, [shouldShowImage, imageSource, imageStyle, handleImageError, handleImageLoad, avatarText, avatarTextStyle, avatarEmojiCode, isEmoji, twemojiStyle, twemojiSource, twemojiError, handleTwemojiError]);
 
   // 클릭 불가능한 경우 일반 View로 렌더링
   if (!isClickable) {
@@ -226,6 +263,7 @@ export default React.memo(ClickableAvatar, (prevProps, nextProps) => {
     prevProps.isAnonymous === nextProps.isAnonymous &&
     prevProps.avatarUrl === nextProps.avatarUrl &&
     prevProps.avatarText === nextProps.avatarText &&
+    prevProps.avatarEmojiCode === nextProps.avatarEmojiCode &&
     prevProps.avatarColor === nextProps.avatarColor &&
     prevProps.size === nextProps.size
   );

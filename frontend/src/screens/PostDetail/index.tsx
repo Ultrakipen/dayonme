@@ -14,7 +14,9 @@ import {
   Keyboard,
   Animated,
   Modal,
-  StatusBar
+  StatusBar,
+  DeviceEventEmitter,
+  Image
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -57,6 +59,7 @@ import logger from '../../utils/logger';
 import { normalize, normalizeSpace, normalizeIcon, normalizeTouchable } from '../../utils/responsive';
 import { COLORS } from '../../constants/designSystem';
 import { EMOTION_CHARACTERS, getRandomEmotion, getAnonymousEmotion } from './utils/emotionHelper';
+import { getEmotionEmoji, getTwemojiUrl } from '../../constants/emotions';
 import { tryMultipleApis, getErrorMessage } from './utils/apiHelper';
 import PostImages from './components/PostImages';
 import { extractBestComments, findCommentById, calculateTotalCommentCount } from './utils/commentHelper';
@@ -76,6 +79,7 @@ interface Post {
   content: string;
   title?: string;
   is_anonymous: boolean;
+  anonymous_emotion_id?: number | null; // 익명 게시물용 감정 ID
   image_url?: string;
   like_count: number;
   comment_count: number;
@@ -149,8 +153,11 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   isDarkRef.current = isDark;
 
   const { user } = useAuth();
-  const { postId, postType, highlightCommentId } = route.params;
-  logger.log('📍 [PostDetailScreen] 렌더링:', { postId, postType, highlightCommentId });
+  const rawParams = route.params || {};
+  // postId를 숫자로 확실하게 변환
+  const postId = typeof rawParams.postId === 'string' ? parseInt(rawParams.postId, 10) : rawParams.postId;
+  const { postType, highlightCommentId } = rawParams;
+  logger.log('📍 [PostDetailScreen] 렌더링:', { postId, postType, highlightCommentId, rawPostId: rawParams.postId });
   const scrollViewRef = useRef<ScrollView>(null);
   // Timeout cleanup을 위한 ref
   const timeoutsRef = useRef<Set<NodeJS.Timeout>>(new Set());
@@ -332,6 +339,26 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
     }, [postId, lastFetchTime]) // fetchPostData 제거로 무한 리로드 방지
   );
 
+  // 게시물 수정 이벤트 수신 - 수정 후 강제 새로고침
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener('homeScreenRefresh', (event) => {
+      if (event?.postUpdated) {
+        if (__DEV__) {
+          logger.log('🔄 PostDetail: 게시물 수정 감지 - 강제 새로고침');
+        }
+        // 캐시 무시하고 강제 새로고침
+        setLastFetchTime(0);
+        if (fetchPostDataRef.current) {
+          fetchPostDataRef.current();
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
   // 헤더 설정 - 게시물 로드 후 동적 업데이트
   // 키보드 이벤트 리스너
   useEffect(() => {
@@ -499,8 +526,16 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
     try {
       setLoading(true);
       setError(null);
-      
+
       logger.log('🔍 PostDetail 데이터 로드 시작:', { postId, retryCount });
+
+      // postId 유효성 검사
+      if (!postId || typeof postId !== 'number' || postId <= 0) {
+        logger.error('❌ 유효하지 않은 postId:', postId);
+        setError('잘못된 게시물 ID입니다.');
+        setLoading(false);
+        return;
+      }
       
       // postType에 따라 API 호출 순서 최적화
       let postResponse;
@@ -613,7 +648,13 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       
       // 다양한 응답 구조 지원
       let postData = null;
-      
+
+      // 에러 응답 먼저 확인: { status: 'error', message: '...' }
+      if (responseData && responseData.status === 'error') {
+        logger.log('❌ 서버 에러 응답:', responseData.message);
+        throw new Error(responseData.message || '게시물을 불러올 수 없습니다.');
+      }
+
       if (responseData && responseData.status === 'success' && responseData.data) {
         // 표준 구조: { status: 'success', data: {...} }
         postData = responseData.data;
@@ -2122,7 +2163,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
     let displayName = '';
     let avatarText = '';
     let avatarColor = isDark ? '#a78bfa' : '#8b5cf6';
-    let emotionEmoji = null;
+    let emotionEmoji: string | null = null;
+    let emotionEmojiCode: string | null = null;
 
     if (commentIsAnonymous) {
       // 익명 댓글인 경우 항상 랜덤 감정 적용
@@ -2131,6 +2173,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       avatarText = emotion.label[0] || '익';
       avatarColor = emotion.color;
       emotionEmoji = emotion.emoji;
+      emotionEmojiCode = emotion.emojiCode;
     } else {
       // 일반 사용자: 항상 실제 닉네임 사용
       displayName = commentUser?.nickname || '사용자';
@@ -2177,6 +2220,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             isAnonymous={commentIsAnonymous}
             avatarUrl={!commentIsAnonymous && commentUser?.profile_image_url && commentUser.profile_image_url.trim() !== '' ? commentUser.profile_image_url : undefined}
             avatarText={emotionEmoji || avatarText}
+            avatarEmojiCode={emotionEmojiCode || undefined}
             avatarColor={avatarColor}
             size={isReply ? 24 : 28}
           />
@@ -2197,13 +2241,16 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               </ClickableNickname>
 
               {/* 익명 댓글의 감정 이모지 */}
-              {commentIsAnonymous && emotionEmoji && (
-                <RNText style={{
-                  fontSize: normalizeIcon(12),
-                  marginRight: normalizeSpace(3)
-                }}>
-                  {emotionEmoji}
-                </RNText>
+              {commentIsAnonymous && emotionEmojiCode && (
+                <Image
+                  source={{ uri: getTwemojiUrl(emotionEmojiCode) }}
+                  style={{
+                    width: normalizeIcon(14),
+                    height: normalizeIcon(14),
+                    marginRight: normalizeSpace(3)
+                  }}
+                  resizeMode="contain"
+                />
               )}
 
               {isPostAuthor && (
@@ -2867,7 +2914,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 {/* 익명 게시물: 감정 이모지 아바타 (클릭 불가) */}
                 {(() => {
                   const postEmotion = post.emotions && post.emotions.length > 0 ? post.emotions[0].name : undefined;
-                  const emotion = getAnonymousEmotion(post.user_id, post.post_id, 0, postEmotion);
+                  const emotion = getAnonymousEmotion(post.user_id, post.post_id, 0, postEmotion, post.anonymous_emotion_id);
                   return (
                     <>
                       <Box
@@ -2885,14 +2932,14 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                           elevation: 2,
                         }}
                       >
-                        <RNText style={{
-                          fontSize: normalizeIcon(28),
-                          color: '#ffffff',
-                          textAlign: 'center',
-                          lineHeight: normalizeIcon(29)
-                        }}>
-                          {emotion.emoji}
-                        </RNText>
+                        <Image
+                          source={{ uri: getTwemojiUrl(emotion.emojiCode) }}
+                          style={{
+                            width: normalizeIcon(22),
+                            height: normalizeIcon(22),
+                          }}
+                          resizeMode="contain"
+                        />
                       </Box>
                       <VStack style={{ marginLeft: normalizeSpace(10), flex: 1 }}>
                         <HStack style={{ alignItems: 'center', marginBottom: normalizeSpace(3) }}>
@@ -3150,41 +3197,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           {post.emotions && post.emotions.length > 0 && (
             <Box style={{ paddingHorizontal: 10, paddingBottom: 10 }}>
               {post.emotions.slice(0, 1).map((emotion, index) => {
-                const getEmotionEmoji = (emotionName: string): string => {
-                  const emojiMap: Record<string, string> = {
-                    '행복': '😊',
-                    '기쁨': '😄',
-                    '감사': '🙏',
-                    '위로': '🤗',
-                    '감동': '🥺',
-                    '슬픔': '😢',
-                    '우울': '😞',
-                    '불안': '😰',
-                    '걱정': '😟',
-                    '화남': '😠',
-                    '지침': '😑',
-                    '무서움': '😨',
-                    '편함': '😌',
-                    '궁금': '🤔',
-                    '사랑': '❤️',
-                    '아픔': '🤕',
-                    '욕심': '🤑',
-                    '추억': '🥰',
-                    '설렘': '🤗',
-                    '황당': '🤨',
-                    '당황': '😲',
-                    '고독': '😔',
-                    '충격': '😱'
-                  };
-                  
-                  for (const [key, emoji] of Object.entries(emojiMap)) {
-                    if (emotionName.includes(key) || key.includes(emotionName)) {
-                      return emoji;
-                    }
-                  }
-                  return '😊';
-                };
-
+                // 공통 getEmotionEmoji 함수 사용 (../../constants/emotions에서 import)
                 const emotionEmoji = getEmotionEmoji(typeof emotion.name === 'string' ? emotion.name : '감정');
 
                 return (
@@ -3261,13 +3274,13 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               <MaterialCommunityIcons
                 name={liked ? "heart" : "heart-outline"}
                 size={normalizeIcon(20)}
-                color={(!post && !loading) || (error && !post) ? "#9ca3af" : liked ? "#1A1A1A" : "#666666"}
+                color={liked ? "#FF3B30" : (isDark ? '#E5E7EB' : '#666666')}
               />
               <RNText style={{
                 marginLeft: normalizeSpace(6),
                 fontSize: normalize(17),
                 fontWeight: '700',
-                color: (!post && !loading) || (error && !post) ? '#9ca3af' : liked ? '#111827' : '#6b7280',
+                color: liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#6b7280'),
                 letterSpacing: -0.2
               }}>
                 {likeCount}
@@ -3318,7 +3331,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               <RNText style={{
                 fontSize: normalize(14),
                 fontWeight: '700',
-                color: '#1A1A1A'
+                color: isDark ? '#FFFFFF' : '#1A1A1A'
               }}>
                 댓글 {totalCommentCount}개
               </RNText>
@@ -3434,9 +3447,11 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                               justifyContent: 'center',
                               marginRight: normalizeSpace(10),
                             }}>
-                              <RNText style={{ fontSize: normalizeIcon(16) }}>
-                                {emotion.emoji}
-                              </RNText>
+                              <Image
+                                source={{ uri: getTwemojiUrl(emotion.emojiCode) }}
+                                style={{ width: normalizeIcon(18), height: normalizeIcon(18) }}
+                                resizeMode="contain"
+                              />
                             </Box>
                           );
                         })()
@@ -3579,12 +3594,12 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 <MaterialCommunityIcons
                   name={liked ? 'heart' : 'heart-outline'}
                   size={normalizeIcon(24)}
-                  color={(!post && !loading) || (error && !post) ? '#9ca3af' : liked ? '#ef4444' : '#64748b'}
+                  color={liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#64748b')}
                 />
                 <RNText style={{
                   fontSize: normalize(14),
                   fontWeight: '600',
-                  color: (!post && !loading) || (error && !post) ? '#9ca3af' : liked ? '#ef4444' : '#64748b'
+                  color: liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#64748b')
                 }}>
                   {likeCount}
                 </RNText>

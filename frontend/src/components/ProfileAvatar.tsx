@@ -3,6 +3,7 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { Text } from './ui';
+import { useModernTheme } from '../contexts/ModernThemeContext';
 
 interface ProfileAvatarProps {
   imageUrl?: string;
@@ -23,17 +24,30 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
   style,
   isAnonymous = false,
 }) => {
+  const { theme, isDark } = useModernTheme();
+
   const renderInitial = () => {
-    if (isAnonymous) {
-      return '익';
-    }
-    if (name && name.length > 0) {
-      return name.charAt(0).toUpperCase();
-    }
+    if (isAnonymous) return '익';
+    if (name && name.length > 0) return name.charAt(0).toUpperCase();
     return '?';
   };
 
   const AvatarContainer = onPress ? TouchableOpacity : View;
+
+  const dynamicStyles = {
+    avatar: {
+      backgroundColor: isDark ? theme.bg.secondary : '#E1EFF9',
+    },
+    anonymousAvatar: {
+      backgroundColor: isDark ? theme.bg.tertiary : '#F0F0F0',
+    },
+    initial: {
+      color: isDark ? theme.colors.primary : '#4A90E2',
+    },
+    name: {
+      color: isDark ? theme.colors.text.primary : '#333333',
+    },
+  };
 
   return (
     <AvatarContainer
@@ -44,7 +58,8 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
       <View
         style={[
           styles.avatar,
-          isAnonymous && styles.anonymousAvatar,
+          dynamicStyles.avatar,
+          isAnonymous && dynamicStyles.anonymousAvatar,
           { width: size, height: size, borderRadius: size / 2 },
         ]}
       >
@@ -59,14 +74,14 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
             resizeMode={FastImage.resizeMode.cover}
           />
         ) : (
-          <Text style={[styles.initial, { fontSize: size / 2.5 }]}>
+          <Text style={[styles.initial, dynamicStyles.initial, { fontSize: size / 2.5 }]}>
             {renderInitial()}
           </Text>
         )}
       </View>
-      
+
       {showName && name && (
-        <Text style={styles.name}>
+        <Text style={[styles.name, dynamicStyles.name]}>
           {isAnonymous ? '익명' : name}
         </Text>
       )}
@@ -75,30 +90,11 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-  },
-  avatar: {
-    backgroundColor: '#E1EFF9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  anonymousAvatar: {
-    backgroundColor: '#F0F0F0',
-  },
-  image: {
-    resizeMode: 'cover',
-  },
-  initial: {
-    color: '#4A90E2',
-    fontWeight: 'bold',
-  },
-  name: {
-    marginTop: 4,
-    fontSize: 12,
-    color: '#333333',
-  },
+  container: { alignItems: 'center' },
+  avatar: { justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+  image: { resizeMode: 'cover' },
+  initial: { fontWeight: 'bold' },
+  name: { marginTop: 4, fontSize: 12 },
 });
 
 export default ProfileAvatar;

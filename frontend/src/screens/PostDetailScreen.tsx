@@ -2785,16 +2785,16 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         onLongPress={() => handleCommentLongPress(comment)}
         activeOpacity={isMyComment ? 0.8 : 1}
         style={{
-          backgroundColor: isHighlighted ? '#FEF3C7' : (isReply ? modernTheme.bg.secondary : modernTheme.bg.card),
+          backgroundColor: isHighlighted ? (isDark ? 'rgba(251, 191, 36, 0.3)' : '#FEF3C7') : (isReply ? modernTheme.bg.secondary : modernTheme.bg.card),
           borderRadius: 8,
           padding: isReply ? 6 : 10,
           ...(isHighlighted && { borderWidth: 2, borderColor: '#F59E0B', shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 4 }),
           marginBottom: 6,
           borderWidth: isReply ? 0 : 1,
-          borderColor: 'rgba(0, 0, 0, 0.06)',
-          shadowColor: '#000',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+          shadowColor: isDark ? '#fff' : '#000',
           shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.02,
+          shadowOpacity: isDark ? 0.02 : 0.02,
           shadowRadius: 2,
           elevation: 1
         }}
@@ -2890,7 +2890,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               )}
               <RNText style={{
                 fontSize: TYPOGRAPHY.captionSmall,
-                color: '#9ca3af'
+                color: isDark ? '#9CA3AF' : '#9ca3af'
               }}>
                 {formatCommentTime(comment.created_at)}
               </RNText>
@@ -2907,8 +2907,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 right: 8,
                 padding: 4,
                 borderRadius: 8,
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                shadowColor: '#000',
+                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.9)',
+                shadowColor: isDark ? '#fff' : '#000',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.1,
                 shadowRadius: 2,
@@ -2918,7 +2918,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               <MaterialCommunityIcons
                 name={isCollapsed ? 'chevron-down' : 'chevron-up'}
                 size={14}
-                color="#6b7280"
+                color={isDark ? '#D1D5DB' : '#6b7280'}
               />
             </TouchableOpacity>
           )}
@@ -2938,12 +2938,12 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 backgroundColor: modernTheme.bg.secondary,
                 fontSize: TYPOGRAPHY.body,
               }}
-              outlineColor="#E5E7EB"
+              outlineColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#E5E7EB'}
               activeOutlineColor="#8B5CF6"
               theme={{
                 colors: {
-                  onSurfaceVariant: '#6B7280',
-                  outline: '#E5E7EB',
+                  onSurfaceVariant: isDark ? '#9CA3AF' : '#6B7280',
+                  outline: isDark ? 'rgba(255, 255, 255, 0.15)' : '#E5E7EB',
                   primary: '#8B5CF6'
                 }
               }}
@@ -2996,9 +2996,9 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   paddingVertical: 3,
                   paddingHorizontal: 6,
                   borderRadius: 10,
-                  backgroundColor: comment.is_liked ? '#fef3c7' : '#f9fafb',
+                  backgroundColor: comment.is_liked ? (isDark ? 'rgba(251, 191, 36, 0.2)' : '#fef3c7') : (isDark ? 'rgba(255, 255, 255, 0.1)' : '#f9fafb'),
                   borderWidth: 1,
-                  borderColor: comment.is_liked ? '#f59e0b' : '#e5e7eb',
+                  borderColor: comment.is_liked ? '#f59e0b' : (isDark ? 'rgba(255, 255, 255, 0.15)' : '#e5e7eb'),
                   alignSelf: 'flex-start',
                   minWidth: 50,
                   justifyContent: 'center'
@@ -3008,12 +3008,12 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 <MaterialCommunityIcons
                   name={comment.is_liked ? "heart" : "heart-outline"}
                   size={11}
-                  color={comment.is_liked ? "#f59e0b" : "#6b7280"}
+                  color={comment.is_liked ? "#f59e0b" : (isDark ? '#D1D5DB' : '#6b7280')}
                   style={{ marginRight: 3 }}
                 />
                 <RNText style={{
                   fontSize: TYPOGRAPHY.captionSmall,
-                  color: comment.is_liked ? "#f59e0b" : "#6b7280",
+                  color: comment.is_liked ? "#f59e0b" : (isDark ? '#D1D5DB' : '#6b7280'),
                   fontWeight: comment.is_liked ? '600' : '500'
                 }}>
                   {comment.like_count || 0}
@@ -3050,7 +3050,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     borderRadius: 10,
                     backgroundColor: modernTheme.bg.secondary,
                     borderWidth: 1,
-                    borderColor: '#e5e7eb',
+                    borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#e5e7eb',
                     alignSelf: 'flex-start'
                   }}
                   activeOpacity={0.7}
@@ -3058,7 +3058,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   <MaterialCommunityIcons
                     name="reply"
                     size={10}
-                    color="#6b7280"
+                    color={isDark ? '#D1D5DB' : '#6b7280'}
                     style={{ marginRight: 3 }}
                   />
                   <RNText style={{ fontSize: TYPOGRAPHY.captionSmall, color: modernTheme.text.secondary, fontWeight: '500' }}>
@@ -3153,19 +3153,19 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   fontSize: TYPOGRAPHY.body,
                   height: 36,
                 }}
-                outlineColor="#e5e7eb"
+                outlineColor={isDark ? 'rgba(255, 255, 255, 0.15)' : '#e5e7eb'}
                 activeOutlineColor="#8b5cf6"
                 theme={{
                   colors: {
-                    onSurfaceVariant: '#9ca3af',
-                    outline: '#e5e7eb',
+                    onSurfaceVariant: isDark ? '#9CA3AF' : '#9ca3af',
+                    outline: isDark ? 'rgba(255, 255, 255, 0.15)' : '#e5e7eb',
                     primary: '#8b5cf6'
                   }
                 }}
                 dense
               />
               <TouchableOpacity onPress={handleInlineReplyCancel}>
-                <MaterialCommunityIcons name="close-circle" size={18} color="#9ca3af" />
+                <MaterialCommunityIcons name="close-circle" size={18} color={isDark ? '#9CA3AF' : '#9ca3af'} />
               </TouchableOpacity>
             </HStack>
           </Box>
@@ -3178,7 +3178,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             marginTop: 6,
             paddingLeft: 10,
             borderLeftWidth: 2,
-            borderLeftColor: '#e5e7eb'
+            borderLeftColor: isDark ? 'rgba(255, 255, 255, 0.15)' : '#e5e7eb'
           }}>
             {(comment.replies || [])
               .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
@@ -3266,7 +3266,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         )}
       </TouchableOpacity>
     );
-  }, [user, post, highlightedCommentId, collapsedComments, modernTheme, handleCommentLongPress, toggleCommentCollapse]); // renderComment 함수 닫기 - useCallback 의존성 배열 추가
+  }, [user, post, highlightedCommentId, collapsedComments, modernTheme, isDark, handleCommentLongPress, toggleCommentCollapse]); // renderComment 함수 닫기 - useCallback 의존성 배열 추가
 
   // 로딩 화면
   if (loading) {
@@ -3558,10 +3558,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                         }}
                       >
                         <RNText style={{
-                          fontSize: TYPOGRAPHY.h2,
-                          color: '#ffffff',
+                          fontSize: 24,
                           textAlign: 'center',
-                          lineHeight: 26
                         }}>
                           {emotion.emoji}
                         </RNText>
@@ -3908,7 +3906,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             paddingHorizontal: 12,
             paddingVertical: 10,
             borderTopWidth: 1,
-            borderTopColor: '#F0F0F0'
+            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#F0F0F0'
           }}>
             <Pressable
               onPress={(!post && !loading) || (error && !post) ? undefined : handleLikePress}
@@ -3919,7 +3917,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 paddingVertical: 6,
                 paddingHorizontal: 8,
                 borderRadius: 16,
-                backgroundColor: liked ? modernTheme.bg.hover : 'transparent',
+                backgroundColor: liked ? (isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)') : 'transparent',
                 opacity: (!post && !loading) || (error && !post) ? 0.5 : 1,
               }}
               disabled={(!post && !loading) || (error && !post)}
@@ -3927,13 +3925,13 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               <MaterialCommunityIcons
                 name={liked ? "heart" : "heart-outline"}
                 size={18}
-                color={(!post && !loading) || (error && !post) ? "#9ca3af" : liked ? "#1A1A1A" : "#666666"}
+                color={liked ? "#FF3B30" : (isDark ? '#E5E7EB' : '#666666')}
               />
               <RNText style={{
                 marginLeft: 4,
                 fontSize: TYPOGRAPHY.body,
                 fontWeight: '600',
-                color: (!post && !loading) || (error && !post) ? '#9ca3af' : liked ? '#111827' : '#6b7280',
+                color: liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#6b7280'),
                 letterSpacing: -0.1
               }}>
                 {likeCount}
@@ -3959,13 +3957,13 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               <MaterialCommunityIcons
                 name="comment-outline"
                 size={18}
-                color="#666666"
+                color={isDark ? '#D1D5DB' : '#666666'}
               />
               <RNText style={{
                 marginLeft: 4,
                 fontSize: TYPOGRAPHY.body,
                 fontWeight: '600',
-                color: '#666666'
+                color: isDark ? '#D1D5DB' : '#666666'
               }}>
                 {totalCommentCount}
               </RNText>
@@ -3984,7 +3982,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               <RNText style={{
                 fontSize: TYPOGRAPHY.body,
                 fontWeight: '700',
-                color: modernTheme.text.primary
+                color: isDark ? '#FFFFFF' : '#1F2937'
               }}>
                 댓글 {totalCommentCount}개
               </RNText>
@@ -4003,13 +4001,13 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 <MaterialCommunityIcons
                   name={allCommentsCollapsed ? 'chevron-down' : 'chevron-up'}
                   size={12}
-                  color="#6b7280"
+                  color={isDark ? '#9CA3AF' : '#6b7280'}
                   style={{ marginRight: 3 }}
                 />
                 <RNText style={{
                   fontSize: TYPOGRAPHY.caption,
                   fontWeight: '500',
-                  color: '#6b7280'
+                  color: isDark ? '#9CA3AF' : '#6b7280'
                 }}>
                   {allCommentsCollapsed ? '전체 펼치기' : '전체 접기'}
                 </RNText>
@@ -4019,12 +4017,12 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             {/* 베스트 댓글 섹션 */}
             {!allCommentsCollapsed && bestComments.length > 0 && (
               <Box style={{ marginBottom: 16 }}>
-                <HStack style={{ 
-                  alignItems: 'center', 
-                  marginBottom: 12, 
+                <HStack style={{
+                  alignItems: 'center',
+                  marginBottom: 12,
                   paddingBottom: 8,
                   borderBottomWidth: 1,
-                  borderBottomColor: '#f3f4f6'
+                  borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#f3f4f6'
                 }}>
                   <MaterialCommunityIcons
                     name="trophy-outline"
@@ -4140,12 +4138,12 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 <MaterialCommunityIcons
                   name={liked ? 'heart' : 'heart-outline'}
                   size={24}
-                  color={(!post && !loading) || (error && !post) ? '#9ca3af' : liked ? '#ef4444' : '#64748b'}
+                  color={liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#64748b')}
                 />
                 <RNText style={{
                   fontSize: FONT_SIZES.bodySmall,
                   fontWeight: '600',
-                  color: (!post && !loading) || (error && !post) ? '#9ca3af' : liked ? '#ef4444' : '#64748b'
+                  color: liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#64748b')
                 }}>
                   {likeCount}
                 </RNText>
@@ -4166,12 +4164,12 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 <MaterialCommunityIcons
                   name="comment-outline"
                   size={24}
-                  color="#64748b"
+                  color={isDark ? '#D1D5DB' : '#64748b'}
                 />
                 <RNText style={{
                   fontSize: FONT_SIZES.bodySmall,
                   fontWeight: '600',
-                  color: '#64748b'
+                  color: isDark ? '#D1D5DB' : '#64748b'
                 }}>
                   {comments.length}
                 </RNText>
@@ -4188,7 +4186,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 paddingHorizontal: 16,
                 paddingVertical: 8,
                 borderWidth: 1,
-                borderColor: 'rgba(0, 0, 0, 0.08)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
               }}
               onPress={() => {
                 logger.log('💬 [PostDetailScreen] 댓글 달기 버튼 클릭됨', {
@@ -4211,8 +4209,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 }, 100);
               }}
             >
-              <MaterialCommunityIcons name="pencil" size={16} color="#6B7280" />
-              <RNText style={{ marginLeft: 6, color: '#6B7280', fontSize: TYPOGRAPHY.caption, fontWeight: '500' }}>
+              <MaterialCommunityIcons name="pencil" size={16} color={isDark ? '#D1D5DB' : '#6B7280'} />
+              <RNText style={{ marginLeft: 6, color: isDark ? '#D1D5DB' : '#6B7280', fontSize: TYPOGRAPHY.caption, fontWeight: '500' }}>
                 댓글 달기
               </RNText>
             </TouchableOpacity>
@@ -4232,7 +4230,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             borderLeftColor: '#8B5CF6'
           }}>
             <HStack style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <RNText style={{ fontSize: TYPOGRAPHY.caption, color: '#6B7280', fontWeight: '600' }}>
+              <RNText style={{ fontSize: TYPOGRAPHY.caption, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '600' }}>
                 답글 작성 중
               </RNText>
               <TouchableOpacity onPress={() => {
@@ -4242,10 +4240,10 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   textInputRef.current.blur();
                 }
               }}>
-                <MaterialCommunityIcons name="close" size={18} color="#6B7280" />
+                <MaterialCommunityIcons name="close" size={18} color={isDark ? '#9CA3AF' : '#6B7280'} />
               </TouchableOpacity>
             </HStack>
-            <RNText style={{ fontSize: TYPOGRAPHY.caption, color: '#4B5563' }} numberOfLines={2}>
+            <RNText style={{ fontSize: TYPOGRAPHY.caption, color: isDark ? '#D1D5DB' : '#4B5563' }} numberOfLines={2}>
               @{replyingTo.is_anonymous ? '익명' : (replyingTo.user?.nickname || '사용자')}: {replyingTo.content}
             </RNText>
           </Box>
@@ -4258,7 +4256,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             onValueChange={setIsAnonymous}
             color="#8B5CF6"
           />
-          <RNText style={{ marginLeft: 8, fontSize: TYPOGRAPHY.body, color: '#4B5563' }}>
+          <RNText style={{ marginLeft: 8, fontSize: TYPOGRAPHY.body, color: isDark ? '#D1D5DB' : '#4B5563' }}>
             익명으로 댓글 작성
           </RNText>
         </HStack>

@@ -6,6 +6,7 @@ import { Card } from '../../../components/common/Card';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
 import { getPersonalTempColor, getPersonalTempText, getPersonalTempIcon } from '../../../utils/temperatureUtils';
+import { TwemojiImage } from '../../../components/common/TwemojiImage';
 
 interface TemperatureData {
   temperature: number;
@@ -105,14 +106,15 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
 
   return (
     <Card accessible={true} accessibilityLabel="나의 감정 온도계" accessibilityHint="나의 감정 상태를 체온으로 표현합니다">
-      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale, marginBottom: 16 * scale }]}>
-        🌡️ 나의 {periodText} 감정 온도
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 * scale }}>
+        <TwemojiImage emoji="🌡️" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>
+          나의 {periodText} 감정 온도
+        </Text>
+      </View>
 
       <View style={[styles.tempContainer, { marginBottom: 12 * scale }]}>
-        <Text style={{ fontSize: 48 * scale, marginBottom: 8 * scale }}>
-          {getPersonalTempIcon(data.temperature)}
-        </Text>
+        <TwemojiImage emoji={getPersonalTempIcon(data.temperature)} size={48 * scale} style={{ marginBottom: 8 * scale }} />
         <Text style={[styles.tempText, { color: getPersonalTempColor(data.temperature), fontSize: FONT_SIZES.h1 * scale }]}>
           {getPersonalTempText(data.temperature)} {data.temperature.toFixed(1)}°
         </Text>
@@ -149,7 +151,7 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
                 accessible={true}
                 accessibilityLabel={`${emotion.name} 감정, ${emotion.count}회, ${emotion.percentage}퍼센트`}
               >
-                <Text style={{ fontSize: FONT_SIZES.h2 * scale }}>{emotion.icon}</Text>
+                <TwemojiImage emoji={emotion.icon} size={FONT_SIZES.h2 * scale} />
                 <Text style={[styles.emotionName, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>
                   {emotion.name}
                 </Text>
@@ -161,9 +163,12 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
           </View>
 
           <View style={[styles.insight, { backgroundColor: colors.surface || colors.background, marginTop: 12 * scale, padding: 12 * scale, borderRadius: 12 * scale }]}>
-            <Text style={[styles.insightText, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale, lineHeight: 20 * scale }]}>
-              💭 {data.emotions[0].name}을 가장 많이 느꼈어요
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+              <TwemojiImage emoji="💭" size={FONT_SIZES.bodySmall * scale} style={{ marginRight: 6 * scale }} />
+              <Text style={[styles.insightText, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale, lineHeight: 20 * scale }]}>
+                {data.emotions[0].name}을 가장 많이 느꼈어요
+              </Text>
+            </View>
           </View>
         </>
       )}
@@ -175,7 +180,7 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
         borderRadius: 16 * scale,
         gap: 12 * scale
       }]}>
-        <Text style={{ fontSize: FONT_SIZES.h1 * scale }}>{predictiveInsight.icon}</Text>
+        <TwemojiImage emoji={predictiveInsight.icon} size={FONT_SIZES.h1 * scale} />
         <Text style={[styles.predictiveText, { color: colors.text, fontSize: FONT_SIZES.body * scale, lineHeight: 22 * scale }]}>
           {predictiveInsight.message}
         </Text>

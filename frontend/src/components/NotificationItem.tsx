@@ -62,7 +62,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({ notification, onPre
     switch (notification.notification_type) {
       case 'like':
       case 'comment':
-        navigation.navigate('PostDetailScreen', { postId: notification.related_id });
+        navigation.navigate('PostDetail', { postId: notification.related_id, postType: 'myday' });
         break;
       case 'challenge':
         navigation.navigate('ChallengeDetailScreen', { challengeId: notification.related_id });

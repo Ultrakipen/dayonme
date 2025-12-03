@@ -9,6 +9,7 @@ import HotChallengesScreen from '../screens/HotChallengesScreen';
 import UserProfileScreen from '../screens/UserProfileScreen';
 import NotificationScreen from '../screens/NotificationScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import EmotionReportScreen from '../screens/EmotionReportScreen';
 import { ChallengeStackParamList } from '../types/navigation';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 
@@ -84,6 +85,14 @@ const ChallengeStack = () => {
         component={ProfileScreen}
         options={{
           title: '프로필',
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="EmotionReport"
+        component={EmotionReportScreen}
+        options={{
+          title: '감정 리포트',
           headerShown: false
         }}
       />

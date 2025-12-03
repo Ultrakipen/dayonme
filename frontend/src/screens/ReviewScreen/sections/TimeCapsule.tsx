@@ -6,6 +6,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
+import { TwemojiImage } from '../../../components/common/TwemojiImage';
 
 const API_URL = 'https://dayonme.com/api';
 
@@ -67,14 +68,23 @@ export const TimeCapsule: React.FC = React.memo(() => {
   if (!capsuleData) {
     return (
       <Card accessible={true} accessibilityLabel="타임캡슐" accessibilityHint="과거의 나를 돌아보는 공간입니다">
-        <View style={[styles.header, { gap: 12 * scale, marginBottom: 16 * scale }]}>
-          <Text style={{ fontSize: 40 * scale }}>📮</Text>
+        <View style={[styles.header, { gap: 12 * scale, marginBottom: 12 * scale }]}>
+          <TwemojiImage emoji="📮" size={40 * scale} />
           <View style={styles.headerText}>
             <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>타임캡슐</Text>
             <Text style={[styles.date, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale, marginTop: 2 * scale }]}>
               아직 타임캡슐이 없습니다
             </Text>
           </View>
+        </View>
+        <View style={[styles.guideBox, {
+          backgroundColor: isDark ? colors.surface : colors.border + '20',
+          padding: 12 * scale,
+          borderRadius: 10 * scale,
+        }]}>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, lineHeight: 18 * scale }}>
+            💡 나의 하루에 글을 작성하면 1개월 후 이곳에서 과거의 나를 돌아볼 수 있어요
+          </Text>
         </View>
       </Card>
     );
@@ -85,7 +95,7 @@ export const TimeCapsule: React.FC = React.memo(() => {
   return (
     <Card accessible={true} accessibilityLabel="타임캡슐" accessibilityHint="1개월 전의 나를 돌아봅니다">
       <View style={[styles.header, { gap: 12 * scale, marginBottom: 16 * scale }]}>
-        <Text style={{ fontSize: 40 * scale }}>📮</Text>
+        <TwemojiImage emoji="📮" size={40 * scale} />
         <View style={styles.headerText}>
           <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>
             타임캡슐
@@ -128,7 +138,10 @@ export const TimeCapsule: React.FC = React.memo(() => {
           현재 당신의 상태
         </Text>
         <View style={[styles.comparisonStats, { gap: 12 * scale }]}>
-          <Text style={{ fontSize: FONT_SIZES.bodySmall * scale, color: colors.text }}>🌡️ {present.temperature}° ({getTempLabel(present.temperature)})</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TwemojiImage emoji="🌡️" size={FONT_SIZES.bodySmall * scale} style={{ marginRight: 4 * scale }} />
+            <Text style={{ fontSize: FONT_SIZES.bodySmall * scale, color: colors.text }}>{present.temperature}° ({getTempLabel(present.temperature)})</Text>
+          </View>
         </View>
         <Text style={[styles.improvement, {
           color: improvement > 0 ? colors.primary : colors.textSecondary,
@@ -178,5 +191,7 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     padding: 8,
+  },
+  guideBox: {
   },
 });

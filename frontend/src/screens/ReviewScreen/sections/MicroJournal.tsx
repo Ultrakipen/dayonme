@@ -5,6 +5,7 @@ import { Card } from '../../../components/common/Card';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { TwemojiImage } from '../../../components/common/TwemojiImage';
 
 interface MicroEntry {
   id: string;
@@ -115,12 +116,15 @@ export const MicroJournal: React.FC = React.memo(() => {
   return (
     <Card accessible={true} accessibilityLabel="마이크로 저널">
       <View style={styles.header}>
-        <Text
-          style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}
-          accessibilityRole="header"
-        >
-          ✍️ 30초 마이크로 저널
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TwemojiImage emoji="✍️" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text
+            style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}
+            accessibilityRole="header"
+          >
+            30초 마이크로 저널
+          </Text>
+        </View>
         <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
           한 줄만 적어도 충분해요
         </Text>
@@ -155,15 +159,18 @@ export const MicroJournal: React.FC = React.memo(() => {
 
         <View style={styles.metaContainer}>
           {isTyping && (
-            <Text style={[
-              styles.timerText,
-              {
-                color: timer < 10 ? '#ff9800' : colors.textSecondary,
-                fontSize: FONT_SIZES.caption * scale
-              }
-            ]}>
-              ⏱️ {timer}초
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <TwemojiImage emoji="⏱️" size={FONT_SIZES.caption * scale} style={{ marginRight: 4 * scale }} />
+              <Text style={[
+                styles.timerText,
+                {
+                  color: timer < 10 ? '#ff9800' : colors.textSecondary,
+                  fontSize: FONT_SIZES.caption * scale
+                }
+              ]}>
+                {timer}초
+              </Text>
+            </View>
           )}
           <Text style={[
             styles.charCount,
@@ -214,21 +221,27 @@ export const MicroJournal: React.FC = React.memo(() => {
             }
           ]}
         >
-          <Text style={[styles.successText, { color: '#4caf50', fontSize: FONT_SIZES.bodySmall * scale }]}>
-            ✨ 기록되었어요!
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TwemojiImage emoji="✨" size={FONT_SIZES.bodySmall * scale} style={{ marginRight: 6 * scale }} />
+            <Text style={[styles.successText, { color: '#4caf50', fontSize: FONT_SIZES.bodySmall * scale }]}>
+              기록되었어요!
+            </Text>
+          </View>
         </Animated.View>
       )}
 
       {/* 최근 기록 */}
       {entries.length > 0 && (
         <View style={styles.entriesContainer}>
-          <Text
-            style={[styles.entriesTitle, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}
-            accessibilityRole="header"
-          >
-            📝 최근 7일
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 * scale }}>
+            <TwemojiImage emoji="📝" size={FONT_SIZES.bodySmall * scale} style={{ marginRight: 6 * scale }} />
+            <Text
+              style={[styles.entriesTitle, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale, marginBottom: 0 }]}
+              accessibilityRole="header"
+            >
+              최근 7일
+            </Text>
+          </View>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}

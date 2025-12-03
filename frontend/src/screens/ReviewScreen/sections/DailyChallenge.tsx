@@ -2,12 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Card } from '../../../components/common/Card';
 import { useModernTheme } from '../../../hooks/useModernTheme';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from '../../../services/api/client';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
-
-const API_URL = 'https://dayonme.com/api';
+import { TwemojiImage } from '../../../components/common/TwemojiImage';
 
 interface Challenge {
   id: number;
@@ -30,19 +28,16 @@ export const DailyChallenge: React.FC = React.memo(() => {
   const loadChallenges = useCallback(async () => {
     try {
       setError(null);
-      const token = await AsyncStorage.getItem('token');
-      if (!token) return;
 
-      const response = await axios.get(`${API_URL}/review/daily-challenges`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // apiClient가 자동으로 인증 토큰을 추가함
+      const response = await apiClient.get('/review/daily-challenges');
 
       if (response.data.status === 'success') {
         setChallenges(response.data.data.challenges);
       }
     } catch (err) {
       setError('챌린지를 불러오는데 실패했습니다');
-      console.error('챌린지 로드 실패:', err);
+      if (__DEV__) console.error('챌린지 로드 실패:', err);
     }
   }, []);
 
@@ -75,7 +70,10 @@ export const DailyChallenge: React.FC = React.memo(() => {
   return (
     <Card accessible={true} accessibilityLabel="오늘의 챌린지 섹션">
       <View style={[styles.header, { marginBottom: 12 * scale }]}>
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>🎯 오늘의 챌린지</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TwemojiImage emoji="🎯" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>오늘의 챌린지</Text>
+        </View>
         <Text style={[styles.progress, { color: colors.primary, fontSize: FONT_SIZES.bodyLarge * scale }]}>
           {completedCount}/{totalCount}
         </Text>
@@ -135,9 +133,12 @@ export const DailyChallenge: React.FC = React.memo(() => {
 
       {completedCount === totalCount && (
         <View style={[styles.reward, { backgroundColor: isDark ? colors.surface : colors.border + '30', marginTop: 16 * scale, padding: 12 * scale, borderRadius: 12 * scale }]}>
-          <Text style={[styles.rewardText, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}>
-            🎉 모든 챌린지 완료! "오늘도 완주" 배지 획득!
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <TwemojiImage emoji="🎉" size={FONT_SIZES.bodySmall * scale} style={{ marginRight: 6 * scale }} />
+            <Text style={[styles.rewardText, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}>
+              모든 챌린지 완료! "오늘도 완주" 배지 획득!
+            </Text>
+          </View>
         </View>
       )}
     </Card>

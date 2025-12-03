@@ -21,7 +21,7 @@ export const anonymousEmotions: AnonymousEmotion[] = [
   { label: '설렘이', icon: 'heart-multiple', color: '#FF69B4' },
   { label: '편안이', icon: 'emoticon-kiss', color: '#98FB98' },
   { label: '궁금이', icon: 'emoticon-outline', color: '#DAA520' },
-  { label: '사랑이', icon: 'heart', color: '#E91E63' },
+  { label: '사랑이', icon: 'heart', color: '#E8D5F2' },
   { label: '아픔이', icon: 'medical-bag', color: '#8B4513' },
   { label: '희망이', icon: 'star', color: '#FFD700' },
 ];
@@ -45,7 +45,7 @@ export const emotionEmojiMap: Record<string, { emoji: string; color: string }> =
   '설렘이': { emoji: '🤗', color: '#FF69B4' },
   '편안이': { emoji: '😌', color: '#98FB98' },
   '궁금이': { emoji: '🤔', color: '#DAA520' },
-  '사랑이': { emoji: '❤️', color: '#E91E63' },
+  '사랑이': { emoji: '❤️', color: '#E8D5F2' },
   '아픔이': { emoji: '🤕', color: '#8B4513' },
   '욕심이': { emoji: '🤑', color: '#32CD32' },
   // 추가로 '이' 없는 버전도 지원 (호환성)
@@ -66,7 +66,7 @@ export const emotionEmojiMap: Record<string, { emoji: string; color: string }> =
   '설렘': { emoji: '🤗', color: '#FF69B4' },
   '편안함': { emoji: '😌', color: '#98FB98' },
   '궁금함': { emoji: '🤔', color: '#DAA520' },
-  '사랑': { emoji: '❤️', color: '#E91E63' },
+  '사랑': { emoji: '❤️', color: '#E8D5F2' },
   '아픔': { emoji: '🤕', color: '#8B4513' },
   '욕심': { emoji: '🤑', color: '#32CD32' }
 };
@@ -90,7 +90,7 @@ export const fallbackEmotions: Emotion[] = [
   { emotion_id: 15, name: '설렘이', icon: 'excited', color: '#FF69B4' },
   { emotion_id: 16, name: '편안이', icon: 'calm', color: '#98FB98' },
   { emotion_id: 17, name: '궁금이', icon: 'curious', color: '#DAA520' },
-  { emotion_id: 18, name: '사랑이', icon: 'love', color: '#E91E63' },
+  { emotion_id: 18, name: '사랑이', icon: 'love', color: '#E8D5F2' },
   { emotion_id: 19, name: '아픔이', icon: 'hurt', color: '#8B4513' },
   { emotion_id: 20, name: '욕심이', icon: 'greedy', color: '#32CD32' }
 ];

@@ -6,7 +6,6 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import notificationService, { Notification } from '../services/api/notificationService';
-import { useTheme } from '../contexts/ThemeContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import LoadingIndicator from '../components/LoadingIndicator';
 import Button from '../components/Button';
@@ -28,7 +27,6 @@ interface NotificationScreenProps {
 
 const NotificationScreen = (props: NotificationScreenProps = {}) => {
   const navigation = useNavigation();
-  const { isDarkMode } = useTheme();
   const { theme, isDark } = useModernTheme();
 
   // Dimensions 호출은 컴포넌트 내부에서

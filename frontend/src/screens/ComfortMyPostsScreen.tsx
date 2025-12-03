@@ -142,7 +142,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
 
   // 게시물 클릭 핸들러
   const handlePostPress = useCallback((post: ComfortPost) => {
-    (navigation as any).navigate('PostDetail', { postId: post.post_id });
+    (navigation as any).navigate('PostDetail', { postId: post.post_id, postType: 'comfort' });
   }, [navigation]);
 
   // 게시물 수정 핸들러

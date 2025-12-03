@@ -156,8 +156,8 @@ const CreateChallengeScreen = () => {
   };
 
   const handleSubmit = async () => {
-    console.log('🎯 챌린지 생성 버튼 클릭됨');
-    console.log('📝 현재 폼 데이터:', formData);
+    if (__DEV__) console.log('🎯 챌린지 생성 버튼 클릭됨');
+    if (__DEV__) console.log('📝 현재 폼 데이터:', formData);
 
     // 검증 로직을 직접 실행하여 즉시 결과 확인
     const newErrors: {[key: string]: string} = {};
@@ -188,55 +188,83 @@ const CreateChallengeScreen = () => {
     }
 
     const isValid = Object.keys(newErrors).length === 0;
-    console.log('✅ 폼 검증 결과:', isValid);
-    console.log('❌ 검증 오류:', newErrors);
+    if (__DEV__) console.log('✅ 폼 검증 결과:', isValid);
+    if (__DEV__) console.log('❌ 검증 오류:', newErrors);
 
     // 에러 상태 업데이트
     setErrors(newErrors);
 
     if (!isValid) {
-      console.log('❌ 폼 검증 실패로 중단');
+      if (__DEV__) console.log('❌ 폼 검증 실패로 중단');
       return;
     }
 
     try {
-      console.log('🚀 챌린지 생성 API 호출 시작');
+      if (__DEV__) console.log('🚀 챌린지 생성 API 호출 시작');
       setLoading(true);
 
-      // 이미지 서버에 업로드
+      // 이미지 서버에 업로드 (강화된 에러 핸들링 + 재시도 로직)
       const uploadedImageUrls: string[] = [];
+      const failedImages: string[] = [];
+      const MAX_RETRIES = 2;
 
       if (imageUris.length > 0) {
-        try {
-          console.log('📸 이미지 업로드 시작:', imageUris.length, '개');
-          for (const imageUri of imageUris) {
-            const formData = new FormData();
-            formData.append('images', {
-              uri: imageUri,
-              type: 'image/jpeg',
-              name: `challenge_${Date.now()}.jpg`,
-            } as any);
+        if (__DEV__) console.log('📸 이미지 업로드 시작:', imageUris.length, '개');
 
-            const uploadResponse = await apiClient.post('/uploads/images', formData, {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-              },
-            });
+        for (let i = 0; i < imageUris.length; i++) {
+          const imageUri = imageUris[i];
+          let uploadSuccess = false;
 
-            if (uploadResponse.data.status === 'success' && uploadResponse.data.data.images) {
-              // 업로드된 이미지 URL 수집
-              uploadedImageUrls.push(...uploadResponse.data.data.images.map((img: any) => img.url));
-              console.log('✅ 이미지 업로드 성공:', uploadResponse.data.data.images.length, '개');
+          for (let retry = 0; retry <= MAX_RETRIES && !uploadSuccess; retry++) {
+            try {
+              const imageFormData = new FormData();
+              imageFormData.append('images', {
+                uri: imageUri,
+                type: 'image/jpeg',
+                name: `challenge_${Date.now()}_${i}.jpg`,
+              } as any);
+
+              const uploadResponse = await apiClient.post('/uploads/images', imageFormData, {
+                headers: {
+                  'Content-Type': 'multipart/form-data',
+                },
+                timeout: 30000, // 30초 타임아웃
+              });
+
+              if (uploadResponse.data.status === 'success' && uploadResponse.data.data.images) {
+                uploadedImageUrls.push(...uploadResponse.data.data.images.map((img: any) => img.url));
+                uploadSuccess = true;
+                if (__DEV__) console.log(`✅ 이미지 ${i + 1} 업로드 성공`);
+              }
+            } catch (uploadError: any) {
+              if (__DEV__) console.log(`⚠️ 이미지 ${i + 1} 업로드 실패 (시도 ${retry + 1}/${MAX_RETRIES + 1}):`, uploadError.message);
+
+              if (retry === MAX_RETRIES) {
+                failedImages.push(imageUri);
+              } else {
+                // 재시도 전 대기 (점진적 백오프)
+                await new Promise(resolve => setTimeout(resolve, 1000 * (retry + 1)));
+              }
             }
           }
-        } catch (uploadError) {
-          console.error('이미지 업로드 실패:', uploadError);
-          showAlert('오류', '이미지 업로드에 실패했습니다.');
-          return;
         }
-      }
 
-      console.log('📤 최종 업로드된 이미지 URLs:', uploadedImageUrls);
+        // 부분 실패 처리
+        if (failedImages.length > 0 && uploadedImageUrls.length > 0) {
+          // 일부만 성공한 경우 - 사용자에게 확인
+          showAlert(
+            '일부 이미지 업로드 실패',
+            `${failedImages.length}개의 이미지 업로드에 실패했습니다.\n성공한 ${uploadedImageUrls.length}개의 이미지로 챌린지를 생성하시겠습니까?`
+          );
+          // 계속 진행 (실패한 이미지 제외)
+        } else if (failedImages.length > 0 && uploadedImageUrls.length === 0) {
+          // 모든 이미지 업로드 실패
+          showAlert('이미지 업로드 실패', '이미지 업로드에 실패했습니다.\n이미지 없이 챌린지를 생성합니다.');
+          // 이미지 없이 계속 진행
+        }
+
+        if (__DEV__) console.log('📤 최종 업로드된 이미지 URLs:', uploadedImageUrls.length, '개');
+      }
 
       // 챌린지 생성 (업로드된 이미지 URL 사용)
       const response = await challengeService.createChallenge({
@@ -249,8 +277,8 @@ const CreateChallengeScreen = () => {
 
       // 챌린지 생성 후 캐시 무효화
       challengeService.clearCache();
-      console.log('✅ 챌린지 생성 완료 - 캐시 무효화됨');
-      console.log('📋 응답 데이터 구조:', response.data);
+      if (__DEV__) console.log('✅ 챌린지 생성 완료 - 캐시 무효화됨');
+      if (__DEV__) console.log('📋 응답 데이터 구조:', response.data);
 
       // 응답 구조 확인 및 challengeId 추출
       let challengeId;
@@ -261,13 +289,13 @@ const CreateChallengeScreen = () => {
       } else if (response.data?.id) {
         challengeId = response.data.id;
       } else {
-        console.warn('⚠️ 챌린지 ID를 찾을 수 없음. 메인으로 이동');
+        if (__DEV__) console.warn('⚠️ 챌린지 ID를 찾을 수 없음. 메인으로 이동');
       }
 
       // 성공 후 즉시 네비게이션 처리 (Alert 없이)
       try {
         if (challengeId) {
-          console.log('🔄 챌린지 상세로 이동:', challengeId);
+          if (__DEV__) console.log('🔄 챌린지 상세로 이동:', challengeId);
           navigation.reset({
             index: 1,
             routes: [
@@ -279,7 +307,7 @@ const CreateChallengeScreen = () => {
             ],
           });
         } else {
-          console.log('🔄 메인으로 이동 (ID 없음)');
+          if (__DEV__) console.log('🔄 메인으로 이동 (ID 없음)');
           navigation.navigate('ChallengeMain');
         }
 
@@ -289,17 +317,19 @@ const CreateChallengeScreen = () => {
         }, 100);
 
       } catch (navError) {
-        console.error('❌ 네비게이션 오류:', navError);
+        if (__DEV__) console.error('❌ 네비게이션 오류:', navError);
         // 네비게이션 실패시 뒤로 가기
         navigation.goBack();
         showAlert('챌린지 생성 완료', '새로운 챌린지가 생성되었습니다! 하지만 화면 이동 중 오류가 발생했습니다.', 'success');
       }
 
     } catch (err: any) {
-      console.error('챌린지 생성 오류:', err);
-      console.error('요청 데이터:', formData);
-      console.error('오류 응답:', err.response?.data);
-      console.error('오류 상태:', err.response?.status);
+      if (__DEV__) {
+        console.error('챌린지 생성 오류:', err);
+        console.error('요청 데이터:', formData);
+        console.error('오류 응답:', err.response?.data);
+        console.error('오류 상태:', err.response?.status);
+      }
 
       const errorMessage = err.response?.data?.message ||
                           err.message ||

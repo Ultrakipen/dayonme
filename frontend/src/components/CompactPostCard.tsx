@@ -13,30 +13,7 @@ import ImageCarousel from './ImageCarousel';
 import ClickableNickname from './ClickableNickname';
 import ClickableAvatar from './ClickableAvatar';
 import ReactionButton from './ReactionButton';
-
-// 익명 감정 시스템 - 실제 이모지 사용
-const anonymousEmotions = [
-  { label: '기쁨이', emoji: '😊', color: '#FFD700' },
-  { label: '행복이', emoji: '😄', color: '#FFA500' },
-  { label: '슬픔이', emoji: '😢', color: '#4682B4' },
-  { label: '우울이', emoji: '😞', color: '#708090' },
-  { label: '지루미', emoji: '😑', color: '#A9A9A9' },
-  { label: '버럭이', emoji: '😠', color: '#FF4500' },
-  { label: '불안이', emoji: '😰', color: '#DDA0DD' },
-  { label: '걱정이', emoji: '😟', color: '#FFA07A' },
-  { label: '감동이', emoji: '🥺', color: '#FF6347' },
-  { label: '황당이', emoji: '🤨', color: '#20B2AA' },
-  { label: '당황이', emoji: '😲', color: '#FF8C00' },
-  { label: '짜증이', emoji: '😤', color: '#DC143C' },
-  { label: '무섭이', emoji: '😨', color: '#9370DB' },
-  { label: '추억이', emoji: '🥰', color: '#87CEEB' },
-  { label: '설렘이', emoji: '🤗', color: '#FF69B4' },
-  { label: '편안이', emoji: '😌', color: '#98FB98' },
-  { label: '궁금이', emoji: '🤔', color: '#DAA520' },
-  { label: '사랑이', emoji: '❤️', color: '#E91E63' },
-  { label: '아픔이', emoji: '🤕', color: '#8B4513' },
-  { label: '욕심이', emoji: '🤑', color: '#32CD32' }
-];
+import { EMOTION_AVATARS, getConsistentEmotion, getEmotionEmoji, getEmotionById, getEmotionByName, getTwemojiUrl } from '../constants/emotions';
 
 // 감정 중복 처리를 위한 글로벌 상태
 const usedEmotions = new Map<string, number>();
@@ -49,145 +26,27 @@ const resetEmotionUsage = () => {
 // 내보내기
 export { resetEmotionUsage };
 
+// 공통 상수에서 가져온 getConsistentEmotion 래퍼 (중복 처리 추가)
 const getAnonymousEmotion = (userId?: number, postId?: number, postEmotion?: string) => {
-  // 실제 게시물 감정이 있으면 해당 감정에 맞는 아바타 사용
-  if (postEmotion) {
-    const emotionKeywords = {
-      // 기쁨 계열 확장
-      '기쁨': '기쁨이', '즐거움': '기쁨이', '신남': '행복이', '좋음': '행복이', '재미': '기쁨이', '흥미': '기쁨이',
-      '행복': '행복이', '만족': '행복이', '기뻐': '기쁨이', '즐거워': '기쁨이', '신나': '행복이',
-      
-      // 감동 계열 확장  
-      '감동': '감동이', '뭉클': '감동이', '눈물': '감동이', '벅참': '감동이', '울컥': '감동이', '고마움': '감동이',
-      
-      // 슬픔 계열 확장
-      '슬픔': '슬픔이', '우울': '우울이', '외로움': '슬픔이', '서글픔': '슬픔이', '울적': '우울이', '허전': '슬픔이',
-      '아쉬움': '슬픔이', '그리움': '추억이', '그립': '추억이',
-      
-      // 무서움 계열 확장
-      '무섭': '무섭이', '무서움': '무섭이', '두려움': '무섭이', '공포': '무섭이', '무서워': '무섭이', '두려워': '무섭이',
-      
-      // 화남 계열 확장
-      '화남': '버럭이', '분노': '버럭이', '열받음': '버럭이', '빡침': '짜증이', '화가': '버럭이', '열받': '버럭이',
-      '짜증': '짜증이', '심술': '짜증이', '화나': '버럭이', '짜증나': '짜증이',
-      
-      // 불안 걱정 계열 확장
-      '불안': '불안이', '걱정': '걱정이', '근심': '걱정이', '염려': '걱정이', '불안해': '불안이', '걱정돼': '걱정이',
-      
-      // 지루함 계열 확장
-      '지루함': '지루미', '지겨움': '지루미', '따분': '지루미', '지루해': '지루미', '지겨워': '지루미',
-      
-      // 황당 당황 계열 확장
-      '황당': '황당이', '당황': '당황이', '어이없': '황당이', '헛웃음': '황당이', '멘붕': '당황이',
-      
-      // 설렘 계열 확장
-      '설렘': '설렘이', '두근': '설렘이', '떨림': '설렘이', '설레': '설렘이', '두근거림': '설렘이',
-      
-      // 편안함 계열 확장
-      '편안': '편안이', '평온': '편안이', '여유': '편안이', '차분': '편안이', '안정': '편안이',
-      
-      // 궁금함 계열 확장
-      '궁금': '궁금이', '의문': '궁금이', '호기심': '궁금이', '궁금해': '궁금이',
-      
-      // 사랑 계열 확장
-      '사랑': '사랑이', '애정': '사랑이', '좋아': '사랑이', '마음': '사랑이',
-      
-      // 아픔 계열 확장
-      '아픔': '아픔이', '고통': '아픔이', '힘듦': '아픔이', '괴로움': '아픔이', '아파': '아픔이',
-      
-      // 욕심 계열 확장
-      '욕심': '욕심이', '탐욕': '욕심이', '욕망': '욕심이'
-    };
-    
-    // 게시물 감정과 매칭되는 익명 감정 찾기 (안전성 강화)
-    devLog('🔍 getAnonymousEmotion 디버그:', {
-      userId,
-      postId,
-      postEmotion,
-      postEmotionType: typeof postEmotion,
-      emotionKeywordsKeys: Object.keys(emotionKeywords)
-    });
-    
-    try {
-      for (const [keyword, emotionLabel] of Object.entries(emotionKeywords)) {
-        const isMatch = postEmotion && keyword && (postEmotion.includes(keyword) || keyword.includes(postEmotion));
-        
-        if (isMatch) {
-          devLog('🎯 키워드 매치 발견:', {
-            postEmotion,
-            keyword,
-            emotionLabel,
-            matchType: postEmotion.includes(keyword) ? 'postEmotion.includes(keyword)' : 'keyword.includes(postEmotion)'
-          });
+  const baseEmotion = getConsistentEmotion(postEmotion, userId, postId);
 
-          const matchedEmotion = anonymousEmotions.find(e => e && e.label === emotionLabel);
-          if (matchedEmotion) {
-            devLog(`🎭 감정 매칭 성공: ${postEmotion} -> ${emotionLabel} (${matchedEmotion.emoji})`);
-            return {
-              ...matchedEmotion,
-              label: matchedEmotion.label // 기존 레이블 그대로 유지
-            };
-          } else {
-            devLog('⚠️ anonymousEmotions에서 찾을 수 없음:', emotionLabel);
-          }
-        }
-      }
-
-      devLog('❌ 매칭되는 키워드 없음:', {
-        postEmotion,
-        checkedKeywords: Object.keys(emotionKeywords),
-        willUseFallback: true
-      });
-
-    } catch (error) {
-      devLog('🚨 감정 매칭 중 오류 발생:', error);
-    }
-  }
-  
-  // 실제 감정이 없거나 매칭되지 않으면 랜덤 할당
-  const userSeed = userId || 1;
-  const postSeed = postId || 1;
-  
-  // 다양한 수학적 연산으로 시드 생성
-  const seed1 = (userSeed * 17 + postSeed * 37) % 1000;
-  const seed2 = (userSeed * 23 + postSeed * 41) % 500;
-  const seed3 = (userSeed + postSeed) * 13;
-  const finalSeed = (seed1 + seed2 + seed3) % anonymousEmotions.length;
-  
-  // 배열 인덱스 안전성 체크
-  const safeIndex = Math.abs(finalSeed) % anonymousEmotions.length;
-  const baseEmotion = anonymousEmotions[safeIndex];
-
-  devLog(`🎭 감정 할당 디버그:`, {
+  devLog('🎭 CompactPostCard 감정 할당:', {
     userId,
     postId,
-    userSeed,
-    postSeed,
-    seed1,
-    seed2,
-    seed3,
-    finalSeed,
-    safeIndex,
-    totalEmotions: anonymousEmotions.length,
-    selectedEmotion: baseEmotion?.label,
-    selectedEmoji: baseEmotion?.emoji
+    postEmotion,
+    matchedEmotion: baseEmotion.label,
+    emoji: baseEmotion.emoji
   });
 
-  // baseEmotion이 정의되지 않은 경우를 위한 안전장치
-  if (!baseEmotion) {
-    devLog('🚨 baseEmotion이 undefined입니다!', { safeIndex, totalEmotions: anonymousEmotions.length });
-    return anonymousEmotions[0]; // 첫 번째 감정을 기본값으로 사용
-  }
-  
   // 감정 레이블에 중복 처리
   const emotionKey = baseEmotion.label;
   const currentCount = usedEmotions.get(emotionKey) || 0;
   const newCount = currentCount + 1;
   usedEmotions.set(emotionKey, newCount);
-  
+
   // 중복된 경우 숫자 추가
   const finalLabel = newCount > 1 ? `${baseEmotion.label}${newCount}` : baseEmotion.label;
-  
+
   return {
     ...baseEmotion,
     label: finalLabel
@@ -313,12 +172,24 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
   // 익명 게시물에서 본인이 작성한 글인지 확인
   const isMyPost = post.is_anonymous && user && post.user_id === user.user_id;
   // "나의 하루"는 실명이어도 감정 이모지만 표시
-  const avatarText = post.emotions && post.emotions.length > 0
-    ? post.emotions[0].icon
-    : (post.is_anonymous ? (emotion?.emoji || '😊') : '😊');
-  const avatarColor = post.emotions && post.emotions.length > 0
-    ? post.emotions[0].color
-    : (post.is_anonymous ? (emotion?.color || '#FFD700') : '#FFD700');
+  // emotion_id를 기반으로 이모지 가져오기
+  const getEmotionDisplay = () => {
+    if (post.emotions && post.emotions.length > 0) {
+      const emotionData = post.emotions[0];
+      // emotion_id로 프론트엔드 이모지 가져오기
+      const frontendEmotion = getEmotionById(emotionData.emotion_id);
+      if (frontendEmotion) {
+        return { emoji: frontendEmotion.emoji, color: frontendEmotion.color };
+      }
+      // name으로 이모지 가져오기 (fallback)
+      const emojiByName = getEmotionEmoji(emotionData.name);
+      return { emoji: emojiByName, color: emotionData.color || '#FFD700' };
+    }
+    return { emoji: emotion?.emoji || '😊', color: emotion?.color || '#FFD700' };
+  };
+  const emotionDisplay = getEmotionDisplay();
+  const avatarText = emotionDisplay.emoji;
+  const avatarColor = emotionDisplay.color;
 
   // 상대시간 포맷 (현대적 트렌드)
   const getRelativeTime = (dateString: string) => {
@@ -392,28 +263,18 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
           backgroundColor: post.emotions && post.emotions.length > 0 ? `${post.emotions[0].color}10` : '#FFD70010',
           borderColor: post.emotions && post.emotions.length > 0 ? `${post.emotions[0].color}30` : '#FFD70030'
         }]}>
-          <Text style={styles.emotionIcon}>
-            {(() => {
-              if (post.emotions && post.emotions.length > 0) {
-                const emotion = post.emotions[0];
-                const emojiMap: Record<string, string> = {
-                  '행복': '😊', '기쁨': '😄', '감사': '🙏', '위로': '🤗',
-                  '감동': '🥺', '슬픔': '😢', '우울': '😞', '불안': '😰',
-                  '걱정': '😟', '화남': '😠', '지침': '😑', '무서움': '😨',
-                  '편함': '😌', '궁금': '🤔', '사랑': '❤️', '아픔': '🤕',
-                  '욕심': '🤑', '추억': '🥰', '설렘': '🤗', '황당': '🤨',
-                  '당황': '😲', '고독': '😔', '충격': '😱'
-                };
-
-                for (const [key, emoji] of Object.entries(emojiMap)) {
-                  if (emotion.name.includes(key) || key.includes(emotion.name)) {
-                    return emoji;
-                  }
-                }
-              }
-              return '😊';
-            })()}
-          </Text>
+          {/* Twemoji 이미지로 선명하게 렌더링 */}
+          <Image
+            source={{
+              uri: getTwemojiUrl(
+                post.emotions && post.emotions.length > 0
+                  ? (getEmotionByName(post.emotions[0].name)?.emojiCode || '1f60a')
+                  : '1f60a'
+              )
+            }}
+            style={styles.emotionIconImage}
+            resizeMode="contain"
+          />
      <HStack style={{ flex: 1, flexWrap: 'wrap', alignItems: 'center', gap: 4, padding: 3 ,paddingTop:8}}>
               <Text style={{
                 fontSize: 14,
@@ -702,6 +563,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginRight: 6,
   },
+  emotionIconImage: {
+    width: 28,
+    height: 28,
+    marginBottom: 6,
+    marginRight: 6,
+  },
   emotionLabel: {
     fontSize: 14,
     fontWeight: '500',
@@ -936,10 +803,19 @@ const styles = StyleSheet.create({
 });
 
 export default React.memo(CompactPostCard, (prevProps, nextProps) => {
+  // 감정 변경 감지 (emotion_id 비교)
+  const prevEmotionId = prevProps.post.emotions?.[0]?.emotion_id;
+  const nextEmotionId = nextProps.post.emotions?.[0]?.emotion_id;
+  const prevEmotionName = prevProps.post.emotions?.[0]?.name;
+  const nextEmotionName = nextProps.post.emotions?.[0]?.name;
+
   return (
     prevProps.post.post_id === nextProps.post.post_id &&
     prevProps.post.like_count === nextProps.post.like_count &&
     prevProps.post.comment_count === nextProps.post.comment_count &&
+    prevProps.post.updated_at === nextProps.post.updated_at &&
+    prevEmotionId === nextEmotionId &&
+    prevEmotionName === nextEmotionName &&
     prevProps.liked === nextProps.liked &&
     prevProps.isBookmarked === nextProps.isBookmarked &&
     prevProps.isBestPost === nextProps.isBestPost

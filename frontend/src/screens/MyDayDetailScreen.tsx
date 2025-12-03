@@ -29,6 +29,7 @@ import ClickableAvatar from '../components/ClickableAvatar';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import ModernToast, { ToastType } from '../components/ModernToast';
 import { FONT_SIZES } from '../constants';
+import { EMOTION_AVATARS } from '../constants/emotions';
 
 // 반응형 폰트 스케일링 함수 - React Native 0.80 호환
 const BASE_WIDTH = 360;
@@ -101,29 +102,7 @@ interface MyDayDetailScreenProps {
   };
 }
 
-// 랜덤 감정 아바타 생성 함수
-const EMOTION_AVATARS = [
-  { label: '기쁨이', emoji: '😊', color: '#FFD700' },
-  { label: '행복이', emoji: '😄', color: '#FFA500' },
-  { label: '슬픔이', emoji: '😢', color: '#4682B4' },
-  { label: '우울이', emoji: '😞', color: '#708090' },
-  { label: '지루미', emoji: '😑', color: '#A9A9A9' },
-  { label: '버럭이', emoji: '😠', color: '#FF4500' },
-  { label: '불안이', emoji: '😰', color: '#DDA0DD' },
-  { label: '걱정이', emoji: '😟', color: '#FFA07A' },
-  { label: '감동이', emoji: '🥺', color: '#FF6347' },
-  { label: '황당이', emoji: '🤨', color: '#20B2AA' },
-  { label: '당황이', emoji: '😲', color: '#FF8C00' },
-  { label: '짜증이', emoji: '😤', color: '#DC143C' },
-  { label: '무섭이', emoji: '😨', color: '#9370DB' },
-  { label: '추억이', emoji: '🥰', color: '#87CEEB' },
-  { label: '설렘이', emoji: '🤗', color: '#FF69B4' },
-  { label: '편안이', emoji: '😌', color: '#98FB98' },
-  { label: '궁금이', emoji: '🤔', color: '#DAA520' },
-  { label: '사랑이', emoji: '❤️', color: '#E91E63' },
-  { label: '아픔이', emoji: '🤕', color: '#8B4513' },
-  { label: '욕심이', emoji: '🤑', color: '#32CD32' }
-];
+// 감정 데이터는 emotions.ts에서 import (일관성 유지)
 
 const getRandomEmotion = (userId: number, postId: number, commentId: number = 0) => {
   const userSeed = userId || 1;
