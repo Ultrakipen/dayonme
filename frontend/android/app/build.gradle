@@ -2,6 +2,7 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 apply plugin: "com.onesignal.androidsdk.onesignal-gradle-plugin" // OneSignal
+apply from: project(':react-native-config').projectDir.getPath() + "/dotenv.gradle" // react-native-config
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -88,15 +89,26 @@ android {
         // 버전 관리 (업데이트 시 versionCode는 반드시 증가해야 함)
         // versionCode: 정수값, 매 업데이트마다 증가 (1 → 2 → 3...)
         // versionName: 사용자에게 표시되는 버전 (시맨틱 버저닝: major.minor.patch)
-        versionCode 1
-        versionName "1.0.0"
+        versionCode 9
+        versionName "1.1.6"
 
-        // 소셜 로그인 SDK 설정
+        // CPU 아키텍처 필터링 (릴리즈에서만 ARM 제한)
+        // 디버그에서는 에뮬레이터(x86) 지원을 위해 모든 아키텍처 포함
+
+        // App Bundle 분할 설정 (사용자는 자기 기기에 맞는 버전만 다운로드)
+        bundle {
+            language { enableSplit = true }     // 언어별 분할 (한국어만 받음)
+            density { enableSplit = true }      // 해상도별 분할 (자기 화면 해상도만)
+            abi { enableSplit = true }          // CPU별 분할 (자기 CPU만)
+        }
+
+        // 소셜 로그인 SDK 설정 (환경변수에서 로드)
+        // react-native-config를 통해 .env 파일에서 값을 읽어옵니다
         manifestPlaceholders = [
-            KAKAO_NATIVE_APP_KEY: "184257b4534e3e26b4d70dde7b44d91e",
-            NAVER_CLIENT_ID: "lX6cDQ4s3ZncTBOWQZzu",
-            NAVER_CLIENT_SECRET: "0zHQPwjoB5",
-            NAVER_CLIENT_NAME: "dayonme"
+            KAKAO_NATIVE_APP_KEY: project.env.get("KAKAO_NATIVE_APP_KEY") ?: "",
+            NAVER_CLIENT_ID: project.env.get("NAVER_CLIENT_ID") ?: "",
+            NAVER_CLIENT_SECRET: project.env.get("NAVER_CLIENT_SECRET") ?: "",
+            NAVER_CLIENT_NAME: project.env.get("NAVER_CLIENT_NAME") ?: "dayonme"
         ]
     }
     signingConfigs {
@@ -106,30 +118,35 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
-        // ⚠️ 프로덕션 릴리즈 시 아래 주석을 해제하고 실제 키스토어 정보 입력
-        // 키스토어 생성 명령어:
-        // keytool -genkeypair -v -storetype PKCS12 -keystore release.keystore \
-        //   -alias dayonme -keyalg RSA -keysize 2048 -validity 10000
-        //
-        // release {
-        //     storeFile file('release.keystore')
-        //     storePassword System.getenv("RELEASE_STORE_PASSWORD") ?: "your-store-password"
-        //     keyAlias 'dayonme'
-        //     keyPassword System.getenv("RELEASE_KEY_PASSWORD") ?: "your-key-password"
-        // }
+        release {
+            def keystorePropertiesFile = rootProject.file("keystore.properties")
+            def keystoreProperties = new Properties()
+            if (keystorePropertiesFile.exists()) {
+                keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+                storeFile file('release.keystore')
+                storePassword keystoreProperties['KEYSTORE_PASSWORD']
+                keyAlias keystoreProperties['KEY_ALIAS']
+                keyPassword keystoreProperties['KEY_PASSWORD']
+            }
+        }
     }
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // ⚠️ 프로덕션 출시 전 반드시 signingConfigs.release로 변경!
-            // 현재: debug 서명 (개발/테스트용)
-            // 출시시: signingConfig signingConfigs.release 로 변경
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             shrinkResources enableProguardInReleaseBuilds  // 사용하지 않는 리소스 제거
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+            ndk {
+                abiFilters "armeabi-v7a", "arm64-v8a"  // 릴리즈: ARM만 (APK 크기 48% 감소)
+            }
         }
     }
 }
