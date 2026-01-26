@@ -63,19 +63,23 @@ jobs:
           EOF
 
       - name: Decode Keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        continue-on-error: true
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > frontend/android/app/release.keystore
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > frontend/android/app/release.keystore
+          fi
 
       - name: Create keystore.properties
-        if: ${{ secrets.KEYSTORE_PASSWORD != '' }}
+        continue-on-error: true
         run: |
-          cd frontend/android
-          cat > keystore.properties << 'EOF'
+          if [ -n "${{ secrets.KEYSTORE_PASSWORD }}" ]; then
+            cd frontend/android
+            cat > keystore.properties << 'EOF'
           KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS=${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
           EOF
+          fi
 
       - name: Build Release APK
         run: |
