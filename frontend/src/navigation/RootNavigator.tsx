@@ -10,6 +10,7 @@ import { RootStackParamList } from '../types/navigation';
 // 핵심 네비게이터 (즉시 로드)
 import AuthStack from './AuthStack';
 import MainTabs from './MainTabs';
+import SplashScreen from '../screens/SplashScreen';
 import WelcomeScreen from '../screens/WelcomeScreen';
 
 // 자주 사용하는 화면 (즉시 로드)
@@ -23,10 +24,7 @@ import UserProfileScreen from '../screens/UserProfileScreen';
 const ChallengeDetailScreen = lazy(() => import('../screens/ChallengeDetailScreen'));
 const ProfileEditScreen = lazy(() => import('../screens/ProfileEditScreen'));
 const WriteComfortPostScreen = lazy(() => import('../screens/WriteComfortPostScreen'));
-const SettingsScreen = lazy(() => import('../screens/SettingsScreen'));
-const BlockManagementScreen = lazy(() => import('../screens/BlockManagementScreen'));
-const MyPostsScreen = lazy(() => import('../screens/MyPostsScreen'));
-const MyChallengesScreen = lazy(() => import('../screens/MyChallengesScreen'));
+const WriteMyDayScreen = lazy(() => import('../screens/WriteMyDayScreen'));
 const PrivacyPolicyScreen = lazy(() => import('../screens/PrivacyPolicyScreen'));
 const MyReportsScreen = lazy(() => import('../screens/MyReportsScreen'));
 const NoticeScreen = lazy(() => import('../screens/NoticeScreen'));
@@ -60,10 +58,7 @@ const withSuspense = <P extends object>(Component: ComponentType<P>): React.FC<P
 const LazyChallengeDetail = withSuspense(ChallengeDetailScreen);
 const LazyProfileEdit = withSuspense(ProfileEditScreen);
 const LazyWriteComfortPost = withSuspense(WriteComfortPostScreen);
-const LazySettings = withSuspense(SettingsScreen);
-const LazyBlockManagement = withSuspense(BlockManagementScreen);
-const LazyMyPosts = withSuspense(MyPostsScreen);
-const LazyMyChallenges = withSuspense(MyChallengesScreen);
+const LazyWriteMyDay = withSuspense(WriteMyDayScreen);
 const LazyPrivacyPolicy = withSuspense(PrivacyPolicyScreen);
 const LazyMyReports = withSuspense(MyReportsScreen);
 const LazyNotice = withSuspense(NoticeScreen);
@@ -87,7 +82,7 @@ const RootNavigator: React.FC = () => {
     if (isLoading) return;
 
     if (prevAuthRef.current === false && isAuthenticated === true) {
-      console.log('🔄 [RootNavigator] 로그인 감지 - Main으로 자동 전환');
+      if (__DEV__) console.log('🔄 [RootNavigator] 로그인 감지 - Main으로 자동 전환');
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
@@ -101,13 +96,18 @@ const RootNavigator: React.FC = () => {
 
   return (
     <Stack.Navigator
-      initialRouteName="Welcome"
+      initialRouteName="Splash"
       screenOptions={{
         headerStyle: { backgroundColor: '#6200ee' },
         headerTintColor: '#fff',
-        headerTitleStyle: { fontWeight: 'bold' },
+        headerTitleStyle: { fontFamily: 'Pretendard-Bold' },
       }}
     >
+      <Stack.Screen
+        name="Splash"
+        component={SplashScreen}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen
         name="Welcome"
         component={WelcomeScreen}
@@ -162,44 +162,9 @@ const RootNavigator: React.FC = () => {
           options={{ title: '위로와 공감' }}
         />
         <Stack.Screen
-          name="Settings"
-          component={LazySettings}
-          options={{ title: '설정' }}
-        />
-        <Stack.Screen
-          name="BlockManagement"
-          component={LazyBlockManagement}
-          options={{ title: '차단 관리' }}
-        />
-        <Stack.Screen
-          name="MyPosts"
-          component={LazyMyPosts}
-          options={{ title: '내 게시물' }}
-        />
-        <Stack.Screen
-          name="MyChallenges"
-          component={LazyMyChallenges}
-          options={{ title: '내 챌린지' }}
-        />
-        <Stack.Screen
-          name="ChangePassword"
-          component={LazySettings}
-          options={{ title: '비밀번호 변경' }}
-        />
-        <Stack.Screen
-          name="FAQ"
-          component={LazySettings}
-          options={{ title: '자주 묻는 질문' }}
-        />
-        <Stack.Screen
-          name="Contact"
-          component={LazySettings}
-          options={{ title: '문의하기' }}
-        />
-        <Stack.Screen
-          name="OpenSourceLicenses"
-          component={LazySettings}
-          options={{ title: '오픈소스 라이선스' }}
+          name="WriteMyDay"
+          component={LazyWriteMyDay}
+          options={{ title: '나의 하루' }}
         />
         <Stack.Screen
           name="PrivacyPolicy"

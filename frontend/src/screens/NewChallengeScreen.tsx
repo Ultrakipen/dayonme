@@ -55,7 +55,7 @@ const NewChallengeScreen: React.FC = () => {
   const loadData = async (isRefresh = false) => {
     try {
       if (!isRefresh) setLoading(true);
-      console.log('🎯 새로운 챌린지 화면 데이터 로드 시작');
+      if (__DEV__) console.log('🎯 새로운 챌린지 화면 데이터 로드 시작');
 
       // 병렬로 모든 데이터 요청
       const [challengesRes, bestRes, participationsRes] = await Promise.allSettled([
@@ -85,10 +85,10 @@ const NewChallengeScreen: React.FC = () => {
         setMyParticipations(data.data || []);
       }
 
-      console.log('✅ 새로운 챌린지 화면 데이터 로드 완료');
+      if (__DEV__) console.log('✅ 새로운 챌린지 화면 데이터 로드 완료');
 
-    } catch (error: any) {
-      console.error('❌ 데이터 로드 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 데이터 로드 오류:', error);
       Alert.alert('오류', '데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -109,7 +109,7 @@ const NewChallengeScreen: React.FC = () => {
       await simpleChallengeService.joinChallenge(challengeId);
       Alert.alert('성공', '챌린지에 성공적으로 참여했습니다!');
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert('오류', error.message);
     }
   };
@@ -146,7 +146,7 @@ const NewChallengeScreen: React.FC = () => {
       await simpleChallengeService.createChallenge(sampleData);
       Alert.alert('성공', '챌린지가 생성되었습니다!');
       loadData();
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert('오류', error.message);
     }
   };
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: FONT_SIZES.h1,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
   },
   headerSubtitle: {
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: FONT_SIZES.h3,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 12,
   },
   myCard: {
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
   },
   cardDescription: {
     fontSize: FONT_SIZES.small,
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   },
   bestCardTitle: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 8,
   },
   bestCardFooter: {
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   },
   challengeTitle: {
     fontSize: FONT_SIZES.bodyLarge,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 4,
   },
   challengeDescription: {
@@ -459,7 +459,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: FONT_SIZES.h3,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginTop: 16,
   },
   emptyDescription: {

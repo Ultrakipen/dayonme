@@ -3,6 +3,22 @@
 // React Native 0.80 호환성: lazy initialization
 import { normalizeFont, moderateScale } from './responsive';
 
+/**
+ * Pretendard 폰트 패밀리 (2026 트렌드 - 한글 최적화)
+ * Android에서는 파일 이름을 직접 사용해야 함
+ */
+export const FONT_FAMILY = {
+  thin: 'Pretendard-Thin',          // 100
+  extraLight: 'Pretendard-ExtraLight', // 200
+  light: 'Pretendard-Light',        // 300
+  regular: 'Pretendard-Regular',    // 400
+  medium: 'Pretendard-Medium',      // 500
+  semiBold: 'Pretendard-SemiBold',  // 600
+  bold: 'Pretendard-Bold',          // 700
+  extraBold: 'Pretendard-ExtraBold', // 800
+  black: 'Pretendard-Black',        // 900
+} as const;
+
 // 초기화 플래그
 let _initialized = false;
 
@@ -19,22 +35,23 @@ export const initializeTypography = () => {
   if (_initialized) return;
 
   // FONT_SIZES 초기화 (인스타그램 스타일 + 가독성 향상)
+  // 2026 트렌드: 가독성 우선, WCAG 권장 최소 14dp
   Object.assign(_values.FONT_SIZES, {
-    h1: normalizeFont(24),
-    h2: normalizeFont(20),
-    h3: normalizeFont(18),
+    h1: normalizeFont(26),      // 24 → 26 (제목 강조)
+    h2: normalizeFont(22),      // 20 → 22
+    h3: normalizeFont(19),      // 18 → 19
     h4: normalizeFont(17),
     h5: normalizeFont(16),
     body: normalizeFont(15),
     bodyLarge: normalizeFont(16),
     bodySmall: normalizeFont(14),
-    caption: normalizeFont(13),
-    small: normalizeFont(13),  // 12 → 13 (가독성 향상)
-    tiny: normalizeFont(12),   // 11 → 12 (가독성 향상)
+    caption: normalizeFont(14), // 13 → 14 (가독성 향상)
+    small: normalizeFont(14),   // 13 → 14 (가독성 향상)
+    tiny: normalizeFont(13),    // 12 → 13 (최소 가독성 보장)
     button: normalizeFont(15),
     buttonSmall: normalizeFont(14),
-    input: normalizeFont(15),
-    placeholder: normalizeFont(14),
+    input: normalizeFont(16),   // 15 → 16 (입력 필드 가독성)
+    placeholder: normalizeFont(15), // 14 → 15
   });
 
   // TEXT_STYLES 초기화
@@ -42,43 +59,51 @@ export const initializeTypography = () => {
   Object.assign(_values.TEXT_STYLES, {
     h1: {
       fontSize: fontSizes.h1,
-      fontWeight: FONT_WEIGHTS.bold,
+      fontFamily: FONT_FAMILY.bold,
       lineHeight: fontSizes.h1 * LINE_HEIGHTS.tight,
+      letterSpacing: LETTER_SPACING.tight,
     },
     h2: {
       fontSize: fontSizes.h2,
-      fontWeight: FONT_WEIGHTS.bold,
+      fontFamily: FONT_FAMILY.bold,
       lineHeight: fontSizes.h2 * LINE_HEIGHTS.tight,
+      letterSpacing: LETTER_SPACING.tight,
     },
     h3: {
       fontSize: fontSizes.h3,
-      fontWeight: FONT_WEIGHTS.semiBold,
+      fontFamily: FONT_FAMILY.semiBold,
       lineHeight: fontSizes.h3 * LINE_HEIGHTS.normal,
+      letterSpacing: LETTER_SPACING.normal,
     },
     body: {
       fontSize: fontSizes.body,
-      fontWeight: FONT_WEIGHTS.regular,
+      fontFamily: FONT_FAMILY.regular,
       lineHeight: fontSizes.body * LINE_HEIGHTS.normal,
+      letterSpacing: LETTER_SPACING.normal,
     },
     bodyBold: {
       fontSize: fontSizes.body,
-      fontWeight: FONT_WEIGHTS.semiBold,
+      fontFamily: FONT_FAMILY.semiBold,
       lineHeight: fontSizes.body * LINE_HEIGHTS.normal,
+      letterSpacing: LETTER_SPACING.normal,
     },
     caption: {
       fontSize: fontSizes.caption,
-      fontWeight: FONT_WEIGHTS.regular,
+      fontFamily: FONT_FAMILY.regular,
       lineHeight: fontSizes.caption * LINE_HEIGHTS.normal,
+      letterSpacing: LETTER_SPACING.normal,
     },
     captionBold: {
       fontSize: fontSizes.caption,
-      fontWeight: FONT_WEIGHTS.semiBold,
+      fontFamily: FONT_FAMILY.semiBold,
       lineHeight: fontSizes.caption * LINE_HEIGHTS.normal,
+      letterSpacing: LETTER_SPACING.normal,
     },
     button: {
       fontSize: fontSizes.button,
-      fontWeight: FONT_WEIGHTS.semiBold,
+      fontFamily: FONT_FAMILY.semiBold,
       lineHeight: fontSizes.button * LINE_HEIGHTS.tight,
+      letterSpacing: LETTER_SPACING.normal,
     },
   });
 

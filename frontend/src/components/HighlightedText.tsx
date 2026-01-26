@@ -13,7 +13,7 @@ export const HighlightedText: React.FC<HighlightedTextProps> = ({
   text,
   highlight,
   style,
-  highlightStyle = { backgroundColor: '#FFE082', fontWeight: 'bold' },
+  highlightStyle = { backgroundColor: '#FFE082', fontFamily: 'Pretendard-Bold' },
   numberOfLines
 }) => {
   if (!highlight || !text) {

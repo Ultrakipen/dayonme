@@ -44,7 +44,7 @@ const NaverLoginWebView: React.FC<NaverLoginWebViewProps> = ({ navigation }) => 
 
   // 네이버 OAuth 설정
   const NAVER_CLIENT_ID = 'sdlZLc5BdOEm6UuMuGnH';
-  const NAVER_REDIRECT_URI = 'http://localhost:3001/auth/callback';
+  const NAVER_REDIRECT_URI = 'https://dayonme.com/auth/callback';
   const state = Math.random().toString(36).substring(7);
 
   const authUrl = `https://nid.naver.com/oauth2.0/authorize?response_type=code&client_id=${NAVER_CLIENT_ID}&redirect_uri=${encodeURIComponent(NAVER_REDIRECT_URI)}&state=${state}`;
@@ -64,7 +64,7 @@ const NaverLoginWebView: React.FC<NaverLoginWebViewProps> = ({ navigation }) => 
       // URL 변경 감지 (redirect 감지)
       const checkUrl = () => {
         const currentUrl = window.location.href;
-        if (currentUrl.includes('localhost:3001/auth/callback')) {
+        if (currentUrl.includes('dayonme.com/auth/callback')) {
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'CALLBACK_URL',
             url: currentUrl
@@ -88,14 +88,14 @@ const NaverLoginWebView: React.FC<NaverLoginWebViewProps> = ({ navigation }) => 
   const handleCallbackUrl = async (url: string) => {
     // 이미 처리 중이면 무시
     if (isProcessing) {
-      console.log('⏸️ 이미 처리 중입니다. 무시합니다.');
+      if (__DEV__) console.log('⏸️ 이미 처리 중입니다. 무시합니다.');
       return;
     }
 
     setIsProcessing(true);
 
     try {
-      console.log('📥 콜백 URL 처리:', url);
+      if (__DEV__) console.log('📥 콜백 URL 처리:', url);
 
       // URL에서 code와 state 추출
       const urlParams = new URL(url);
@@ -105,7 +105,7 @@ const NaverLoginWebView: React.FC<NaverLoginWebViewProps> = ({ navigation }) => 
 
       // 사용자가 취소한 경우
       if (error === 'access_denied') {
-        console.log('ℹ️ 사용자가 네이버 로그인을 취소했습니다.');
+        if (__DEV__) console.log('ℹ️ 사용자가 네이버 로그인을 취소했습니다.');
         navigation.goBack();
         return;
       }
@@ -114,7 +114,7 @@ const NaverLoginWebView: React.FC<NaverLoginWebViewProps> = ({ navigation }) => 
         throw new Error('인증 코드를 받지 못했습니다.');
       }
 
-      console.log('🔄 네이버 액세스 토큰 요청 중...');
+      if (__DEV__) console.log('🔄 네이버 액세스 토큰 요청 중...');
 
       // code를 access_token으로 교환 (네이버 API 직접 호출)
       const NAVER_CLIENT_SECRET = 'TpnwOsEK61';
@@ -128,7 +128,7 @@ const NaverLoginWebView: React.FC<NaverLoginWebViewProps> = ({ navigation }) => 
         throw new Error('액세스 토큰을 받지 못했습니다.');
       }
 
-      console.log('✅ 네이버 액세스 토큰 획득');
+      if (__DEV__) console.log('✅ 네이버 액세스 토큰 획득');
 
       // 백엔드로 액세스 토큰 전송하여 JWT 받기
       const response = await apiClient.post<NaverAuthResponse>('/auth/naver', {
@@ -149,8 +149,8 @@ const NaverLoginWebView: React.FC<NaverLoginWebViewProps> = ({ navigation }) => 
       } else {
         throw new Error(response.data.message || '로그인에 실패했습니다.');
       }
-    } catch (error: any) {
-      console.error('❌ 네이버 로그인 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 네이버 로그인 오류:', error);
       showAlert.error('로그인 실패', error.message || '로그인 중 오류가 발생했습니다.');
       navigation.goBack();
     }
@@ -162,11 +162,11 @@ const NaverLoginWebView: React.FC<NaverLoginWebViewProps> = ({ navigation }) => 
       const data = JSON.parse(event.nativeEvent.data);
 
       if (data.type === 'CALLBACK_URL') {
-        console.log('📨 WebView로부터 콜백 URL 수신:', data.url);
+        if (__DEV__) console.log('📨 WebView로부터 콜백 URL 수신:', data.url);
         handleCallbackUrl(data.url);
       }
     } catch (error) {
-      console.error('❌ 메시지 파싱 오류:', error);
+      if (__DEV__) console.error('❌ 메시지 파싱 오류:', error);
     }
   };
 
@@ -198,12 +198,12 @@ const NaverLoginWebView: React.FC<NaverLoginWebViewProps> = ({ navigation }) => 
             backgroundColor: theme.bg.secondary,
           }}
         >
-          <Text style={{ fontSize: FONT_SIZES.h3, fontWeight: '600', color: isDark ? theme.text.primary : '#333' }}>✕</Text>
+          <Text style={{ fontSize: FONT_SIZES.h3, fontFamily: 'Pretendard-SemiBold', color: isDark ? theme.text.primary : '#333' }}>✕</Text>
         </TouchableOpacity>
 
         <Text style={{
           fontSize: FONT_SIZES.h4,
-          fontWeight: '700',
+          fontFamily: 'Pretendard-Bold',
           color: isDark ? theme.text.primary : '#333',
           letterSpacing: -0.3,
         }}>
@@ -251,7 +251,7 @@ const NaverLoginWebView: React.FC<NaverLoginWebViewProps> = ({ navigation }) => 
           <Text style={{
             marginTop: 16,
             fontSize: FONT_SIZES.body,
-            fontWeight: '600',
+            fontFamily: 'Pretendard-SemiBold',
             color: isDark ? theme.text.secondary : '#666',
           }}>
             네이버 로그인 페이지 로딩 중...

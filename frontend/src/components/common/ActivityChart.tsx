@@ -13,6 +13,7 @@ interface ActivityChartProps {
   type: 'pie' | 'bar' | 'line';
   width?: number;
   height?: number;
+  textColor?: string;
 }
 
 const ActivityChart: React.FC<ActivityChartProps> = ({
@@ -20,6 +21,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
   type,
   width,
   height = 200,
+  textColor = '#000',
 }) => {
   const { width: screenWidth } = useWindowDimensions();
   const chartWidth = width ?? screenWidth - 80;
@@ -95,7 +97,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
                 x={x + barWidth / 2}
                 y={height - 20}
                 fontSize="14"
-                fill="#000"
+                fill={textColor}
                 textAnchor="middle"
                 fontWeight="600"
               >
@@ -105,7 +107,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
                 x={x + barWidth / 2}
                 y={y - 5}
                 fontSize="16"
-                fill="#000"
+                fill={textColor}
                 textAnchor="middle"
                 fontWeight="bold"
               >
@@ -174,7 +176,7 @@ const styles = StyleSheet.create({
   legendText: {
     fontSize: 16,
     color: '#000',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 });
 

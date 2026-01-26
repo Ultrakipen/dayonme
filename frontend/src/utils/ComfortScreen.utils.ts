@@ -86,17 +86,17 @@ export const isValidSearchQuery = (query: string): boolean => {
   const trimmed = query.trim();
 
   if (trimmed.length >= 1) {
-    console.log('✅ 검색어 유효:', trimmed);
+    if (__DEV__) console.log('✅ 검색어 유효:', trimmed);
     return true;
   }
 
-  console.log('❌ 검색어 무효:', trimmed);
+  if (__DEV__) console.log('❌ 검색어 무효:', trimmed);
   return false;
 };
 
 // 개발 환경 로거
 export const logger = {
   log: (...args: any[]) => __DEV__ && console.log(...args),
-  error: (...args: any[]) => console.error(...args),
+  error: (...args: any[]) => __DEV__ && console.error(...args),
   warn: (...args: any[]) => __DEV__ && console.warn(...args),
 };

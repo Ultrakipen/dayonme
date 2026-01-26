@@ -7,7 +7,7 @@ const HomeScreen = () => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
       <View style={{ padding: 20 }}>
-        <Text style={{ fontSize: 24, color: '#000000', fontWeight: 'bold' }}>
+        <Text style={{ fontSize: 24, color: '#000000', fontFamily: 'Pretendard-Bold' }}>
           Simple HomeScreen - Testing
         </Text>
         <Text style={{ fontSize: 16, color: '#666666', marginTop: 10 }}>

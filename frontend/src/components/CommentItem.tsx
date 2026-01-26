@@ -82,7 +82,7 @@ const CommentItem: React.FC<CommentItemProps> = ({
         onCommentBlocked(id);
       }
     } catch (error) {
-      console.error('댓글 차단 오류:', error);
+      if (__DEV__) console.error('댓글 차단 오류:', error);
       Alert.alert('오류', '댓글 차단에 실패했습니다.');
     }
   };
@@ -142,10 +142,11 @@ const CommentItem: React.FC<CommentItemProps> = ({
         <View style={styles.profileImageContainer}>
           {profileImage ? (
             <FastImage
+              key={`comment-profile-${profileImage}`}
               source={{
                 uri: profileImage,
                 priority: FastImage.priority.normal,
-                cache: FastImage.cacheControl.immutable
+                cache: FastImage.cacheControl.web
               }}
               style={styles.profileImage}
               resizeMode={FastImage.resizeMode.cover}
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
   },
   profilePlaceholderText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#657786',
   },
   // 콘텐츠 영역
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   userName: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     fontSize: 16,
     lineHeight: 22,
     color: '#000000',
@@ -311,7 +312,7 @@ const styles = StyleSheet.create({
   authorBadge: {
     fontSize: 13,
     color: '#4A5568',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginLeft: 6,
   },
   blockButton: {
@@ -323,7 +324,7 @@ const styles = StyleSheet.create({
   blockButtonText: {
     fontSize: 12,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   date: {
     fontSize: 14,
@@ -332,8 +333,8 @@ const styles = StyleSheet.create({
   },
   // 댓글 내용
   content: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 14,
+    lineHeight: 22,
     color: '#1A202C',
     marginBottom: 12,
     marginLeft: 56,
@@ -368,7 +369,7 @@ const styles = StyleSheet.create({
   emotionText: {
     fontSize: 13,
     color: '#4A5568',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   // 버튼 영역
   footer: {
@@ -385,7 +386,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: '#718096',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   deleteText: {
     color: '#1A202C',
@@ -429,13 +430,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: '#4A5568',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   saveButtonText: {
     fontSize: 14,
     lineHeight: 20,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 });
 

@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24, // 더 큰 제목
-    fontWeight: '700', // 더 굵은 폰트
+    fontFamily: 'Pretendard-Bold', // 더 굵은 폰트
     color: '#1f2937', // 더 진한 색상
     marginBottom: 16,
     textAlign: 'center',
@@ -190,13 +190,13 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: 16,
-    fontWeight: '700', // 더 굵은 텍스트
+    fontFamily: 'Pretendard-Bold', // 더 굵은 텍스트
     color: '#374151', // 더 진한 회색
     letterSpacing: -0.2,
   },
   loginButtonText: {
     fontSize: 16,
-    fontWeight: '700', // 더 굵은 텍스트
+    fontFamily: 'Pretendard-Bold', // 더 굵은 텍스트
     color: '#FFFFFF',
     letterSpacing: -0.2,
   },

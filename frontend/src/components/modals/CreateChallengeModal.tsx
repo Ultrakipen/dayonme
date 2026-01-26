@@ -210,7 +210,7 @@ if (!startDateString.trim()) {
         resetForm();
         onDismiss();
       }, 1500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert(
         '오류',
         error.message || '챌린지 생성 중 오류가 발생했습니다.'
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     color: '#4a0e4e',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   input: {
     marginBottom: 8,
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 12,
     color: '#4a0e4e',
   },
@@ -605,7 +605,7 @@ dateSection: {
   removeTagText: {
     color: '#fff',
     fontSize: 13,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginLeft: 4,
   },
   visibilityCard: {
@@ -632,7 +632,7 @@ dateSection: {
   },
   visibilityOptionText: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     color: '#666',
     marginBottom: 4,
   },
@@ -664,7 +664,7 @@ dateSection: {
   },
   cancelButtonText: {
     color: '#6b7280',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   submitButton: {
     backgroundColor: '#4a0e4e',
@@ -672,7 +672,7 @@ dateSection: {
   },
   submitButtonText: {
     color: '#fff',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   successSnackbar: {
     backgroundColor: '#10b981',

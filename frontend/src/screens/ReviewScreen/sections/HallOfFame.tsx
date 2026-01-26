@@ -22,7 +22,7 @@ export const HallOfFame: React.FC = React.memo(() => {
       setRankings(rankArray.slice(0, 10));
     } catch (err) {
       setError('명예의 전당을 불러오는데 실패했습니다');
-      console.error('명예의 전당 로드 실패:', err);
+      if (__DEV__) console.error('명예의 전당 로드 실패:', err);
       setRankings([]);
     }
   }, [period]);
@@ -169,14 +169,14 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   periodSelector: {
     flexDirection: 'row',
   },
   periodButton: {},
   periodText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   emptyText: {
     textAlign: 'center',
@@ -187,10 +187,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rankBadge: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   rankName: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   rankStats: {
     flexDirection: 'row',

@@ -73,7 +73,7 @@ export const EmotionJourney: React.FC<Props> = React.memo(({ period = 'week' }) 
       }
     } catch (err) {
       setError('감정 여정을 불러오는데 실패했습니다');
-      console.error('감정 여정 로드 실패:', err);
+      if (__DEV__) console.error('감정 여정 로드 실패:', err);
     }
   }, [period]);
 
@@ -122,7 +122,7 @@ export const EmotionJourney: React.FC<Props> = React.memo(({ period = 'week' }) 
       accessibilityLabel={periodInfo.accessibilityLabel}
       accessibilityHint={periodInfo.accessibilityHint}
     >
-      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale, marginBottom: 16 * scale }]}>
+      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, marginBottom: 16 * scale }]}>
         {periodInfo.title}
       </Text>
 
@@ -182,7 +182,7 @@ export const EmotionJourney: React.FC<Props> = React.memo(({ period = 'week' }) 
 
 const styles = StyleSheet.create({
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   journeyContainer: {
     flexDirection: 'row',
@@ -199,10 +199,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   day: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   emotion: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   arrow: {
   },
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   summary: {
   },
   summaryText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     textAlign: 'center',
   },
   errorContainer: {

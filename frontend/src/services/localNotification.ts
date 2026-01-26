@@ -10,7 +10,7 @@ export function initLocalNotifications() {
   PushNotification.configure({
     // 알림 클릭 시
     onNotification: (notification) => {
-      console.log('📩 알림 클릭:', notification);
+      if (__DEV__) console.log('📩 알림 클릭:', notification);
 
       // 화면 이동 처리
       if (notification.data?.screen) {
@@ -37,10 +37,10 @@ export function initLocalNotifications() {
       importance: 4,
       vibrate: true,
     },
-    (created) => console.log(`✅ 알림 채널 생성: ${created}`)
+    (created) => { if (__DEV__) console.log(`✅ 알림 채널 생성: ${created}`); }
   );
 
-  console.log('✅ 로컬 알림 초기화 완료');
+  if (__DEV__) console.log('✅ 로컬 알림 초기화 완료');
 }
 
 // 즉시 알림 (로컬)
@@ -75,7 +75,7 @@ export function scheduleLocalNotification(
     allowWhileIdle: true, // Android: 절전 모드에서도 알림
   });
 
-  console.log(`⏰ 알림 예약: ${title} - ${date.toLocaleString()}`);
+  if (__DEV__) console.log(`⏰ 알림 예약: ${title} - ${date.toLocaleString()}`);
 }
 
 // 반복 알림 (매일, 매주 등)
@@ -110,13 +110,13 @@ export function scheduleRepeatingNotification(
     allowWhileIdle: true,
   });
 
-  console.log(`🔄 반복 알림 설정: ${title} (${repeatType}, ${hour}:${minute})`);
+  if (__DEV__) console.log(`🔄 반복 알림 설정: ${title} (${repeatType}, ${hour}:${minute})`);
 }
 
 // 모든 예약 알림 취소
 export function cancelAllNotifications() {
   PushNotification.cancelAllLocalNotifications();
-  console.log('🗑️ 모든 알림 취소');
+  if (__DEV__) console.log('🗑️ 모든 알림 취소');
 }
 
 // 특정 알림 취소

@@ -88,7 +88,7 @@ const DiversityModal: React.FC<DiversityModalProps> = ({
                         <RNText
                           style={{
                             fontSize: scaleFontSize(17),
-                            fontWeight: '700',
+                            fontFamily: 'Pretendard-Bold',
                             color: emotionColor,
                             textAlign: 'center'
                           }}
@@ -98,7 +98,7 @@ const DiversityModal: React.FC<DiversityModalProps> = ({
                         <RNText
                           style={{
                             fontSize: scaleFontSize(15),
-                            fontWeight: '600',
+                            fontFamily: 'Pretendard-SemiBold',
                             color: emotionColors.textSecondary,
                             textAlign: 'center',
                             marginTop: 3
@@ -124,7 +124,7 @@ const DiversityModal: React.FC<DiversityModalProps> = ({
             ) : (
               <View style={{ paddingVertical: scaleSpacing(40), alignItems: 'center' }}>
                 <RNText style={{ fontSize: scaleFontSize(48), marginBottom: scaleSpacing(16) }}>🎨</RNText>
-                <RNText style={{ fontSize: scaleFontSize(17), fontWeight: '600', color: colors.text.secondary }}>
+                <RNText style={{ fontSize: scaleFontSize(17), fontFamily: 'Pretendard-SemiBold', color: colors.text.secondary }}>
                   아직 기록된 감정이 없어요
                 </RNText>
                 <RNText style={{ fontSize: scaleFontSize(15), color: colors.text.secondary, marginTop: scaleSpacing(8) }}>

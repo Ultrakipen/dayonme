@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 24,
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
   },
   retryButton: {
@@ -62,6 +62,6 @@ const styles = StyleSheet.create({
   retryText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 });

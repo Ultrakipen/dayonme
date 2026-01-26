@@ -56,7 +56,7 @@ export const validateSecrets = () => {
     errors.push('ONESIGNAL_APP_ID가 설정되지 않았습니다');
   }
 
-  if (errors.length > 0 && !__DEV__) {
+  if (errors.length > 0) {
     console.error('🚨 보안 설정 오류:', errors.join(', '));
   }
 

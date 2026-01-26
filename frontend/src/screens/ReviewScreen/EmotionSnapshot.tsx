@@ -62,21 +62,22 @@ export const EmotionSnapshot: React.FC<Props> = ({ emotionData }) => {
       });
 
       setShowModal(false);
-    } catch (error: any) {
-      if (error.message !== 'User did not share') {
+    } catch (error: unknown) {
+      if ((error as any).message !== 'User did not share') {
         Alert.alert('오류', '이미지 공유에 실패했습니다');
       }
     }
   };
 
+  // emotionData가 없으면 기본값 사용 (더미가 아닌 실제 사용 가능한 기본값)
   const defaultData = {
-    emotion: '행복',
+    emotion: '평온',
     icon: '😊',
     date: new Date().toLocaleDateString('ko-KR'),
-    content: '오늘도 좋은 하루였어요',
+    content: '',
     stats: {
-      consecutiveDays: 1,
-      totalPosts: 1,
+      consecutiveDays: 0,
+      totalPosts: 0,
     },
   };
 
@@ -193,7 +194,7 @@ export const EmotionSnapshot: React.FC<Props> = ({ emotionData }) => {
 const createStyles = (scale: number, screenHeight: number) => StyleSheet.create({
   title: {
     fontSize: FONT_SIZES.h4 * scale,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 8 * scale,
   },
   subtitle: {
@@ -212,7 +213,7 @@ const createStyles = (scale: number, screenHeight: number) => StyleSheet.create(
   },
   modalTitle: {
     fontSize: FONT_SIZES.h2 * scale,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 16 * scale,
   },
   templateScroll: {
@@ -251,7 +252,7 @@ const createStyles = (scale: number, screenHeight: number) => StyleSheet.create(
   },
   templateName: {
     fontSize: FONT_SIZES.small * scale,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
     textAlign: 'center',
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -281,7 +282,7 @@ const createStyles = (scale: number, screenHeight: number) => StyleSheet.create(
   },
   snapshotEmotion: {
     fontSize: 36,
-    fontWeight: '800',
+    fontFamily: 'Pretendard-ExtraBold',
     color: '#FFFFFF',
     marginBottom: 12,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -293,7 +294,7 @@ const createStyles = (scale: number, screenHeight: number) => StyleSheet.create(
     color: '#FFFFFF',
     marginBottom: 20,
     opacity: 0.9,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   snapshotText: {
     fontSize: FONT_SIZES.h3,
@@ -301,7 +302,7 @@ const createStyles = (scale: number, screenHeight: number) => StyleSheet.create(
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 28,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     textShadowColor: 'rgba(0, 0, 0, 0.2)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
@@ -316,7 +317,7 @@ const createStyles = (scale: number, screenHeight: number) => StyleSheet.create(
   },
   snapshotStat: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
   },
   snapshotFooter: {
@@ -324,7 +325,7 @@ const createStyles = (scale: number, screenHeight: number) => StyleSheet.create(
     textAlign: 'center',
     color: '#FFFFFF',
     opacity: 0.7,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -338,6 +339,6 @@ const createStyles = (scale: number, screenHeight: number) => StyleSheet.create(
   },
   buttonText: {
     fontSize: FONT_SIZES.bodyLarge * scale,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 });

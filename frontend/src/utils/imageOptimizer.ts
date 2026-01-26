@@ -71,9 +71,9 @@ export const preloadImages = async (urls: string[]): Promise<void> => {
     });
 
     await Promise.all(promises);
-    console.log(`✅ 이미지 사전 로드 완료: ${urls.length}개`);
+    if (__DEV__) console.log(`✅ 이미지 사전 로드 완료: ${urls.length}개`);
   } catch (error) {
-    console.error('❌ 이미지 사전 로드 실패:', error);
+    if (__DEV__) console.error('❌ 이미지 사전 로드 실패:', error);
   }
 };
 

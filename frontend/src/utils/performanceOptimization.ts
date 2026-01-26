@@ -194,7 +194,7 @@ export const lazyImport = async <T>(
     const module = await importFn();
     return module.default;
   } catch (error) {
-    console.error('Lazy import failed:', error);
+    if (__DEV__) console.error('Lazy import failed:', error);
     throw error;
   }
 };
@@ -211,7 +211,7 @@ export const measureRenderTime = (componentName: string) => {
 
     if (duration > 16) {
       // 60fps 기준
-      console.warn(`[Performance] ${componentName} render took ${duration}ms (>16ms)`);
+      if (__DEV__) console.warn(`[Performance] ${componentName} render took ${duration}ms (>16ms)`);
     }
   };
 };

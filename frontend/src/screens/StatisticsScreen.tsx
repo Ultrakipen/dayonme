@@ -65,7 +65,7 @@ const StatisticsScreen: React.FC<StatisticsScreenProps> = ({ navigation }) => {
       setDataCache({ emotions: emotionsData, statistics: statsData });
       setCacheTimestamp(Date.now());
     } catch (error) {
-      console.error('데이터 로드 오류:', error);
+      if (__DEV__) console.error('데이터 로드 오류:', error);
     } finally {
       setLoading(false);
     }
@@ -203,7 +203,7 @@ return (
             })
           }}
         >
-          <Text style={{ fontSize: getFontSize(20), fontWeight: 'bold', color: theme.colors.text.primary, letterSpacing: -0.3 }}>감정 통계</Text>
+          <Text style={{ fontSize: getFontSize(20), fontFamily: 'Pretendard-Bold', color: theme.colors.text.primary, letterSpacing: -0.3 }}>감정 통계</Text>
         </Box>
 
         <Box style={{ margin: 16 }}>
@@ -239,7 +239,7 @@ return (
               <Text
                 style={{
                   fontSize: getFontSize(16),
-                  fontWeight: 'bold',
+                  fontFamily: 'Pretendard-Bold',
                   marginBottom: 16,
                   color: theme.colors.text.primary,
                   letterSpacing: -0.2
@@ -289,7 +289,7 @@ return (
               <Text
                 style={{
                   fontSize: getFontSize(16),
-                  fontWeight: 'bold',
+                  fontFamily: 'Pretendard-Bold',
                   marginBottom: 16,
                   color: theme.colors.text.primary,
                   letterSpacing: -0.2
@@ -346,7 +346,7 @@ return (
               <Text
                 style={{
                   fontSize: getFontSize(16),
-                  fontWeight: 'bold',
+                  fontFamily: 'Pretendard-Bold',
                   marginBottom: 16,
                   color: theme.colors.text.primary,
                   letterSpacing: -0.2

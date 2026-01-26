@@ -9,7 +9,7 @@ export const formatChallengeDate = (dateString: string): string => {
 
         // 유효하지 않은 날짜 검사
         if (isNaN(date.getTime())) {
-            console.warn('유효하지 않은 날짜:', dateString);
+            if (__DEV__) console.warn('유효하지 않은 날짜:', dateString);
             return '잘못된 날짜';
         }
 
@@ -26,7 +26,7 @@ export const formatChallengeDate = (dateString: string): string => {
         const years = Math.floor(days / 365);
         return years > 0 ? `${years}년 전` : '오래 전';
     } catch (error) {
-        console.error('날짜 포맷 오류:', error, 'dateString:', dateString);
+        if (__DEV__) console.error('날짜 포맷 오류:', error, 'dateString:', dateString);
         return '날짜 오류';
     }
 };
@@ -43,7 +43,7 @@ export const calculateDday = (endDate: string): string => {
 
         // 유효하지 않은 날짜 검사
         if (isNaN(end.getTime())) {
-            console.warn('유효하지 않은 종료일:', endDate);
+            if (__DEV__) console.warn('유효하지 않은 종료일:', endDate);
             return '잘못된 날짜';
         }
 
@@ -54,7 +54,7 @@ export const calculateDday = (endDate: string): string => {
         if (days > 0) return `D-${days}`;
         return '종료';
     } catch (error) {
-        console.error('D-day 계산 오류:', error, 'endDate:', endDate);
+        if (__DEV__) console.error('D-day 계산 오류:', error, 'endDate:', endDate);
         return '날짜 오류';
     }
 };
@@ -79,7 +79,7 @@ export const getChallengeStatus = (startDate: string, endDate: string): 'upcomin
         if (nowDate > endDate) return 'completed';
         return 'active'; // 당일 시작하는 챌린지도 진행중으로 표시
     } catch (error) {
-        console.error('챌린지 상태 확인 오류:', error);
+        if (__DEV__) console.error('챌린지 상태 확인 오류:', error);
         return 'completed';
     }
 };

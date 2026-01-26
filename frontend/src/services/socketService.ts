@@ -1,6 +1,6 @@
 // services/socketService.ts
 import { io, Socket } from 'socket.io-client';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import EncryptedStorage from 'react-native-encrypted-storage';
 
 /**
  * Socket.IO 연결 및 이벤트 처리를 위한 서비스
@@ -37,14 +37,14 @@ class SocketService {
     });
 
     try {
-      // 토큰 가져오기 (React Native AsyncStorage 사용)
-      const token = await AsyncStorage.getItem('authToken');
+      // 토큰 가져오기 (React Native EncryptedStorage 사용)
+      const token = await EncryptedStorage.getItem('authToken');
 
       if (!token) {
         throw new Error('인증 토큰 없음');
       }
 
-      const socketUrl = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+      const socketUrl = 'https://dayonme.com';
       
       this.socket = io(socketUrl, {
         auth: { token },

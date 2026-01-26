@@ -82,7 +82,7 @@ const Collapsible: React.FC<CollapsibleProps> = ({
     },
     title: {
       fontSize: scaleFontSize(17),
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       color: isDark ? '#FFFFFF' : colors.text,
       flex: 1
     },
@@ -97,7 +97,7 @@ const Collapsible: React.FC<CollapsibleProps> = ({
     },
     badgeText: {
       fontSize: scaleFontSize(13),
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       color: '#FFFFFF'
     },
     content: {

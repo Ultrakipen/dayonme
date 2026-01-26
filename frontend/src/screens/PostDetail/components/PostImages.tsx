@@ -6,10 +6,11 @@ import {
   TouchableOpacity,
   Dimensions,
   Animated,
-  ActivityIndicator
+  ActivityIndicator,
 } from 'react-native';
+import ImageView from 'react-native-image-viewing';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { Box } from '../../../components/ui';
+import { Text } from '../../../components/ui';
 import { useModernTheme } from '../../../contexts/ModernThemeContext';
 import { normalizeImageUrl, logImageError, logImageSuccess } from '../../../utils/imageUtils';
 import { normalizeSpace, normalizeIcon } from '../../../utils/responsive';
@@ -40,6 +41,8 @@ const PostImages = React.memo<PostImagesProps>(
     };
 
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [fullscreenVisible, setFullscreenVisible] = useState(false);
+    const [fullscreenIndex, setFullscreenIndex] = useState(0);
     const [imageLoadStates, setImageLoadStates] = useState<ImageLoadState>({});
     const scrollViewRef = useRef<ScrollView>(null);
     const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -86,7 +89,7 @@ const PostImages = React.memo<PostImagesProps>(
           urls = Array.isArray(parsed) ? parsed : [imageUrls];
         } catch (e) {
           if (__DEV__) {
-            console.warn('이미지 URL JSON 파싱 실패:', e);
+            if (__DEV__) console.warn('이미지 URL JSON 파싱 실패:', e);
           }
           urls = [imageUrls];
         }
@@ -107,17 +110,17 @@ const PostImages = React.memo<PostImagesProps>(
 
     if (!normalizedUrls || normalizedUrls.length === 0) {
       if (__DEV__) {
-        console.log('⏭️ PostImages 렌더링 건너뜀: 빈 URL');
+        if (__DEV__) console.log('⏭️ PostImages 렌더링 건너뜀: 빈 URL');
       }
       return null;
     }
 
     if (__DEV__) {
-      console.log('🖼️ PostImages 렌더링:', normalizedUrls.length, '개 이미지');
+      if (__DEV__) console.log('🖼️ PostImages 렌더링:', normalizedUrls.length, '개 이미지');
     }
 
     return (
-      <Box style={{ paddingHorizontal: imagePadding, paddingBottom: normalizeSpace(16) }}>
+      <View style={{ paddingHorizontal: imagePadding, paddingBottom: normalizeSpace(16), position: 'relative' }}>
         <ScrollView
           ref={scrollViewRef}
           horizontal
@@ -241,27 +244,84 @@ const PostImages = React.memo<PostImagesProps>(
         {normalizedUrls.length > 1 && (
           <View
             style={{
+              position: 'absolute',
+              bottom: normalizeSpace(12),
+              left: 0,
+              right: 0,
               flexDirection: 'row',
               justifyContent: 'center',
               alignItems: 'center',
-              paddingTop: normalizeSpace(12),
-              gap: normalizeSpace(6),
             }}
           >
             {normalizedUrls.map((_, index) => (
               <View
                 key={index}
                 style={{
-                  width: currentImageIndex === index ? normalizeSpace(8) : normalizeSpace(6),
-                  height: currentImageIndex === index ? normalizeSpace(8) : normalizeSpace(6),
+                  width: currentImageIndex === index ? normalizeSpace(24) : normalizeSpace(8),
+                  height: normalizeSpace(8),
                   borderRadius: normalizeSpace(4),
-                  backgroundColor: currentImageIndex === index ? colors.primary : (isDark ? '#52525b' : '#cbd5e1'),
+                  marginHorizontal: normalizeSpace(4),
+                  backgroundColor: currentImageIndex === index ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 4,
+                  elevation: 4,
                 }}
               />
             ))}
           </View>
         )}
-      </Box>
+
+        {/* 이미지 카운터 */}
+        <View style={{
+          position: 'absolute',
+          top: normalizeSpace(12),
+          right: normalizeSpace(12),
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          paddingHorizontal: normalizeSpace(12),
+          paddingVertical: normalizeSpace(6),
+          borderRadius: normalizeSpace(16),
+          zIndex: 10,
+        }}>
+          <Text style={{ color: '#FFFFFF', fontSize: normalizeSpace(12), fontFamily: 'Pretendard-SemiBold' }}>
+            {currentImageIndex + 1}/{normalizedUrls.length}
+          </Text>
+        </View>
+
+        {/* 풀스크린 버튼 */}
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top: normalizeSpace(12),
+            left: normalizeSpace(12),
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            width: normalizeSpace(36),
+            height: normalizeSpace(36),
+            borderRadius: normalizeSpace(18),
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
+          }}
+          onPress={() => {
+            setFullscreenIndex(currentImageIndex);
+            setFullscreenVisible(true);
+          }}
+        >
+          <MaterialCommunityIcons name="arrow-expand" size={normalizeIcon(20)} color="#FFFFFF" />
+        </TouchableOpacity>
+
+        {/* react-native-image-viewing: 줌인/줌아웃 가능한 이미지 뷰어 */}
+        <ImageView
+          images={normalizedUrls.map(uri => ({ uri }))}
+          imageIndex={fullscreenIndex}
+          visible={fullscreenVisible}
+          onRequestClose={() => setFullscreenVisible(false)}
+          swipeToCloseEnabled={true}
+          doubleTapToZoomEnabled={true}
+          presentationStyle="overFullScreen"
+        />
+      </View>
     );
   },
   (prevProps, nextProps) => {

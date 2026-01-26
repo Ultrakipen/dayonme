@@ -96,10 +96,11 @@ export const InstagramAvatar: React.FC<InstagramAvatarProps> = ({
     <View style={storyBorderStyle}>
       {source ? (
         <FastImage
+          key={typeof source === 'number' ? `avatar-${source}` : `avatar-${source.uri}`}
           source={typeof source === 'number' ? source : {
             uri: source.uri,
             priority: FastImage.priority.normal,
-            cache: FastImage.cacheControl.immutable
+            cache: FastImage.cacheControl.web
           }}
           style={avatarStyle}
           resizeMode={FastImage.resizeMode.cover}

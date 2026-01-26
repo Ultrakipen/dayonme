@@ -30,7 +30,7 @@ export const formatDate = (dateString: string): string => {
 
         // Invalid Date 체크
         if (isNaN(date.getTime())) {
-            console.error('Invalid date:', dateString);
+            if (__DEV__) console.error('Invalid date:', dateString);
             return '잘못된 날짜';
         }
 
@@ -41,7 +41,7 @@ export const formatDate = (dateString: string): string => {
 
         return `${year}. ${month}. ${day}.`;
     } catch (error) {
-        console.error('날짜 포맷 오류:', error);
+        if (__DEV__) console.error('날짜 포맷 오류:', error);
         return '날짜 오류';
     }
 };
@@ -71,7 +71,7 @@ export const formatCommentTime = (dateString: string): string => {
 
         return `${month}월 ${day}일`;
     } catch (error) {
-        console.error('시간 포맷 오류:', error);
+        if (__DEV__) console.error('시간 포맷 오류:', error);
         return '시간 오류';
     }
 };

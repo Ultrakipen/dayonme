@@ -40,7 +40,7 @@ export const useChallengeData = (): UseChallengeDataReturn => {
 
       setError(null);
     } catch (err) {
-      console.error('챌린지 로드 실패:', err);
+      if (__DEV__) console.error('챌린지 로드 실패:', err);
       setError('챌린지를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);

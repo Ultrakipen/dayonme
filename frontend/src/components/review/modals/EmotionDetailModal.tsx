@@ -64,7 +64,7 @@ const EmotionDetailModal: React.FC<EmotionDetailModalProps> = ({ visible, onClos
           <RNText
             style={{
               fontSize: scaleFontSize(22),
-              fontWeight: '700',
+              fontFamily: 'Pretendard-Bold',
               color: colors.text.primary,
               marginBottom: scaleSpacing(8)
             }}
@@ -84,13 +84,13 @@ const EmotionDetailModal: React.FC<EmotionDetailModalProps> = ({ visible, onClos
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
               <RNText style={{ fontSize: scaleFontSize(14), color: colors.text.secondary }}>기록 횟수</RNText>
-              <RNText style={{ fontSize: scaleFontSize(16), fontWeight: '600', color: content.color }}>
+              <RNText style={{ fontSize: scaleFontSize(16), fontFamily: 'Pretendard-SemiBold', color: content.color }}>
                 {content.count}번
               </RNText>
             </View>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <RNText style={{ fontSize: scaleFontSize(14), color: colors.text.secondary }}>비율</RNText>
-              <RNText style={{ fontSize: scaleFontSize(16), fontWeight: '600', color: content.color }}>
+              <RNText style={{ fontSize: scaleFontSize(16), fontFamily: 'Pretendard-SemiBold', color: content.color }}>
                 {content.percent}%
               </RNText>
             </View>
@@ -110,7 +110,7 @@ const EmotionDetailModal: React.FC<EmotionDetailModalProps> = ({ visible, onClos
             <RNText
               style={{
                 fontSize: scaleFontSize(16),
-                fontWeight: '600',
+                fontFamily: 'Pretendard-SemiBold',
                 color: '#FFFFFF',
                 textAlign: 'center'
               }}

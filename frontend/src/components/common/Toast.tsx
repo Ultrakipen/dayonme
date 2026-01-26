@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   message: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#FFFFFF',
     letterSpacing: 0.2,
   },

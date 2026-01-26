@@ -74,7 +74,7 @@ export const EmotionInsights: React.FC<Props> = React.memo(({ data }) => {
 
   return (
     <Card accessible={true} accessibilityLabel="감정 인사이트 섹션">
-      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale, marginBottom: 4 * scale }]}>✨ 감정 인사이트</Text>
+      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, marginBottom: 4 * scale }]}>✨ 감정 인사이트</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale, marginBottom: 16 * scale }]}>
         데이터로 보는 나의 감정 패턴
       </Text>
@@ -107,7 +107,7 @@ export const EmotionInsights: React.FC<Props> = React.memo(({ data }) => {
 
 const styles = StyleSheet.create({
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   subtitle: {
   },
@@ -129,15 +129,15 @@ const styles = StyleSheet.create({
   insightTitle: {
     color: '#FFFFFF',
     opacity: 0.9,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   insightValue: {
     color: '#FFFFFF',
-    fontWeight: '800',
+    fontFamily: 'Pretendard-ExtraBold',
   },
   insightSubtitle: {
     color: '#FFFFFF',
     opacity: 0.8,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
 });

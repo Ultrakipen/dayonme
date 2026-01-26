@@ -89,7 +89,7 @@ const MyDayPostForm: React.FC<MyDayPostFormProps> = ({
         ];
         setEmotions(mockEmotions);
       } catch (error) {
-        console.error('감정 목록 가져오기 오류:', error);
+        if (__DEV__) console.error('감정 목록 가져오기 오류:', error);
         setError('감정 목록을 불러오는데 실패했습니다.');
       }
     };
@@ -154,7 +154,7 @@ const MyDayPostForm: React.FC<MyDayPostFormProps> = ({
       // 이미지 미리보기 설정
       setImageUrl(result.uri);
     } catch (error) {
-      console.error('이미지 선택 오류:', error);
+      if (__DEV__) console.error('이미지 선택 오류:', error);
       Alert.alert('오류', '이미지를 선택하는 중 문제가 발생했습니다.');
     }
   };
@@ -178,10 +178,10 @@ const MyDayPostForm: React.FC<MyDayPostFormProps> = ({
       // FormData 대신 직접 파일 URI를 전달
       const response = await uploadService.uploadImage(imageUri);
       
-      console.log('🔍 업로드 응답 전체:', JSON.stringify(response.data, null, 2));
+      if (__DEV__) console.log('🔍 업로드 응답 전체:', JSON.stringify(response.data, null, 2));
       
       if (!response || !response.data || !response.data.data?.images?.[0]?.url) {
-        console.error('❌ 응답 구조가 예상과 다릅니다:', response.data);
+        if (__DEV__) console.error('❌ 응답 구조가 예상과 다릅니다:', response.data);
         throw new Error('이미지 업로드 응답이 유효하지 않습니다.');
       }
       
@@ -190,7 +190,7 @@ const MyDayPostForm: React.FC<MyDayPostFormProps> = ({
       return response.data.data.images[0].url;
     } catch (error) {
       setImageUploadLoading(false);
-      console.error('이미지 업로드 오류:', error);
+      if (__DEV__) console.error('이미지 업로드 오류:', error);
       Alert.alert('업로드 실패', '이미지 업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
       return undefined;
     }
@@ -273,7 +273,7 @@ const MyDayPostForm: React.FC<MyDayPostFormProps> = ({
 
   // 제출 오류 처리 함수
   const handleSubmitError = (error: any) => {
-    console.error('게시물 제출 오류:', error);
+    if (__DEV__) console.error('게시물 제출 오류:', error);
     
     // API 응답에서 오류 메시지 추출 시도
     let errorMessage = '게시물을 제출하는 중 오류가 발생했습니다. 다시 시도해 주세요.';
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -437,7 +437,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginBottom: 8,
   },
   emotionSelectorContainer: {
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   removeImageText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
   },
   anonymousContainer: {
     flexDirection: 'row',
@@ -546,7 +546,7 @@ const styles = StyleSheet.create({
   checkmark: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
   },
   anonymousText: {
     fontSize: 16,
@@ -565,7 +565,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
   },
 });
 

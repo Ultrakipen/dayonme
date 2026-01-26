@@ -1,12 +1,12 @@
 // src/hooks/HomeScreen/useHomeScroll.ts
 import { useState, useRef, useCallback } from 'react';
-import { ScrollView } from 'react-native';
+import { FlatList } from 'react-native';
 
 /**
  * HomeScreen 스크롤 관리 hook
  */
 export const useHomeScroll = () => {
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<FlatList>(null);
   const [showScrollToTop, setShowScrollToTop] = useState(false);
   const postPositions = useRef<{ [postId: number]: number }>({});
   const cumulativeY = useRef<number>(0);
@@ -20,8 +20,8 @@ export const useHomeScroll = () => {
 
   // 상단으로 스크롤
   const scrollToTop = useCallback(() => {
-    scrollViewRef.current?.scrollTo({
-      y: 0,
+    scrollViewRef.current?.scrollToOffset({
+      offset: 0,
       animated: true,
     });
   }, []);

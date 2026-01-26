@@ -110,7 +110,7 @@ const SomeoneDayPostForm: React.FC<SomeoneDayPostFormProps> = ({
       // 이미지 미리보기 설정
       setImageUrl(result.uri);
     } catch (error) {
-      console.error('이미지 선택 오류:', error);
+      if (__DEV__) console.error('이미지 선택 오류:', error);
       Alert.alert('오류', '이미지를 선택하는 중 문제가 발생했습니다.');
     }
   };
@@ -134,12 +134,12 @@ const SomeoneDayPostForm: React.FC<SomeoneDayPostFormProps> = ({
       // FormData 대신 직접 URI 전달
       const response = await uploadService.uploadImage(imageUri);
       
-      console.log('🔍 업로드 응답 전체:', JSON.stringify(response.data, null, 2));
+      if (__DEV__) console.log('🔍 업로드 응답 전체:', JSON.stringify(response.data, null, 2));
       
       // 새로운 업로드 미들웨어 응답 구조에 맞게 수정
       let imageUrl: string | null = null;
       
-      console.log('🔍 SomeoneDayPostForm 응답 구조 상세 분석:', {
+      if (__DEV__) console.log('🔍 SomeoneDayPostForm 응답 구조 상세 분석:', {
         hasData: !!response.data?.data,
         hasImages: !!response.data?.data?.images,
         imagesLength: response.data?.data?.images?.length,
@@ -150,19 +150,19 @@ const SomeoneDayPostForm: React.FC<SomeoneDayPostFormProps> = ({
       if (response.data?.data?.images?.[0]?.url) {
         // 새로운 업로드 미들웨어 응답 구조 (uploads/images 엔드포인트)
         imageUrl = response.data.data.images[0].url;
-        console.log('✅ SomeoneDayPostForm 새로운 미들웨어 구조로 이미지 URL 추출:', imageUrl);
+        if (__DEV__) console.log('✅ SomeoneDayPostForm 새로운 미들웨어 구조로 이미지 URL 추출:', imageUrl);
       } else if (response.data?.data?.image_url) {
         // 기존 uploadController 응답 구조
         imageUrl = response.data.data.image_url;
-        console.log('✅ SomeoneDayPostForm 기존 구조로 이미지 URL 추출:', imageUrl);
+        if (__DEV__) console.log('✅ SomeoneDayPostForm 기존 구조로 이미지 URL 추출:', imageUrl);
       } else if (response.data?.data?.images?.[0]?.image_url) {
         // 혼합 구조
         imageUrl = response.data.data.images[0].image_url;
-        console.log('✅ SomeoneDayPostForm 혼합 구조로 이미지 URL 추출:', imageUrl);
+        if (__DEV__) console.log('✅ SomeoneDayPostForm 혼합 구조로 이미지 URL 추출:', imageUrl);
       }
       
       if (!imageUrl) {
-        console.error('❌ 응답 구조가 예상과 다릅니다:', response.data);
+        if (__DEV__) console.error('❌ 응답 구조가 예상과 다릅니다:', response.data);
         throw new Error('이미지 업로드 응답이 유효하지 않습니다.');
       }
       
@@ -171,7 +171,7 @@ const SomeoneDayPostForm: React.FC<SomeoneDayPostFormProps> = ({
       return imageUrl;
     } catch (error) {
       setImageUploadLoading(false);
-      console.error('이미지 업로드 오류:', error);
+      if (__DEV__) console.error('이미지 업로드 오류:', error);
       Alert.alert('업로드 실패', '이미지 업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
       return undefined;
     }
@@ -255,7 +255,7 @@ const SomeoneDayPostForm: React.FC<SomeoneDayPostFormProps> = ({
 
   // 제출 오류 처리 함수
   const handleSubmitError = (error: any) => {
-    console.error('게시물 제출 오류:', error);
+    if (__DEV__) console.error('게시물 제출 오류:', error);
     
     // API 응답에서 오류 메시지 추출 시도
     let errorMessage = '게시물을 제출하는 중 오류가 발생했습니다. 다시 시도해 주세요.';
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 20,
     textAlign: 'center',
     color: '#4A6572',
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginBottom: 8,
     color: '#14171A',
   },
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
   removeImageText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
   },
   anonymousContainer: {
     flexDirection: 'row',
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
   checkmark: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
   },
   anonymousText: {
     fontSize: 16,
@@ -610,7 +610,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textShadowColor: 'rgba(0,0,0,0.3)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,

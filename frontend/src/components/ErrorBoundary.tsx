@@ -25,17 +25,30 @@ class ErrorBoundary extends Component<Props, State> {
     };
   }
 
+  // 알려진 React Native 0.80 호환성 오류 패턴 (구체적으로 정의)
+  private static readonly KNOWN_COMPATIBILITY_ERRORS = [
+    'Cannot redefine property', // Hermes 프로퍼티 재정의
+    'property is not configurable and cannot be redefined', // 구체적인 메시지
+    'AlertProvider is not defined in scope', // 특정 Provider 오류
+    'Text strings must be rendered within a <Text> component', // 정확한 Text 오류
+    'Malformed calls from JS: field sizes are different', // Bridge 통신 오류
+  ];
+
+  private static isKnownCompatibilityError(errorMessage: string): boolean {
+    return this.KNOWN_COMPATIBILITY_ERRORS.some(pattern =>
+      errorMessage.includes(pattern)
+    );
+  }
+
   static getDerivedStateFromError(error: Error): Partial<State> {
     const errorMessage = error?.message || '';
 
-    // React Native 0.80 + Hermes 호환성 오류는 무시
-    if (errorMessage.includes('property is not configurable') ||
-        errorMessage.includes('AlertProvider') ||
-        errorMessage.includes('undefined') ||
-        errorMessage.includes('Text strings must be rendered') ||
-        errorMessage.includes('Malformed calls from JS') ||
-        errorMessage.includes('field sizes are different') ||
-        errorMessage.includes('HostFunction')) {
+    // 알려진 호환성 오류만 무시
+    if (ErrorBoundary.isKnownCompatibilityError(errorMessage)) {
+      // 디버그 모드에서는 필터링된 오류도 기록
+      if (__DEV__ && process.env.DEBUG_ERROR_FILTER === 'true') {
+        console.warn('[ErrorBoundary] 필터링된 오류:', errorMessage);
+      }
       return { hasError: false, error: null };
     }
 
@@ -45,14 +58,12 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     const errorMessage = error?.message || '';
 
-    // React Native 0.80 + Hermes 호환성 오류는 무시
-    if (errorMessage.includes('property is not configurable') ||
-        errorMessage.includes('AlertProvider') ||
-        errorMessage.includes('undefined') ||
-        errorMessage.includes('Text strings must be rendered') ||
-        errorMessage.includes('Malformed calls from JS') ||
-        errorMessage.includes('field sizes are different') ||
-        errorMessage.includes('HostFunction')) {
+    // 알려진 호환성 오류는 무시 (getDerivedStateFromError와 동일)
+    if (ErrorBoundary.isKnownCompatibilityError(errorMessage)) {
+      // 디버그 모드: 필터링된 오류 통계 기록
+      if (__DEV__ && process.env.DEBUG_ERROR_FILTER === 'true') {
+        console.warn('[ErrorBoundary] componentDidCatch - 필터링된 오류:', errorMessage);
+      }
       return;
     }
 
@@ -67,6 +78,7 @@ class ErrorBoundary extends Component<Props, State> {
     reportError(error, errorInfo, {
       boundary: 'ErrorBoundary',
       timestamp: new Date().toISOString(),
+      filtered: false, // 실제 오류임을 표시
     });
 
     // 개발 환경에서만 콘솔 출력
@@ -155,7 +167,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#1E293B',
     marginTop: 20,
     marginBottom: 12,
@@ -213,7 +225,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 });
 

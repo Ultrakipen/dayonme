@@ -64,7 +64,7 @@ const getAnonymousEmotion = (userId?: number, commentId?: number, allComments: C
   const seed = userId && postId ? (postId + userId * 13) : (userId || commentId || 1);
   const baseEmotion = anonymousEmotions[Math.abs(seed) % anonymousEmotions.length];
   
-  console.log('🎯 익명 감정 할당 (일관성):', { userId, commentId, postId, seed, baseEmotion: baseEmotion.label });
+  if (__DEV__) console.log('🎯 익명 감정 할당 (일관성):', { userId, commentId, postId, seed, baseEmotion: baseEmotion.label });
   
   // 같은 감정을 사용하는 익명 사용자들 찾기
   const sameEmotionUsers = allComments.filter(comment => {
@@ -206,7 +206,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
   
   // 디버깅용 로그 추가
   React.useEffect(() => {
-    console.log('🚀 ExpandedPostView 마운트/업데이트:', {
+    if (__DEV__) console.log('🚀 ExpandedPostView 마운트/업데이트:', {
       postId: post.post_id,
       commentsReceived: post.comments?.length || 0,
       commentTreeLength: commentTree.length,
@@ -230,7 +230,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
     .sort((a, b) => (b.like_count || 0) - (a.like_count || 0))
     .slice(0, 3); // 베스트 댓글 TOP 3
   
-  console.log('🏆 베스트 댓글 TOP 3 선정:', {
+  if (__DEV__) console.log('🏆 베스트 댓글 TOP 3 선정:', {
     전체댓글수: allSortedComments.length,
     베스트댓글수: bestComments.length,
     베스트댓글: bestComments.map((c, index) => ({ 
@@ -250,16 +250,16 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
   
   // 베스트 댓글 클릭 시 해당 원댓글을 하이라이트하고 상단으로 이동
   const scrollToBestComment = (commentId: number, rank: number) => {
-    console.log(`🚀🚀🚀 ${rank}위 베스트댓글 클릭!`, commentId);
+    if (__DEV__) console.log(`🚀🚀🚀 ${rank}위 베스트댓글 클릭!`, commentId);
     
     // 1. 하이라이트 활성화
     setHighlightedCommentId(commentId);
-    console.log('🎯 원댓글 하이라이트 활성화:', commentId);
+    if (__DEV__) console.log('🎯 원댓글 하이라이트 활성화:', commentId);
     
     // 2. 해당 댓글을 맨 앞으로 이동한 새로운 배열 생성
     const targetComment = allSortedComments.find(c => c.comment_id === commentId);
     if (!targetComment) {
-      console.log('❌ 댓글을 찾을 수 없음:', commentId);
+      if (__DEV__) console.log('❌ 댓글을 찾을 수 없음:', commentId);
       return;
     }
     
@@ -269,7 +269,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
     // 타겟 댓글을 맨 앞에 배치한 새로운 배열
     const reorderedComments = [targetComment, ...otherComments];
     
-    console.log('📋 댓글 순서 재배열:', {
+    if (__DEV__) console.log('📋 댓글 순서 재배열:', {
       순위: rank,
       원래순서: allSortedComments.map(c => c.comment_id),
       새순서: reorderedComments.map(c => c.comment_id),
@@ -286,14 +286,14 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
         offset: 700, // 게시물 + 베스트댓글 섹션을 지나 일반 댓글 섹션으로
         animated: true 
       });
-      console.log(`✅ ${rank}위 댓글 상단으로 이동 완료`);
+      if (__DEV__) console.log(`✅ ${rank}위 댓글 상단으로 이동 완료`);
     }, 200);
     
     // 5. 15초 후 하이라이트 해제 & 원래 순서로 복원
     setTimeout(() => {
       setHighlightedCommentId(null);
       setDisplayedComments(allSortedComments); // 원래 순서로 복원
-      console.log(`🔄 ${rank}위 댓글 하이라이트 해제 & 원래 순서 복원:`, commentId);
+      if (__DEV__) console.log(`🔄 ${rank}위 댓글 하이라이트 해제 & 원래 순서 복원:`, commentId);
     }, 15000);
   };
   
@@ -345,7 +345,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
   const handleCommentLike = (commentId: number) => {
     const isLiked = likedComments.has(commentId);
     
-    console.log('❤️ 좋아요 클릭:', { 
+    if (__DEV__) console.log('❤️ 좋아요 클릭:', { 
       commentId, 
       currentState: isLiked ? 'liked' : 'not liked',
       newState: isLiked ? 'will unlike' : 'will like' 
@@ -399,7 +399,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
       setCommentText('');
       setReplyingTo(null);
     } catch (error) {
-      console.error('댓글 작성 오류:', error);
+      if (__DEV__) console.error('댓글 작성 오류:', error);
     } finally {
       setSubmitting(false);
     }
@@ -420,7 +420,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
     const isHighlighted = highlightedCommentId === comment.comment_id;
     
     if (isHighlighted) {
-      console.log('🎆🎆🎆 댓글 렌더링 시 하이라이트 확인:', {
+      if (__DEV__) console.log('🎆🎆🎆 댓글 렌더링 시 하이라이트 확인:', {
         commentId: comment.comment_id,
         isReply,
         isBest,
@@ -437,7 +437,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
     // 감정 시스템 적용
     let displayName, avatarText, avatarColor, emotionIcon;
     
-    console.log('🎭 댓글 렌더링:', {
+    if (__DEV__) console.log('🎭 댓글 렌더링:', {
       comment_id: comment.comment_id,
       is_anonymous: comment.is_anonymous,
       comment_user_id: comment.user_id,
@@ -481,7 +481,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
       avatarText = isPostAuthor ? '글' : (emotionMappings[emotion.label.replace(/\d+$/, '')] || '😊');
       avatarColor = isPostAuthor ? '#f59e0b' : emotion.color;
       emotionIcon = isPostAuthor ? 'account-edit' : emotion.icon;
-      console.log('🎭 익명 사용자:', { emotion, displayName, avatarText, isPostAuthor });
+      if (__DEV__) console.log('🎭 익명 사용자:', { emotion, displayName, avatarText, isPostAuthor });
     } else {
       // 일반 사용자: 닉네임 + 감정 아이콘
       const userEmotion = getUserEmotionIcon(comment.user_id || 1);
@@ -489,7 +489,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
       avatarText = isPostAuthor ? '글' : (displayName[0] || 'U');
       avatarColor = isPostAuthor ? '#f59e0b' : (isAuthor ? '#059669' : '#6366f1');
       emotionIcon = isPostAuthor ? 'account-edit' : userEmotion.icon;
-      console.log('🎭 일반 사용자:', { displayName, emotionIcon: userEmotion.label, isPostAuthor });
+      if (__DEV__) console.log('🎭 일반 사용자:', { displayName, emotionIcon: userEmotion.label, isPostAuthor });
     }
     
 
@@ -528,7 +528,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
                 [comment.comment_id]: y
               }));
               
-              console.log('📐 원 댓글 레이아웃 업데이트:', {
+              if (__DEV__) console.log('📐 원 댓글 레이아웃 업데이트:', {
                 commentId: comment.comment_id,
                 y,
                 height,
@@ -537,7 +537,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
               });
               
               if (isHighlighted) {
-                console.log('🎆🎆🎆 원 댓글 하이라이트 적용 확인!:', {
+                if (__DEV__) console.log('🎆🎆🎆 원 댓글 하이라이트 적용 확인!:', {
                   commentId: comment.comment_id,
                   y,
                   height,
@@ -772,7 +772,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
         ]}
         onLayout={(event) => {
           if (isHighlighted) {
-            console.log('🎨 하이라이트된 답글 렌더링:', {
+            if (__DEV__) console.log('🎨 하이라이트된 답글 렌더링:', {
               commentId: comment.comment_id,
               y: event.nativeEvent.layout.y,
               isReply: true,
@@ -1174,7 +1174,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
             ref={(ref) => {
               if (ref && !commentData.parent_comment_id) {
                 commentRefs.current[commentData.comment_id] = ref;
-                console.log('📌 FlatList 원본 댓글 ref 설정:', {
+                if (__DEV__) console.log('📌 FlatList 원본 댓글 ref 설정:', {
                   commentId: commentData.comment_id,
                   index,
                   hasRef: !!ref
@@ -1240,7 +1240,7 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
           scrollEnabled={true}
           bounces={true}
           onScrollToIndexFailed={(info) => {
-            console.log('❌ scrollToIndex 실패:', info);
+            if (__DEV__) console.log('❌ scrollToIndex 실패:', info);
             // 백업: 수동으로 스크롤 위치 계산
             const wait = new Promise(resolve => setTimeout(resolve, 500));
             wait.then(() => {
@@ -1251,9 +1251,9 @@ const ExpandedPostView: React.FC<ExpandedPostViewProps> = ({
               });
             });
           }}
-          onScrollBeginDrag={() => console.log('🚀 FlatList 사용자 스크롤 시작')}
-          onScrollEndDrag={() => console.log('🛏 FlatList 사용자 스크롤 종료')}
-          onMomentumScrollEnd={() => console.log('🏁 FlatList 스크롤 완전 정지')}
+          onScrollBeginDrag={() => { if (__DEV__) console.log('🚀 FlatList 사용자 스크롤 시작'); }}
+          onScrollEndDrag={() => { if (__DEV__) console.log('🛏 FlatList 사용자 스크롤 종료'); }}
+          onMomentumScrollEnd={() => { if (__DEV__) console.log('🏁 FlatList 스크롤 완전 정지'); }}
         />
 
         {/* 고정된 댓글 입력창 - 메인 댓글 작성용 */}
@@ -1345,7 +1345,7 @@ const styles = StyleSheet.create({
   collapseButtonText: {
     fontSize: 14,
     color: '#8b5cf6',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   content: {
     flex: 1,
@@ -1370,7 +1370,7 @@ const styles = StyleSheet.create({
   postAvatarText: {
     color: '#ffffff',
     fontSize: 25,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
     marginRight: 8,
   },
@@ -1385,13 +1385,13 @@ const styles = StyleSheet.create({
   },
   postAuthorName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#1f2937',
   },
   postTimestamp: {
     fontSize: 15,
     color: '#6b7280',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   postEmotionsContainer: {
     flexWrap: 'wrap',
@@ -1406,7 +1406,7 @@ const styles = StyleSheet.create({
   },
   postEmotionText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   postContent: {
     fontSize: 16,
@@ -1447,7 +1447,7 @@ const styles = StyleSheet.create({
   },
   postActionText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#6b7280',
   },
   likedActionText: {
@@ -1464,7 +1464,7 @@ const styles = StyleSheet.create({
   },
   commentsSectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#1f2937',
     marginBottom: 8,
   },
@@ -1551,7 +1551,7 @@ const styles = StyleSheet.create({
   inlineActionText: {
     fontSize: 12,
     color: '#6b7280',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   commentAvatar: {
     width: 36,
@@ -1580,13 +1580,13 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   commentAvatarText: {
-    fontSize: 18, // 이모지용 크기 증가
-    fontWeight: '700',
+    fontSize: 22, // 이모지용 크기 증가
+    fontFamily: 'Pretendard-Bold',
     color: '#ffffff',
   },
   replyAvatarText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 18,
+    fontFamily: 'Pretendard-Bold',
     color: '#ffffff',
   },
   commentInfo: {
@@ -1598,7 +1598,7 @@ const styles = StyleSheet.create({
   },
   commentAuthor: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#1f2937',
   },
   // 기존 authorBadge 스타일은 currentUserBadge로 사용
@@ -1612,7 +1612,7 @@ const styles = StyleSheet.create({
   currentUserBadgeText: {
     fontSize: 10,
     color: '#ffffff',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   
   // 글쓴이 배지
@@ -1626,7 +1626,7 @@ const styles = StyleSheet.create({
   postAuthorBadgeText: {
     fontSize: 10,
     color: '#ffffff',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   
   // 익명 배지
@@ -1640,7 +1640,7 @@ const styles = StyleSheet.create({
   anonymousBadgeText: {
     fontSize: 10,
     color: '#ffffff',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   
   // 글쓴이 아바타
@@ -1684,7 +1684,7 @@ const styles = StyleSheet.create({
   commentActionText: {
     fontSize: 12,
     color: '#6b7280',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   noComments: {
     alignItems: 'center',
@@ -1719,7 +1719,7 @@ const styles = StyleSheet.create({
   replyingText: {
     fontSize: 14,
     color: '#8b5cf6',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     flex: 1,
     marginLeft: 6,
   },
@@ -1729,7 +1729,7 @@ const styles = StyleSheet.create({
   replyingAuthor: {
     fontSize: 13,
     color: '#374151',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginBottom: 4,
   },
   replyingPreview: {
@@ -1753,7 +1753,7 @@ const styles = StyleSheet.create({
   replyTargetText: {
     fontSize: 12,
     color: '#7c3aed',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginLeft: 4,
   },
   
@@ -1819,7 +1819,7 @@ const styles = StyleSheet.create({
   inlineAnonymousText: {
     fontSize: 12,
     color: '#6b7280',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   inlineAnonymousTextActive: {
     color: '#ffffff',
@@ -1831,7 +1831,7 @@ const styles = StyleSheet.create({
   inlineCancelText: {
     fontSize: 12,
     color: '#6b7280',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   inlineCharacterCount: {
     fontSize: 12,
@@ -1859,7 +1859,7 @@ const styles = StyleSheet.create({
   anonymousText: {
     fontSize: 14,
     color: '#6b7280',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   commentInput: {
     borderWidth: 1,
@@ -1909,7 +1909,7 @@ const styles = StyleSheet.create({
   loadMoreText: {
     fontSize: 14,
     color: '#8b5cf6',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   
   // 감정 기반 익명 사용자 스타일
@@ -1930,7 +1930,7 @@ const styles = StyleSheet.create({
   },
   emotionName: {
     color: '#1f2937',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     fontSize: 14,
   },
   
@@ -1959,7 +1959,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 12,
     color: '#6b7280',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   reportButtonText: {
     color: '#ef4444',
@@ -1972,12 +1972,12 @@ const styles = StyleSheet.create({
   toggleRepliesText: {
     fontSize: 12,
     color: '#6b7280',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginRight: 4,
   },
   likedButtonText: {
     color: '#f97316',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   emotionIconStyle: {
     marginRight: 6,
@@ -2002,7 +2002,7 @@ const styles = StyleSheet.create({
   },
   bestCommentTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#92400e',
     marginLeft: 4,
   },
@@ -2019,7 +2019,7 @@ const styles = StyleSheet.create({
   },
   bestCommentBadgeText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#ffffff',
     marginLeft: 0,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
@@ -2041,7 +2041,7 @@ const styles = StyleSheet.create({
   },
   bestCommentsHeaderText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#92400e',
     marginLeft: 8,
   },
@@ -2061,7 +2061,7 @@ const styles = StyleSheet.create({
   },
   regularCommentsHeaderText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#374151',
   },
   
@@ -2070,7 +2070,7 @@ const styles = StyleSheet.create({
   },
   regularCommentTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#374151',
     marginBottom: 8,
   },
@@ -2095,12 +2095,12 @@ const styles = StyleSheet.create({
   anonymousButtonText: {
     fontSize: 14,
     color: '#6b7280',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginLeft: 8,
   },
   anonymousButtonTextActive: {
     color: '#ffffff',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   
   // 답글 토글 버튼 스타일
@@ -2118,7 +2118,7 @@ const styles = StyleSheet.create({
   replyToggleText: {
     fontSize: 12,
     color: '#6366f1',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginLeft: 4,
   },
   
@@ -2151,12 +2151,12 @@ const styles = StyleSheet.create({
   },
   bestCommentAuthor: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#374151',
   },
   bestCommentBadge: {
     fontSize: 9,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#f59e0b',
     backgroundColor: '#fef3c7',
     paddingHorizontal: 3,
@@ -2173,7 +2173,7 @@ const styles = StyleSheet.create({
   },
   bestCommentLikesText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#f59e0b',
     marginLeft: 3,
   },
@@ -2218,7 +2218,7 @@ const styles = StyleSheet.create({
   },
   bestCommentsMainHeaderText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#92400e',
     marginLeft: 5,
   },
@@ -2241,7 +2241,7 @@ const styles = StyleSheet.create({
   },
   bestCommentLikeCount: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#ef4444',
   },
   bestCommentDivider: {
@@ -2263,7 +2263,7 @@ const styles = StyleSheet.create({
   },
   rankText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#ffffff',
     marginLeft: 2,
   },

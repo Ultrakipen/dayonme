@@ -25,7 +25,7 @@ const ProfileStack: React.FC = () => {
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
-          fontWeight: 'bold',
+          fontFamily: 'Pretendard-Bold',
         },
       }}
     >

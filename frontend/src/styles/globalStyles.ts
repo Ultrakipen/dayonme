@@ -225,13 +225,13 @@ const globalStyles = StyleSheet.create({
   },
   titleText: {
     fontSize: typography.title,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text,
     marginBottom: spacing.medium,
   },
   subtitleText: {
     fontSize: typography.large,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text,
     marginBottom: spacing.small,
   },
@@ -255,12 +255,12 @@ const globalStyles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: typography.medium,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   buttonTextSecondary: {
     color: colors.primary,
     fontSize: typography.medium,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   card: {
     ...componentStyles.card,

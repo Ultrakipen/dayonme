@@ -68,7 +68,7 @@ class RequestQueue {
         try {
           await request();
         } catch (error) {
-          console.warn('Request queue error:', error);
+          if (__DEV__) console.warn('Request queue error:', error);
         }
       }
     }
@@ -196,7 +196,7 @@ class OfflineQueue {
       await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
       return queueItem.id;
     } catch (error) {
-      console.error('[OfflineQueue] 큐 저장 실패:', error);
+      if (__DEV__) console.error('[OfflineQueue] 큐 저장 실패:', error);
       throw error;
     }
   }
@@ -210,7 +210,7 @@ class OfflineQueue {
       const filtered = queue.filter(item => item.id !== id);
       await AsyncStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(filtered));
     } catch (error) {
-      console.error('[OfflineQueue] 큐 삭제 실패:', error);
+      if (__DEV__) console.error('[OfflineQueue] 큐 삭제 실패:', error);
     }
   }
 

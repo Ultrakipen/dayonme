@@ -12,6 +12,8 @@ import {
   SafeAreaView,
   StatusBar,
   Vibration,
+  Animated,
+  ScrollView,
 } from 'react-native';
 import {
   Text,
@@ -26,7 +28,7 @@ import comfortWallService from '../services/api/comfortWallService';
 import blockService, { BlockedUser, BlockedContent } from '../services/api/blockService';
 import { normalizeImageUrl } from '../utils/imageUtils';
 import { RFValue, normalize, normalizeSpace, normalizeTouchable, wp, hp } from '../utils/responsive';
-import ImageCarousel from '../components/ImageCarousel';
+import FastImage from 'react-native-fast-image';
 import ClickableNickname from '../components/ClickableNickname';
 import ClickableAvatar from '../components/ClickableAvatar';
 import { PostSkeletonList } from '../components/SkeletonCard';
@@ -40,6 +42,9 @@ const CACHE_TTL = 5 * 60 * 1000; // 5분
 // lazy getter
 const getGridPadding = () => normalizeSpace(DEFAULT_GRID_PADDING);
 const getColumnGap = () => normalizeSpace(DEFAULT_COLUMN_GAP);
+
+// Animated FlatList 생성 (useNativeDriver 지원)
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 
 // 감정 데이터는 emotions.ts에서 import (일관성 유지)
@@ -73,9 +78,11 @@ const getTimeAgo = (dateString: string) => {
   else return postDate.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
 };
 
-const truncateToSevenLines = (text: string) => {
+// 이미지 유무에 따라 텍스트 길이 최적화 (2026 트렌드 반영)
+const truncateText = (text: string, hasImages: boolean) => {
   if (!text) return '';
-  const maxChars = 266;
+  // 이미지 있을 때: 4줄 약 152자, 이미지 없을 때: 5줄 약 190자
+  const maxChars = hasImages ? 152 : 190;
   if (text.length <= maxChars) return text;
   const truncated = text.substring(0, maxChars - 3);
   const lastSpaceIndex = truncated.lastIndexOf(' ');
@@ -140,6 +147,12 @@ const BestPostsScreen: React.FC = () => {
   const loadingMoreRef = useRef(loadingMore);
   const lastFetchTimeRef = useRef<number>(0);
 
+  // 스크롤 헤더 숨김 애니메이션
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const lastScrollY = useRef(0);
+  const headerTranslateY = useRef(new Animated.Value(0)).current;
+  const HEADER_HEIGHT = 174; // 헤더(60) + 필터(114) = 174px
+
   useEffect(() => {
     pageRef.current = page;
   }, [page]);
@@ -168,7 +181,7 @@ const BestPostsScreen: React.FC = () => {
         setBlockedContents(contentsResponse.data.data || []);
       }
     } catch (error) {
-      console.error('차단 목록 로드 오류:', error);
+      if (__DEV__) console.error('차단 목록 로드 오류:', error);
     }
   }, []);
 
@@ -192,6 +205,21 @@ const BestPostsScreen: React.FC = () => {
 
       if (response.data?.status === 'success') {
         const newPosts = response.data.data.posts || [];
+
+        // 디버그: 이미지 데이터 확인
+        if (__DEV__ && newPosts.length > 0) {
+          console.log('📸 베스트 게시물 이미지 필드:', {
+            total: newPosts.length,
+            withImages: newPosts.filter((p: any) => p.images?.length > 0).length,
+            withImageUrl: newPosts.filter((p: any) => p.image_url).length,
+          });
+          console.log('📸 첫 번째 게시물:', {
+            post_id: newPosts[0].post_id,
+            title: newPosts[0].title,
+            images: newPosts[0].images,
+            image_url: newPosts[0].image_url,
+          });
+        }
 
         // 차단 필터링
         const filteredPosts = newPosts.filter((post: BestPost) => {
@@ -222,7 +250,7 @@ const BestPostsScreen: React.FC = () => {
         setHasMore(newPosts.length >= 20);
       }
     } catch (error) {
-      console.error('베스트 게시물 로드 오류:', error);
+      if (__DEV__) console.error('베스트 게시물 로드 오류:', error);
       Alert.alert('오류', '베스트 게시물을 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
@@ -291,6 +319,38 @@ const BestPostsScreen: React.FC = () => {
     lastFetchTimeRef.current = 0;
   }, []);
 
+  // 스크롤 이벤트 핸들러 (인스타그램 스타일)
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    {
+      useNativeDriver: true,
+      listener: (event: any) => {
+        const currentScrollY = event.nativeEvent.contentOffset.y;
+        const diff = currentScrollY - lastScrollY.current;
+
+        // 스크롤 방향 감지 (최소 이동 거리 5px)
+        if (Math.abs(diff) > 5) {
+          if (diff > 0 && currentScrollY > 50) {
+            // 아래로 스크롤 - 헤더 숨김
+            Animated.timing(headerTranslateY, {
+              toValue: -HEADER_HEIGHT,
+              duration: 250,
+              useNativeDriver: true,
+            }).start();
+          } else if (diff < 0 || currentScrollY < 50) {
+            // 위로 스크롤 또는 상단 근처 - 헤더 표시
+            Animated.timing(headerTranslateY, {
+              toValue: 0,
+              duration: 250,
+              useNativeDriver: true,
+            }).start();
+          }
+          lastScrollY.current = currentScrollY;
+        }
+      },
+    }
+  );
+
   // 게시물 클릭
   const handlePostPress = useCallback((post: BestPost) => {
     Vibration.vibrate(10);
@@ -303,9 +363,52 @@ const BestPostsScreen: React.FC = () => {
   // 게시물 카드 렌더링
   const renderPost = useCallback(({ item: post }: { item: BestPost }) => {
     const emotion = getRandomEmotion(post.user_id, post.post_id, post.anonymous_emotion_id);
-    const hasImages = post.images && post.images.length > 0;
-    // TODO: 썸네일 API 구현 시 원본 대신 썸네일 사용으로 트래픽 최적화
-    const imageUrls = hasImages ? post.images!.map(normalizeImageUrl) : [];
+
+    // 이미지 처리: images 배열, image_url 문자열/JSON 배열 모두 지원
+    let imageUrls: string[] = [];
+
+    if (post.images && post.images.length > 0) {
+      // 1. images 배열이 있는 경우
+      imageUrls = post.images.map(url => {
+        const normalized = normalizeImageUrl(url);
+        // 최적화 API 우회: 원본 URL 사용 (URL 중복 문제 해결)
+        return normalized.replace('/api/images/', '/api/uploads/');
+      });
+    } else if (post.image_url) {
+      // 2. image_url 처리
+      try {
+        // JSON 문자열로 된 배열인지 확인 (예: '["/path/1.jpg","/path/2.jpg"]')
+        if (typeof post.image_url === 'string' && post.image_url.startsWith('[')) {
+          const parsed = JSON.parse(post.image_url);
+          if (Array.isArray(parsed)) {
+            imageUrls = parsed.map(url => normalizeImageUrl(url));
+          } else {
+            imageUrls = [normalizeImageUrl(post.image_url)];
+          }
+        } else {
+          // 단일 URL 문자열
+          imageUrls = [normalizeImageUrl(post.image_url)];
+        }
+      } catch (e) {
+        // JSON 파싱 실패 시 단일 문자열로 처리
+        if (__DEV__) console.error('❌ JSON 파싱 실패:', post.image_url, e);
+        imageUrls = [normalizeImageUrl(post.image_url)];
+      }
+    }
+    const hasImages = imageUrls.length > 0;
+
+    // 디버그: 모든 게시물의 이미지 처리 결과 출력
+    if (__DEV__) {
+      console.log(`🖼️ [${post.post_id}] 이미지 처리:`, {
+        title: post.title?.substring(0, 20),
+        image_url_type: typeof post.image_url,
+        image_url_length: post.image_url?.length,
+        image_url_preview: post.image_url?.substring(0, 50),
+        imageUrls_count: imageUrls.length,
+        imageUrls_preview: imageUrls[0]?.substring(0, 50),
+        hasImages,
+      });
+    }
 
     return (
       <TouchableOpacity
@@ -341,7 +444,7 @@ const BestPostsScreen: React.FC = () => {
                 <>
                   <ClickableAvatar
                     userId={post.user_id}
-                    profileImageUrl={post.user?.profile_image_url}
+                    avatarUrl={post.user?.profile_image_url}
                     nickname={post.user?.nickname}
                     size={38}
                   />
@@ -366,14 +469,37 @@ const BestPostsScreen: React.FC = () => {
           )}
 
           {/* 내용 */}
-          <Text style={[styles.postContent, { color: colors.textSecondary }]} numberOfLines={hasImages ? 3 : 7}>
-            {truncateToSevenLines(post.content)}
+          <Text style={[styles.postContent, { color: colors.textSecondary }]} numberOfLines={hasImages ? 4 : 5}>
+            {truncateText(post.content, hasImages)}
           </Text>
 
           {/* 이미지 */}
           {hasImages && (
             <View style={styles.imageContainer}>
-              <ImageCarousel images={imageUrls} height={140} />
+              {__DEV__ && console.log(`✅ [${post.post_id}] 이미지 렌더링:`, imageUrls)}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                pagingEnabled
+                style={styles.imageScroll}
+              >
+                {imageUrls.map((imageUrl, index) => (
+                  <FastImage
+                    key={`${post.post_id}-img-${index}`}
+                    source={{
+                      uri: imageUrl,
+                      priority: FastImage.priority.high,
+                    }}
+                    style={styles.postImage}
+                    resizeMode={FastImage.resizeMode.cover}
+                  />
+                ))}
+              </ScrollView>
+              {imageUrls.length > 1 && (
+                <View style={styles.imageCounter}>
+                  <Text style={styles.imageCounterText}>1/{imageUrls.length}</Text>
+                </View>
+              )}
             </View>
           )}
 
@@ -399,86 +525,96 @@ const BestPostsScreen: React.FC = () => {
     <SafeAreaView style={[styles.safeContainer, { backgroundColor: colors.headerBackground }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.headerBackground} />
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* 헤더 */}
-        <View style={[styles.header, { backgroundColor: colors.headerBackground, shadowColor: isDark ? '#000' : '#000' }]}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-            activeOpacity={0.7}
-          >
-            <MaterialCommunityIcons name="arrow-left" size={24} color={colors.iconColor} />
-          </TouchableOpacity>
-          <View style={styles.headerTitleContainer}>
-            <MaterialCommunityIcons name="trophy" size={20} color={isDark ? '#FFD700' : '#FFA500'} />
-            <Text style={[styles.headerTitle, { color: colors.text }]}>베스트</Text>
+        {/* 헤더 (스크롤 시 자동 숨김) */}
+        <Animated.View
+          style={[
+            styles.headerContainer,
+            {
+              backgroundColor: colors.headerBackground,
+              transform: [{ translateY: headerTranslateY }],
+            }
+          ]}
+        >
+          <View style={[styles.header, { backgroundColor: colors.headerBackground, shadowColor: isDark ? '#000' : '#000' }]}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons name="arrow-left" size={24} color={colors.iconColor} />
+            </TouchableOpacity>
+            <View style={styles.headerTitleContainer}>
+              <MaterialCommunityIcons name="trophy" size={20} color={isDark ? '#FFD700' : '#FFA500'} />
+              <Text style={[styles.headerTitle, { color: colors.text }]}>위로와 공감 베스트</Text>
+            </View>
+            <View style={styles.placeholder} />
           </View>
-          <View style={styles.placeholder} />
-        </View>
 
-        {/* 필터 */}
-        <View style={[styles.filterContainer, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
-          <View style={styles.periodTabs}>
-            {[
-              { key: 'daily', label: '오늘', icon: 'calendar-today' },
-              { key: 'weekly', label: '이번주', icon: 'calendar-week' },
-              { key: 'monthly', label: '이번달', icon: 'calendar-month' },
-            ].map((tab) => (
-              <TouchableOpacity
-                key={tab.key}
-                style={[
-                  styles.periodTab,
-                  period === tab.key && { backgroundColor: colors.primary },
-                ]}
-                onPress={() => handleFilterChange(tab.key as typeof period)}
-                activeOpacity={0.7}
-              >
-                <MaterialCommunityIcons
-                  name={tab.icon as any}
-                  size={16}
-                  color={period === tab.key ? '#fff' : colors.textSecondary}
-                />
-                <Text style={[
-                  styles.periodTabText,
-                  { color: period === tab.key ? '#fff' : colors.textSecondary }
-                ]}>{tab.label}</Text>
-              </TouchableOpacity>
-            ))}
+          {/* 필터 */}
+          <View style={[styles.filterContainer, { backgroundColor: colors.background, borderBottomColor: colors.border }]}>
+            <View style={styles.periodTabs}>
+              {[
+                { key: 'daily', label: '오늘', icon: 'calendar-today' },
+                { key: 'weekly', label: '이번주', icon: 'calendar-week' },
+                { key: 'monthly', label: '이번달', icon: 'calendar-month' },
+              ].map((tab) => (
+                <TouchableOpacity
+                  key={tab.key}
+                  style={[
+                    styles.periodTab,
+                    period === tab.key && { backgroundColor: colors.primary },
+                  ]}
+                  onPress={() => handleFilterChange(tab.key as typeof period)}
+                  activeOpacity={0.7}
+                >
+                  <MaterialCommunityIcons
+                    name={tab.icon as any}
+                    size={16}
+                    color={period === tab.key ? '#fff' : colors.textSecondary}
+                  />
+                  <Text style={[
+                    styles.periodTabText,
+                    { color: period === tab.key ? '#fff' : colors.textSecondary }
+                  ]}>{tab.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.sortButtons}>
+              {[
+                { key: 'likes', label: '좋아요', icon: 'heart' },
+                { key: 'comments', label: '댓글', icon: 'comment' },
+                { key: 'recent', label: '최신', icon: 'clock' },
+              ].map((sort) => (
+                <TouchableOpacity
+                  key={sort.key}
+                  style={[
+                    styles.sortButton,
+                    { borderColor: colors.border },
+                    sortBy === sort.key && { backgroundColor: isDark ? 'rgba(96,165,250,0.15)' : 'rgba(59,130,246,0.1)', borderColor: colors.primary },
+                  ]}
+                  onPress={() => handleFilterChange(undefined, sort.key as typeof sortBy)}
+                  activeOpacity={0.7}
+                >
+                  <MaterialCommunityIcons
+                    name={sort.icon as any}
+                    size={14}
+                    color={sortBy === sort.key ? colors.primary : colors.textSecondary}
+                  />
+                  <Text style={[
+                    styles.sortButtonText,
+                    { color: sortBy === sort.key ? colors.primary : colors.textSecondary }
+                  ]}>{sort.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-          <View style={styles.sortButtons}>
-            {[
-              { key: 'likes', label: '좋아요', icon: 'heart' },
-              { key: 'comments', label: '댓글', icon: 'comment' },
-              { key: 'recent', label: '최신', icon: 'clock' },
-            ].map((sort) => (
-              <TouchableOpacity
-                key={sort.key}
-                style={[
-                  styles.sortButton,
-                  { borderColor: colors.border },
-                  sortBy === sort.key && { backgroundColor: isDark ? 'rgba(96,165,250,0.15)' : 'rgba(59,130,246,0.1)', borderColor: colors.primary },
-                ]}
-                onPress={() => handleFilterChange(undefined, sort.key as typeof sortBy)}
-                activeOpacity={0.7}
-              >
-                <MaterialCommunityIcons
-                  name={sort.icon as any}
-                  size={14}
-                  color={sortBy === sort.key ? colors.primary : colors.textSecondary}
-                />
-                <Text style={[
-                  styles.sortButtonText,
-                  { color: sortBy === sort.key ? colors.primary : colors.textSecondary }
-                ]}>{sort.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+        </Animated.View>
 
         {/* 게시물 목록 */}
         {loading && posts.length === 0 ? (
           <PostSkeletonList count={6} />
         ) : (
-          <FlatList
+          <AnimatedFlatList
             data={sortedPosts}
             renderItem={renderPost}
             keyExtractor={(item) => `best-${item.post_id}`}
@@ -489,6 +625,8 @@ const BestPostsScreen: React.FC = () => {
             maxToRenderPerBatch={10}
             windowSize={5}
             removeClippedSubviews={true}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -525,16 +663,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  headerContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
-    elevation: 3,
   },
   backButton: {
     padding: 6,
@@ -542,14 +687,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitleContainer: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
+    paddingHorizontal: 8,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 16,
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
+    flexShrink: 1,
   },
   placeholder: {
     width: 28,
@@ -575,7 +724,7 @@ const styles = StyleSheet.create({
   },
   periodTabText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.2,
   },
   sortButtons: {
@@ -594,11 +743,11 @@ const styles = StyleSheet.create({
   },
   sortButtonText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.2,
   },
   listContent: {
-    paddingTop: 12,
+    paddingTop: 186, // 헤더 높이(174) + 여백(12)
     paddingBottom: 100,
   },
   columnWrapper: {
@@ -645,12 +794,12 @@ const styles = StyleSheet.create({
   },
   emotionLabel: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
   },
   nicknameText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
   },
   timeText: {
@@ -659,7 +808,7 @@ const styles = StyleSheet.create({
   },
   postTitle: {
     fontSize: 16,
-    fontWeight: '800',
+    fontFamily: 'Pretendard-ExtraBold',
     marginBottom: 8,
     lineHeight: 22,
     letterSpacing: -0.4,
@@ -675,6 +824,30 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 12,
     overflow: 'hidden',
+    position: 'relative',
+  },
+  imageScroll: {
+    borderRadius: 12,
+  },
+  postImage: {
+    width: 160,
+    height: 140,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  imageCounter: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  imageCounterText: {
+    color: '#fff',
+    fontSize: 11,
+    fontFamily: 'Pretendard-SemiBold',
   },
   postFooter: {
     flexDirection: 'row',
@@ -698,7 +871,7 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
   },
   loadingMore: {
@@ -713,7 +886,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginTop: 20,
     letterSpacing: -0.3,
   },

@@ -35,8 +35,8 @@ const blockService = {
     try {
       const response = await apiClient.post('/blocks/content', data);
       return response.data;
-    } catch (error: any) {
-      console.error('콘텐츠 차단 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('콘텐츠 차단 오류:', error);
       throw error;
     }
   },
@@ -46,8 +46,8 @@ const blockService = {
     try {
       const response = await apiClient.post(`/blocks/user/${blockedUserId}`, { reason });
       return response.data;
-    } catch (error: any) {
-      console.error('사용자 차단 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('사용자 차단 오류:', error);
       throw error;
     }
   },
@@ -57,8 +57,8 @@ const blockService = {
     try {
       const response = await apiClient.get('/blocks/contents');
       return response.data;
-    } catch (error: any) {
-      console.error('차단 콘텐츠 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('차단 콘텐츠 조회 오류:', error);
       throw error;
     }
   },
@@ -68,8 +68,8 @@ const blockService = {
     try {
       const response = await apiClient.get('/blocks/users');
       return response.data;
-    } catch (error: any) {
-      console.error('차단 사용자 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('차단 사용자 조회 오류:', error);
       throw error;
     }
   },
@@ -79,8 +79,8 @@ const blockService = {
     try {
       const response = await apiClient.delete(`/blocks/content/${contentType}/${contentId}`);
       return response.data;
-    } catch (error: any) {
-      console.error('콘텐츠 차단 해제 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('콘텐츠 차단 해제 오류:', error);
       throw error;
     }
   },
@@ -90,8 +90,8 @@ const blockService = {
     try {
       const response = await apiClient.delete(`/blocks/user/${blockedUserId}`);
       return response.data;
-    } catch (error: any) {
-      console.error('사용자 차단 해제 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('사용자 차단 해제 오류:', error);
       throw error;
     }
   },

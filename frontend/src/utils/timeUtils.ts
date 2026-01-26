@@ -11,7 +11,7 @@ export const formatTimeAgo = (dateString: string | undefined | null): string => 
     if (!dateString) {
       // 개발 중에만 경고 표시
       if (__DEV__) {
-        console.warn('⚠️ formatTimeAgo: dateString is empty', { dateString });
+        if (__DEV__) console.warn('⚠️ formatTimeAgo: dateString is empty', { dateString });
       }
       return '날짜 없음';
     }
@@ -42,7 +42,7 @@ export const formatTimeAgo = (dateString: string | undefined | null): string => 
 
     // 유효한 날짜인지 확인
     if (isNaN(postDate.getTime())) {
-      console.warn('⚠️ formatTimeAgo: Invalid date string:', dateString);
+      if (__DEV__) console.warn('⚠️ formatTimeAgo: Invalid date string:', dateString);
       return '날짜 오류';
     }
 
@@ -61,7 +61,7 @@ export const formatTimeAgo = (dateString: string | undefined | null): string => 
 
     // 음수인 경우 (미래 시간) 처리
     if (diffInMs < 0) {
-      console.warn('⚠️ formatTimeAgo: Future date detected:', {
+      if (__DEV__) console.warn('⚠️ formatTimeAgo: Future date detected:', {
         dateString,
         postDate: postDate.toISOString(),
         now: now.toISOString()
@@ -91,7 +91,7 @@ export const formatTimeAgo = (dateString: string | undefined | null): string => 
       day: 'numeric'
     });
   } catch (error) {
-    console.error('❌ formatTimeAgo error:', error, 'dateString:', dateString);
+    if (__DEV__) console.error('❌ formatTimeAgo error:', error, 'dateString:', dateString);
     return '날짜 오류';
   }
 };
@@ -109,7 +109,7 @@ export const formatDate = (dateString: string): string => {
 
     // 유효한 날짜인지 확인
     if (isNaN(date.getTime())) {
-      console.warn('⚠️ formatDate: Invalid date string:', dateString);
+      if (__DEV__) console.warn('⚠️ formatDate: Invalid date string:', dateString);
       return '날짜 없음';
     }
 
@@ -119,7 +119,7 @@ export const formatDate = (dateString: string): string => {
       day: 'numeric'
     });
   } catch (error) {
-    console.error('❌ formatDate error:', error, 'dateString:', dateString);
+    if (__DEV__) console.error('❌ formatDate error:', error, 'dateString:', dateString);
     return '날짜 오류';
   }
 };
@@ -136,7 +136,7 @@ export const formatDetailedDate = (dateString: string): string => {
     const date = new Date(dateString);
 
     if (isNaN(date.getTime())) {
-      console.warn('⚠️ formatDetailedDate: Invalid date string:', dateString);
+      if (__DEV__) console.warn('⚠️ formatDetailedDate: Invalid date string:', dateString);
       return '날짜 없음';
     }
 
@@ -148,7 +148,12 @@ export const formatDetailedDate = (dateString: string): string => {
       minute: '2-digit'
     });
   } catch (error) {
-    console.error('❌ formatDetailedDate error:', error, 'dateString:', dateString);
+    if (__DEV__) console.error('❌ formatDetailedDate error:', error, 'dateString:', dateString);
     return '날짜 오류';
   }
 };
+
+/**
+ * formatTimeAgo의 별칭 (하위 호환성)
+ */
+export const getTimeAgo = formatTimeAgo;

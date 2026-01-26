@@ -42,7 +42,7 @@ const ClickableNickname: React.FC<ClickableNicknameProps> = ({
   const isClickable = isAuthenticated && !isAnonymous && !isOwnProfile;
 
   // 디버깅 로그
-  console.log('👤 ClickableNickname:', {
+  if (__DEV__) console.log('👤 ClickableNickname:', {
     userId,
     nickname,
     isAnonymous,
@@ -52,10 +52,10 @@ const ClickableNickname: React.FC<ClickableNicknameProps> = ({
   });
 
   const handlePress = () => {
-    console.log('🖱️ 닉네임 클릭됨:', { userId, nickname, isClickable });
+    if (__DEV__) console.log('🖱️ 닉네임 클릭됨:', { userId, nickname, isClickable });
 
     if (!isClickable) {
-      console.log('❌ 클릭 불가능 (익명 또는 본인)');
+      if (__DEV__) console.log('❌ 클릭 불가능 (익명 또는 본인)');
       return;
     }
 
@@ -70,16 +70,16 @@ const ClickableNickname: React.FC<ClickableNicknameProps> = ({
     }
 
     try {
-      console.log('✅ UserProfile로 이동 시도:', { userId, nickname });
+      if (__DEV__) console.log('✅ UserProfile로 이동 시도:', { userId, nickname });
 
       navigation.navigate('UserProfile', {
         userId,
         nickname,
       });
 
-      console.log('✅ Navigation.navigate 호출 완료');
+      if (__DEV__) console.log('✅ Navigation.navigate 호출 완료');
     } catch (error) {
-      console.error('❌ Navigation 오류:', error);
+      if (__DEV__) console.error('❌ Navigation 오류:', error);
       Alert.alert('오류', '프로필 화면으로 이동할 수 없습니다.');
     }
   };
@@ -98,7 +98,7 @@ const ClickableNickname: React.FC<ClickableNicknameProps> = ({
     ...mergedStyle,
     color: '#405DE6',
     textDecorationLine: 'underline',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   };
 
   return (

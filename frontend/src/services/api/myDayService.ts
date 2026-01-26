@@ -1,5 +1,6 @@
 // src/services/api/myDayService.ts
 import apiClient from './client';
+import { requestDeduplicator } from './requestQueue';
 
 export interface CreateMyDayPostData {
   content: string;
@@ -73,8 +74,8 @@ const myDayService = {
     try {
       const response = await apiClient.post('/my-day/posts', data);
       return response.data;
-    } catch (error: any) {
-      console.error('MyDay 게시물 작성 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('MyDay 게시물 작성 오류:', error);
       throw error;
     }
   },
@@ -88,8 +89,8 @@ const myDayService = {
     try {
       const response = await apiClient.get('/my-day/posts/me', { params });
       return response.data;
-    } catch (error: any) {
-      console.error('내 MyDay 게시물 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('내 MyDay 게시물 조회 오류:', error);
       throw error;
     }
   },
@@ -102,8 +103,8 @@ const myDayService = {
     try {
       const response = await apiClient.get('/my-day/posts', { params });
       return response.data;
-    } catch (error: any) {
-      console.error('MyDay 게시물 목록 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('MyDay 게시물 목록 조회 오류:', error);
       throw error;
     }
   },
@@ -112,9 +113,9 @@ const myDayService = {
   getPostById: async (postId: number) => {
     try {
       const response = await apiClient.get(`/my-day/posts/${postId}`);
-      return response.data;
-    } catch (error: any) {
-      console.error('MyDay 게시물 단일 조회 오류:', error);
+      return response; // PostDetail과 호환을 위해 response 전체 반환
+    } catch (error: unknown) {
+      if (__DEV__) console.error('MyDay 게시물 단일 조회 오류:', error);
       throw error;
     }
   },
@@ -124,8 +125,8 @@ const myDayService = {
     try {
       const response = await apiClient.put(`/my-day/posts/${postId}`, data);
       return response.data;
-    } catch (error: any) {
-      console.error('MyDay 게시물 수정 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('MyDay 게시물 수정 오류:', error);
       throw error;
     }
   },
@@ -135,8 +136,8 @@ const myDayService = {
     try {
       const response = await apiClient.delete(`/my-day/posts/${postId}`);
       return response.data;
-    } catch (error: any) {
-      console.error('MyDay 게시물 삭제 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('MyDay 게시물 삭제 오류:', error);
       throw error;
     }
   },
@@ -148,9 +149,9 @@ const myDayService = {
       const response = await apiClient.post(`/my-day/posts/${postId}/comments`, data);
       if (__DEV__) console.log('💬 MyDay 댓글 작성 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ MyDay 댓글 작성 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ MyDay 댓글 작성 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -160,9 +161,9 @@ const myDayService = {
     try {
       const response = await apiClient.get(`/my-day/posts/${postId}/comments`, { params });
       return response.data;
-    } catch (error: any) {
-      console.error('❌ MyDay 댓글 목록 조회 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ MyDay 댓글 목록 조회 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -180,7 +181,7 @@ const myDayService = {
         } else {
           throw new Error('PostId required for nested endpoint');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error.response?.status === 404) {
           // Fallback to flat endpoint
           if (__DEV__) console.log('💬 Trying flat endpoint...');
@@ -191,9 +192,9 @@ const myDayService = {
       }
       if (__DEV__) console.log('💬 MyDay 댓글 수정 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ MyDay 댓글 수정 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ MyDay 댓글 수정 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -211,7 +212,7 @@ const myDayService = {
         } else {
           throw new Error('PostId required for nested endpoint');
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (error.response?.status === 404) {
           // Fallback to flat endpoint
           if (__DEV__) console.log('💬 Trying flat endpoint...');
@@ -222,9 +223,9 @@ const myDayService = {
       }
       if (__DEV__) console.log('💬 MyDay 댓글 삭제 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ MyDay 댓글 삭제 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ MyDay 댓글 삭제 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -236,9 +237,9 @@ const myDayService = {
       const response = await apiClient.post(`/my-day/posts/${postId}/like`);
       if (__DEV__) console.log('❤️ MyDay 좋아요 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ MyDay 좋아요 처리 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ MyDay 좋아요 처리 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -250,53 +251,56 @@ const myDayService = {
       const response = await apiClient.post(`/my-day/comments/${commentId}/like`);
       if (__DEV__) console.log('❤️ MyDay 댓글 좋아요 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ MyDay 댓글 좋아요 처리 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ MyDay 댓글 좋아요 처리 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
 
   // 오늘 작성한 MyDay 글 확인 (새로운 백엔드 API 사용)
   getTodayPost: async () => {
-    try {
-      if (__DEV__) console.log('📅 오늘 작성한 MyDay 글 조회 (새로운 API 사용)');
+    // 중복 요청 방지
+    return requestDeduplicator.dedupe('GET:/my-day/posts/today', async () => {
+      try {
+        if (__DEV__) console.log('📅 오늘 작성한 MyDay 글 조회 (새로운 API 사용)');
 
-      // 새로운 전용 API 엔드포인트 사용
-      const response = await apiClient.get('/my-day/posts/today');
+        // 새로운 전용 API 엔드포인트 사용
+        const response = await apiClient.get('/my-day/posts/today');
 
-      if (__DEV__) console.log('📅 오늘 글 조회 API 응답:', JSON.stringify(response.data, null, 2));
+        if (__DEV__) console.log('📅 오늘 글 조회 API 응답:', JSON.stringify(response.data, null, 2));
 
-      if (response.data?.status === 'success') {
-        const todayPost = response.data.data;
+        if (response.data?.status === 'success') {
+          const todayPost = response.data.data;
 
-        if (todayPost) {
-          if (__DEV__) console.log('✅ 오늘 작성한 글 발견 (새 API):', {
-            postId: todayPost.post_id,
-            createdAt: todayPost.created_at,
-            content: todayPost.content?.substring(0, 50) + '...'
-          });
-          return todayPost;
-        } else {
-          if (__DEV__) console.log('📅 오늘 작성한 글이 없습니다 (새 API)');
-          return null;
+          if (todayPost) {
+            if (__DEV__) console.log('✅ 오늘 작성한 글 발견 (새 API):', {
+              postId: todayPost.post_id,
+              createdAt: todayPost.created_at,
+              content: todayPost.content?.substring(0, 50) + '...'
+            });
+            return todayPost;
+          } else {
+            if (__DEV__) console.log('📅 오늘 작성한 글이 없습니다 (새 API)');
+            return null;
+          }
         }
+
+        if (__DEV__) console.warn('📅 예상치 못한 응답 구조:', response.data);
+        return null;
+
+      } catch (error: unknown) {
+        if (__DEV__) console.error('❌ 오늘 MyDay 글 조회 오류 (새 API):', error);
+        if (__DEV__) console.error('❌ 에러 상세:', {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+
+        // 404나 다른 에러 시에도 null 반환 (작성 제한 해제)
+        return null;
       }
-
-      if (__DEV__) console.warn('📅 예상치 못한 응답 구조:', response.data);
-      return null;
-
-    } catch (error: any) {
-      console.error('❌ 오늘 MyDay 글 조회 오류 (새 API):', error);
-      console.error('❌ 에러 상세:', {
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message
-      });
-
-      // 404나 다른 에러 시에도 null 반환 (작성 제한 해제)
-      return null;
-    }
+    });
   },
 
   // 사용자의 MyDay 게시물 감정 통계 조회
@@ -309,8 +313,8 @@ const myDayService = {
 
       if (__DEV__) console.log('📊 감정 통계 조회 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ 감정 통계 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 감정 통계 조회 오류:', error);
 
       // API가 구현되기 전까지 임시로 사용자의 실제 게시물을 분석
       try {
@@ -353,7 +357,7 @@ const myDayService = {
           };
         }
       } catch (fallbackError) {
-        console.error('❌ 임시 감정 통계 생성도 실패:', fallbackError);
+        if (__DEV__) console.error('❌ 임시 감정 통계 생성도 실패:', fallbackError);
       }
 
       // 모든 방법이 실패할 경우 빈 배열 반환

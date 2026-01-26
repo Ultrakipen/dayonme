@@ -40,7 +40,7 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
       setData(response.data);
     } catch (err) {
       setError('감정 온도를 불러오는데 실패했습니다');
-      console.error('개인 감정 온도 로드 실패:', err);
+      if (__DEV__) console.error('개인 감정 온도 로드 실패:', err);
     } finally {
       setLoading(false);
     }
@@ -107,8 +107,8 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
   return (
     <Card accessible={true} accessibilityLabel="나의 감정 온도계" accessibilityHint="나의 감정 상태를 체온으로 표현합니다">
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 * scale }}>
-        <TwemojiImage emoji="🌡️" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>
+        <TwemojiImage emoji="🌡️" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
+        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
           나의 {periodText} 감정 온도
         </Text>
       </View>
@@ -191,13 +191,13 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
 
 const styles = StyleSheet.create({
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   tempContainer: {
     alignItems: 'center',
   },
   tempText: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   progressBar: {
     overflow: 'hidden',
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emotionName: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     flex: 1,
   },
   emotionCount: {
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   predictiveText: {
     flex: 1,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   errorContainer: {
     alignItems: 'center',

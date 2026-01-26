@@ -44,7 +44,7 @@ export const CommunityTemperature: React.FC<Props> = React.memo(({ period = 'wee
       setData(response.data);
     } catch (err) {
       setError('커뮤니티 온도를 불러오는데 실패했습니다');
-      console.error('커뮤니티 온도 로드 실패:', err);
+      if (__DEV__) console.error('커뮤니티 온도 로드 실패:', err);
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ export const CommunityTemperature: React.FC<Props> = React.memo(({ period = 'wee
 
   return (
     <Card accessible={true} accessibilityLabel="커뮤니티 감정 온도계" accessibilityHint="현재 커뮤니티의 전체적인 감정 상태를 보여줍니다">
-      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale, marginBottom: 16 * scale }]}>
+      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, marginBottom: 16 * scale }]}>
         🌡️ {periodText} 우리의 감정 온도
       </Text>
 
@@ -160,13 +160,13 @@ export const CommunityTemperature: React.FC<Props> = React.memo(({ period = 'wee
 
 const styles = StyleSheet.create({
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   tempContainer: {
     alignItems: 'center',
   },
   tempText: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   progressBar: {
     overflow: 'hidden',
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emotionName: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     flex: 1,
   },
   emotionCount: {

@@ -91,7 +91,7 @@ export const SafeAreaContext: React.FC<SafeAreaProviderProps> = ({ children }) =
           };
           setContextValue(newValue);
         } catch (error) {
-          console.warn('SafeArea 업데이트 실패:', error);
+          if (__DEV__) console.warn('SafeArea 업데이트 실패:', error);
         }
       };
 
@@ -100,7 +100,7 @@ export const SafeAreaContext: React.FC<SafeAreaProviderProps> = ({ children }) =
       const subscription = Dimensions.addEventListener('change', updateSafeArea);
       return () => subscription?.remove();
     } catch (error) {
-      console.warn('SafeArea 초기화 실패:', error);
+      if (__DEV__) console.warn('SafeArea 초기화 실패:', error);
     }
   }, []);
 

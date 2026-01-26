@@ -265,7 +265,7 @@ export function logError(
     ...additionalInfo,
   };
   
-  console.error('에러 발생:', errorInfo);
+  if (__DEV__) console.error('에러 발생:', errorInfo);
   
   // 실제 서비스에서는 에러 로깅 서비스에 전송
   // sendErrorToLoggingService(errorInfo);

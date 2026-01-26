@@ -144,7 +144,7 @@ export const useReviewData = (selectedPeriod: 'week' | 'month' | 'year') => {
         }));
       }
     } catch (error) {
-      console.error('감정 캘린더 로드 오류:', error);
+      if (__DEV__) console.error('감정 캘린더 로드 오류:', error);
     }
   }, [selectedPeriod, getPeriodDateRange, calculateConsecutiveDays]);
 
@@ -196,7 +196,7 @@ export const useReviewData = (selectedPeriod: 'week' | 'month' | 'year') => {
 
       setHighlights(highlightItems);
     } catch (error) {
-      console.error('하이라이트 로드 오류:', error);
+      if (__DEV__) console.error('하이라이트 로드 오류:', error);
     }
   }, []);
 
@@ -244,7 +244,7 @@ export const useReviewData = (selectedPeriod: 'week' | 'month' | 'year') => {
 
       setMonthlyInsight(insights);
     } catch (error) {
-      console.error('월간 인사이트 로드 오류:', error);
+      if (__DEV__) console.error('월간 인사이트 로드 오류:', error);
     }
   }, [getPeriodDateRange, monthlyInsight.consecutiveDays]);
 
@@ -292,7 +292,7 @@ export const useReviewData = (selectedPeriod: 'week' | 'month' | 'year') => {
         setEmotionStats(pieData);
       }
     } catch (error) {
-      console.error('감정 통계 로드 오류:', error);
+      if (__DEV__) console.error('감정 통계 로드 오류:', error);
     }
   }, [selectedPeriod, getPeriodDateRange]);
 
@@ -338,7 +338,7 @@ export const useReviewData = (selectedPeriod: 'week' | 'month' | 'year') => {
       ]);
       analyzeEmotionJourney();
     } catch (error) {
-      console.error('데이터 로드 오류:', error);
+      if (__DEV__) console.error('데이터 로드 오류:', error);
     } finally {
       setLoading(false);
     }

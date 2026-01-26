@@ -1,13 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import EncryptedStorage from 'react-native-encrypted-storage';
 
 /**
- * 보안 강화: 향후 EncryptedStorage로 전환 예정
- * 현재는 AsyncStorage 사용 (네이티브 빌드 없이 즉시 적용 가능)
- *
- * TODO: 프로덕션 배포 전 EncryptedStorage로 전환
- * - npm install react-native-encrypted-storage
- * - npx react-native run-android
- * - 아래 import를 EncryptedStorage로 변경
+ * 보안 강화: EncryptedStorage 사용
+ * 민감한 정보(토큰, 사용자 정보 등)를 암호화하여 저장
  */
 const secureStorage = {
   /**
@@ -15,9 +10,9 @@ const secureStorage = {
    */
   setItem: async (key: string, value: string): Promise<void> => {
     try {
-      await AsyncStorage.setItem(key, value);
+      await EncryptedStorage.setItem(key, value);
     } catch (error) {
-      console.error('Storage set error:', error instanceof Error ? error.message : '알 수 없는 오류');
+      if (__DEV__) console.error('Storage set error:', error instanceof Error ? error.message : '알 수 없는 오류');
       throw error;
     }
   },
@@ -27,9 +22,9 @@ const secureStorage = {
    */
   getItem: async (key: string): Promise<string | null> => {
     try {
-      return await AsyncStorage.getItem(key);
+      return await EncryptedStorage.getItem(key);
     } catch (error) {
-      console.error('Storage get error:', error instanceof Error ? error.message : '알 수 없는 오류');
+      if (__DEV__) console.error('Storage get error:', error instanceof Error ? error.message : '알 수 없는 오류');
       return null;
     }
   },
@@ -39,9 +34,9 @@ const secureStorage = {
    */
   removeItem: async (key: string): Promise<void> => {
     try {
-      await AsyncStorage.removeItem(key);
+      await EncryptedStorage.removeItem(key);
     } catch (error) {
-      console.error('Storage remove error:', error instanceof Error ? error.message : '알 수 없는 오류');
+      if (__DEV__) console.error('Storage remove error:', error instanceof Error ? error.message : '알 수 없는 오류');
       throw error;
     }
   },
@@ -51,9 +46,9 @@ const secureStorage = {
    */
   clear: async (): Promise<void> => {
     try {
-      await AsyncStorage.clear();
+      await EncryptedStorage.clear();
     } catch (error) {
-      console.error('Storage clear error:', error instanceof Error ? error.message : '알 수 없는 오류');
+      if (__DEV__) console.error('Storage clear error:', error instanceof Error ? error.message : '알 수 없는 오류');
       throw error;
     }
   }

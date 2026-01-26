@@ -201,11 +201,11 @@ const convertTextClassToStyle = (className: string = ''): TextStyle => {
     if (cls === 'text-2xl') style.fontSize = 24;
     if (cls === 'text-3xl') style.fontSize = 30;
     
-    // Font weight
-    if (cls === 'font-normal') style.fontWeight = 'normal';
-    if (cls === 'font-medium') style.fontWeight = '500';
-    if (cls === 'font-semibold') style.fontWeight = '600';
-    if (cls === 'font-bold') style.fontWeight = 'bold';
+    // Font family (Pretendard)
+    if (cls === 'font-normal') style.fontFamily = 'Pretendard-Regular';
+    if (cls === 'font-medium') style.fontFamily = 'Pretendard-Medium';
+    if (cls === 'font-semibold') style.fontFamily = 'Pretendard-SemiBold';
+    if (cls === 'font-bold') style.fontFamily = 'Pretendard-Bold';
     
     // Text color
     if (cls === 'text-white') style.color = '#ffffff';

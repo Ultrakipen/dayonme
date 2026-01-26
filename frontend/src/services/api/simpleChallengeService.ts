@@ -1,5 +1,5 @@
 // 완전히 새로운 Simple Challenge API 서비스
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import EncryptedStorage from 'react-native-encrypted-storage';
 
 import { ENV } from '../../config/env';
 
@@ -11,7 +11,7 @@ const TIMEOUT = ENV.API_TIMEOUT; // 10초 타임아웃 (모바일 네트워크 �
 class SimpleHttpClient {
   private async getAuthToken(): Promise<string | null> {
     try {
-      return await AsyncStorage.getItem('authToken');
+      return await EncryptedStorage.getItem('authToken');
     } catch {
       return null;
     }
@@ -30,7 +30,7 @@ class SimpleHttpClient {
       ...options,
     };
 
-    console.log(`🌐 Simple Challenge API 요청: ${config.method} ${endpoint}`);
+    if (__DEV__) console.log(`🌐 Simple Challenge API 요청: ${config.method} ${endpoint}`);
 
     try {
       const controller = new AbortController();
@@ -57,11 +57,11 @@ class SimpleHttpClient {
       }
 
       const data = await response.json();
-      console.log(`✅ Simple Challenge API 응답 성공`);
+      if (__DEV__) console.log(`✅ Simple Challenge API 응답 성공`);
       return data;
 
-    } catch (error: any) {
-      console.error(`❌ Simple Challenge API 오류:`, error.message);
+    } catch (error: unknown) {
+      if (__DEV__) console.error(`❌ Simple Challenge API 오류:`, error.message);
       
       if (error.name === 'AbortError') {
         throw new Error('요청 시간이 초과되었습니다.');
@@ -189,7 +189,7 @@ export const simpleChallengeService = {
       const endpoint = queryParams.toString() ? `?${queryParams.toString()}` : '';
       return await client.get(endpoint);
     } catch (error) {
-      console.log('📱 오프라인 모드로 전환 - 챌린지 목록');
+      if (__DEV__) console.log('📱 오프라인 모드로 전환 - 챌린지 목록');
       return createOfflineData('challenges');
     }
   },
@@ -199,7 +199,7 @@ export const simpleChallengeService = {
     try {
       return await client.get(`/best?limit=${limit}`);
     } catch (error) {
-      console.log('📱 오프라인 모드로 전환 - 베스트 챌린지');
+      if (__DEV__) console.log('📱 오프라인 모드로 전환 - 베스트 챌린지');
       return createOfflineData('best');
     }
   },
@@ -209,7 +209,7 @@ export const simpleChallengeService = {
     try {
       return await client.get('/my-participations');
     } catch (error) {
-      console.log('📱 오프라인 모드로 전환 - 내 참여 챌린지');
+      if (__DEV__) console.log('📱 오프라인 모드로 전환 - 내 참여 챌린지');
       return createOfflineData('participations');
     }
   },

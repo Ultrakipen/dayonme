@@ -140,8 +140,8 @@ export const WeeklyHighlights: React.FC<Props> = ({ highlights }) => {
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: FONT_SIZES.h3 * scale,
-    fontWeight: '700',
+    fontSize: FONT_SIZES.h4 * scale,
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 4 * scale,
   },
   subtitle: {
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: FONT_SIZES.tiny * scale,
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   emotionRow: {
     flexDirection: 'row',
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   emotionText: {
     fontSize: FONT_SIZES.body * scale,
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   content: {
     fontSize: FONT_SIZES.bodySmall * scale,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.tiny * scale,
     color: '#FFFFFF',
     opacity: 0.8,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   likeRow: {
     flexDirection: 'row',
@@ -238,6 +238,6 @@ const styles = StyleSheet.create({
   likeCount: {
     fontSize: FONT_SIZES.small * scale,
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
 });

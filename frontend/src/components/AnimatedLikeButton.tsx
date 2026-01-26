@@ -128,7 +128,7 @@ export const AnimatedLikeButton: React.FC<AnimatedLikeButtonProps> = ({
           style={{
             marginLeft: 6,
             fontSize: 14,
-            fontWeight: '600',
+            fontFamily: 'Pretendard-SemiBold',
             color: isLiked ? '#ef4444' : '#6b7280',
             opacity: heartAnim.interpolate({
               inputRange: [0, 1],

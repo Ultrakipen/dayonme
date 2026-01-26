@@ -42,7 +42,7 @@ const unifiedPostService = {
     include_sources?: ('myday' | 'comfort' | 'posts' | 'challenge' | 'reflection')[];
   }) => {
     try {
-      console.log('🚀 통합 내 게시물 조회 시작:', params);
+      if (__DEV__) console.log('🚀 통합 내 게시물 조회 시작:', params);
       
       const includeSources = params?.include_sources || ['myday', 'comfort', 'challenge', 'reflection'];
       const results: UnifiedPost[] = [];
@@ -51,9 +51,9 @@ const unifiedPostService = {
       // 1. 나의 하루 게시물
       if (includeSources.includes('myday')) {
         try {
-          console.log('📅 MyDay 게시물 조회 중...');
+          if (__DEV__) console.log('📅 MyDay 게시물 조회 중...');
           const myDayData = await myDayService.getMyPosts(params);
-          console.log('📅 MyDay API 응답:', {
+          if (__DEV__) console.log('📅 MyDay API 응답:', {
             hasData: !!myDayData,
             hasPosts: !!myDayData?.posts,
             postsLength: myDayData?.posts?.length || 0,
@@ -66,10 +66,10 @@ const unifiedPostService = {
               post_type: 'myday'
             }));
             results.push(...myDayPosts);
-            console.log('✅ MyDay 게시물:', myDayPosts.length, '개');
+            if (__DEV__) console.log('✅ MyDay 게시물:', myDayPosts.length, '개');
           }
-        } catch (error: any) {
-          console.log('⚠️ MyDay 게시물 조회 실패:', {
+        } catch (error: unknown) {
+          if (__DEV__) console.log('⚠️ MyDay 게시물 조회 실패:', {
             message: error?.message,
             status: error?.response?.status,
             statusText: error?.response?.statusText,
@@ -88,12 +88,12 @@ const unifiedPostService = {
       // 2. 위로와 공감 게시물 (내가 작성한 것만)
       if (includeSources.includes('comfort')) {
         try {
-          console.log('💝 위로와 공감 내 게시물 조회 중...');
+          if (__DEV__) console.log('💝 위로와 공감 내 게시물 조회 중...');
           const comfortData = await comfortWallService.getPosts({
             ...params,
             author_only: true
           });
-          console.log('💝 위로와공감 API 응답:', {
+          if (__DEV__) console.log('💝 위로와공감 API 응답:', {
             hasData: !!comfortData,
             hasDataPosts: !!comfortData?.data?.posts,
             postsLength: comfortData?.data?.posts?.length || 0,
@@ -107,10 +107,10 @@ const unifiedPostService = {
               post_type: 'comfort'
             }));
             results.push(...comfortPosts);
-            console.log('✅ 위로와 공감 내 게시물:', comfortPosts.length, '개');
+            if (__DEV__) console.log('✅ 위로와 공감 내 게시물:', comfortPosts.length, '개');
           }
-        } catch (error: any) {
-          console.log('⚠️ 위로와 공감 게시물 조회 실패:', {
+        } catch (error: unknown) {
+          if (__DEV__) console.log('⚠️ 위로와 공감 게시물 조회 실패:', {
             message: error?.message,
             status: error?.response?.status,
             statusText: error?.response?.statusText,
@@ -129,13 +129,13 @@ const unifiedPostService = {
 
       // 3. 일반 게시물 - postService는 통합 관리에서 제외 (별도 독립 서비스)
       if (includeSources.includes('posts')) {
-        console.log('📝 일반 게시물은 postService로 별도 관리 - 현재 통합에서 제외');
+        if (__DEV__) console.log('📝 일반 게시물은 postService로 별도 관리 - 현재 통합에서 제외');
       }
 
       // 4. 챌린지 게시물 (안전한 처리)
       if (includeSources.includes('challenge')) {
         try {
-          console.log('🎯 챌린지 내 게시물 조회 중...');
+          if (__DEV__) console.log('🎯 챌린지 내 게시물 조회 중...');
           
           // 타임아웃 설정 (3초로 더 단축하여 빠른 fallback)
           const challengeTimeout = (promise: Promise<any>, timeoutMs: number = 3000) => {
@@ -162,15 +162,15 @@ const unifiedPostService = {
               source: 'challenge',
               post_type: 'challenge_created'
             })));
-            console.log('✅ 내가 생성한 챌린지:', myCreated.value.data.length, '개');
+            if (__DEV__) console.log('✅ 내가 생성한 챌린지:', myCreated.value.data.length, '개');
           } else if (myCreated.status === 'rejected') {
             const error = myCreated.reason;
             if (error?.message === 'CHALLENGE_API_TIMEOUT') {
-              console.log('⚠️ 챌린지 API 타임아웃 - 생성한 챌린지 조회 건너뜀');
+              if (__DEV__) console.log('⚠️ 챌린지 API 타임아웃 - 생성한 챌린지 조회 건너뜀');
             } else if (error?.message?.includes('401') || error?.response?.status === 401) {
-              console.log('⚠️ 인증 오류 - 챌린지 API 접근 권한 없음');
+              if (__DEV__) console.log('⚠️ 인증 오류 - 챌린지 API 접근 권한 없음');
             } else {
-              console.log('⚠️ 내가 생성한 챌린지 조회 실패:', error?.message || 'Unknown error');
+              if (__DEV__) console.log('⚠️ 내가 생성한 챌린지 조회 실패:', error?.message || 'Unknown error');
             }
           }
           
@@ -181,15 +181,15 @@ const unifiedPostService = {
               source: 'challenge', 
               post_type: 'challenge_participated'
             })));
-            console.log('✅ 내가 참여한 챌린지:', myParticipations.value.data.length, '개');
+            if (__DEV__) console.log('✅ 내가 참여한 챌린지:', myParticipations.value.data.length, '개');
           } else if (myParticipations.status === 'rejected') {
             const error = myParticipations.reason;
             if (error?.message === 'CHALLENGE_API_TIMEOUT') {
-              console.log('⚠️ 챌린지 API 타임아웃 - 참여한 챌린지 조회 건너뜀');
+              if (__DEV__) console.log('⚠️ 챌린지 API 타임아웃 - 참여한 챌린지 조회 건너뜀');
             } else if (error?.message?.includes('401') || error?.response?.status === 401) {
-              console.log('⚠️ 인증 오류 - 챌린지 참여 정보 접근 권한 없음');
+              if (__DEV__) console.log('⚠️ 인증 오류 - 챌린지 참여 정보 접근 권한 없음');
             } else {
-              console.log('⚠️ 내가 참여한 챌린지 조회 실패:', error?.message || 'Unknown error');
+              if (__DEV__) console.log('⚠️ 내가 참여한 챌린지 조회 실패:', error?.message || 'Unknown error');
             }
           }
           
@@ -200,10 +200,10 @@ const unifiedPostService = {
               post_type: challenge.post_type || 'challenge'
             }));
             results.push(...processedPosts);
-            console.log('✅ 챌린지 내 게시물:', processedPosts.length, '개');
+            if (__DEV__) console.log('✅ 챌린지 내 게시물:', processedPosts.length, '개');
           }
-        } catch (error: any) {
-          console.log('⚠️ 챌린지 게시물 조회 치명적 실패:', {
+        } catch (error: unknown) {
+          if (__DEV__) console.log('⚠️ 챌린지 게시물 조회 치명적 실패:', {
             message: error?.message,
             name: error?.name,
             stack: error?.stack?.split('\n')[0] // 스택의 첫 번째 라인만
@@ -215,7 +215,7 @@ const unifiedPostService = {
       // 5. 일상 돌아보기 (통계 기반)
       if (includeSources.includes('reflection')) {
         try {
-          console.log('📊 일상 돌아보기 데이터 조회 중...');
+          if (__DEV__) console.log('📊 일상 돌아보기 데이터 조회 중...');
           
           // 타임아웃 설정 (5초)
           const reflectionTimeout = (promise: Promise<any>, timeoutMs: number = 5000) => {
@@ -246,9 +246,9 @@ const unifiedPostService = {
               post_type: 'user_stats',
               stats_data: userStats.value.data
             });
-            console.log('✅ 사용자 통계 데이터 로드 성공');
+            if (__DEV__) console.log('✅ 사용자 통계 데이터 로드 성공');
           } else if (userStats.status === 'rejected') {
-            console.log('⚠️ 사용자 통계 조회 실패:', userStats.reason?.message || 'Unknown error');
+            if (__DEV__) console.log('⚠️ 사용자 통계 조회 실패:', userStats.reason?.message || 'Unknown error');
           }
           
           // 감정 트렌드를 게시물 형태로 변환
@@ -262,9 +262,9 @@ const unifiedPostService = {
               post_type: 'emotion_trends',
               trends_data: emotionTrends.value.data
             });
-            console.log('✅ 감정 트렌드 데이터 로드 성공');
+            if (__DEV__) console.log('✅ 감정 트렌드 데이터 로드 성공');
           } else if (emotionTrends.status === 'rejected') {
-            console.log('⚠️ 감정 트렌드 조회 실패:', emotionTrends.reason?.message || 'Unknown error');
+            if (__DEV__) console.log('⚠️ 감정 트렌드 조회 실패:', emotionTrends.reason?.message || 'Unknown error');
           }
           
           if (reflectionData.length > 0) {
@@ -276,10 +276,10 @@ const unifiedPostService = {
               is_anonymous: false
             }));
             results.push(...processedPosts);
-            console.log('✅ 일상 돌아보기 데이터:', processedPosts.length, '개');
+            if (__DEV__) console.log('✅ 일상 돌아보기 데이터:', processedPosts.length, '개');
           }
         } catch (error) {
-          console.log('⚠️ 일상 돌아보기 조회 실패:', error);
+          if (__DEV__) console.log('⚠️ 일상 돌아보기 조회 실패:', error);
           errors.push({ source: 'reflection', error });
         }
       }
@@ -300,7 +300,7 @@ const unifiedPostService = {
         errors: errors.length
       };
 
-      console.log('📊 통합 게시물 조회 결과:', summary);
+      if (__DEV__) console.log('📊 통합 게시물 조회 결과:', summary);
 
       return {
         status: 'success',
@@ -310,8 +310,8 @@ const unifiedPostService = {
         errors: errors.length > 0 ? errors : undefined
       };
 
-    } catch (error: any) {
-      console.log('⚠️ 통합 게시물 조회 치명적 오류:', error?.message);
+    } catch (error: unknown) {
+      if (__DEV__) console.log('⚠️ 통합 게시물 조회 치명적 오류:', error?.message);
       throw new Error('게시물을 불러오는 중 오류가 발생했습니다.');
     }
   },
@@ -321,7 +321,7 @@ const unifiedPostService = {
     source: 'myday' | 'comfort' | 'posts' | 'challenge' | 'reflection',
     params?: any
   ) => {
-    console.log(`🎯 ${source} 게시물 조회:`, params);
+    if (__DEV__) console.log(`🎯 ${source} 게시물 조회:`, params);
 
     switch (source) {
       case 'myday':
@@ -360,7 +360,7 @@ const unifiedPostService = {
 
   // 게시물 검색 (모든 소스에서)
   searchMyPosts: async (query: string, params?: any) => {
-    console.log('🔍 통합 게시물 검색:', { query, params });
+    if (__DEV__) console.log('🔍 통합 게시물 검색:', { query, params });
     
     // 각 소스에서 검색한 후 통합
     const results = await unifiedPostService.getAllMyPosts({

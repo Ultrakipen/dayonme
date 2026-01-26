@@ -46,7 +46,7 @@ export const HotSection = memo<HotSectionProps>(({
 
   return (
     <LinearGradient
-      colors={['rgba(255,100,100,0.08)', 'rgba(255,150,50,0.04)', 'transparent']}
+      colors={['rgba(255,100,100,0.15)', 'rgba(255,150,50,0.08)', 'rgba(255,180,100,0.03)', 'transparent']}
       start={{ x: 0, y: 0 }}
       end={{ x: 0, y: 1 }}
       style={styles.bestSectionGradient}
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
   },
   viewAllButton: {
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   },
   viewAllText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginRight: 4,
   },
   hotGridContainer: {
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
   },
   loadMoreText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginRight: 4,
   },
 });

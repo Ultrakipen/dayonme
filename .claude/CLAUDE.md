@@ -1,3 +1,4 @@
+# 모든 작업에 토큰을 절약할것(중요).
 # 모든 파일 작업에 드라이브 문자와 백슬래시를 포함한 완전한 절대 Windows 경로를 사용하세요.
 # 2026년 모바일 예상 트랜드와 인스타그램의 수준 등급으로 실제 서비스를 디자인과 구성,코드등 구현할것.
 # 앱 화면의 라이트모드,다크모드를 구분하여 구현해야함.
@@ -28,6 +29,14 @@
 - Working directory: C:\app_build\Iexist
 - Frontend source path: C:\app_build\Iexist\frontend\src
 - Backend source path: C:\app_build\Iexist\backend
+
+# 백엔드 작업 규칙 (중요)
+- 백엔드 파일 수정 시 반드시 SSH로 실제 서버에 접속하여 작업할 것
+- 로컬 backend/ 폴더는 절대 수정하지 말 것
+- SSH 접속 정보: root@222.122.203.18
+- 서버 백엔드 경로: /var/www/dayonme/backend
+- 백엔드 파일 읽기/수정/생성 모두 SSH 명령어로 실행할 것
+- 예시: ssh root@222.122.203.18 "cat /var/www/dayonme/backend/파일명"
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.

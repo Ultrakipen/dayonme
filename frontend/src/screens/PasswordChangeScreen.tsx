@@ -60,7 +60,7 @@ const PasswordChangeScreen: React.FC<PasswordChangeScreenProps> = ({ navigation 
         Vibration.vibrate([0, 50, 100, 50]);
         showAlert.success('성공', '비밀번호가 성공적으로 변경되었습니다.', [{ text: '확인', onPress: () => { setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); navigation.goBack(); }}]);
       } else { Vibration.vibrate(50); showAlert.error('오류', response.message || '비밀번호 변경에 실패했습니다.'); }
-    } catch (error: any) {
+    } catch (error: unknown) {
       Vibration.vibrate(50);
       const errorMessage = error?.message || error?.response?.data?.message || '비밀번호 변경 중 오류가 발생했습니다.';
       showAlert.error('오류', errorMessage);
@@ -165,32 +165,32 @@ const createStyles = (theme: any) => StyleSheet.create({
   container: { flex: 1 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: SPACING.md, paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + SPACING.sm : moderateScale(48), paddingBottom: SPACING.sm },
   backButton: { padding: SPACING.xs, marginLeft: -SPACING.xs },
-  headerTitle: { fontSize: FONT_SIZES.h3, fontWeight: '700', letterSpacing: -0.3, lineHeight: FONT_SIZES.h3 * 1.3 },
+  headerTitle: { fontSize: FONT_SIZES.h3, fontFamily: 'Pretendard-Bold', letterSpacing: -0.3, lineHeight: FONT_SIZES.h3 * 1.3 },
   headerSpacer: { width: moderateScale(40) },
   scrollView: { flex: 1 },
   scrollContent: { padding: SPACING.md, paddingBottom: moderateScale(40) },
   infoCard: { flexDirection: 'row', backgroundColor: theme.colors?.surface || theme.background, borderRadius: moderateScale(12), padding: SPACING.md, marginBottom: moderateScale(20), ...Platform.select({ ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: moderateScale(3) }, android: { elevation: 1 }}) },
   infoIconContainer: { width: moderateScale(40), height: moderateScale(40), borderRadius: moderateScale(20), backgroundColor: theme.colors.primary + '20', justifyContent: 'center', alignItems: 'center', marginRight: moderateScale(12) },
   infoContent: { flex: 1 },
-  infoTitle: { fontSize: FONT_SIZES.body, fontWeight: '700', marginBottom: moderateScale(6), letterSpacing: -0.2, lineHeight: FONT_SIZES.body * 1.4 },
-  infoText: { fontSize: FONT_SIZES.small, lineHeight: FONT_SIZES.small * 1.5, fontWeight: '400' },
+  infoTitle: { fontSize: FONT_SIZES.body, fontFamily: 'Pretendard-Bold', marginBottom: moderateScale(6), letterSpacing: -0.2, lineHeight: FONT_SIZES.body * 1.4 },
+  infoText: { fontSize: FONT_SIZES.small, lineHeight: FONT_SIZES.small * 1.5, fontFamily: 'Pretendard-Regular' },
   formCard: { backgroundColor: theme.colors?.surface || theme.background, borderRadius: moderateScale(12), padding: SPACING.md, marginBottom: moderateScale(20), ...Platform.select({ ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: moderateScale(3) }, android: { elevation: 1 }}) },
   inputSection: { marginBottom: moderateScale(24) },
-  inputLabel: { fontSize: FONT_SIZES.small, fontWeight: '700', marginBottom: moderateScale(8), letterSpacing: -0.1, lineHeight: FONT_SIZES.small * 1.4 },
+  inputLabel: { fontSize: FONT_SIZES.small, fontFamily: 'Pretendard-Bold', marginBottom: moderateScale(8), letterSpacing: -0.1, lineHeight: FONT_SIZES.small * 1.4 },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors?.surface || theme.surface, borderRadius: moderateScale(8), borderWidth: 1, borderColor: theme.colors?.border || theme.border, paddingHorizontal: moderateScale(12), height: moderateScale(48) },
   inputIcon: { marginRight: moderateScale(10) },
-  textInput: { flex: 1, fontSize: FONT_SIZES.body, fontWeight: '400', padding: 0, letterSpacing: -0.2, lineHeight: FONT_SIZES.body * 1.4 },
+  textInput: { flex: 1, fontSize: FONT_SIZES.body, fontFamily: 'Pretendard-Regular', padding: 0, letterSpacing: -0.2, lineHeight: FONT_SIZES.body * 1.4 },
   eyeButton: { padding: moderateScale(8), marginRight: moderateScale(-8) },
   strengthContainer: { flexDirection: 'row', alignItems: 'center', marginTop: moderateScale(8) },
   strengthBar: { flex: 1, height: moderateScale(4), backgroundColor: theme.colors?.border || theme.border, borderRadius: moderateScale(2), marginRight: moderateScale(10), overflow: 'hidden' },
   strengthBarFill: { height: '100%', borderRadius: moderateScale(2) },
-  strengthText: { fontSize: FONT_SIZES.small, fontWeight: '600', letterSpacing: -0.1, lineHeight: FONT_SIZES.small * 1.4 },
+  strengthText: { fontSize: FONT_SIZES.small, fontFamily: 'Pretendard-SemiBold', letterSpacing: -0.1, lineHeight: FONT_SIZES.small * 1.4 },
   matchContainer: { marginTop: moderateScale(8) },
   matchRow: { flexDirection: 'row', alignItems: 'center', gap: moderateScale(6) },
-  matchText: { fontSize: FONT_SIZES.small, fontWeight: '500', letterSpacing: -0.1, lineHeight: FONT_SIZES.small * 1.4 },
+  matchText: { fontSize: FONT_SIZES.small, fontFamily: 'Pretendard-Medium', letterSpacing: -0.1, lineHeight: FONT_SIZES.small * 1.4 },
   changeButton: { backgroundColor: theme.colors?.primary || theme.primary, borderRadius: moderateScale(8), paddingVertical: moderateScale(14), alignItems: 'center', ...Platform.select({ ios: { shadowColor: '#000000', shadowOffset: { width: 0, height: moderateScale(2) }, shadowOpacity: 0.1, shadowRadius: moderateScale(4) }, android: { elevation: 2 }}) },
   changeButtonDisabled: { backgroundColor: theme.colors?.border || theme.border, ...Platform.select({ ios: { shadowOpacity: 0 }, android: { elevation: 0 }}) },
-  changeButtonText: { fontSize: FONT_SIZES.bodyLarge, fontWeight: '700', color: theme.colors.background, letterSpacing: -0.2, lineHeight: FONT_SIZES.bodyLarge * 1.4 },
+  changeButtonText: { fontSize: FONT_SIZES.bodyLarge, fontFamily: 'Pretendard-Bold', color: theme.colors.background, letterSpacing: -0.2, lineHeight: FONT_SIZES.bodyLarge * 1.4 },
 });
 
 export default PasswordChangeScreen;

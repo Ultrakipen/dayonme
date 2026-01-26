@@ -10,6 +10,7 @@ export interface LoginCredentials {
     password: string;
     nickname?: string;
     profile_image_url?: string;
+    age_range?: string;
   }
   
   export interface User {
@@ -18,6 +19,7 @@ export interface LoginCredentials {
     email: string;
     nickname?: string;
     profile_image_url?: string;
+    age_range?: string;
   }
   
   export interface AuthResponse {

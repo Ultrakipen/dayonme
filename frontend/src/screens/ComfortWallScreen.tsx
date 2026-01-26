@@ -18,7 +18,7 @@ interface ComfortPost {
 
 const ComfortWallScreen: React.FC = () => {
   if (__DEV__) {
-    console.log('ComfortWallScreen rendering...');
+    if (__DEV__) console.log('ComfortWallScreen rendering...');
   }
 
   const { theme, isDark } = useModernTheme();
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 8,
   },
   subtitle: {
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   postTitle: {
     fontSize: FONT_SIZES.h3,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 8,
   },
   postContent: {
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   postAuthor: {
     fontSize: FONT_SIZES.small,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   actionButton: {
     flexDirection: 'row',
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   actionText: {
     marginLeft: 4,
     fontSize: FONT_SIZES.small,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   fab: {
     position: 'absolute',

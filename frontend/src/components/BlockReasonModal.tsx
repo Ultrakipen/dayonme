@@ -186,7 +186,7 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: theme.text.primary,
     letterSpacing: -0.4,
   },
@@ -230,11 +230,11 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: 15.5,
     color: theme.text.primary,
     marginLeft: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.2,
   },
   reasonLabelSelected: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#8B5CF6',
   },
   radio: {
@@ -274,7 +274,7 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   skipButtonText: {
     fontSize: 15.5,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: theme.text.primary,
     letterSpacing: -0.2,
   },
@@ -291,7 +291,7 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   blockButtonText: {
     fontSize: 15.5,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
     letterSpacing: -0.2,
   },

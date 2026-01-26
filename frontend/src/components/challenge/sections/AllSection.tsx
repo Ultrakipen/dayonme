@@ -88,7 +88,7 @@ export const AllSection = memo<AllSectionProps>(({
         <TouchableOpacity
           style={[styles.statusTab, allStatusFilter === 'active' && styles.statusTabActive]}
           onPress={() => {
-            console.log('🔘 진행 챌린지 버튼 클릭 - 현재 필터:', allStatusFilter);
+            if (__DEV__) console.log('🔘 진행 챌린지 버튼 클릭 - 현재 필터:', allStatusFilter);
             onFilterChange('active');
           }}
         >
@@ -103,7 +103,7 @@ export const AllSection = memo<AllSectionProps>(({
         <TouchableOpacity
           style={[styles.statusTab, allStatusFilter === 'completed' && styles.statusTabActive]}
           onPress={() => {
-            console.log('🔘 끝난 챌린지 버튼 클릭 - 현재 필터:', allStatusFilter);
+            if (__DEV__) console.log('🔘 끝난 챌린지 버튼 클릭 - 현재 필터:', allStatusFilter);
             onFilterChange('completed');
           }}
         >
@@ -156,15 +156,16 @@ export const AllSection = memo<AllSectionProps>(({
           scrollEnabled={false}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
-          initialNumToRender={10}
-          maxToRenderPerBatch={6}
-          windowSize={8}
+          initialNumToRender={8}
+          maxToRenderPerBatch={4}
+          windowSize={5}
+          updateCellsBatchingPeriod={50}
           onEndReached={() => {
             if (!loadingMore && challenges.length > 0 && challenges.length % 20 === 0) {
               onLoadMore();
             }
           }}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0.3}
           ListFooterComponent={() => (
             challenges.length > 0 && challenges.length % 20 === 0 && !loadingMore ? (
               <TouchableOpacity
@@ -216,7 +217,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
   },
   myChallengeButton: {
@@ -229,7 +230,7 @@ const styles = StyleSheet.create({
   },
   myChallengeText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginLeft: 4,
   },
   statusTabContainer: {
@@ -251,7 +252,7 @@ const styles = StyleSheet.create({
   },
   statusTabText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   statusTabTextActive: {
     color: '#FFFFFF',
@@ -279,7 +280,7 @@ const styles = StyleSheet.create({
   },
   loadMoreText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginLeft: 8,
   },
   loadingMore: {
@@ -291,7 +292,7 @@ const styles = StyleSheet.create({
   loadingMoreText: {
     marginLeft: 12,
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   warningContainer: {
     alignItems: 'center',
@@ -308,14 +309,14 @@ const styles = StyleSheet.create({
   },
   warningTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginTop: 16,
     marginBottom: 8,
     textAlign: 'center',
   },
   warningMessage: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
@@ -329,6 +330,6 @@ const styles = StyleSheet.create({
   warningButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 });

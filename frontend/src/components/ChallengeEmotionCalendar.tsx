@@ -164,7 +164,7 @@ const ChallengeEmotionCalendar: React.FC<ChallengeEmotionCalendarProps> = ({
 
         setEmotions(processedEmotions);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // 오프라인 또는 API 미구현 시 graceful 처리
       if (err.isOffline || err.response?.status === 404) {
         setEmotions([]);
@@ -243,8 +243,8 @@ const ChallengeEmotionCalendar: React.FC<ChallengeEmotionCalendarProps> = ({
         <Text style={[
           styles.dateText,
           { color: isDark ? '#e2e8f0' : '#374151' },
-          isToday && { color: isDark ? '#38bdf8' : '#0ea5e9', fontWeight: '700' },
-          isSelected && { color: isDark ? '#818cf8' : '#667eea', fontWeight: '700' }
+          isToday && { color: isDark ? '#38bdf8' : '#0ea5e9', fontFamily: 'Pretendard-Bold' },
+          isSelected && { color: isDark ? '#818cf8' : '#667eea', fontFamily: 'Pretendard-Bold' }
         ]}>
           {date.getDate()}
         </Text>
@@ -469,7 +469,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   header: {
     marginBottom: 12,
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#ffffff',
     flex: 1,
   },
@@ -506,11 +506,11 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   retryText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   weekNavigation: {
     flexDirection: 'row',
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   },
   weekText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   weekHeader: {
     flexDirection: 'row',
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
   },
   dayHeaderText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   dateGrid: {
     flexDirection: 'row',
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   emotionDot: {
     position: 'absolute',
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
   },
   othersCount: {
     fontSize: 8,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#fff',
   },
   emptyDot: {
@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   legend: {
     flexDirection: 'row',
@@ -635,7 +635,7 @@ const styles = StyleSheet.create({
   },
   legendPlus: {
     fontSize: 8,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#fff',
   },
   legendEmpty: {
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   modalOverlay: {
     flex: 1,
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
   },
   noEmotionsText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   emotionItem: {
     padding: 16,
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
   },
   emotionName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginBottom: 2,
   },
   emotionUser: {

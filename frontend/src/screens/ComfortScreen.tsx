@@ -18,11 +18,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   Vibration,
-  Share,
   useWindowDimensions,
   Text as RNText,
   DeviceEventEmitter,
 } from 'react-native';
+import Share from 'react-native-share';
 import {
   Text,
   Card,
@@ -50,11 +50,14 @@ import blockService, { BlockedUser, BlockedContent } from '../services/api/block
 import reportService from '../services/api/reportService';
 import bookmarkService from '../services/api/bookmarkService';
 import { normalizeImageUrl, isValidImageUrl } from '../utils/imageUtils';
+import { optimizeTextLength, truncateToSevenLines } from '../utils/textUtils';
+import { UI_CONSTANTS } from '../constants/uiConstants';
 import SearchMode from '../components/ComfortScreen/SearchMode';
 import { RFValue, normalize, normalizeSpace, normalizeTouchable, normalizeIcon, wp, hp } from '../utils/responsive';
 import ImageCarousel from '../components/ImageCarousel';
 import ClickableNickname from '../components/ClickableNickname';
 import ClickableAvatar from '../components/ClickableAvatar';
+import InstagramStylePostCard from '../components/ComfortWall/InstagramStylePostCard';
 import EmotionLoginPromptModal from '../components/EmotionLoginPromptModal';
 import { TYPOGRAPHY, ACCESSIBLE_COLORS } from '../utils/typography';
 import { COLORS } from '../constants/designSystem';
@@ -63,6 +66,9 @@ import { sanitizeInput, logger } from '../utils/security';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { FONT_SIZES } from '../constants';
 import FastImage from 'react-native-fast-image';
+import { useInfiniteComfortPostsQuery } from './ComfortScreen/hooks/useInfiniteComfortPostsQuery';
+import { useBestComfortPostsQuery } from './ComfortScreen/hooks/useBestComfortPostsQuery';
+import { useMyComfortPostsQuery } from './ComfortScreen/hooks/useMyComfortPostsQuery';
 
 // 레이아웃 상수 계산 함수 (반응형)
 const getLayoutConstants = (screenWidth: number) => {
@@ -83,14 +89,6 @@ const API_CONSTANTS = {
   SEARCH_HISTORY_MAX: 10,            // 검색 기록 최대 개수
 } as const;
 
-const UI_CONSTANTS = {
-  TOAST_DURATION: 2000,              // 토스트 표시 시간 (ms)
-  HIGHLIGHT_DURATION: 3000,          // 하이라이트 지속 시간 (ms)
-  MY_RECENT_POSTS_LIMIT: 5,          // 나의 최근 게시물 표시 개수
-  USER_POSTS_PREVIEW_LIMIT: 3,       // 사용자 게시물 미리보기 개수
-  TAGS_PREVIEW_LIMIT: 3,             // 태그 미리보기 개수 (카드)
-  TAGS_FILTER_LIMIT: 4,              // 필터 태그 표시 개수
-} as const;
 // lazy 초기화
 let _CARD_GAP: number | null = null;
 let _FIXED_CARD_HEIGHT: number | null = null;
@@ -186,50 +184,6 @@ const handleApiError = (error: ApiError, customMessages?: {
 
   return { isNetworkError, is404Error, message };
 };
-
-// 텍스트 길이 최적화 함수 - 단어 단위로 자르기
-const optimizeTextLength = (text: string, maxLength: number) => {
-  if (!text) return '';
-  if (text.length <= maxLength) return text;
-  
-  // 단어 단위로 자르기
-  const truncated = text.substring(0, maxLength - 3);
-  const lastSpaceIndex = truncated.lastIndexOf(' ');
-  
-  // 공백을 찾았고, 전체 길이의 80% 이상이면 단어 단위로 자르기
-  if (lastSpaceIndex > 0 && lastSpaceIndex > maxLength * 0.8) {
-    return truncated.substring(0, lastSpaceIndex) + '...';
-  }
-  
-  // 그렇지 않으면 기존 방식
-  return truncated + '...';
-};
-
-// 7줄 제한을 위한 텍스트 자르기 함수
-const truncateToSevenLines = (text: string) => {
-  if (!text) return '';
-  
-  // 폰트 크기 16px, 라인 높이 24px에 맞게 조정
-  // 한 줄당 35-40자 정도로 계산 (더 큰 폰트 고려)
-  // 7줄 * 38자 = 266자로 제한
-  const maxChars = 266;
-  
-  if (text.length <= maxChars) {
-    return text;
-  }
-  
-  // 266자에서 자르고 마지막 단어 경계 찾기
-  const truncated = text.substring(0, maxChars - 3);
-  const lastSpaceIndex = truncated.lastIndexOf(' ');
-  
-  // 단어 경계에서 자르기
-  if (lastSpaceIndex > maxChars * 0.8) {
-    return truncated.substring(0, lastSpaceIndex) + '...';
-  }
-  
-  return truncated + '...';
-};
-
 // 필터 옵션 - 컴포넌트 외부에서 정의하여 리렌더링 방지
 const FILTER_OPTIONS = [
   { key: 'all', label: '전체', icon: 'view-grid-outline', description: '모든 게시물' },
@@ -295,6 +249,8 @@ interface ComfortPost {
     nickname?: string;
     profile_image_url?: string;
   };
+  isLiked?: boolean; // 현재 사용자가 좋아요를 눌렀는지 여부
+  isBookmarked?: boolean; // 현재 사용자가 북마크했는지 여부
 }
 
 interface BestPost extends ComfortPost {}
@@ -310,13 +266,13 @@ const isValidSearchQuery = (query: string): boolean => {
   // 최소 1글자 이상이면 검색 허용 (매우 관대한 정책)
   if (trimmed.length >= 1) {
     if (__DEV__) {
-      console.log('✅ 검색어 유효:', trimmed);
+      if (__DEV__) console.log('✅ 검색어 유효:', trimmed);
     }
     return true;
   }
 
   if (__DEV__) {
-    console.log('❌ 검색어 무효:', trimmed);
+    if (__DEV__) console.log('❌ 검색어 무효:', trimmed);
   }
   return false;
 };
@@ -348,7 +304,7 @@ const HighlightedText: React.FC<{
           <Text key={index} style={[style, {
             backgroundColor: highlightColor,
             color: highlightTextColor,
-            fontWeight: '700',
+            fontFamily: 'Pretendard-Bold',
             paddingHorizontal: 4,
             paddingVertical: 1,
             borderRadius: 4,
@@ -426,7 +382,7 @@ const SearchInput: React.FC<{
     flex: 1,
     fontSize: 14,
     color: isDark ? '#ffffff' : 'white',
-    fontWeight: '500' as const,
+    fontFamily: 'Pretendard-Medium',
     paddingVertical: 8,
   };
 
@@ -489,7 +445,7 @@ const ComfortScreen: React.FC = () => {
   const renderCount = useRef(0);
   renderCount.current += 1;
   if (__DEV__) {
-    console.log('🔄 [ComfortScreen] 렌더링 횟수:', renderCount.current);
+    if (__DEV__) console.log('🔄 [ComfortScreen] 렌더링 횟수:', renderCount.current);
   }
 
   const navigation = useNavigation();
@@ -573,7 +529,7 @@ const ComfortScreen: React.FC = () => {
     const seen = new Set<number>();
     return postsArray.filter(post => {
       if (seen.has(post.post_id)) {
-        console.warn(`⚠️ [ComfortScreen] 중복 게시물 제거: post_id=${post.post_id}`);
+        if (__DEV__) console.warn(`⚠️ [ComfortScreen] 중복 게시물 제거: post_id=${post.post_id}`);
         return false;
       }
       seen.add(post.post_id);
@@ -585,7 +541,7 @@ const ComfortScreen: React.FC = () => {
     const seen = new Set<number>();
     return postsArray.filter(post => {
       if (seen.has(post.post_id)) {
-        console.warn(`⚠️ [ComfortScreen] 중복 베스트 게시물 제거: post_id=${post.post_id}`);
+        if (__DEV__) console.warn(`⚠️ [ComfortScreen] 중복 베스트 게시물 제거: post_id=${post.post_id}`);
         return false;
       }
       seen.add(post.post_id);
@@ -597,7 +553,12 @@ const ComfortScreen: React.FC = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-50)).current;
   const scrollToTopAnim = useRef(new Animated.Value(0)).current;
+  const headerTranslateY = useRef(new Animated.Value(0)).current; // 헤더 숨김/표시 애니메이션
   const flatListRef = useRef<typeof FlatList>(null);
+
+  // 스크롤 위치 추적
+  const lastScrollY = useRef(0);
+  const headerVisible = useRef(true);
   
   // searchInputRef와 isComposing 상태 제거 - SearchInput 컴포넌트에서 자체 관리
   const [clearTrigger, setClearTrigger] = useState(0); // SearchInput 클리어 트리거
@@ -609,20 +570,96 @@ const ComfortScreen: React.FC = () => {
   const selectedTagRef = useRef(selectedTag);
   const blockedUsersRef = useRef(blockedUsers);
   const blockedContentsRef = useRef(blockedContents);
+  const isAuthenticatedRef = useRef(isAuthenticated);
+  const userRef = useRef(user);
+  const likedPostsRef = useRef(likedPosts);
+  const bookmarkedPostsRef = useRef(bookmarkedPosts);
 
   // setTimeout cleanup용 ref
   const bookmarkToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 중복 클릭 방지용 ref
+  const isLikingRef = useRef<Set<number>>(new Set());
+  const isBookmarkingRef = useRef<Set<number>>(new Set());
+
+  // React Query - 무한 스크롤 게시물
+  const {
+    data: infinitePostsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isPostsLoading,
+    refetch: refetchPosts,
+  } = useInfiniteComfortPostsQuery({
+    selectedFilter: selectedFilter === 'all' ? 'latest' : selectedFilter === 'best' ? 'best' : 'latest',
+    searchQuery,
+    selectedTag,
+  });
+
+  // React Query - 베스트 게시물
+  const { data: bestPostsData, refetch: refetchBestPosts } = useBestComfortPostsQuery();
+
+  // React Query - 나의 게시물
+  const { data: myPostsData, refetch: refetchMyPosts } = useMyComfortPostsQuery({
+    enabled: isAuthenticated,
+  });
+
+  // React Query 데이터를 useMemo로 안정화 (깜빡임 방지)
+  const postsFromQuery = useMemo(() => {
+    if (!infinitePostsData) return [];
+    return infinitePostsData.pages.flatMap(page => page.posts);
+  }, [infinitePostsData]);
+
+  // posts state 동기화 (참조 안정성 유지)
+  useEffect(() => {
+    if (postsFromQuery.length > 0) {
+      setPosts(prev => {
+        // 길이와 내용이 같으면 이전 배열 유지 (참조 안정성)
+        if (prev.length === postsFromQuery.length &&
+            prev[0]?.post_id === postsFromQuery[0]?.post_id &&
+            prev[prev.length - 1]?.post_id === postsFromQuery[postsFromQuery.length - 1]?.post_id) {
+          return prev;
+        }
+        return postsFromQuery;
+      });
+      setLoading(false);
+    }
+  }, [postsFromQuery]);
+
+  useEffect(() => {
+    if (bestPostsData) {
+      // 얕은 비교로 불필요한 업데이트 방지
+      setBestPosts(prevBest => {
+        if (prevBest.length !== bestPostsData.length) return bestPostsData;
+        if (bestPostsData.length === 0) return bestPostsData;
+        if (prevBest[0]?.post_id !== bestPostsData[0]?.post_id) return bestPostsData;
+        return prevBest;
+      });
+    }
+  }, [bestPostsData]);
+
+  useEffect(() => {
+    if (myPostsData && isAuthenticated) {
+      // 얕은 비교로 불필요한 업데이트 방지
+      setMyRecentPosts(prevMy => {
+        if (prevMy.length !== myPostsData.length) return myPostsData;
+        if (myPostsData.length === 0) return myPostsData;
+        if (prevMy[0]?.post_id !== myPostsData[0]?.post_id) return myPostsData;
+        return prevMy;
+      });
+    }
+  }, [myPostsData, isAuthenticated]);
+
   // 상태 변경 시 ref 업데이트
   useEffect(() => {
     searchQueryRef.current = searchQuery;
   }, [searchQuery]);
-  
+
   useEffect(() => {
     pageRef.current = page;
   }, [page]);
-  
+
   useEffect(() => {
     hasMoreRef.current = hasMore;
   }, [hasMore]);
@@ -646,6 +683,22 @@ const ComfortScreen: React.FC = () => {
   useEffect(() => {
     blockedContentsRef.current = blockedContents;
   }, [blockedContents]);
+
+  useEffect(() => {
+    isAuthenticatedRef.current = isAuthenticated;
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  useEffect(() => {
+    likedPostsRef.current = likedPosts;
+  }, [likedPosts]);
+
+  useEffect(() => {
+    bookmarkedPostsRef.current = bookmarkedPosts;
+  }, [bookmarkedPosts]);
 
   // 차단 필터링 로직 통합 (중복 제거)
   const filterBlockedPosts = useCallback((posts: ComfortPost[]) => {
@@ -676,7 +729,7 @@ const ComfortScreen: React.FC = () => {
       }
 
       if (__DEV__) {
-        console.log('📊 데이터 로딩 시작:', {
+        if (__DEV__) console.log('📊 데이터 로딩 시작:', {
           isRefresh,
           selectedFilter,
           searchQuery: searchQuery || '없음',
@@ -737,7 +790,7 @@ const ComfortScreen: React.FC = () => {
               .map((bookmark: any) => bookmark.post.post_id)
           );
           setBookmarkedPosts(bookmarkedPostIds);
-          console.log('✅ 북마크 목록 로드:', bookmarkedPostIds.size, '개');
+          if (__DEV__) console.log('✅ 북마크 목록 로드:', bookmarkedPostIds.size, '개');
         }
       } else {
         setBlockedUsers([]);
@@ -809,6 +862,7 @@ const ComfortScreen: React.FC = () => {
       // 게시물 목록 처리 (차단된 콘텐츠 및 사용자 필터링)
       if (postsResponse.status === 'fulfilled' && postsResponse.value.data?.status === 'success') {
         const allPosts = postsResponse.value.data.data.posts || [];
+        const bookmarkedIds = isAuthenticated ? Array.from(bookmarkedPostsRef.current) : [];
 
         // 차단 필터링 적용
         const filteredPosts = allPosts.filter((post: ComfortPost) => {
@@ -827,13 +881,17 @@ const ComfortScreen: React.FC = () => {
           return true;
         });
 
-        const uniquePosts = deduplicatePosts(filteredPosts);
+        const uniquePosts = deduplicatePosts(filteredPosts).map(post => ({
+          ...post,
+          isLiked: (post as any).is_liked || likedPostsRef.current.has(post.post_id) || false,
+          isBookmarked: bookmarkedIds.includes(post.post_id)
+        }));
         setPosts(uniquePosts);
         setHasMore(allPosts.length >= API_CONSTANTS.PAGE_LIMIT);
-        console.log('✅ 게시물 로딩 성공:', uniquePosts.length, '개 (차단 필터링 후)');
+        if (__DEV__) console.log('✅ 게시물 로딩 성공:', uniquePosts.length, '개 (차단 필터링 후)');
       }
-    } catch (error: any) {
-      console.error('❌ 데이터 로드 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 데이터 로드 오류:', error);
       const { isNetworkError, message } = handleApiError(error, {
         network: '인터넷 연결을 확인하고 다시 시도해주세요.',
         default: '데이터를 불러오는 중 오류가 발생했습니다.',
@@ -902,15 +960,22 @@ const ComfortScreen: React.FC = () => {
           return true;
         });
 
+        const bookmarkedIds = Array.from(bookmarkedPostsRef.current);
+        const postsWithStatus = filteredPosts.map(post => ({
+          ...post,
+          isLiked: (post as any).is_liked || likedPostsRef.current.has(post.post_id) || false,
+          isBookmarked: bookmarkedIds.includes(post.post_id)
+        }));
+
         setPosts(prev => {
-          const combinedPosts = deduplicatePosts([...prev, ...filteredPosts]);
+          const combinedPosts = deduplicatePosts([...prev, ...postsWithStatus]);
           return combinedPosts;
         });
         setPage(prev => prev + 1);
         setHasMore(allPosts.length >= API_CONSTANTS.PAGE_LIMIT);
       }
     } catch (error) {
-      console.error('더 많은 게시물 로드 오류:', error);
+      if (__DEV__) console.error('더 많은 게시물 로드 오류:', error);
     } finally {
       setLoadingMore(false);
     }
@@ -923,14 +988,22 @@ const ComfortScreen: React.FC = () => {
 
   // 좋아요 기능
   const handleLike = useCallback(async (postId: number) => {
-    // 비로그인 사용자 체크
-    if (!isAuthenticated || !user) {
+    // 중복 클릭 방지
+    if (isLikingRef.current.has(postId)) {
+      return;
+    }
+
+    // 비로그인 사용자 체크 (ref 사용)
+    if (!isAuthenticatedRef.current || !userRef.current) {
       setEmotionLoginPromptAction('like');
       setEmotionLoginPromptVisible(true);
       return;
     }
 
-    const isLiked = likedPosts.has(postId);
+    const isLiked = likedPostsRef.current.has(postId);
+
+    // 실행 중 플래그 설정
+    isLikingRef.current.add(postId);
 
     // 햅틱 피드백
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
@@ -946,13 +1019,13 @@ const ComfortScreen: React.FC = () => {
 
     setPosts(prev => prev.map(post =>
       post.post_id === postId
-        ? { ...post, like_count: post.like_count + (isLiked ? -1 : 1) }
+        ? { ...post, like_count: post.like_count + (isLiked ? -1 : 1), isLiked: !isLiked }
         : post
     ));
 
     try {
       await comfortWallService.likePost(postId);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 에러 시 롤백
       setLikedPosts(prev => {
         const newSet = new Set(prev);
@@ -961,7 +1034,7 @@ const ComfortScreen: React.FC = () => {
       });
       setPosts(prev => prev.map(post =>
         post.post_id === postId
-          ? { ...post, like_count: post.like_count + (isLiked ? 1 : -1) }
+          ? { ...post, like_count: post.like_count + (isLiked ? 1 : -1), isLiked }
           : post
       ));
 
@@ -970,17 +1043,28 @@ const ComfortScreen: React.FC = () => {
       if (isNetworkError) {
         Alert.alert('네트워크 오류', ERROR_MESSAGES.NETWORK);
       }
+    } finally {
+      // 실행 중 플래그 해제
+      isLikingRef.current.delete(postId);
     }
-  }, [likedPosts]);
+  }, []);
 
   // 북마크 토글 핸들러
   const handleBookmark = useCallback(async (postId: number) => {
-    // 비로그인 사용자 체크
-    if (!isAuthenticated || !user) {
+    // 중복 클릭 방지
+    if (isBookmarkingRef.current.has(postId)) {
+      return;
+    }
+
+    // 비로그인 사용자 체크 (ref 사용)
+    if (!isAuthenticatedRef.current || !userRef.current) {
       setEmotionLoginPromptAction('like');
       setEmotionLoginPromptVisible(true);
       return;
     }
+
+    // 실행 중 플래그 설정
+    isBookmarkingRef.current.add(postId);
 
     // 햅틱 피드백
     if (Platform.OS === 'ios' || Platform.OS === 'android') {
@@ -1006,6 +1090,13 @@ const ComfortScreen: React.FC = () => {
         return newSet;
       });
 
+      // posts 배열의 isBookmarked도 업데이트
+      setPosts(prev => prev.map(post =>
+        post.post_id === postId
+          ? { ...post, isBookmarked: response.data.isBookmarked }
+          : post
+      ));
+
       // Toast 메시지 표시
       setBookmarkToast({
         visible: true,
@@ -1020,15 +1111,18 @@ const ComfortScreen: React.FC = () => {
         setBookmarkToast(prev => ({ ...prev, visible: false }));
         bookmarkToastTimeoutRef.current = null;
       }, UI_CONSTANTS.TOAST_DURATION);
-    } catch (error: any) {
-      console.error('북마크 토글 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('북마크 토글 오류:', error);
       const { message } = handleApiError(error, {
         notFound: '게시물을 찾을 수 없습니다.',
         default: '북마크 처리 중 오류가 발생했습니다.',
       });
       Alert.alert('오류', message);
+    } finally {
+      // 실행 중 플래그 해제
+      isBookmarkingRef.current.delete(postId);
     }
-  }, [isAuthenticated, user]);
+  }, []);
 
   // 검색 입력 처리 - Paper TextInput 사용으로 단순화
   // Paper TextInput이 한글 입력을 안정적으로 처리하므로 복잡한 로직 제거
@@ -1037,7 +1131,7 @@ const ComfortScreen: React.FC = () => {
   const performSearch = useCallback(async (query: string) => {
     try {
       setLoading(true);
-      console.log('🔍 검색 실행:', query);
+      if (__DEV__) console.log('🔍 검색 실행:', query);
 
       const response = await comfortWallService.getPosts({
         page: 1,
@@ -1053,7 +1147,12 @@ const ComfortScreen: React.FC = () => {
         const filteredPosts = filterBlockedPosts(allPosts);
 
         // 모든 상태를 한 번에 업데이트 (React 자동 batching 활용)
-        const uniquePosts = deduplicatePosts(filteredPosts);
+        const bookmarkedIds = Array.from(bookmarkedPostsRef.current);
+        const uniquePosts = deduplicatePosts(filteredPosts).map(post => ({
+          ...post,
+          isLiked: (post as any).is_liked || likedPostsRef.current.has(post.post_id) || false,
+          isBookmarked: bookmarkedIds.includes(post.post_id)
+        }));
         setPosts(uniquePosts);
         setHasMore(allPosts.length >= API_CONSTANTS.PAGE_LIMIT);
         setSearchQuery(query);
@@ -1061,7 +1160,7 @@ const ComfortScreen: React.FC = () => {
         setLoading(false);
       }
     } catch (error) {
-      console.error('검색 오류:', error);
+      if (__DEV__) console.error('검색 오류:', error);
       setLoading(false);
     }
   }, [blockedContents, blockedUsers]);
@@ -1070,7 +1169,7 @@ const ComfortScreen: React.FC = () => {
   const performTagOnlySearch = useCallback(async (query: string) => {
     try {
       setLoading(true);
-      console.log('🏷️ 태그 전용 검색 실행:', query);
+      if (__DEV__) console.log('🏷️ 태그 전용 검색 실행:', query);
 
       const response = await comfortWallService.getPosts({
         page: 1,
@@ -1087,7 +1186,12 @@ const ComfortScreen: React.FC = () => {
         const filteredPosts = filterBlockedPosts(allPosts);
 
         // 모든 상태를 한 번에 업데이트 (React 자동 batching 활용)
-        const uniquePosts = deduplicatePosts(filteredPosts);
+        const bookmarkedIds = Array.from(bookmarkedPostsRef.current);
+        const uniquePosts = deduplicatePosts(filteredPosts).map(post => ({
+          ...post,
+          isLiked: (post as any).is_liked || likedPostsRef.current.has(post.post_id) || false,
+          isBookmarked: bookmarkedIds.includes(post.post_id)
+        }));
         setPosts(uniquePosts);
         setHasMore(allPosts.length >= API_CONSTANTS.PAGE_LIMIT);
         setSearchQuery(''); // 일반 검색어는 비움
@@ -1096,7 +1200,7 @@ const ComfortScreen: React.FC = () => {
         setLoading(false);
       }
     } catch (error) {
-      console.error('태그 검색 오류:', error);
+      if (__DEV__) console.error('태그 검색 오류:', error);
       setLoading(false);
     }
   }, [blockedContents, blockedUsers]);
@@ -1116,7 +1220,7 @@ const ComfortScreen: React.FC = () => {
 
   // 검색 초기화 함수 - 리렌더링 최소화
   const handleSearchClear = useCallback(() => {
-    console.log('🗑️ 검색 초기화 및 전체 목록 로드');
+    if (__DEV__) console.log('🗑️ 검색 초기화 및 전체 목록 로드');
     
     // 상태 초기화
     setSearchQuery('');
@@ -1130,7 +1234,7 @@ const ComfortScreen: React.FC = () => {
     (async () => {
       try {
         setLoading(true);
-        console.log('📡 전체 목록 API 호출');
+        if (__DEV__) console.log('📡 전체 목록 API 호출');
         
         const [myRecentResponse, bestResponse, postsResponse] = await Promise.allSettled([
           comfortWallService.getMyRecentPosts(),
@@ -1174,13 +1278,18 @@ const ComfortScreen: React.FC = () => {
             return true;
           });
 
-          const uniquePosts = deduplicatePosts(filteredPosts);
+          const bookmarkedIds = Array.from(bookmarkedPostsRef.current);
+          const uniquePosts = deduplicatePosts(filteredPosts).map(post => ({
+            ...post,
+            isLiked: (post as any).is_liked || likedPostsRef.current.has(post.post_id) || false,
+            isBookmarked: bookmarkedIds.includes(post.post_id)
+          }));
           setPosts(uniquePosts);
           setHasMore(allPosts.length >= API_CONSTANTS.PAGE_LIMIT);
-          console.log('✅ 전체 목록 로드 완료:', uniquePosts.length, '개 (차단 필터링 후)');
+          if (__DEV__) console.log('✅ 전체 목록 로드 완료:', uniquePosts.length, '개 (차단 필터링 후)');
         }
       } catch (error) {
-        console.error('❌ 전체 목록 로드 오류:', error);
+        if (__DEV__) console.error('❌ 전체 목록 로드 오류:', error);
         Alert.alert('오류', '전체 목록을 불러오는 중 오류가 발생했습니다.');
       } finally {
         setLoading(false);
@@ -1194,7 +1303,7 @@ const ComfortScreen: React.FC = () => {
     const currentSearchQuery = searchQueryRef.current;
     const currentSelectedTag = selectedTagRef.current;
     
-    console.log('🏷️ 필터 변경:', {
+    if (__DEV__) console.log('🏷️ 필터 변경:', {
       from: currentSelectedFilter,
       to: filter,
       currentSearchQuery,
@@ -1203,7 +1312,7 @@ const ComfortScreen: React.FC = () => {
     
     // 같은 필터 클릭 시 무시 (불필요한 리렌더링 방지)
     if (currentSelectedFilter === filter) {
-      console.log('⚠️ 동일한 필터 선택됨, 무시');
+      if (__DEV__) console.log('⚠️ 동일한 필터 선택됨, 무시');
       return;
     }
     
@@ -1220,7 +1329,7 @@ const ComfortScreen: React.FC = () => {
 
       // 'all' 필터: 모든 검색 조건 초기화
       if (filter === 'all') {
-        console.log('🔄 전체 게시물 로드 (모든 조건 초기화)');
+        if (__DEV__) console.log('🔄 전체 게시물 로드 (모든 조건 초기화)');
         apiParams = {
           page: 1,
           limit: API_CONSTANTS.PAGE_LIMIT,
@@ -1252,7 +1361,7 @@ const ComfortScreen: React.FC = () => {
         }
       }
       
-      console.log('📡 필터 변경 API 호출:', apiParams);
+      if (__DEV__) console.log('📡 필터 변경 API 호출:', apiParams);
       
       const response = await comfortWallService.getPosts(apiParams);
 
@@ -1291,10 +1400,10 @@ const ComfortScreen: React.FC = () => {
             // post_id 배열을 비교하여 동일한 게시물인지 확인
             if (prevPosts.length === uniquePosts.length &&
                 prevPosts.every((post, index) => post.post_id === uniquePosts[index].post_id)) {
-              console.log('⚠️ [ComfortScreen] 동일한 게시물 목록, 업데이트 스킵');
+              if (__DEV__) console.log('⚠️ [ComfortScreen] 동일한 게시물 목록, 업데이트 스킵');
               return prevPosts; // 동일하면 이전 상태 유지
             }
-            console.log('✅ [ComfortScreen] 게시물 목록 업데이트:', uniquePosts.length, '개');
+            if (__DEV__) console.log('✅ [ComfortScreen] 게시물 목록 업데이트:', uniquePosts.length, '개');
             return uniquePosts;
           });
 
@@ -1310,10 +1419,10 @@ const ComfortScreen: React.FC = () => {
           }
         });
 
-        console.log('✅ 필터 변경 완료:', filteredPosts.length, '개 게시물 (차단 필터링 후)');
+        if (__DEV__) console.log('✅ 필터 변경 완료:', filteredPosts.length, '개 게시물 (차단 필터링 후)');
       }
     } catch (error) {
-      console.error('❌ 필터 변경 오류:', error);
+      if (__DEV__) console.error('❌ 필터 변경 오류:', error);
       // 오류 발생 시 이전 필터로 되돌리기
       dispatchFilter({ type: 'SET_FILTER', payload: currentSelectedFilter });
     }
@@ -1321,7 +1430,7 @@ const ComfortScreen: React.FC = () => {
 
   // 검색 모드 진입 - 항상 빈 검색어로 시작하여 인기 검색어 표시
   const enterSearchMode = useCallback(() => {
-    console.log('🔍 [enterSearchMode] 검색 모드 진입');
+    if (__DEV__) console.log('🔍 [enterSearchMode] 검색 모드 진입');
     setIsSearchMode(true);
     setCurrentSearchQuery(''); // 항상 빈 문자열로 시작
   }, []);
@@ -1334,7 +1443,7 @@ const ComfortScreen: React.FC = () => {
 
   // 검색어 변경 처리
   const handleSearchQueryChange = useCallback((query: string) => {
-    console.log('📝 [handleSearchQueryChange] 검색어 변경:', query);
+    if (__DEV__) console.log('📝 [handleSearchQueryChange] 검색어 변경:', query);
     setCurrentSearchQuery(query);
   }, []);
 
@@ -1351,7 +1460,7 @@ const ComfortScreen: React.FC = () => {
   // 검색 실행 및 기록 추가
   const executeSearch = useCallback(async (query: string) => {
     const trimmedQuery = query.trim();
-    console.log('🔍 [executeSearch] 검색 실행:', trimmedQuery);
+    if (__DEV__) console.log('🔍 [executeSearch] 검색 실행:', trimmedQuery);
 
     if (trimmedQuery.length > 0) {
       addToSearchHistory(trimmedQuery);
@@ -1361,7 +1470,7 @@ const ComfortScreen: React.FC = () => {
       // 검색 실행
       try {
         setLoading(true);
-        console.log('🔍 [executeSearch] API 호출 시작');
+        if (__DEV__) console.log('🔍 [executeSearch] API 호출 시작');
         const response = await comfortWallService.getPosts({
           page: 1,
           limit: API_CONSTANTS.PAGE_LIMIT,
@@ -1369,7 +1478,7 @@ const ComfortScreen: React.FC = () => {
           sort_by: selectedFilter === 'best' ? 'popular' : 'latest'
         });
 
-        console.log('🔍 [executeSearch] API 응답:', response.data?.status, '게시물 수:', response.data?.data?.posts?.length);
+        if (__DEV__) console.log('🔍 [executeSearch] API 응답:', response.data?.status, '게시물 수:', response.data?.data?.posts?.length);
 
         if (response.data?.status === 'success') {
           const allPosts = response.data.data.posts || [];
@@ -1384,27 +1493,32 @@ const ComfortScreen: React.FC = () => {
             }
             return true;
           });
-          const uniquePosts = deduplicatePosts(filteredPosts);
-          console.log('🔍 [executeSearch] 검색 결과:', uniquePosts.length, '개');
+          const bookmarkedIds = Array.from(bookmarkedPostsRef.current);
+          const uniquePosts = deduplicatePosts(filteredPosts).map(post => ({
+            ...post,
+            isLiked: (post as any).is_liked || likedPostsRef.current.has(post.post_id) || false,
+            isBookmarked: bookmarkedIds.includes(post.post_id)
+          }));
+          if (__DEV__) console.log('🔍 [executeSearch] 검색 결과:', uniquePosts.length, '개');
           setPosts(uniquePosts);
           setHasMore(allPosts.length >= API_CONSTANTS.PAGE_LIMIT);
 
           if (uniquePosts.length === 0) {
-            console.log('⚠️ [executeSearch] 검색 결과 없음');
+            if (__DEV__) console.log('⚠️ [executeSearch] 검색 결과 없음');
           }
         } else {
-          console.error('❌ [executeSearch] API 응답 실패:', response.data);
+          if (__DEV__) console.error('❌ [executeSearch] API 응답 실패:', response.data);
           Alert.alert('알림', '검색 결과를 불러올 수 없습니다.');
         }
       } catch (error) {
-        console.error('❌ [executeSearch] 검색 오류:', error);
+        if (__DEV__) console.error('❌ [executeSearch] 검색 오류:', error);
         Alert.alert('오류', '검색 중 오류가 발생했습니다.');
       } finally {
         setLoading(false);
-        console.log('🔍 [executeSearch] 검색 완료');
+        if (__DEV__) console.log('🔍 [executeSearch] 검색 완료');
       }
     } else {
-      console.log('⚠️ [executeSearch] 검색어가 비어있음');
+      if (__DEV__) console.log('⚠️ [executeSearch] 검색어가 비어있음');
     }
   }, [selectedFilter, addToSearchHistory, deduplicatePosts]);
 
@@ -1424,7 +1538,7 @@ const ComfortScreen: React.FC = () => {
     const currentSearchQuery = searchQueryRef.current;
     const newTag = tag === currentSelectedTag ? '' : tag;
     
-    console.log('🏷️ 태그 선택:', { 
+    if (__DEV__) console.log('🏷️ 태그 선택:', { 
       previous: currentSelectedTag, 
       new: newTag,
       currentSearch: currentSearchQuery 
@@ -1458,7 +1572,7 @@ const ComfortScreen: React.FC = () => {
         setClearTrigger(prev => prev + 1); // 검색창 초기화
       }
       
-      console.log('📡 태그 선택 API 호출:', apiParams);
+      if (__DEV__) console.log('📡 태그 선택 API 호출:', apiParams);
       
       const response = await comfortWallService.getPosts(apiParams);
 
@@ -1488,7 +1602,12 @@ const ComfortScreen: React.FC = () => {
           dispatchFilter({ type: 'SET_FILTER', payload: newFilter });
           setPage(1);
           setHasMore(allPosts.length >= API_CONSTANTS.PAGE_LIMIT);
-          const uniquePosts = deduplicatePosts(filteredPosts);
+          const bookmarkedIds = Array.from(bookmarkedPostsRef.current);
+          const uniquePosts = deduplicatePosts(filteredPosts).map(post => ({
+            ...post,
+            isLiked: (post as any).is_liked || likedPostsRef.current.has(post.post_id) || false,
+            isBookmarked: bookmarkedIds.includes(post.post_id)
+          }));
           setPosts(uniquePosts);
           if (newSearchQuery !== currentSearchQuery) {
             setSearchQuery(newSearchQuery);
@@ -1497,10 +1616,10 @@ const ComfortScreen: React.FC = () => {
 
         setLoading(false);
 
-        console.log('✅ 태그 선택 완료:', filteredPosts.length, '개 게시물 (차단 필터링 후)');
+        if (__DEV__) console.log('✅ 태그 선택 완료:', filteredPosts.length, '개 게시물 (차단 필터링 후)');
       }
     } catch (error) {
-      console.error('❌ 태그 선택 오료:', error);
+      if (__DEV__) console.error('❌ 태그 선택 오료:', error);
       setLoading(false);
     }
   }, []); // ref를 사용하므로 빈 의존성 배열 안전
@@ -1509,17 +1628,58 @@ const ComfortScreen: React.FC = () => {
   const handleScroll = useCallback((event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     const shouldShow = offsetY > 300;
-    
+
+    // 상단으로 이동 버튼 처리
     if (shouldShow !== showScrollToTop) {
       setShowScrollToTop(shouldShow);
-      
+
       Animated.timing(scrollToTopAnim, {
         toValue: shouldShow ? 1 : 0,
         duration: 300,
         useNativeDriver: true,
       }).start();
     }
-  }, [showScrollToTop, scrollToTopAnim]);
+
+    // 헤더 숨김/표시 처리
+    const currentScrollY = offsetY;
+    const scrollDiff = currentScrollY - lastScrollY.current;
+
+    // 스크롤이 최상단 근처(100px 이내)이면 항상 헤더 표시
+    if (currentScrollY < 100) {
+      if (!headerVisible.current) {
+        headerVisible.current = true;
+        Animated.timing(headerTranslateY, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }
+    }
+    // 아래로 스크롤 (scrollDiff > 0) && 일정 거리 이상 스크롤했을 때 헤더 숨김
+    else if (scrollDiff > 5 && currentScrollY > 100) {
+      if (headerVisible.current) {
+        headerVisible.current = false;
+        Animated.timing(headerTranslateY, {
+          toValue: -200, // 헤더 높이만큼 위로 이동
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }
+    }
+    // 위로 스크롤 (scrollDiff < 0) 헤더 표시
+    else if (scrollDiff < -5) {
+      if (!headerVisible.current) {
+        headerVisible.current = true;
+        Animated.timing(headerTranslateY, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }
+    }
+
+    lastScrollY.current = currentScrollY;
+  }, [showScrollToTop, scrollToTopAnim, headerTranslateY]);
 
   // 상단으로 스크롤
   const scrollToTop = useCallback(() => {
@@ -1536,7 +1696,7 @@ const ComfortScreen: React.FC = () => {
     currentFilter: FilterType;
     onFilterChange: (filter: FilterType) => void;
   }) => {
-    console.log('🔄 FilterChips 렌더링, currentFilter:', currentFilter);
+    if (__DEV__) console.log('🔄 FilterChips 렌더링, currentFilter:', currentFilter);
 
     return (
       <ScrollView
@@ -1563,7 +1723,7 @@ const ComfortScreen: React.FC = () => {
                 isActive && { transform: [{ scale: 1.05 }] }
               ]}
               onPress={() => {
-                console.log('🔄 필터 칩 클릭:', filter.key);
+                if (__DEV__) console.log('🔄 필터 칩 클릭:', filter.key);
                 onFilterChange(filter.key);
               }}
               activeOpacity={0.7}
@@ -1580,7 +1740,7 @@ const ComfortScreen: React.FC = () => {
                     color: isActive
                       ? COLORS.primary
                       : (isDark ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.65)'),
-                    fontWeight: isActive ? '700' : '500'
+                    fontFamily: isActive ? 'Pretendard-Bold' : 'Pretendard-Medium'
                   }
                 ]}
               >
@@ -1638,7 +1798,7 @@ const ComfortScreen: React.FC = () => {
       setMyRecentPosts(prev => prev.filter(post => post.post_id !== deletePostId));
       setBestPosts(prev => prev.filter(post => post.post_id !== deletePostId));
     } catch (error) {
-      console.error('게시물 삭제 오류:', error);
+      if (__DEV__) console.error('게시물 삭제 오류:', error);
       Alert.alert('오류', '게시물 삭제 중 오류가 발생했습니다.');
     } finally {
       setShowDeleteModal(false);
@@ -1664,29 +1824,20 @@ const ComfortScreen: React.FC = () => {
         ? `${nickname}님의 감정 나눔:\n\n${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`
         : `익명의 감정 나눔:\n\n${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`;
 
-      const result = await Share.share({
-        message: shareContent,
+      await Share.open({
         title: '위로와 공감 게시물 공유',
+        message: shareContent,
+        url: `https://dayonme.com/comfort/${postId}`,
       });
-
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          // 특정 앱으로 공유됨
-        } else {
-          // 공유됨
-        }
-      } else if (result.action === Share.dismissedAction) {
-        // 취소됨
-      }
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert('오류', '공유 중 오류가 발생했습니다.');
-      console.error('공유 오류:', error);
+      if (__DEV__) console.error('공유 오류:', error);
     }
   }, []);
 
   // 게시물 신고
  const handleReportPost = useCallback((postId: number) => {
-      console.log('🚨 신고하기 클릭됨, postId:', postId);
+      if (__DEV__) console.log('🚨 신고하기 클릭됨, postId:', postId);
       setMenuVisible(prev => ({
         ...prev,
         [postId]: false
@@ -1695,7 +1846,7 @@ const ComfortScreen: React.FC = () => {
       setSelectedReportReason('');
       setReportDetails('');
       setReportModalVisible(true);
-      console.log('🚨 reportModalVisible를 true로 설정함');
+      if (__DEV__) console.log('🚨 reportModalVisible를 true로 설정함');
     }, []);
 
   // 신고 제출
@@ -1752,8 +1903,8 @@ const ComfortScreen: React.FC = () => {
           title: '신고 완료',
           message: '신고가 정상적으로 접수되었습니다.\n관리자가 검토 후 적절한 조치를 취하겠습니다.',
         });
-      } catch (error: any) {
-        console.error('신고 제출 오류:', error);
+      } catch (error: unknown) {
+        if (__DEV__) console.error('신고 제출 오류:', error);
         setAlertConfig({
           visible: true,
           type: 'error',
@@ -1792,13 +1943,13 @@ const ComfortScreen: React.FC = () => {
     try {
       if (blockTarget.type === 'post') {
         const { postId } = blockTarget.data;
-        console.log('🚫 게시물 차단 시도:', postId);
+        if (__DEV__) console.log('🚫 게시물 차단 시도:', postId);
         await blockService.blockContent({
           contentType: 'post',
           contentId: postId,
           reason,
         });
-        console.log('✅ 게시물 차단 성공');
+        if (__DEV__) console.log('✅ 게시물 차단 성공');
 
         // 로컬 상태 업데이트
         setBlockedContents(prev => [
@@ -1817,13 +1968,13 @@ const ComfortScreen: React.FC = () => {
         setBestPosts(prev => prev.filter(post => post.post_id !== postId));
         setMyRecentPosts(prev => prev.filter(post => post.post_id !== postId));
 
-        console.log(`🗑️ 차단된 게시물 ${postId}를 모든 목록에서 제거 완료`);
+        if (__DEV__) console.log(`🗑️ 차단된 게시물 ${postId}를 모든 목록에서 제거 완료`);
         Alert.alert('완료', '게시물이 차단되었습니다.');
       } else if (blockTarget.type === 'user') {
         const { userId, nickname } = blockTarget.data;
-        console.log('🚫 사용자 차단 시도:', userId, nickname);
+        if (__DEV__) console.log('🚫 사용자 차단 시도:', userId, nickname);
         await blockService.blockUser(userId, reason);
-        console.log('✅ 사용자 차단 성공');
+        if (__DEV__) console.log('✅ 사용자 차단 성공');
 
         // 로컬 상태 업데이트
         setBlockedUsers(prev => [
@@ -1846,7 +1997,7 @@ const ComfortScreen: React.FC = () => {
         Alert.alert('완료', `${nickname}님이 차단되었습니다.`);
       }
     } catch (error) {
-      console.error('❌ 차단 오류:', error);
+      if (__DEV__) console.error('❌ 차단 오류:', error);
       Alert.alert('오류', '차단 중 오류가 발생했습니다.');
     } finally {
       setBlockTarget(null);
@@ -1856,7 +2007,7 @@ const ComfortScreen: React.FC = () => {
   // 게시물 상세보기
   const handlePostPress = useCallback((post: ComfortPost) => {
     Vibration.vibrate(10);
-    console.log('🔗 게시물 클릭:', { postId: post.post_id, title: post.title });
+    if (__DEV__) console.log('🔗 게시물 클릭:', { postId: post.post_id, title: post.title });
     navigation.navigate('PostDetail', {
       postId: post.post_id,
       postType: 'comfort',
@@ -1867,13 +2018,13 @@ const ComfortScreen: React.FC = () => {
 
   // 베스트 게시물 클릭 시 상세 페이지로 이동 (요청사항 수정)
   const handleBestPostPress = useCallback((post: BestPost) => {
-    console.log('🏆 베스트 게시물 클릭 - 상세페이지로 이동:', { postId: post.post_id, title: post.title });
+    if (__DEV__) console.log('🏆 베스트 게시물 클릭 - 상세페이지로 이동:', { postId: post.post_id, title: post.title });
     handlePostPress(post);
   }, [handlePostPress]);
 
   // 나의 최근 게시물 클릭 시 목록의 해당 위치로 스크롤 + 하이라이트 (요청사항 수정)
   const handleMyRecentPostPress = useCallback((post: ComfortPost) => {
-    console.log('📝 나의 최근 게시물 클릭 - 목록 하이라이트:', { postId: post.post_id, title: post.title });
+    if (__DEV__) console.log('📝 나의 최근 게시물 클릭 - 목록 하이라이트:', { postId: post.post_id, title: post.title });
 
     // 현재 게시물 목록에서 해당 게시물의 인덱스 찾기
     const postIndex = posts.findIndex(p => p.post_id === post.post_id);
@@ -1923,11 +2074,11 @@ const ComfortScreen: React.FC = () => {
       highlightTimeoutRef.current = setTimeout(() => {
         setHighlightedPostId(null);
         highlightTimeoutRef.current = null;
-        console.log(`✨ ${post.title} 게시물 하이라이트 완료`);
+        if (__DEV__) console.log(`✨ ${post.title} 게시물 하이라이트 완료`);
       }, UI_CONSTANTS.HIGHLIGHT_DURATION);
     } else {
       // 목록에 없는 경우 상세 페이지로 이동
-      console.log('⚠️ 나의 최근 게시물이 현재 목록에 없음, 상세페이지로 이동');
+      if (__DEV__) console.log('⚠️ 나의 최근 게시물이 현재 목록에 없음, 상세페이지로 이동');
       handlePostPress(post);
     }
   }, [posts, bestPosts.length, myRecentPosts.length, handlePostPress]);
@@ -1936,7 +2087,7 @@ const ComfortScreen: React.FC = () => {
   const handlePostsSortChange = useCallback(async (sortOrder: 'latest' | 'popular') => {
     if (postsSortOrder === sortOrder) return;
     
-    console.log('📋 게시물 정렬 순서 변경:', sortOrder);
+    if (__DEV__) console.log('📋 게시물 정렬 순서 변경:', sortOrder);
     
     try {
       setLoading(true);
@@ -1956,14 +2107,19 @@ const ComfortScreen: React.FC = () => {
         // 차단 필터링 적용 (통합 함수 사용)
         const filteredPosts = filterBlockedPosts(allPosts);
 
-        const uniquePosts = deduplicatePosts(filteredPosts);
+        const bookmarkedIds = Array.from(bookmarkedPostsRef.current);
+        const uniquePosts = deduplicatePosts(filteredPosts).map(post => ({
+          ...post,
+          isLiked: (post as any).is_liked || likedPostsRef.current.has(post.post_id) || false,
+          isBookmarked: bookmarkedIds.includes(post.post_id)
+        }));
         setPosts(uniquePosts);
         setPage(1);
         setHasMore(allPosts.length >= API_CONSTANTS.PAGE_LIMIT);
-        console.log('✅ 정렬 순서 변경 완료:', uniquePosts.length, '개 게시물 (차단 필터링 후)');
+        if (__DEV__) console.log('✅ 정렬 순서 변경 완료:', uniquePosts.length, '개 게시물 (차단 필터링 후)');
       }
     } catch (error) {
-      console.error('❌ 정렬 순서 변경 오류:', error);
+      if (__DEV__) console.error('❌ 정렬 순서 변경 오류:', error);
       Alert.alert('오류', '정렬 순서 변경 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -1993,7 +2149,7 @@ const ComfortScreen: React.FC = () => {
       setBookmarkedPosts(new Set());
       setLikedPosts(new Set());
 
-      console.log('🧹 ComfortScreen 정리 완료');
+      if (__DEV__) console.log('🧹 ComfortScreen 정리 완료');
     };
   }, [fadeAnim, slideAnim, scrollToTopAnim]);
 
@@ -2010,7 +2166,7 @@ const ComfortScreen: React.FC = () => {
 
       // Optimistic Update: newPost가 있으면 즉시 목록에 추가
       if (newPost && newPost.post_id) {
-        console.log('✨ [ComfortScreen] Optimistic Update - 새 게시물 추가:', {
+        if (__DEV__) console.log('✨ [ComfortScreen] Optimistic Update - 새 게시물 추가:', {
           post_id: newPost.post_id,
           anonymous_emotion_id: newPost.anonymous_emotion_id,
           title: newPost.title?.substring(0, 20)
@@ -2030,12 +2186,12 @@ const ComfortScreen: React.FC = () => {
         setPosts((prevPosts: ComfortPost[]) => {
           const exists = prevPosts.some((p: ComfortPost) => p.post_id === newPost.post_id);
           if (exists) {
-            console.log('⚠️ [ComfortScreen] 이미 존재하는 게시물, 업데이트');
+            if (__DEV__) console.log('⚠️ [ComfortScreen] 이미 존재하는 게시물, 업데이트');
             return prevPosts.map((p: ComfortPost) =>
               p.post_id === newPost.post_id ? postWithUser : p
             );
           }
-          console.log('✅ [ComfortScreen] 새 게시물 목록 맨 앞에 추가');
+          if (__DEV__) console.log('✅ [ComfortScreen] 새 게시물 목록 맨 앞에 추가');
           return [postWithUser, ...prevPosts];
         });
 
@@ -2049,13 +2205,13 @@ const ComfortScreen: React.FC = () => {
 
       // refresh가 명시적으로 true일 때만 새로고침, 그렇지 않으면 캐시된 데이터 사용
       if (shouldRefresh) {
-        console.log('🔄 [ComfortScreen] 명시적 새로고침 요청');
+        if (__DEV__) console.log('🔄 [ComfortScreen] 명시적 새로고침 요청');
         loadData(true); // 강제 새로고침
         // params 초기화하여 다음 포커스에서는 새로고침하지 않음
         navigation.setParams({ refresh: false } as never);
       } else if (posts.length === 0) {
         // 초기 로드 시에만 데이터 로드
-        console.log('🔄 [ComfortScreen] 초기 데이터 로드');
+        if (__DEV__) console.log('🔄 [ComfortScreen] 초기 데이터 로드');
         loadData();
       }
     }, [route.params, posts.length, navigation, user])
@@ -2065,7 +2221,7 @@ const ComfortScreen: React.FC = () => {
   useEffect(() => {
     const subscription = DeviceEventEmitter.addListener('homeScreenRefresh', (event) => {
       if (event?.postUpdated) {
-        console.log('🔄 [ComfortScreen] 게시물 수정 감지 - 목록 새로고침');
+        if (__DEV__) console.log('🔄 [ComfortScreen] 게시물 수정 감지 - 목록 새로고침');
         loadData(true); // 강제 새로고침
       }
     });
@@ -2075,16 +2231,25 @@ const ComfortScreen: React.FC = () => {
     };
   }, [loadData]);
 
+  // 프로필 이미지 URL 정규화 - 메모이제이션으로 깜빡임 방지
+  const normalizedProfileImageUrl = useMemo(() =>
+    user?.profile_image_url ? normalizeImageUrl(user.profile_image_url) : null,
+    [user?.profile_image_url]
+  );
+
+  // 프로필 이미지 source 객체 - 메모이제이션으로 깜빡임 방지
+  const profileImageSource = useMemo(() => normalizedProfileImageUrl ? ({
+    uri: normalizedProfileImageUrl,
+    priority: FastImage.priority.high,
+    cache: FastImage.cacheControl.web,
+  }) : null, [normalizedProfileImageUrl]);
+
   // 프로필 이미지 컴포넌트 - 필터 변경과 무관하게 유지
   const HeaderProfileImage = useMemo(() => {
-    if (user?.profile_image_url) {
+    if (profileImageSource) {
       return (
         <FastImage
-          source={{
-            uri: normalizeImageUrl(user.profile_image_url),
-            priority: FastImage.priority.high,
-            cache: FastImage.cacheControl.immutable,
-          }}
+          source={profileImageSource}
           style={{
             width: 46,
             height: 46,
@@ -2097,7 +2262,7 @@ const ComfortScreen: React.FC = () => {
       );
     }
     return <MaterialCommunityIcons name="account-circle-outline" size={34} color={modernTheme.text.primary} />;
-  }, [user?.profile_image_url, user?.user_id, modernTheme.bg.border, modernTheme.text.primary]);
+  }, [profileImageSource, modernTheme.bg.border, modernTheme.text.primary]);
 
   // 2025년 트렌드 헤더 컴포넌트 - 메모이제이션으로 불필요한 재렌더링 방지
   const ModernHeader = useMemo(() => (
@@ -2223,7 +2388,7 @@ const ComfortScreen: React.FC = () => {
         </View>
       </View>
     </View>
-  ), [modernTheme, isDark, styles, COLORS, HeaderProfileImage, searchQuery, selectedFilter, navigation, enterSearchMode, handleSearchClear, handleFilterChange]);
+  ), [modernTheme, isDark, COLORS, HeaderProfileImage, searchQuery, selectedFilter, navigation, enterSearchMode, handleSearchClear, handleFilterChange]);
 
   // 베스트 게시물 카드 (3개씩 배치)
   const BestPostCard = ({ post, index }: { post: BestPost; index: number }) => (
@@ -2338,431 +2503,38 @@ const ComfortScreen: React.FC = () => {
       index={index}
       highlightedPostId={highlightedPostId}
       isMenuVisible={menuVisible[item.post_id] || false}
-      isBookmarked={bookmarkedPosts.has(item.post_id)}
-      isLiked={likedPosts.has(item.post_id)}
+      isBookmarked={item.isBookmarked || false}
+      isLiked={item.isLiked || false}
       isDarkMode={isDark}
       themeColors={COLORS}
       cardStyles={styles}
+      user={user}
+      searchQuery={searchQuery}
+      selectedTag={selectedTag}
+      handlePostPress={handlePostPress}
+      handleLike={handleLike}
+      handleBookmark={handleBookmark}
+      toggleMenu={toggleMenu}
+      handleShare={handleShare}
+      handleEditPost={handleEditPost}
+      handleDeletePost={handleDeletePost}
+      handleBlockPost={handleBlockPost}
+      handleBlockUser={handleBlockUser}
+      handleReportPost={handleReportPost}
+      handleTagSelect={handleTagSelect}
     />
-  ), [highlightedPostId, menuVisible, bookmarkedPosts, likedPosts, isDark, COLORS, styles]);
+  ), [highlightedPostId, menuVisible, isDark, user, searchQuery, selectedTag, handlePostPress, handleLike, handleBookmark, toggleMenu, handleShare, handleEditPost, handleDeletePost, handleBlockPost, handleBlockUser, handleReportPost, handleTagSelect]);
 
-  // 인스타그램 스타일 게시물 카드 (2개씩 배치)
-  const InstagramStylePostCard = React.memo(({ item, index, highlightedPostId, isMenuVisible, isBookmarked, isLiked, isDarkMode, themeColors, cardStyles }: { item: ComfortPost; index: number; highlightedPostId: number | null; isMenuVisible: boolean; isBookmarked: boolean; isLiked: boolean; isDarkMode: boolean; themeColors: typeof COLORS; cardStyles: typeof styles }) => {
-    const isMyPost = user?.user_id === item.user_id;
-    const hasImage = (item.image_url || (item.images && item.images.length > 0));
+  // FlatList extraData 메모이제이션
+  const flatListExtraData = useMemo(() => ({
+    menuVisible
+  }), [menuVisible]);
 
-    // randomEmotion과 timeAgo를 useMemo로 메모이제이션하여 불필요한 재계산 방지
-    // anonymous_emotion_id가 있으면 저장된 감정 사용
-    const randomEmotion = useMemo(() => getRandomEmotion(item.user_id, item.post_id, 0, item.anonymous_emotion_id), [item.user_id, item.post_id, item.anonymous_emotion_id]);
-    const timeAgo = useMemo(() => getTimeAgo(item.created_at), [item.created_at]);
-    const isHighlighted = highlightedPostId === item.post_id;
-    
-    // 하이라이트 애니메이션 값
-    const highlightAnim = useRef(new Animated.Value(0)).current;
-    const heartScaleAnim = useRef(new Animated.Value(1)).current;
-
-    // 하트 애니메이션 함수
-    const animateHeart = useCallback(() => {
-      Animated.sequence([
-        Animated.timing(heartScaleAnim, {
-          toValue: 1.3,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(heartScaleAnim, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }, [heartScaleAnim]);
-
-    // 하이라이트 상태 변화 감지 및 애니메이션
-    React.useEffect(() => {
-      if (isHighlighted) {
-        // 하이라이트 시작 - 펄스 애니메이션
-        Animated.sequence([
-          Animated.timing(highlightAnim, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: false,
-          }),
-          Animated.timing(highlightAnim, {
-            toValue: 0.7,
-            duration: 200,
-            useNativeDriver: false,
-          }),
-          Animated.timing(highlightAnim, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: false,
-          }),
-        ]).start();
-      } else {
-        // 하이라이트 종료
-        Animated.timing(highlightAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: false,
-        }).start();
-      }
-    }, [isHighlighted, highlightAnim]);
-    
-    // 이미지가 있는 경우와 없는 경우의 텍스트 길이 조정
-    const titleMaxLength = hasImage ? 50 : 70;
-    
-    const optimizedTitle = optimizeTextLength(item.title || '', titleMaxLength);
-    // 이미지 없을 때는 7줄 제한 함수 사용, 있을 때는 기존 로직 사용
-    const optimizedContent = hasImage 
-      ? optimizeTextLength(item.content || '', 100)
-      : truncateToSevenLines(item.content || '');
-    
-    return (
-      <TouchableOpacity
-        style={[cardStyles.instagramCard]}
-        onPress={() => {
-          console.log('🔗 Instagram PostCard 클릭됨:', { postId: item.post_id, title: item.title });
-          handlePostPress(item);
-        }}
-        activeOpacity={0.95}
-        accessible={true}
-        accessibilityLabel={`${item.title} 게시물`}
-        accessibilityHint="탭하여 게시물 상세 보기"
-      >
-          <Animated.View style={[
-            cardStyles.instagramCardContainer,
-            { backgroundColor: themeColors.surface },
-          isHighlighted && {
-            borderWidth: highlightAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [1, 3],
-            }),
-            borderColor: highlightAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [themeColors.outline + '40', themeColors.primary],
-            }),
-            shadowOpacity: highlightAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0.04, 0.3],
-            }),
-            elevation: highlightAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [2, 8],
-            }),
-            transform: [{
-              scale: highlightAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [1, 1.02],
-              })
-            }],
-          }
-        ]}>
-          {/* 헤더 */}
-          <View style={cardStyles.instagramCardHeader}>
-            <View style={cardStyles.instagramAuthor}>
-              {/* Profile image or avatar */}
-              {/* 프로필 사진 또는 감정 이모지 */}
-              <ClickableAvatar
-                key={`avatar-${item.post_id}-${item.user_id}`}
-                userId={item.user_id}
-                nickname={item.user?.nickname || '사용자'}
-                isAnonymous={item.is_anonymous}
-                avatarUrl={item.user?.profile_image_url}
-                avatarText={randomEmotion.emoji}
-                avatarEmojiCode={randomEmotion.emojiCode}
-                avatarColor={randomEmotion.color}
-                size={44}
-              />
-              <View style={cardStyles.instagramAuthorInfo}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style={[cardStyles.instagramAuthorName, { color: themeColors.onSurface }]}>
-                    {item.is_anonymous ? randomEmotion.label : item.user?.nickname || '사용자'}
-                  </Text>
-                  {isMyPost && item.is_anonymous && (
-                    <Text style={[cardStyles.authorBadge, { color: themeColors.onSurfaceVariant }]}> [나]</Text>
-                  )}
-                </View>
-                <Text style={[cardStyles.instagramPostDate, { color: themeColors.onSurfaceVariant }]}>
-                  {timeAgo}
-                </Text>
-              </View>
-            </View>
-
-            {/* 옵션 메뉴 버튼 - 비로그인 사용자는 볼 수 없음 */}
-            {user && (
-              <TouchableOpacity
-                onPress={() => toggleMenu(item.post_id)}
-                style={cardStyles.instagramMenuButton}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <MaterialCommunityIcons name="dots-horizontal" size={18} color={themeColors.onSurfaceVariant} />
-              </TouchableOpacity>
-            )}
-
-            {/* 옵션 메뉴 모달 */}
-            <Modal
-              visible={isMenuVisible}
-              transparent={true}
-              animationType="slide"
-              onRequestClose={() => toggleMenu(item.post_id)}
-            >
-              <View style={cardStyles.bottomSheetOverlay}>
-                <TouchableOpacity
-                  style={cardStyles.bottomSheetBackdrop}
-                  activeOpacity={1}
-                  onPress={() => toggleMenu(item.post_id)}
-                />
-                <View style={[cardStyles.bottomSheetContainer, { backgroundColor: themeColors.surface }]}>
-                  <View style={cardStyles.bottomSheetHandle} />
-
-                  <TouchableOpacity
-                    style={cardStyles.bottomSheetItem}
-                    onPress={() => handleShare(item.post_id, item.content, item.nickname)}
-                  >
-                    <MaterialCommunityIcons name="share-outline" size={22} color={themeColors.text} />
-                    <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>공유하기</Text>
-                  </TouchableOpacity>
-
-                  {isMyPost && (
-                    <>
-                      <TouchableOpacity
-                        style={cardStyles.bottomSheetItem}
-                        onPress={() => handleEditPost(item.post_id)}
-                      >
-                        <MaterialCommunityIcons name="pencil" size={22} color={themeColors.text} />
-                        <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>수정하기</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={cardStyles.bottomSheetItem}
-                        onPress={() => handleDeletePost(item.post_id)}
-                      >
-                        <MaterialCommunityIcons name="delete" size={22} color={themeColors.error} />
-                        <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.error }]}>삭제하기</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
-
-                  {!isMyPost && (
-                    <>
-                      <TouchableOpacity
-                        style={cardStyles.bottomSheetItem}
-                        onPress={() => handleBlockPost(item.post_id)}
-                      >
-                        <MaterialCommunityIcons name="block-helper" size={22} color={themeColors.text} />
-                        <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>게시물 차단</Text>
-                      </TouchableOpacity>
-                      {!item.is_anonymous && (
-                        <TouchableOpacity
-                          style={cardStyles.bottomSheetItem}
-                          onPress={() => handleBlockUser(item.post_id, item.user_id, item.user?.nickname || '사용자')}
-                        >
-                          <MaterialCommunityIcons name="account-cancel" size={22} color={themeColors.text} />
-                          <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>사용자 차단</Text>
-                        </TouchableOpacity>
-                      )}
-                      <TouchableOpacity
-                        style={cardStyles.bottomSheetItem}
-                        onPress={() => handleReportPost(item.post_id)}
-                      >
-                        <MaterialCommunityIcons name="flag" size={22} color={themeColors.warning} />
-                        <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.warning }]}>신고하기</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
-                </View>
-              </View>
-            </Modal>
-          </View>
-
-          {/* 컨텐츠 영역 */}
-          <View style={cardStyles.instagramContent}>
-            {/* 제목 */}
-            <HighlightedText
-              text={optimizedTitle}
-              highlight={searchQuery}
-              style={[cardStyles.instagramTitle, { color: themeColors.onSurface }]}
-              numberOfLines={1}
-            />
-
-            {/* 이미지 또는 확장된 내용 */}
-            {hasImage ? (
-              <View style={cardStyles.instagramImageContainer}>
-                {(() => {
-                  // 이미지 배열 준비 (여러 이미지 지원)
-                  const imageUrls = item.images && item.images.length > 0
-                    ? item.images.map(img => normalizeImageUrl(img)).filter(url => isValidImageUrl(url) && url)
-                    : item.image_url && isValidImageUrl(item.image_url)
-                      ? [normalizeImageUrl(item.image_url)].filter(url => url)
-                      : [];
-
-                  if (imageUrls.length > 0) {
-                    return (
-                      <ImageCarousel
-                        images={imageUrls}
-                        height={120}
-                        borderRadius={8}
-                        showFullscreenButton={true}
-                        accessible={true}
-                        accessibilityLabel={`게시물 이미지 ${imageUrls.length}개`}
-                      />
-                    );
-                  }
-                  return null;
-                })()}
-              </View>
-            ) : (
-              <Text
-                style={[cardStyles.instagramContentText, { color: themeColors.onSurfaceVariant }]}
-                numberOfLines={4}
-              >
-                {optimizedContent}
-              </Text>
-            )}
-
-            {/* 이미지가 있는 경우의 축약된 내용 */}
-            {hasImage && (
-              <HighlightedText
-                text={optimizedContent}
-                highlight={searchQuery}
-                style={[cardStyles.instagramContentTextWithImage, { color: themeColors.onSurfaceVariant }]}
-                numberOfLines={2}
-              />
-            )}
-          </View>
-
-
-          {/* 공간 확보를 위한 플렉스 영역 */}
-          <View style={cardStyles.instagramSpacer} />
-
-          {/* 태그 - 액션 버튼 바로 상단에 위치 (배경 없는 간단한 스타일) */}
-          {(() => {
-            const tagsToShow = item.tags;
-
-            if (tagsToShow && Array.isArray(tagsToShow) && tagsToShow.length > 0) {
-              return (
-                <View style={cardStyles.instagramSimpleTagsAboveActions}>
-                  {tagsToShow.slice(0, UI_CONSTANTS.TAGS_FILTER_LIMIT).map((tag, index) => {
-                    const tagName = typeof tag === 'string' ? tag : (tag?.name || '');
-                    if (!tagName) return null;
-
-                    return (
-                      <TouchableOpacity
-                        key={`${item.post_id}-simple-tag-${index}`}
-                        onPress={() => handleTagSelect(tagName)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[
-                          cardStyles.instagramSimpleTagText,
-                          selectedTag === tagName && cardStyles.instagramSimpleTagTextSelected,
-                        ]}>
-                          #{tagName}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  }).filter(Boolean)}
-
-                  {tagsToShow.length > 4 && (
-                    <Text style={[cardStyles.instagramSimpleTagMoreText, { color: themeColors.onSurfaceVariant }]}>
-                      +{tagsToShow.length - 4}
-                    </Text>
-                  )}
-                </View>
-              );
-            }
-            return null;
-          })()}
-
-          {/* 상호작용 버튼 */}
-          <View style={cardStyles.instagramActions}>
-            <TouchableOpacity
-              style={cardStyles.instagramActionButton}
-              onPress={() => {
-                animateHeart();
-                handleLike(item.post_id);
-              }}
-              accessible={true}
-              accessibilityLabel={`좋아요 ${item.like_count || 0}개`}
-              accessibilityHint={isLiked ? "좋아요 취소" : "좋아요 누르기"}
-            >
-              <Animated.View style={{ transform: [{ scale: heartScaleAnim }] }}>
-                <MaterialCommunityIcons
-                  name={isLiked ? "heart" : "heart-outline"}
-                  size={17}
-                  color={isLiked ? themeColors.error : themeColors.onSurfaceVariant}
-                />
-              </Animated.View>
-              <Text style={[cardStyles.instagramActionText, { color: themeColors.onSurfaceVariant }]}>
-                {item.like_count || 0}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={cardStyles.instagramActionButton}
-              onPress={() => handlePostPress(item)}
-              accessible={true}
-              accessibilityLabel={`댓글 ${item.comment_count || 0}개`}
-              accessibilityHint="탭하여 댓글 보기"
-            >
-              <MaterialCommunityIcons name="comment-outline" size={17} color={themeColors.onSurfaceVariant} />
-              <Text style={[cardStyles.instagramActionText, { color: themeColors.onSurfaceVariant }]}>
-                {item.comment_count || 0}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={cardStyles.instagramActionButton}
-              onPress={() => handleBookmark(item.post_id)}
-              accessible={true}
-              accessibilityLabel={isBookmarked ? "북마크됨" : "북마크하기"}
-              accessibilityHint={isBookmarked ? "북마크 해제" : "북마크 추가"}
-            >
-              <MaterialCommunityIcons
-                name={isBookmarked ? "bookmark" : "bookmark-outline"}
-                size={17}
-                color={isBookmarked ? themeColors.primary : themeColors.onSurfaceVariant}
-              />
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-      </TouchableOpacity>
-    );
-  }, (prevProps, nextProps) => {
-    // 모든 관련 props를 비교하여 불필요한 재렌더링 방지
-    const shouldSkipRerender =
-           prevProps.item.post_id === nextProps.item.post_id &&
-           prevProps.item.like_count === nextProps.item.like_count &&
-           prevProps.item.comment_count === nextProps.item.comment_count &&
-           prevProps.item.is_anonymous === nextProps.item.is_anonymous &&
-           prevProps.item.user?.profile_image_url === nextProps.item.user?.profile_image_url &&
-           prevProps.item.user?.nickname === nextProps.item.user?.nickname &&
-           prevProps.highlightedPostId === nextProps.highlightedPostId &&
-           prevProps.isMenuVisible === nextProps.isMenuVisible &&
-           prevProps.isBookmarked === nextProps.isBookmarked &&
-           prevProps.isLiked === nextProps.isLiked &&
-           prevProps.index === nextProps.index &&
-           prevProps.isDarkMode === nextProps.isDarkMode;
-
-    // 디버깅: 재렌더링되는 경우 어떤 prop이 변경되었는지 로깅
-    if (!shouldSkipRerender) {
-      console.log('🔄 [InstagramStylePostCard] 재렌더링 이유:', {
-        post_id: prevProps.item.post_id,
-        like_count_changed: prevProps.item.like_count !== nextProps.item.like_count,
-        comment_count_changed: prevProps.item.comment_count !== nextProps.item.comment_count,
-        is_anonymous_changed: prevProps.item.is_anonymous !== nextProps.item.is_anonymous,
-        profile_image_changed: prevProps.item.user?.profile_image_url !== nextProps.item.user?.profile_image_url,
-        nickname_changed: prevProps.item.user?.nickname !== nextProps.item.user?.nickname,
-        highlighted_changed: prevProps.highlightedPostId !== nextProps.highlightedPostId,
-        menu_visible_changed: prevProps.isMenuVisible !== nextProps.isMenuVisible,
-        bookmarked_changed: prevProps.isBookmarked !== nextProps.isBookmarked,
-        liked_changed: prevProps.isLiked !== nextProps.isLiked,
-        index_changed: prevProps.index !== nextProps.index,
-      });
-    }
-
-    return shouldSkipRerender;
-  });
+  // InstagramStylePostCard는 별도 파일로 분리됨 (성능 최적화)
 
   // 신고 모달
   const ReportModal = () => {
-      console.log('🎨 ReportModal 렌더링, visible:', reportModalVisible);
+      if (__DEV__) console.log('🎨 ReportModal 렌더링, visible:', reportModalVisible);
       const reportReasons = [
       {
         type: 'spam',
@@ -2971,7 +2743,7 @@ const ComfortScreen: React.FC = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safeContainer}>
+      <View style={styles.safeContainer}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={modernTheme.bg.primary} />
         {ModernHeader}
         <View style={[styles.content, { paddingTop: 20 }]}>
@@ -2988,13 +2760,13 @@ const ComfortScreen: React.FC = () => {
             <SkeletonCard />
           </View>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
     <Provider>
-      <SafeAreaView style={styles.safeContainer}>
+      <View style={styles.safeContainer}>
         <StatusBar
           barStyle={isDark ? "light-content" : "dark-content"}
           backgroundColor={modernTheme.bg.primary}
@@ -3008,7 +2780,19 @@ const ComfortScreen: React.FC = () => {
           keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
           enabled={true}
         >
-          {ModernHeader}
+          <Animated.View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              transform: [{ translateY: headerTranslateY }],
+              zIndex: 10,
+              backgroundColor: modernTheme.bg.primary,
+            }}
+          >
+            {ModernHeader}
+          </Animated.View>
           
           <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.listContainer}>
@@ -3018,7 +2802,7 @@ const ComfortScreen: React.FC = () => {
               data={posts}
               renderItem={renderPostItem}
               keyExtractor={(item: ComfortPost) => `post-${item.post_id}`}
-              extraData={{ menuVisible, bookmarkedPosts, likedPosts }}
+              extraData={flatListExtraData}
               numColumns={2}
               columnWrapperStyle={styles.postListColumns}
               contentContainerStyle={styles.postList}
@@ -3031,22 +2815,26 @@ const ComfortScreen: React.FC = () => {
                   tintColor={COLORS.primary}
                 />
               }
-              onEndReached={loadMorePosts}
+              onEndReached={() => {
+                if (hasNextPage && !isFetchingNextPage) {
+                  fetchNextPage();
+                }
+              }}
               onEndReachedThreshold={0.5}
               onScroll={handleScroll}
               scrollEventThrottle={16}
-              removeClippedSubviews={Platform.OS === 'android'}
-              maxToRenderPerBatch={8}
-              windowSize={11}
-              initialNumToRender={8}
-              updateCellsBatchingPeriod={100}
+              removeClippedSubviews={false}
+              maxToRenderPerBatch={10}
+              windowSize={21}
+              initialNumToRender={10}
+              updateCellsBatchingPeriod={50}
               getItemLayout={(data, index) => ({
                 length: 240,
                 offset: 240 * index,
                 index,
               })}
             ListHeaderComponent={() => (
-              <View>
+              <View style={{ paddingTop: 170 }}>
                 {/* 베스트 게시물 컴팩트 버튼 */}
                 {bestPosts.length > 0 && (
                   <TouchableOpacity
@@ -3278,7 +3066,7 @@ const ComfortScreen: React.FC = () => {
             actionType={emotionLoginPromptAction}
           />
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </Provider>
   );
 };
@@ -3307,7 +3095,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     marginTop: 16,
     fontSize: 13,
     color: COLORS.onSurfaceVariant,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
 
   // 현대적 헤더
@@ -3346,15 +3134,17 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
   },
   headerSubtitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.2,
   },
   headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginLeft: 20,
     marginRight: 10,
   },
@@ -3408,7 +3198,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     flex: 1,
     marginLeft: 10,
     fontSize: normalize(12, 11, 14),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: normalize(18, 16, 20),
     textAlignVertical: 'center',
     letterSpacing: -0.2,
@@ -3437,7 +3227,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     flex: 1,
     fontSize: 12,
     color: 'white',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     paddingVertical: 0,
   },
   searchClear: {
@@ -3458,7 +3248,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   searchbarInput: {
     fontSize: normalize(12, 11, 14),
     color: COLORS.onSurface,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
 
   filterChip: {
@@ -3476,7 +3266,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   filterChipText: {
     fontSize: normalize(11, 11, 12),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginLeft: 4,
     letterSpacing: -0.2,
     textAlignVertical: 'center',
@@ -3521,7 +3311,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   bestCompactTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: COLORS.primary,
   },
 
@@ -3566,20 +3356,20 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     },
     viewAllText: {
       fontSize: 11,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       color: COLORS.primary,
       marginRight: 4,
     },                       // ← 여기까지 추가
     sectionTitle: {
       fontSize: 15,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       color: COLORS.onSurface,
     },
 
   sectionMore: {
     fontSize: 13,
     color: COLORS.primary,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
 
   sectionMoreButton: {
@@ -3599,7 +3389,8 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
 
   myRecentScrollContent: {
     gap: 12,
-    paddingRight: 16,
+    paddingRight: 8,
+    paddingLeft:8,
   },
 
   // 카드 그리드
@@ -3648,12 +3439,12 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   bestBadgeText: {
     fontSize: normalize(12, 11, 13), // 베스트 순위 배지
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: 'white',
   },
   bestCardTitle: {
     fontSize: normalize(14, 13, 16), // 베스트 카드 제목
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: COLORS.onSurface,
     marginBottom: 6,
     lineHeight: normalize(20, 18, 22),
@@ -3676,7 +3467,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   bestCardStatText: {
     fontSize: normalize(12, 11, 13), // 베스트 카드 통계
     color: COLORS.onSurfaceVariant,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 
   // 나의 최근 게시물 카드 - 2025년 트렌드 모던 스타일로 통일
@@ -3699,7 +3490,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   myRecentCardTitle: {
     fontSize: normalize(14, 13, 16), // 최근 게시물 제목
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: COLORS.onSurface,
     marginBottom: 4,
     lineHeight: normalize(20, 18, 22),
@@ -3709,7 +3500,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     color: COLORS.onSurface,
     lineHeight: normalize(18, 16, 20),
     marginBottom: 4,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
     padding: 0,
     borderRadius: 4,
@@ -3729,18 +3520,18 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   myRecentSimpleTagText: {
     fontSize: normalize(11, 11, 12), // 최근 게시물 태그 (최소 11px)
     color: COLORS.primary,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: 0.2,
   },
   myRecentSimpleTagTextSelected: {
     color: COLORS.primary,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textDecorationLine: 'underline',
   },
   myRecentSimpleTagMoreText: {
     fontSize: normalize(11, 11, 12),
     color: COLORS.onSurfaceVariant,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginLeft: 4,
   },
   myRecentCardFooter: {
@@ -3755,7 +3546,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   myRecentCardStatText: {
     fontSize: normalize(12, 11, 13), // 최근 게시물 통계
     color: COLORS.onSurfaceVariant,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 
   // 게시물 목록 헤더 (95% 너비, 중앙정렬)
@@ -3778,13 +3569,13 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   postsListTitle: {
     fontSize: 16, // 게시물 목록 제목 (15→16)
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: COLORS.onSurface,
   },
   postsListCount: {
     fontSize: normalize(12, 11, 13), // 게시물 개수
     color: COLORS.onSurfaceVariant,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     backgroundColor: COLORS.primary + '15',
     paddingHorizontal: 6,
     paddingVertical: 3,
@@ -3817,13 +3608,13 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   sortButtonText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: isDark ? '#A0A0B0' : '#505060',
     letterSpacing: 0.3,
   },
   sortButtonTextActive: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
 
   // 게시물 리스트 (2열 그리드) - 인스타그램 스타일
@@ -3882,22 +3673,22 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     elevation: 2,
   },
   instagramAvatarEmoji: {
-    fontSize: normalize(26, 24, 28), // 아바타 이모지
-    fontWeight: '600',
+    fontSize: normalize(30, 28, 32), // 아바타 이모지
+    fontFamily: 'Pretendard-SemiBold',
   },
   instagramAuthorInfo: {
     flex: 1,
   },
   instagramAuthorName: {
     fontSize: normalize(12, 11, 14), // 작성자 이름
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: COLORS.onSurface,
     marginBottom: 2,
      marginLeft: 5,
   },
   authorBadge: {
     fontSize: normalize(11, 11, 12), // 배지 (최소 11px)
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: COLORS.onSurfaceVariant,
     marginLeft: 4,
   },
@@ -3953,14 +3744,14 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     fontSize: 14, // 바텀시트 메뉴
     color: COLORS.onSurface,
     marginLeft: 16,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   instagramContent: {
     // flex: 1 제거 - 태그와 겹치는 문제 방지
   },
   instagramTitle: {
     fontSize: normalize(14, 13, 16), // 게시물 제목
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: COLORS.onSurface,
     lineHeight: normalize(20, 18, 22),
     marginBottom: 6,
@@ -4012,7 +3803,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   instagramTagText: {
     fontSize: normalize(11, 11, 12), // 태그 텍스트 (최소 11px)
     color: COLORS.primary,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   instagramTagTextSelected: {
     color: 'white',
@@ -4046,7 +3837,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   instagramTagAboveActionText: {
     fontSize: normalize(11, 11, 12), // 액션 버튼 위 태그 텍스트 (최소 11px)
     color: COLORS.primary,
-    fontWeight: '800',
+    fontFamily: 'Pretendard-ExtraBold',
     letterSpacing: 0.2,
   },
   instagramTagAboveActionSelected: {
@@ -4055,12 +3846,12 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   instagramTagAboveActionTextSelected: {
     color: '#FFFFFF',
-    fontWeight: '800',
+    fontFamily: 'Pretendard-ExtraBold',
   },
   instagramTagMoreCount: {
     fontSize: normalize(11, 11, 12), // 추가 태그 개수 (최소 11px)
     color: COLORS.primary + '90',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginLeft: 5,
     backgroundColor: COLORS.primary + '25',
     paddingHorizontal: 8,
@@ -4084,18 +3875,18 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   instagramSimpleTagText: {
     fontSize: normalize(11, 11, 12), // 간단한 태그 텍스트 (최소 11px)
     color: COLORS.primary,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: 0.2,
   },
   instagramSimpleTagTextSelected: {
     color: COLORS.primary,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textDecorationLine: 'underline',
   },
   instagramSimpleTagMoreText: {
     fontSize: normalize(11, 11, 12), // 더보기 텍스트 (최소 11px)
     color: COLORS.onSurfaceVariant,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginLeft: 4,
     lineHeight: normalize(16, 15, 18),
   },
@@ -4129,7 +3920,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   instagramActionText: {
     fontSize: normalize(12, 11, 13), // 액션 버튼 텍스트
     color: COLORS.onSurfaceVariant,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 
   // 로딩 상태
@@ -4152,7 +3943,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   noMorePostsText: {
     fontSize: normalize(12, 11, 13),
     color: COLORS.onSurfaceVariant,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
 
   // FAB - 하단 네비게이션 고려하여 위치 조정
@@ -4218,7 +4009,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   reportModalTitle: {
     fontSize: 19,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: isDark ? '#FAFAFA' : COLORS.onSurface,
     letterSpacing: -0.5,
   },
@@ -4263,14 +4054,14 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   reportReasonLabel: {
     fontSize: RFValue(14.5),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: isDark ? '#FAFAFA' : COLORS.onSurface,
     marginBottom: 4,
     letterSpacing: -0.3,
   },
   reportReasonLabelSelected: {
     color: '#FFD60A',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   reportReasonDescription: {
     fontSize: RFValue(12.5),
@@ -4311,7 +4102,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   reportCancelButtonText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: isDark ? '#E8E8E8' : COLORS.onSurfaceVariant,
     letterSpacing: -0.3,
   },
@@ -4329,7 +4120,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   reportSubmitButtonText: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#1C1C1E',
     letterSpacing: -0.3,
   },
@@ -4347,7 +4138,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   emptyStateTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: COLORS.onSurface,
     marginTop: 16,
     marginBottom: 8,
@@ -4386,7 +4177,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   searchTextInput: {
     flex: 1,
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginLeft: 8,
     paddingVertical: 4,
     lineHeight: 20,
@@ -4406,7 +4197,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   },
   searchSectionTitle: {
     fontSize: FONT_SIZES.body,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 14,
     lineHeight: 21,
     letterSpacing: -0.2,
@@ -4423,7 +4214,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     flex: 1,
     marginLeft: 12,
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 20,
     letterSpacing: -0.1,
   },
@@ -4441,14 +4232,14 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   popularSearchRank: {
     width: 28,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
     lineHeight: 22,
   },
   popularSearchText: {
     marginLeft: 16,
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 22,
     letterSpacing: -0.2,
   },

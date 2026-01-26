@@ -23,9 +23,21 @@ import { kakaoNativeLogin } from '../services/api/kakaoNativeLogin';
 import { startNaverLogin } from '../services/api/naverAuth';
 import { showAlert } from '../contexts/AlertContext';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon from 'react-native-vector-icons/Ionicons';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
 import { FONT_SIZES } from '../constants';
+import { LayoutAnimation, UIManager, Platform as RNPlatform } from 'react-native';
+
+// New Architecture에서는 setLayoutAnimationEnabledExperimental이 작동하지 않으므로
+// Old Architecture에서만 실행
+if (
+  RNPlatform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental &&
+  !(global as any).nativeFabricUIManager // New Architecture가 아닐 때만
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 // 타입 정의
 type RootStackParamList = {
@@ -49,7 +61,19 @@ interface FormData {
   password: string;
   confirmPassword: string;
   nickname: string;
+  ageRange: string;
 }
+
+// 연령대 옵션 (카카오 심사용)
+const AGE_RANGE_OPTIONS = [
+  { label: '선택 안함', value: '' },
+  { label: '10대 (15~19세)', value: '15~19' },
+  { label: '20대', value: '20~29' },
+  { label: '30대', value: '30~39' },
+  { label: '40대', value: '40~49' },
+  { label: '50대', value: '50~59' },
+  { label: '60대 이상', value: '60~' },
+];
 
 // 상수 정의
 const BREAKPOINTS = {
@@ -117,6 +141,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const { width, height } = useWindowDimensions();
   const [step, setStep] = useState(1); // 1: 이메일, 2: 인증, 3: 정보, 4: 프로필
 
+  // fadeAnim 제거 - 깜빡임 방지
+
   const [formData, setFormData] = useState<FormData>({
     email: '',
     verificationCode: ['', '', '', '', '', ''],
@@ -124,6 +150,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     password: '',
     confirmPassword: '',
     nickname: '',
+    ageRange: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -133,6 +160,13 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const [isSocialLoading, setIsSocialLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // 약관 동의 상태
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  const [marketingAgreed, setMarketingAgreed] = useState(false);
+  const [ageRangeAgreed, setAgeRangeAgreed] = useState(false);
+  const [showAgeRangePicker, setShowAgeRangePicker] = useState(false);
 
   // 인증 코드 입력 refs
   const codeInputRefs = useRef<Array<RNTextInput | null>>([]);
@@ -175,6 +209,11 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         setResendTimer((prev) => {
           if (prev <= 1) {
             clearInterval(interval);
+            // 타이머 만료 시 보안을 위해 입력된 인증 코드 초기화
+            setFormData(prevData => ({
+              ...prevData,
+              verificationCode: ['', '', '', '', '', '']
+            }));
             return 0;
           }
           return prev - 1;
@@ -200,11 +239,29 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
 
     setSendingCode(true);
     try {
+      // 이메일 중복 체크
+      const emailCheck = await authService.checkEmail(formData.email);
+      if (!emailCheck.available) {
+        showAlert.confirm(
+          '이메일 중복',
+          '이미 사용 중인 이메일입니다.\n로그인 화면으로 이동하시겠습니까?',
+          () => {
+            // 확인 버튼: 로그인 화면으로 이동
+            navigation.navigate('Login');
+          },
+          () => {
+            // 취소 버튼: 이메일 필드 초기화
+            setFormData(prev => ({ ...prev, email: '' }));
+          }
+        );
+        return;
+      }
+
       await authService.sendVerificationCode(formData.email);
       // 성공 알림 대신 바로 다음 단계로 이동 (브릿지 오류 방지)
       setStep(2);
       startResendTimer();
-    } catch (error: any) {
+    } catch (error: unknown) {
       showAlert.error('오류', error.message || '인증 코드 발송에 실패했습니다.');
     } finally {
       setSendingCode(false);
@@ -228,7 +285,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       setIsEmailVerified(true);
       // 성공 알림 대신 바로 다음 단계로 이동 (브릿지 오류 방지)
       setStep(3);
-    } catch (error: any) {
+    } catch (error: unknown) {
       showAlert.error('오류', error.message || '인증 코드가 올바르지 않습니다.');
     } finally {
       setLoading(false);
@@ -244,8 +301,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       return;
     }
 
-    if (!formData.username || formData.username.length < 3) {
-      showAlert.error('오류', '사용자명은 3자 이상이어야 합니다.');
+    if (!formData.username || formData.username.length < 2) {
+      showAlert.error('오류', '사용자명은 2자 이상이어야 합니다.');
       return;
     }
 
@@ -271,6 +328,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         email: formData.email.trim(),
         password: formData.password,
         nickname: formData.nickname.trim() || formData.username.trim(),
+        age_range: formData.ageRange || undefined,
       });
 
       showAlert.success('회원가입 성공', 'Dayonme에 오신 것을 환영합니다!');
@@ -282,7 +340,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           routes: [{ name: 'Main' }],
         })
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       showAlert.error('회원가입 실패', error.message || '회원가입 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -315,14 +373,46 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
 
+  // 비밀번호 강도 계산
+  const calculatePasswordStrength = useCallback((password: string) => {
+    if (!password) return { strength: 0, color: '#e0e0e0', label: '' };
+
+    let strength = 0;
+    const checks = {
+      length: password.length >= 8,
+      hasUpper: /[A-Z]/.test(password),
+      hasLower: /[a-z]/.test(password),
+      hasNumber: /\d/.test(password),
+      hasSpecial: /[!@#$%^&*]/.test(password),
+    };
+
+    strength += checks.length ? 20 : 0;
+    strength += checks.hasUpper ? 20 : 0;
+    strength += checks.hasLower ? 20 : 0;
+    strength += checks.hasNumber ? 20 : 0;
+    strength += checks.hasSpecial ? 20 : 0;
+
+    let color = '#FF3040'; // 약함
+    let label = '약함';
+    if (strength >= 80) {
+      color = '#00C851'; // 강함
+      label = '강함';
+    } else if (strength >= 60) {
+      color = '#FFB300'; // 보통
+      label = '보통';
+    }
+
+    return { strength, color, label };
+  }, []);
+
   // 카카오 로그인 핸들러
   const handleKakaoLogin = useCallback(async () => {
     if (isSocialLoading) return;
     setIsSocialLoading(true);
     try {
       await kakaoNativeLogin();
-    } catch (error: any) {
-      console.error('카카오 로그인 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('카카오 로그인 오류:', error);
       showAlert.error('로그인 실패', '카카오 로그인 중 오류가 발생했습니다.');
     } finally {
       setIsSocialLoading(false);
@@ -335,8 +425,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     setIsSocialLoading(true);
     try {
       await startNaverLogin();
-    } catch (error: any) {
-      console.error('네이버 로그인 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('네이버 로그인 오류:', error);
       showAlert.error('로그인 실패', '네이버 로그인 중 오류가 발생했습니다.');
     } finally {
       setIsSocialLoading(false);
@@ -359,16 +449,19 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     },
     scrollContent: {
       flexGrow: 1,
-      justifyContent: 'center' as const,
+      justifyContent: 'flex-start' as const,
       alignItems: 'center' as const,
       paddingHorizontal: 24,
-      paddingVertical: 60,
-      minHeight: height
+      paddingTop: 100,
+      paddingBottom: 60,
+      minHeight: height,
     },
     card: {
       backgroundColor: isDark ? theme.bg.card : 'rgba(255, 255, 255, 0.95)',
       borderRadius: 32,
-      padding: 36,
+      padding: 28,
+      paddingTop: 32,
+      paddingBottom: 32,
       width: '100%' as const,
       maxWidth: 460,
       shadowColor: COLORS.black,
@@ -407,7 +500,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       backgroundColor: theme.bg.secondary,
       borderRadius: 16,
       fontSize: FONT_SIZES.h4,
-      fontWeight: '600' as const
+      fontFamily: 'Pretendard-SemiBold' as const
     },
     textInputContent: {
       paddingHorizontal: 24,
@@ -450,12 +543,12 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     loginLinkText: {
       color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
       fontSize: normalizeFontSize(15),
-      fontWeight: '600' as const
+      fontFamily: 'Pretendard-SemiBold' as const
     },
     loginLinkHighlight: {
       color: isDark ? '#60a5fa' : COLORS.gradient.primary[0],
       fontSize: normalizeFontSize(15),
-      fontWeight: '700' as const
+      fontFamily: 'Pretendard-Bold' as const
     }
   }), [theme, isDark, height, spacing, normalizeFontSize]);
 
@@ -463,7 +556,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const progressBarStyles = useMemo(() => ({
     container: {
       justifyContent: 'center' as const,
-      marginBottom: 32,
+      marginBottom: 20,
       gap: 8
     },
     activeBar: {
@@ -480,10 +573,10 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     }
   }), []);
 
-  // 진행률 표시
+  // 진행률 표시 (5단계)
   const renderProgressBar = useCallback(() => (
     <HStack style={progressBarStyles.container}>
-      {[1, 2, 3, 4].map((s) => (
+      {[1, 2, 3, 4, 5].map((s) => (
         <View
           key={s}
           style={step >= s ? progressBarStyles.activeBar : progressBarStyles.inactiveBar}
@@ -494,11 +587,11 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
 
   // Step 1: 이메일 입력
   const renderStep1 = useCallback(() => (
-    <VStack style={{ gap: spacing(20) }}>
-      <VStack style={{ alignItems: 'center', gap: spacing(16) }}>
+    <VStack style={{ gap: spacing(16) }}>
+      <VStack style={{ alignItems: 'center', gap: spacing(12) }}>
         <Text style={{
           fontSize: normalizeFontSize(26),
-          fontWeight: '900',
+          fontFamily: 'Pretendard-Black',
           color: isDark ? theme.text.primary : '#1a1a1a',
           letterSpacing: -0.5
         }}>
@@ -507,7 +600,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         <Text style={{
           fontSize: normalizeFontSize(15),
           color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
-          fontWeight: '600',
+          fontFamily: 'Pretendard-SemiBold',
           textAlign: 'center',
           lineHeight: normalizeFontSize(22)
         }}>
@@ -515,7 +608,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         </Text>
       </VStack>
 
-      <View style={{ marginTop: spacing(12) }}>
+      <View style={{ marginTop: spacing(8), position: 'relative' }}>
         <TextInput
           placeholder="이메일 주소"
           value={formData.email}
@@ -545,6 +638,20 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           accessibilityLabel="이메일 주소 입력"
           accessibilityHint="회원가입을 위한 이메일 주소를 입력하세요"
         />
+        {formData.email && (
+          <View style={{
+            position: 'absolute',
+            right: 16,
+            top: '50%',
+            transform: [{ translateY: -12 }]
+          }}>
+            <Icon
+              name={EMAIL_REGEX.test(formData.email) ? 'checkmark-circle' : 'close-circle'}
+              size={24}
+              color={EMAIL_REGEX.test(formData.email) ? '#00C851' : '#FF3040'}
+            />
+          </View>
+        )}
       </View>
 
       <Pressable
@@ -558,14 +665,14 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           colors={sendingCode ? ['#ccc', '#999'] : COLORS.gradient.primary}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={[styles.button, { marginTop: spacing(8), opacity: sendingCode ? 0.7 : 1 }]}
+          style={[styles.button, { marginTop: spacing(4), opacity: sendingCode ? 0.7 : 1 }]}
         >
           <HStack style={{ justifyContent: 'center', alignItems: 'center', gap: spacing(8) }}>
             {sendingCode && <ActivityIndicator size="small" color={COLORS.white} />}
             <Text style={{
               color: COLORS.white,
               fontSize: normalizeFontSize(16),
-              fontWeight: '700',
+              fontFamily: 'Pretendard-Bold',
               letterSpacing: 0.3
             }}>
               {sendingCode ? '전송 중...' : '인증 코드 받기'}
@@ -578,15 +685,15 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       <View style={{
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: spacing(20),
-        marginBottom: spacing(8)
+        marginTop: spacing(16),
+        marginBottom: spacing(6)
       }}>
         <View style={{ flex: 1, height: 1, backgroundColor: isDark ? COLORS.border.dark : COLORS.border.light }} />
         <Text style={{
           paddingHorizontal: spacing(16),
           fontSize: normalizeFontSize(14),
           color: isDark ? COLORS.text.tertiary.dark : COLORS.text.tertiary.light,
-          fontWeight: '600'
+          fontFamily: 'Pretendard-SemiBold'
         }}>
           간편 가입
         </Text>
@@ -617,12 +724,12 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               justifyContent: 'center',
               alignItems: 'center'
             }}>
-              <Text style={{ fontSize: normalizeFontSize(13), fontWeight: '900', color: COLORS.kakao.background }}>K</Text>
+              <Text style={{ fontSize: normalizeFontSize(13), fontFamily: 'Pretendard-Black', color: COLORS.kakao.background }}>K</Text>
             </View>
             <Text style={{
               color: COLORS.kakao.text,
               fontSize: normalizeFontSize(15),
-              fontWeight: '700',
+              fontFamily: 'Pretendard-Bold',
               letterSpacing: 0.2,
               marginLeft: spacing(8)
             }}>
@@ -654,12 +761,12 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               justifyContent: 'center',
               alignItems: 'center'
             }}>
-              <Text style={{ fontSize: normalizeFontSize(13), fontWeight: '900', color: COLORS.naver.background }}>N</Text>
+              <Text style={{ fontSize: normalizeFontSize(13), fontFamily: 'Pretendard-Black', color: COLORS.naver.background }}>N</Text>
             </View>
             <Text style={{
               color: COLORS.naver.text,
               fontSize: normalizeFontSize(15),
-              fontWeight: '700',
+              fontFamily: 'Pretendard-Bold',
               letterSpacing: 0.2,
               marginLeft: spacing(8)
             }}>
@@ -682,7 +789,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           <Text style={{ fontSize: normalizeFontSize(48) }}>📧</Text>
           <Text style={{
             fontSize: normalizeFontSize(26),
-            fontWeight: '900',
+            fontFamily: 'Pretendard-Black',
             color: isDark ? theme.text.primary : '#1a1a1a',
             letterSpacing: -0.5
           }}>
@@ -691,7 +798,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           <Text style={{
             fontSize: normalizeFontSize(15),
             color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
-            fontWeight: '600',
+            fontFamily: 'Pretendard-SemiBold',
             textAlign: 'center',
             lineHeight: normalizeFontSize(22)
           }}>
@@ -699,31 +806,31 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           </Text>
         </VStack>
 
-        {/* 인증 코드 입력 */}
+        {/* 인증 코드 입력 - 모바일 최적화 */}
         <View style={{
           flexDirection: 'row',
           justifyContent: 'center',
           alignItems: 'center',
-          marginVertical: 8,
-          paddingHorizontal: 10,
+          marginVertical: spacing(12),
+          paddingHorizontal: spacing(8),
         }}>
           {formData.verificationCode.map((digit, index) => (
             <View
               key={index}
               style={{
                 flex: 1,
-                maxWidth: 44,
-                height: 40,
-                borderRadius: 8,
-                borderWidth: digit ? 2 : 1.5,
+                maxWidth: normalize(52),
+                height: normalize(56),
+                borderRadius: normalize(12),
+                borderWidth: digit ? 2.5 : 2,
                 borderColor: digit ? COLORS.gradient.primary[0] : (isDark ? 'rgba(255,255,255,0.2)' : '#D1D5DB'),
                 backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F9FAFB',
-                marginHorizontal: 4,
+                marginHorizontal: spacing(4),
                 shadowColor: digit ? COLORS.gradient.primary[0] : '#000',
                 shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: digit ? 0.15 : 0.05,
-                shadowRadius: 4,
-                elevation: digit ? 3 : 1,
+                shadowOpacity: digit ? 0.2 : 0.05,
+                shadowRadius: 6,
+                elevation: digit ? 4 : 1,
               }}
             >
               <RNTextInput
@@ -731,8 +838,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                 style={{
                   flex: 1,
                   textAlign: 'center',
-                  fontSize: 20,
-                  fontWeight: '700',
+                  fontSize: normalizeFontSize(24),
+                  fontFamily: 'Pretendard-Bold',
                   color: isDark ? '#FFFFFF' : '#1F2937',
                   padding: 0,
                 }}
@@ -754,7 +861,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
             textAlign: 'center',
             fontSize: normalizeFontSize(15),
             color: isDark ? '#60a5fa' : COLORS.gradient.primary[0],
-            fontWeight: '700'
+            fontFamily: 'Pretendard-Bold'
           }}>
             {minutes}:{seconds.toString().padStart(2, '0')}
           </Text>
@@ -778,7 +885,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               <Text style={{
                 color: COLORS.white,
                 fontSize: normalizeFontSize(16),
-                fontWeight: '700',
+                fontFamily: 'Pretendard-Bold',
                 letterSpacing: 0.3
               }}>
                 {loading ? '확인 중...' : '다음'}
@@ -797,7 +904,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               textAlign: 'center',
               fontSize: normalizeFontSize(15),
               color: isDark ? '#60a5fa' : COLORS.gradient.primary[0],
-              fontWeight: '700'
+              fontFamily: 'Pretendard-Bold'
             }}>
               코드 재전송
             </Text>
@@ -808,108 +915,161 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   }, [formData.email, formData.verificationCode, resendTimer, loading, handleVerifyCode, handleCodeChange, handleCodeKeyPress, handleSendCode, spacing, normalizeFontSize, isDark, theme, styles, codeInputRefs]);
 
   // Step 3: 기본 정보 입력
-  const renderStep3 = useCallback(() => (
-    <VStack style={{ gap: spacing(20) }}>
-      <VStack style={{ alignItems: 'center', gap: spacing(16) }}>
-        <Text style={{
-          fontSize: normalizeFontSize(26),
-          fontWeight: '900',
-          color: isDark ? theme.text.primary : '#1a1a1a',
-          letterSpacing: -0.5
-        }}>
-          기본 정보
-        </Text>
-        <Text style={{
-          fontSize: normalizeFontSize(15),
-          color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
-          fontWeight: '600',
-          textAlign: 'center',
-          lineHeight: normalizeFontSize(22)
-        }}>
-          사용자명과 비밀번호를{'\n'}설정해주세요
-        </Text>
-      </VStack>
+  const renderStep3 = useCallback(() => {
+    const passwordStrength = calculatePasswordStrength(formData.password);
 
-      <VStack style={{ gap: 16, marginTop: 8 }}>
-        <TextInput
-          placeholder="사용자명 (3자 이상)"
-          value={formData.username}
-          onChangeText={(value) => updateFormData('username', value)}
-          mode="outlined"
-          textColor={isDark ? COLORS.text.dark : COLORS.text.light}
-          style={styles.textInput}
-          contentStyle={styles.textInputContent}
-          outlineStyle={{
-            borderRadius: 16,
-            borderWidth: 2,
-            borderColor: formData.username ? COLORS.gradient.primary[0] : 'transparent'
-          }}
-          autoCapitalize="none"
-          maxLength={20}
-          theme={{
-            colors: {
-              primary: COLORS.gradient.primary[0],
-              onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
-              outline: 'transparent'
-            },
-          }}
-          placeholderTextColor={isDark ? theme.text.tertiary : COLORS.placeholder.light}
-          accessibilityLabel="사용자명 입력"
-          accessibilityHint="3자 이상의 사용자명을 입력하세요"
-        />
+    return (
+      <VStack style={{ gap: spacing(20) }}>
+        <VStack style={{ alignItems: 'center', gap: spacing(16) }}>
+          <Text style={{
+            fontSize: normalizeFontSize(26),
+            fontFamily: 'Pretendard-Black',
+            color: isDark ? theme.text.primary : '#1a1a1a',
+            letterSpacing: -0.5
+          }}>
+            기본 정보
+          </Text>
+          <Text style={{
+            fontSize: normalizeFontSize(15),
+            color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
+            fontFamily: 'Pretendard-SemiBold',
+            textAlign: 'center',
+            lineHeight: normalizeFontSize(22)
+          }}>
+            사용자명과 비밀번호를{'\n'}설정해주세요
+          </Text>
+        </VStack>
 
-        <TextInput
-          placeholder="비밀번호 (8자 이상)"
-          value={formData.password}
-          onChangeText={(value) => updateFormData('password', value)}
-          mode="outlined"
-          textColor={isDark ? COLORS.text.dark : COLORS.text.light}
-          style={styles.textInput}
-          contentStyle={styles.textInputContent}
-          outlineStyle={{
-            borderRadius: 16,
-            borderWidth: 2,
-            borderColor: formData.password ? COLORS.gradient.primary[0] : 'transparent'
-          }}
-          secureTextEntry={!showPassword}
-          theme={{
-            colors: {
-              primary: COLORS.gradient.primary[0],
-              onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
-              outline: 'transparent'
-            },
-          }}
-          placeholderTextColor={isDark ? theme.text.tertiary : COLORS.placeholder.light}
-          accessibilityLabel="비밀번호 입력"
-          accessibilityHint="8자 이상, 대소문자, 숫자, 특수문자 포함"
-        />
-        <Text style={{
-          color: isDark ? theme.text.tertiary : COLORS.text.tertiary.light,
-          fontSize: FONT_SIZES.bodySmall,
-          marginTop: -8,
-          marginLeft: 8,
-          lineHeight: 22,
-          fontWeight: '600'
-        }}>
-          대문자, 소문자, 숫자, 특수문자(!@#$%^&*) 포함
-        </Text>
+        <VStack style={{ gap: 16, marginTop: 8 }}>
+          <TextInput
+            placeholder="사용자명 (2자 이상)"
+            value={formData.username}
+            onChangeText={(value) => updateFormData('username', value)}
+            mode="outlined"
+            textColor={isDark ? COLORS.text.dark : COLORS.text.light}
+            style={styles.textInput}
+            contentStyle={styles.textInputContent}
+            outlineStyle={{
+              borderRadius: 16,
+              borderWidth: 2,
+              borderColor: formData.username ? COLORS.gradient.primary[0] : 'transparent'
+            }}
+            autoCapitalize="none"
+            maxLength={20}
+            theme={{
+              colors: {
+                primary: COLORS.gradient.primary[0],
+                onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
+                outline: 'transparent'
+              },
+            }}
+            placeholderTextColor={isDark ? theme.text.tertiary : COLORS.placeholder.light}
+            accessibilityLabel="사용자명 입력"
+            accessibilityHint="2자 이상의 사용자명을 입력하세요"
+          />
 
-        <TextInput
-          placeholder="비밀번호 확인"
-          value={formData.confirmPassword}
-          onChangeText={(value) => updateFormData('confirmPassword', value)}
-          mode="outlined"
-          textColor={isDark ? COLORS.text.dark : COLORS.text.light}
-          style={styles.textInput}
-          contentStyle={styles.textInputContent}
-          outlineStyle={{
-            borderRadius: 16,
-            borderWidth: 2,
-            borderColor: formData.confirmPassword ?
-              (formData.password === formData.confirmPassword ? COLORS.success : COLORS.error) :
-              'transparent'
-          }}
-          secureTextEntry={!showConfirmPassword}
+          <View style={{ position: 'relative' }}>
+            <TextInput
+              placeholder="비밀번호 (8자 이상)"
+              value={formData.password}
+              onChangeText={(value) => updateFormData('password', value)}
+              mode="outlined"
+              textColor={isDark ? COLORS.text.dark : COLORS.text.light}
+              style={styles.textInput}
+              contentStyle={styles.textInputContent}
+              outlineStyle={{
+                borderRadius: 16,
+                borderWidth: 2,
+                borderColor: formData.password ? COLORS.gradient.primary[0] : 'transparent'
+              }}
+              secureTextEntry={!showPassword}
+              theme={{
+                colors: {
+                  primary: COLORS.gradient.primary[0],
+                  onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
+                  outline: 'transparent'
+                },
+              }}
+              placeholderTextColor={isDark ? theme.text.tertiary : COLORS.placeholder.light}
+              accessibilityLabel="비밀번호 입력"
+              accessibilityHint="8자 이상, 대소문자, 숫자, 특수문자 포함"
+            />
+            <Pressable
+              onPress={() => setShowPassword(!showPassword)}
+              style={{ position: 'absolute', right: 16, top: '50%', transform: [{ translateY: -12 }] }}
+            >
+              <Icon name={showPassword ? 'eye-off' : 'eye'} size={24} color={isDark ? '#999' : '#666'} />
+            </Pressable>
+          </View>
+
+          {/* 비밀번호 강도 표시기 */}
+          {formData.password && (
+            <View style={{ marginTop: -8, marginHorizontal: 8 }}>
+              <View style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 6
+              }}>
+                <Text style={{
+                  color: isDark ? theme.text.tertiary : COLORS.text.tertiary.light,
+                  fontSize: FONT_SIZES.bodySmall,
+                  fontFamily: 'Pretendard-SemiBold'
+                }}>
+                  비밀번호 강도
+                </Text>
+                <Text style={{
+                  color: passwordStrength.color,
+                  fontSize: FONT_SIZES.bodySmall,
+                  fontFamily: 'Pretendard-Bold'
+                }}>
+                  {passwordStrength.label}
+                </Text>
+              </View>
+              <View style={{
+                height: 6,
+                backgroundColor: isDark ? '#333' : '#e0e0e0',
+                borderRadius: 3,
+                overflow: 'hidden'
+              }}>
+                <View style={{
+                  height: '100%',
+                  width: `${passwordStrength.strength}%`,
+                  backgroundColor: passwordStrength.color,
+                  borderRadius: 3
+                }} />
+              </View>
+            </View>
+          )}
+
+          <Text style={{
+            color: isDark ? theme.text.tertiary : COLORS.text.tertiary.light,
+            fontSize: FONT_SIZES.bodySmall,
+            marginTop: formData.password ? -4 : -8,
+            marginLeft: 8,
+            lineHeight: 22,
+            fontFamily: 'Pretendard-SemiBold'
+          }}>
+            대문자, 소문자, 숫자, 특수문자(!@#$%^&*) 포함
+          </Text>
+
+        <View style={{ position: 'relative' }}>
+          <TextInput
+            placeholder="비밀번호 확인"
+            value={formData.confirmPassword}
+            onChangeText={(value) => updateFormData('confirmPassword', value)}
+            mode="outlined"
+            textColor={isDark ? COLORS.text.dark : COLORS.text.light}
+            style={styles.textInput}
+            contentStyle={styles.textInputContent}
+            outlineStyle={{
+              borderRadius: 16,
+              borderWidth: 2,
+              borderColor: formData.confirmPassword ?
+                (formData.password === formData.confirmPassword ? COLORS.success : COLORS.error) :
+                'transparent'
+            }}
+            secureTextEntry={!showConfirmPassword}
           theme={{
             colors: {
               primary: COLORS.gradient.primary[0],
@@ -920,46 +1080,15 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           placeholderTextColor={isDark ? theme.text.tertiary : COLORS.placeholder.light}
           accessibilityLabel="비밀번호 확인 입력"
         />
-
-        {/* 비밀번호 보기 체크박스 */}
         <Pressable
-          onPress={() => {
-            setShowPassword(!showPassword);
-            setShowConfirmPassword(!showConfirmPassword);
-          }}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginTop: 4,
-            marginLeft: 4
-          }}
-          accessibilityRole="checkbox"
-          accessibilityState={{ checked: showPassword }}
-          accessibilityLabel="비밀번호 보기"
+          onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+          style={{ position: 'absolute', right: 16, top: '50%', transform: [{ translateY: -12 }] }}
         >
-          <View style={{
-            width: 22,
-            height: 22,
-            borderRadius: 6,
-            borderWidth: 2,
-            borderColor: showPassword ? COLORS.gradient.primary[0] : (isDark ? '#555' : '#ccc'),
-            backgroundColor: showPassword ? COLORS.gradient.primary[0] : 'transparent',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: 10
-          }}>
-            {showPassword && (
-              <MaterialCommunityIcons name="check" size={14} color={COLORS.white} />
-            )}
-          </View>
-          <Text style={{
-            color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
-            fontSize: FONT_SIZES.bodySmall,
-            fontWeight: '600'
-          }}>
-            비밀번호 보기
-          </Text>
+          <Icon name={showConfirmPassword ? 'eye-off' : 'eye'} size={24} color={isDark ? '#999' : '#666'} />
         </Pressable>
+      </View>
+
+      {/* 기존 비밀번호 보기 체크박스 삭제됨 - 각 필드에 토글 아이콘 추가 */}
         {formData.confirmPassword && formData.password !== formData.confirmPassword && (
           <Text
             style={{
@@ -967,7 +1096,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               fontSize: FONT_SIZES.bodyLarge,
               marginTop: -8,
               marginLeft: 8,
-              fontWeight: '600'
+              fontFamily: 'Pretendard-SemiBold'
             }}
             accessibilityRole="alert"
           >
@@ -990,7 +1119,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           <Text style={{
             color: COLORS.white,
             fontSize: normalizeFontSize(16),
-            fontWeight: '700',
+            fontFamily: 'Pretendard-Bold',
             textAlign: 'center',
             letterSpacing: 0.3
           }}>
@@ -999,16 +1128,579 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         </LinearGradient>
       </Pressable>
     </VStack>
-  ), [formData.username, formData.password, formData.confirmPassword, updateFormData, spacing, normalizeFontSize, isDark, theme, styles, showPassword, showConfirmPassword]);
+    );
+  }, [formData.username, formData.password, formData.confirmPassword, calculatePasswordStrength, updateFormData, spacing, normalizeFontSize, isDark, theme, styles, showPassword, showConfirmPassword]);
 
-  // Step 4: 프로필 설정 (선택)
-  const renderStep4 = useCallback(() => (
+  // Step 4: 약관 동의
+  const renderStep4 = useCallback(() => {
+    const allRequired = termsAgreed && privacyAgreed;
+    const allAgreed = termsAgreed && privacyAgreed && marketingAgreed && ageRangeAgreed;
+
+    const handleAllAgree = () => {
+      const newState = !allAgreed;
+      setTermsAgreed(newState);
+      setPrivacyAgreed(newState);
+      setMarketingAgreed(newState);
+      setAgeRangeAgreed(newState);
+      if (!newState) {
+        updateFormData('ageRange', '');
+      }
+    };
+
+    return (
+      <VStack style={{ gap: spacing(20) }}>
+        <VStack style={{ alignItems: 'center', gap: spacing(12) }}>
+          <Text style={{ fontSize: normalizeFontSize(40) }}>📋</Text>
+          <Text style={{
+            fontSize: normalizeFontSize(24),
+            fontFamily: 'Pretendard-Black',
+            color: isDark ? theme.text.primary : '#1a1a1a',
+            letterSpacing: -0.5
+          }}>
+            약관 동의
+          </Text>
+          <Text style={{
+            fontSize: normalizeFontSize(14),
+            color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
+            fontFamily: 'Pretendard-SemiBold',
+            textAlign: 'center',
+            lineHeight: normalizeFontSize(20)
+          }}>
+            서비스 이용을 위해{'\n'}약관에 동의해주세요
+          </Text>
+        </VStack>
+
+        {/* 수집하는 개인정보 안내 - 카카오 심사용 상세 표시 */}
+        <View style={{
+          backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#f8f9fa',
+          borderRadius: spacing(12),
+          padding: spacing(16),
+          marginBottom: spacing(8),
+          borderWidth: 1,
+          borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e9ecef'
+        }}>
+          <Text style={{
+            fontSize: normalizeFontSize(14),
+            fontFamily: 'Pretendard-ExtraBold',
+            color: isDark ? theme.text.primary : '#1a1a1a',
+            marginBottom: spacing(12)
+          }}>
+            개인정보 수집 및 이용 안내
+          </Text>
+
+          {/* 일반 회원가입 수집 항목 */}
+          <View style={{
+            backgroundColor: isDark ? 'rgba(102, 126, 234, 0.1)' : 'rgba(102, 126, 234, 0.08)',
+            borderRadius: spacing(8),
+            padding: spacing(12),
+            marginBottom: spacing(10)
+          }}>
+            <Text style={{
+              fontSize: normalizeFontSize(12),
+              fontFamily: 'Pretendard-Bold',
+              color: COLORS.gradient.primary[0],
+              marginBottom: spacing(8)
+            }}>
+              [일반 회원가입]
+            </Text>
+            <View style={{ gap: spacing(6) }}>
+              <HStack style={{ alignItems: 'flex-start' }}>
+                <Text style={{ fontSize: normalizeFontSize(11), color: COLORS.error, fontFamily: 'Pretendard-Bold', width: 40 }}>필수</Text>
+                <Text style={{ fontSize: normalizeFontSize(11), color: isDark ? theme.text.secondary : '#555', flex: 1 }}>
+                  이메일, 비밀번호, 사용자명
+                </Text>
+              </HStack>
+              <HStack style={{ alignItems: 'flex-start' }}>
+                <Text style={{ fontSize: normalizeFontSize(11), color: isDark ? theme.text.tertiary : '#888', fontFamily: 'Pretendard-Bold', width: 40 }}>선택</Text>
+                <Text style={{ fontSize: normalizeFontSize(11), color: isDark ? theme.text.secondary : '#555', flex: 1 }}>
+                  닉네임, 연령대
+                </Text>
+              </HStack>
+            </View>
+          </View>
+
+          {/* 소셜 로그인 수집 항목 */}
+          <View style={{
+            backgroundColor: isDark ? 'rgba(254, 229, 0, 0.1)' : 'rgba(254, 229, 0, 0.15)',
+            borderRadius: spacing(8),
+            padding: spacing(12),
+            marginBottom: spacing(10)
+          }}>
+            <Text style={{
+              fontSize: normalizeFontSize(12),
+              fontFamily: 'Pretendard-Bold',
+              color: '#B8860B',
+              marginBottom: spacing(8)
+            }}>
+              [카카오/네이버 간편 로그인]
+            </Text>
+            <View style={{ gap: spacing(6) }}>
+              <HStack style={{ alignItems: 'flex-start' }}>
+                <Text style={{ fontSize: normalizeFontSize(11), color: isDark ? theme.text.tertiary : '#888', fontFamily: 'Pretendard-Bold', width: 40 }}>선택</Text>
+                <Text style={{ fontSize: normalizeFontSize(11), color: isDark ? theme.text.secondary : '#555', flex: 1 }}>
+                  닉네임, 이메일, 연령대
+                </Text>
+              </HStack>
+            </View>
+          </View>
+
+          {/* 수집 목적 */}
+          <View style={{
+            backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#fff',
+            borderRadius: spacing(8),
+            padding: spacing(12),
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.08)' : '#e9ecef'
+          }}>
+            <Text style={{
+              fontSize: normalizeFontSize(12),
+              fontFamily: 'Pretendard-Bold',
+              color: isDark ? theme.text.primary : '#333',
+              marginBottom: spacing(8)
+            }}>
+              수집 목적
+            </Text>
+            <View style={{ gap: spacing(4) }}>
+              <Text style={{ fontSize: normalizeFontSize(10), color: isDark ? theme.text.secondary : '#666', lineHeight: 16 }}>
+                • 이메일/비밀번호: 회원 식별 및 로그인
+              </Text>
+              <Text style={{ fontSize: normalizeFontSize(10), color: isDark ? theme.text.secondary : '#666', lineHeight: 16 }}>
+                • 닉네임: 서비스 내 프로필 표시
+              </Text>
+              <Text style={{ fontSize: normalizeFontSize(10), color: isDark ? theme.text.secondary : '#666', lineHeight: 16 }}>
+                • 연령대: 연령별 맞춤 콘텐츠 및 통계 분석
+              </Text>
+            </View>
+            <Text style={{
+              fontSize: normalizeFontSize(10),
+              color: isDark ? theme.text.tertiary : '#888',
+              marginTop: spacing(8),
+              lineHeight: 14
+            }}>
+              ※ 보유기간: 회원 탈퇴 시까지 (관련 법령에 따라 일부 정보는 일정 기간 보관)
+            </Text>
+          </View>
+        </View>
+
+        {/* 전체 동의 */}
+        <Pressable
+          onPress={handleAllAgree}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: spacing(16),
+            backgroundColor: isDark ? 'rgba(102, 126, 234, 0.15)' : 'rgba(102, 126, 234, 0.08)',
+            borderRadius: spacing(14),
+            borderWidth: 2,
+            borderColor: allAgreed ? COLORS.gradient.primary[0] : 'transparent'
+          }}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: allAgreed }}
+          accessibilityLabel="전체 동의"
+        >
+          <View style={{
+            width: 26,
+            height: 26,
+            borderRadius: 8,
+            borderWidth: 2,
+            borderColor: allAgreed ? COLORS.gradient.primary[0] : (isDark ? '#555' : '#ccc'),
+            backgroundColor: allAgreed ? COLORS.gradient.primary[0] : 'transparent',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: spacing(12)
+          }}>
+            {allAgreed && (
+              <MaterialCommunityIcons name="check" size={16} color={COLORS.white} />
+            )}
+          </View>
+          <Text style={{
+            fontSize: normalizeFontSize(16),
+            fontFamily: 'Pretendard-Bold',
+            color: isDark ? theme.text.primary : '#1a1a1a'
+          }}>
+            전체 동의
+          </Text>
+        </Pressable>
+
+        <View style={{ height: 1, backgroundColor: isDark ? COLORS.border.dark : COLORS.border.light, marginVertical: spacing(4) }} />
+
+        {/* 이용약관 동의 */}
+        <Pressable
+          onPress={() => setTermsAgreed(!termsAgreed)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: spacing(10),
+            paddingHorizontal: spacing(4)
+          }}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: termsAgreed }}
+          accessibilityLabel="서비스 이용약관 동의 (필수)"
+        >
+          <View style={{
+            width: 24,
+            height: 24,
+            borderRadius: 6,
+            borderWidth: 2,
+            borderColor: termsAgreed ? COLORS.gradient.primary[0] : (isDark ? '#555' : '#ccc'),
+            backgroundColor: termsAgreed ? COLORS.gradient.primary[0] : 'transparent',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: spacing(12)
+          }}>
+            {termsAgreed && (
+              <MaterialCommunityIcons name="check" size={14} color={COLORS.white} />
+            )}
+          </View>
+          <View style={{ flex: 1 }}>
+            <HStack style={{ alignItems: 'center', gap: spacing(6) }}>
+              <Text style={{
+                fontSize: normalizeFontSize(15),
+                fontFamily: 'Pretendard-SemiBold',
+                color: isDark ? theme.text.primary : '#1a1a1a'
+              }}>
+                서비스 이용약관
+              </Text>
+              <Text style={{
+                fontSize: normalizeFontSize(12),
+                fontFamily: 'Pretendard-Bold',
+                color: COLORS.error
+              }}>
+                (필수)
+              </Text>
+            </HStack>
+          </View>
+          <Pressable
+            onPress={() => {
+              // 이용약관 페이지로 이동 (Linking 사용)
+              import('react-native').then(({ Linking }) => {
+                Linking.openURL('https://dayonme.com/terms.html');
+              });
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={{
+              fontSize: normalizeFontSize(13),
+              color: isDark ? '#60a5fa' : COLORS.gradient.primary[0],
+              fontFamily: 'Pretendard-SemiBold'
+            }}>
+              보기
+            </Text>
+          </Pressable>
+        </Pressable>
+
+        {/* 개인정보처리방침 동의 */}
+        <Pressable
+          onPress={() => setPrivacyAgreed(!privacyAgreed)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: spacing(10),
+            paddingHorizontal: spacing(4)
+          }}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: privacyAgreed }}
+          accessibilityLabel="개인정보처리방침 동의 (필수)"
+        >
+          <View style={{
+            width: 24,
+            height: 24,
+            borderRadius: 6,
+            borderWidth: 2,
+            borderColor: privacyAgreed ? COLORS.gradient.primary[0] : (isDark ? '#555' : '#ccc'),
+            backgroundColor: privacyAgreed ? COLORS.gradient.primary[0] : 'transparent',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: spacing(12)
+          }}>
+            {privacyAgreed && (
+              <MaterialCommunityIcons name="check" size={14} color={COLORS.white} />
+            )}
+          </View>
+          <View style={{ flex: 1 }}>
+            <HStack style={{ alignItems: 'center', gap: spacing(6) }}>
+              <Text style={{
+                fontSize: normalizeFontSize(15),
+                fontFamily: 'Pretendard-SemiBold',
+                color: isDark ? theme.text.primary : '#1a1a1a'
+              }}>
+                개인정보처리방침
+              </Text>
+              <Text style={{
+                fontSize: normalizeFontSize(12),
+                fontFamily: 'Pretendard-Bold',
+                color: COLORS.error
+              }}>
+                (필수)
+              </Text>
+            </HStack>
+          </View>
+          <Pressable
+            onPress={() => {
+              import('react-native').then(({ Linking }) => {
+                Linking.openURL('https://dayonme.com/privacy.html');
+              });
+            }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Text style={{
+              fontSize: normalizeFontSize(13),
+              color: isDark ? '#60a5fa' : COLORS.gradient.primary[0],
+              fontFamily: 'Pretendard-SemiBold'
+            }}>
+              보기
+            </Text>
+          </Pressable>
+        </Pressable>
+
+        {/* 마케팅 정보 수신 동의 */}
+        <Pressable
+          onPress={() => setMarketingAgreed(!marketingAgreed)}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingVertical: spacing(10),
+            paddingHorizontal: spacing(4)
+          }}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: marketingAgreed }}
+          accessibilityLabel="마케팅 정보 수신 동의 (선택)"
+        >
+          <View style={{
+            width: 24,
+            height: 24,
+            borderRadius: 6,
+            borderWidth: 2,
+            borderColor: marketingAgreed ? COLORS.gradient.primary[0] : (isDark ? '#555' : '#ccc'),
+            backgroundColor: marketingAgreed ? COLORS.gradient.primary[0] : 'transparent',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: spacing(12)
+          }}>
+            {marketingAgreed && (
+              <MaterialCommunityIcons name="check" size={14} color={COLORS.white} />
+            )}
+          </View>
+          <View style={{ flex: 1 }}>
+            <HStack style={{ alignItems: 'center', gap: spacing(6) }}>
+              <Text style={{
+                fontSize: normalizeFontSize(15),
+                fontFamily: 'Pretendard-SemiBold',
+                color: isDark ? theme.text.primary : '#1a1a1a'
+              }}>
+                마케팅 정보 수신
+              </Text>
+              <Text style={{
+                fontSize: normalizeFontSize(12),
+                fontFamily: 'Pretendard-SemiBold',
+                color: isDark ? theme.text.tertiary : COLORS.text.tertiary.light
+              }}>
+                (선택)
+              </Text>
+            </HStack>
+          </View>
+        </Pressable>
+
+        {/* 연령대 정보 제공 동의 (카카오 심사용) */}
+        <View style={{
+          marginTop: spacing(4),
+          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#fafafa',
+          borderRadius: spacing(12),
+          padding: spacing(12),
+          borderWidth: 1,
+          borderColor: ageRangeAgreed ? COLORS.gradient.primary[0] : (isDark ? 'rgba(255,255,255,0.08)' : '#e9ecef')
+        }}>
+          <Pressable
+            onPress={() => {
+              const newState = !ageRangeAgreed;
+              setAgeRangeAgreed(newState);
+              if (!newState) {
+                updateFormData('ageRange', '');
+                setShowAgeRangePicker(false);
+              } else {
+                setShowAgeRangePicker(true);
+              }
+            }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'flex-start'
+            }}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: ageRangeAgreed }}
+            accessibilityLabel="연령대 정보 제공 동의 (선택)"
+          >
+            <View style={{
+              width: 24,
+              height: 24,
+              borderRadius: 6,
+              borderWidth: 2,
+              borderColor: ageRangeAgreed ? COLORS.gradient.primary[0] : (isDark ? '#555' : '#ccc'),
+              backgroundColor: ageRangeAgreed ? COLORS.gradient.primary[0] : 'transparent',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginRight: spacing(12),
+              marginTop: spacing(2)
+            }}>
+              {ageRangeAgreed && (
+                <MaterialCommunityIcons name="check" size={14} color={COLORS.white} />
+              )}
+            </View>
+            <View style={{ flex: 1 }}>
+              <HStack style={{ alignItems: 'center', gap: spacing(6), marginBottom: spacing(4) }}>
+                <Text style={{
+                  fontSize: normalizeFontSize(15),
+                  fontFamily: 'Pretendard-Bold',
+                  color: isDark ? theme.text.primary : '#1a1a1a'
+                }}>
+                  연령대 정보 제공 동의
+                </Text>
+                <Text style={{
+                  fontSize: normalizeFontSize(12),
+                  fontFamily: 'Pretendard-SemiBold',
+                  color: isDark ? theme.text.tertiary : COLORS.text.tertiary.light
+                }}>
+                  (선택)
+                </Text>
+              </HStack>
+
+              {/* 상세 안내 */}
+              <View style={{
+                backgroundColor: isDark ? 'rgba(102, 126, 234, 0.08)' : 'rgba(102, 126, 234, 0.05)',
+                borderRadius: spacing(8),
+                padding: spacing(10),
+                marginTop: spacing(4)
+              }}>
+                <Text style={{
+                  fontSize: normalizeFontSize(11),
+                  fontFamily: 'Pretendard-SemiBold',
+                  color: isDark ? theme.text.secondary : '#555',
+                  marginBottom: spacing(6)
+                }}>
+                  수집 항목: 연령대 (10대, 20대, 30대 등)
+                </Text>
+                <Text style={{
+                  fontSize: normalizeFontSize(11),
+                  color: isDark ? theme.text.tertiary : '#666',
+                  lineHeight: 16
+                }}>
+                  수집 목적: 연령별 맞춤 콘텐츠 추천, 서비스 이용 통계 분석, 사용자 경험 개선
+                </Text>
+                <Text style={{
+                  fontSize: normalizeFontSize(10),
+                  color: isDark ? theme.text.tertiary : '#888',
+                  marginTop: spacing(6),
+                  lineHeight: 14
+                }}>
+                  ※ 동의하지 않아도 서비스 이용에 제한이 없습니다
+                </Text>
+              </View>
+            </View>
+          </Pressable>
+
+          {/* 연령대 선택 UI */}
+          {ageRangeAgreed && (
+            <View style={{
+              marginLeft: spacing(36),
+              marginTop: spacing(12),
+              paddingTop: spacing(12),
+              borderTopWidth: 1,
+              borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : '#e9ecef'
+            }}>
+              <Text style={{
+                fontSize: normalizeFontSize(13),
+                fontFamily: 'Pretendard-Bold',
+                color: isDark ? theme.text.primary : '#333',
+                marginBottom: spacing(10)
+              }}>
+                연령대를 선택해주세요
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing(8) }}>
+                {AGE_RANGE_OPTIONS.filter(opt => opt.value !== '').map((option) => (
+                  <Pressable
+                    key={option.value}
+                    onPress={() => updateFormData('ageRange', option.value)}
+                    style={{
+                      paddingVertical: spacing(10),
+                      paddingHorizontal: spacing(16),
+                      borderRadius: spacing(20),
+                      backgroundColor: formData.ageRange === option.value
+                        ? COLORS.gradient.primary[0]
+                        : (isDark ? 'rgba(255,255,255,0.1)' : '#e9ecef'),
+                      borderWidth: 2,
+                      borderColor: formData.ageRange === option.value
+                        ? COLORS.gradient.primary[0]
+                        : 'transparent'
+                    }}
+                  >
+                    <Text style={{
+                      fontSize: normalizeFontSize(13),
+                      fontFamily: 'Pretendard-Bold',
+                      color: formData.ageRange === option.value
+                        ? COLORS.white
+                        : (isDark ? theme.text.secondary : '#555')
+                    }}>
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              {formData.ageRange && (
+                <Text style={{
+                  fontSize: normalizeFontSize(12),
+                  color: COLORS.gradient.primary[0],
+                  fontFamily: 'Pretendard-SemiBold',
+                  marginTop: spacing(10)
+                }}>
+                  선택됨: {AGE_RANGE_OPTIONS.find(opt => opt.value === formData.ageRange)?.label}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
+
+        <Pressable
+          onPress={() => {
+            if (!allRequired) {
+              showAlert.error('필수 동의 필요', '서비스 이용약관과 개인정보처리방침에 동의해주세요.');
+              return;
+            }
+            setStep(5);
+          }}
+          disabled={!allRequired}
+          accessibilityRole="button"
+          accessibilityLabel="다음 단계로"
+          accessibilityState={{ disabled: !allRequired }}
+          style={{ marginTop: spacing(8) }}
+        >
+          <LinearGradient
+            colors={allRequired ? COLORS.gradient.primary : ['#ccc', '#999']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.button, { opacity: allRequired ? 1 : 0.6 }]}
+          >
+            <Text style={{
+              color: COLORS.white,
+              fontSize: normalizeFontSize(16),
+              fontFamily: 'Pretendard-Bold',
+              textAlign: 'center',
+              letterSpacing: 0.3
+            }}>
+              다음
+            </Text>
+          </LinearGradient>
+        </Pressable>
+      </VStack>
+    );
+  }, [termsAgreed, privacyAgreed, marketingAgreed, ageRangeAgreed, formData.ageRange, updateFormData, spacing, normalizeFontSize, isDark, theme, styles]);
+
+  // Step 5: 프로필 설정 (선택)
+  const renderStep5 = useCallback(() => (
     <VStack style={{ gap: spacing(20) }}>
       <VStack style={{ alignItems: 'center', gap: spacing(16) }}>
         <Text style={{ fontSize: normalizeFontSize(48) }}>✨</Text>
         <Text style={{
           fontSize: normalizeFontSize(26),
-          fontWeight: '900',
+          fontFamily: 'Pretendard-Black',
           color: isDark ? theme.text.primary : '#1a1a1a',
           letterSpacing: -0.5
         }}>
@@ -1017,7 +1709,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         <Text style={{
           fontSize: normalizeFontSize(15),
           color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
-          fontWeight: '600',
+          fontFamily: 'Pretendard-SemiBold',
           textAlign: 'center',
           lineHeight: normalizeFontSize(22)
         }}>
@@ -1051,68 +1743,38 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         accessibilityHint="선택사항입니다. 나중에 변경할 수 있습니다"
       />
 
-      <VStack style={{ gap: spacing(10), marginTop: spacing(14) }}>
-        <Pressable
-          onPress={handleRegister}
-          disabled={loading}
-          accessibilityRole="button"
-          accessibilityLabel="가입 완료"
-          accessibilityState={{ disabled: loading }}
+      <Pressable
+        onPress={handleRegister}
+        disabled={loading}
+        accessibilityRole="button"
+        accessibilityLabel="가입 완료"
+        accessibilityState={{ disabled: loading }}
+        style={{ marginTop: spacing(14) }}
+      >
+        <LinearGradient
+          colors={loading ? ['#ccc', '#999'] : COLORS.gradient.primary}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.button, { opacity: loading ? 0.7 : 1 }]}
         >
-          <LinearGradient
-            colors={loading ? ['#ccc', '#999'] : COLORS.gradient.primary}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.button, { opacity: loading ? 0.7 : 1 }]}
-          >
-            <HStack style={{ justifyContent: 'center', alignItems: 'center', gap: spacing(8) }}>
-              {loading && <ActivityIndicator size="small" color={COLORS.white} />}
-              <Text style={{
-                color: COLORS.white,
-                fontSize: normalizeFontSize(16),
-                fontWeight: '700',
-                letterSpacing: 0.3
-              }}>
-                {loading ? '가입 중...' : '가입 완료'}
-              </Text>
-            </HStack>
-          </LinearGradient>
-        </Pressable>
-
-        <Pressable
-          onPress={handleRegister}
-          disabled={loading}
-          accessibilityRole="button"
-          accessibilityLabel="건너뛰기"
-          accessibilityState={{ disabled: loading }}
-        >
-          <View style={{
-            borderRadius: spacing(16),
-            paddingVertical: spacing(16),
-            minHeight: spacing(54),
-            justifyContent: 'center',
-            borderWidth: 2,
-            borderColor: isDark ? theme.bg.border : '#ddd',
-            backgroundColor: theme.bg.secondary,
-            opacity: loading ? 0.7 : 1
-          }}>
+          <HStack style={{ justifyContent: 'center', alignItems: 'center', gap: spacing(8) }}>
+            {loading && <ActivityIndicator size="small" color={COLORS.white} />}
             <Text style={{
-              color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
+              color: COLORS.white,
               fontSize: normalizeFontSize(16),
-              fontWeight: '700',
-              textAlign: 'center',
+              fontFamily: 'Pretendard-Bold',
               letterSpacing: 0.3
             }}>
-              건너뛰기
+              {loading ? '가입 중...' : '가입 완료'}
             </Text>
-          </View>
-        </Pressable>
-      </VStack>
+          </HStack>
+        </LinearGradient>
+      </Pressable>
     </VStack>
   ), [formData.nickname, loading, handleRegister, updateFormData, spacing, normalizeFontSize, isDark, theme, styles]);
 
   return (
-    <>
+    <View style={styles.container}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
@@ -1148,6 +1810,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                 contentContainerStyle={styles.scrollContent}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}
+                bounces={false}
+                overScrollMode="never"
               >
                 {/* 뒤로가기 버튼 */}
                 <Pressable
@@ -1158,7 +1822,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                 >
                   <Text style={{
                     fontSize: normalizeFontSize(22),
-                    fontWeight: '600',
+                    fontFamily: 'Pretendard-SemiBold',
                     color: COLORS.white
                   }}>
                     ←
@@ -1172,6 +1836,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                   {step === 2 && renderStep2()}
                   {step === 3 && renderStep3()}
                   {step === 4 && renderStep4()}
+                  {step === 5 && renderStep5()}
 
                   {/* 로그인 링크 */}
                   {step === 1 && (
@@ -1196,7 +1861,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           </LinearGradient>
         </View>
       </TouchableWithoutFeedback>
-    </>
+    </View>
   );
 };
 

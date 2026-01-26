@@ -32,7 +32,7 @@ export const EmotionEcho: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('감정 공명을 불러오는데 실패했습니다');
-      console.log('감정 공명 로드 실패');
+      if (__DEV__) console.log('감정 공명 로드 실패');
     } finally {
       setLoading(false);
     }
@@ -94,7 +94,7 @@ export const EmotionEcho: React.FC = React.memo(() => {
           accessible={true}
           accessibilityLabel={`현재 감정: ${data.emotion}`}
         >
-          <Text style={{ fontSize: FONT_SIZES.h3 * scale }}>{data.icon}</Text>
+          <Text style={{ fontSize: FONT_SIZES.h4 * scale }}>{data.icon}</Text>
           <Text style={[styles.emotionName, { color: data.color, fontSize: FONT_SIZES.small * scale }]}>
             {data.emotion}
           </Text>
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     flex: 1,
   },
   subtitle: {},
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   echoBox: {
     flexDirection: 'row',
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   emotionName: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   echoRow: {
     flexDirection: 'row',
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   echoText: {},
   echoCount: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   echoSubtext: {},
   errorContainer: {

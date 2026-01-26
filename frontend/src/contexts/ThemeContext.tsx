@@ -56,7 +56,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         
         setIsThemeLoaded(true);
       } catch (error) {
-        console.error('테마 설정을 불러오는데 실패했습니다:', error);
+        if (__DEV__) console.error('테마 설정을 불러오는데 실패했습니다:', error);
         setThemeState('system');
         setIsDarkMode(systemColorScheme === 'dark');
         setIsThemeLoaded(true);
@@ -83,7 +83,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     try {
       await AsyncStorage.setItem(THEME_STORAGE_KEY, newTheme);
     } catch (error) {
-      console.error('테마 설정 저장에 실패했습니다:', error);
+      if (__DEV__) console.error('테마 설정 저장에 실패했습니다:', error);
     }
   };
 

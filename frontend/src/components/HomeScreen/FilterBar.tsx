@@ -17,53 +17,49 @@ const FilterBar: React.FC<FilterBarProps> = ({
 }) => {
   const colors = {
     background: isDark ? '#1a1a1a' : '#f8fafc',
-    cardBackground: isDark ? '#2d2d2d' : '#ffffff',
-    text: isDark ? '#ffffff' : '#000000',
-    textSecondary: isDark ? '#b0b0b0' : '#4b5563',
-    border: isDark ? '#404040' : '#e5e7eb',
-    primary: isDark ? '#60a5fa' : '#2563eb',
+    cardBackground: isDark ? 'rgba(255, 255, 255, 0.08)' : '#ffffff',
+    text: isDark ? '#f3f4f6' : '#1f2937',
+    textSecondary: isDark ? '#9ca3af' : '#6b7280',
+    border: isDark ? 'rgba(255, 255, 255, 0.15)' : '#e5e7eb',
+    primary: isDark ? '#8B5CF6' : '#8B5CF6',
   };
 
   return (
-    <Box className="mb-1">
-      {/* 감정 필터 */}
+    <Box style={{ marginBottom: 2, marginTop: 2 }}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 2 }}
+        contentContainerStyle={{ paddingHorizontal: 8, paddingVertical: 2 }}
       >
-        <HStack style={{ gap: 10 }}>
-          <Pressable
-            onPress={() => onEmotionChange('전체')}
-            style={{
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              borderRadius: 20,
-              backgroundColor: selectedEmotion === '전체' ? colors.primary : colors.cardBackground,
-              borderWidth: 1,
-              borderColor: selectedEmotion === '전체' ? colors.primary : colors.border,
-              minHeight: 36,
-            }}
-          >
-            <Text style={{ color: selectedEmotion === '전체' ? '#fff' : colors.text, fontWeight: '600', fontSize: 14 }}>
-              전체
-            </Text>
-          </Pressable>
+        <HStack style={{ gap: 6 }}>
           {localEmotions.map(emotion => (
             <Pressable
               key={emotion.label}
-              onPress={() => onEmotionChange(emotion.label)}
+              onPress={() => onEmotionChange(selectedEmotion === emotion.label ? '' : emotion.label)}
               style={{
-                paddingHorizontal: 14,
-                paddingVertical: 8,
-                borderRadius: 20,
-                backgroundColor: selectedEmotion === emotion.label ? emotion.color + '20' : colors.cardBackground,
-                borderWidth: 1,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 16,
+                backgroundColor: selectedEmotion === emotion.label
+                  ? (isDark ? emotion.color + '25' : emotion.color + '15')
+                  : colors.cardBackground,
+                borderWidth: selectedEmotion === emotion.label ? 1 : 1,
                 borderColor: selectedEmotion === emotion.label ? emotion.color : colors.border,
-                minHeight: 36,
+                minHeight: 32,
+                shadowColor: selectedEmotion === emotion.label ? emotion.color : 'transparent',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: selectedEmotion === emotion.label ? 0.25 : 0,
+                shadowRadius: 4,
+                elevation: selectedEmotion === emotion.label ? 2 : 0,
               }}
             >
-              <Text style={{ color: selectedEmotion === emotion.label ? emotion.color : colors.text, fontWeight: '600', fontSize: 14 }}>
+              <Text style={{
+                color: selectedEmotion === emotion.label
+                  ? (isDark ? emotion.color : emotion.color)
+                  : colors.text,
+                fontWeight: selectedEmotion === emotion.label ? '700' : '600',
+                fontSize: 13
+              }}>
                 {emotion.label}
               </Text>
             </Pressable>

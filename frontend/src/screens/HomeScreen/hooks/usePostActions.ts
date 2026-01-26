@@ -64,7 +64,7 @@ export const usePostActions = ({
           await apiCall();
           success = true;
           break;
-        } catch (error: any) {
+        } catch (error: unknown) {
           lastError = error;
           if (error.response?.status !== 404) break;
         }
@@ -87,7 +87,7 @@ export const usePostActions = ({
           ? { ...post, like_count: isCurrentlyLiked ? post.like_count - 1 : post.like_count + 1, isLiked: !isCurrentlyLiked }
           : post
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = error.response?.status === 404 ? '게시물을 찾을 수 없습니다.' : '좋아요 처리 중 오류가 발생했습니다.';
       Alert.alert('오류', errorMessage);
     }
@@ -123,7 +123,7 @@ export const usePostActions = ({
       } else {
         await bookmarkService.addBookmark(postId, 'my_day');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setBookmarkedPosts(prev => {
         const newSet = new Set(prev);
         if (wasBookmarked) {
@@ -152,7 +152,7 @@ export const usePostActions = ({
           await apiCall();
           success = true;
           break;
-        } catch (error: any) {
+        } catch (error: unknown) {
           if (error.response?.status !== 404) break;
         }
       }

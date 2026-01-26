@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginBottom: 8,
     color: '#333333',
   },
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   },
   selectedTagText: {
     color: '#4A90E2',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   disabledTagText: {
     color: '#999999',
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
   },
   createButtonText: {
     color: '#FFFFFF',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   helperText: {
     fontSize: 12,

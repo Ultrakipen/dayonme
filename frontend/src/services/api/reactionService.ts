@@ -29,13 +29,13 @@ const reactionService = {
   // 리액션 타입 목록 조회
   getReactionTypes: async () => {
     try {
-      console.log('🎭 리액션 타입 목록 조회 요청');
+      if (__DEV__) console.log('🎭 리액션 타입 목록 조회 요청');
       const response = await apiClient.get('/reactions/types');
-      console.log('🎭 리액션 타입 목록 조회 응답:', response.data);
+      if (__DEV__) console.log('🎭 리액션 타입 목록 조회 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ 리액션 타입 목록 조회 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 리액션 타입 목록 조회 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -43,15 +43,15 @@ const reactionService = {
   // My Day 게시물에 리액션 추가/제거 (토글)
   toggleMyDayReaction: async (postId: number, reactionTypeId: number) => {
     try {
-      console.log('👍 MyDay 리액션 토글 요청:', { postId, reactionTypeId });
+      if (__DEV__) console.log('👍 MyDay 리액션 토글 요청:', { postId, reactionTypeId });
       const response = await apiClient.post(`/reactions/my-day/${postId}`, {
         reaction_type_id: reactionTypeId
       });
-      console.log('👍 MyDay 리액션 토글 응답:', response.data);
+      if (__DEV__) console.log('👍 MyDay 리액션 토글 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ MyDay 리액션 토글 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ MyDay 리액션 토글 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -59,13 +59,13 @@ const reactionService = {
   // My Day 게시물의 리액션 통계 조회
   getMyDayReactions: async (postId: number) => {
     try {
-      console.log('📊 MyDay 리액션 통계 조회 요청:', postId);
+      if (__DEV__) console.log('📊 MyDay 리액션 통계 조회 요청:', postId);
       const response = await apiClient.get(`/reactions/my-day/${postId}`);
-      console.log('📊 MyDay 리액션 통계 조회 응답:', response.data);
+      if (__DEV__) console.log('📊 MyDay 리액션 통계 조회 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ MyDay 리액션 통계 조회 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ MyDay 리액션 통계 조회 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -73,15 +73,15 @@ const reactionService = {
   // Someone Day 게시물에 리액션 추가/제거 (토글)
   toggleSomeoneDayReaction: async (postId: number, reactionTypeId: number) => {
     try {
-      console.log('👍 SomeoneDay 리액션 토글 요청:', { postId, reactionTypeId });
+      if (__DEV__) console.log('👍 SomeoneDay 리액션 토글 요청:', { postId, reactionTypeId });
       const response = await apiClient.post(`/reactions/someone-day/${postId}`, {
         reaction_type_id: reactionTypeId
       });
-      console.log('👍 SomeoneDay 리액션 토글 응답:', response.data);
+      if (__DEV__) console.log('👍 SomeoneDay 리액션 토글 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ SomeoneDay 리액션 토글 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ SomeoneDay 리액션 토글 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -89,13 +89,49 @@ const reactionService = {
   // Someone Day 게시물의 리액션 통계 조회
   getSomeoneDayReactions: async (postId: number) => {
     try {
-      console.log('📊 SomeoneDay 리액션 통계 조회 요청:', postId);
+      if (__DEV__) console.log('📊 SomeoneDay 리액션 통계 조회 요청:', postId);
       const response = await apiClient.get(`/reactions/someone-day/${postId}`);
-      console.log('📊 SomeoneDay 리액션 통계 조회 응답:', response.data);
+      if (__DEV__) console.log('📊 SomeoneDay 리액션 통계 조회 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ SomeoneDay 리액션 통계 조회 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ SomeoneDay 리액션 통계 조회 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+      throw error;
+    }
+  },
+
+  // ========== 간단한 리액션 API (프론트엔드 ReactionPicker 호환) ==========
+  /**
+   * 게시물 리액션 토글 (간단한 방식)
+   * @param postId - 게시물 ID
+   * @param reactionType - 리액션 타입 ('like' | 'love' | 'haha' | 'wow' | 'sad')
+   */
+  toggleReaction: async (postId: number, reactionType: 'like' | 'love' | 'haha' | 'wow' | 'sad') => {
+    try {
+      if (__DEV__) console.log('👍 리액션 토글 요청:', { postId, reactionType });
+      const response = await apiClient.post(`/my-day/${postId}/reactions`, {
+        reaction_type: reactionType
+      });
+      if (__DEV__) console.log('👍 리액션 토글 응답:', response.data);
+      return response.data;
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 리액션 토글 오류:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * 게시물 리액션 통계 조회 (간단한 방식)
+   * @param postId - 게시물 ID
+   */
+  getReactions: async (postId: number) => {
+    try {
+      if (__DEV__) console.log('📊 리액션 통계 조회 요청:', postId);
+      const response = await apiClient.get(`/my-day/${postId}/reactions`);
+      if (__DEV__) console.log('📊 리액션 통계 조회 응답:', response.data);
+      return response.data;
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 리액션 통계 조회 오류:', error);
       throw error;
     }
   }

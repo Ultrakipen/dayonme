@@ -51,7 +51,7 @@ class ImageUploadService {
       );
       return granted === PermissionsAndroid.RESULTS.GRANTED;
     } catch (error) {
-      console.error('카메라 권한 요청 실패:', error);
+      if (__DEV__) console.error('카메라 권한 요청 실패:', error);
       return false;
     }
   }
@@ -186,7 +186,7 @@ class ImageUploadService {
       const key = `${this.STORAGE_PREFIX}${directory}_${Date.now()}`;
       await AsyncStorage.setItem(key, JSON.stringify(image));
     } catch (error) {
-      console.error('이미지 저장 실패:', error);
+      if (__DEV__) console.error('이미지 저장 실패:', error);
     }
   };
 
@@ -209,7 +209,7 @@ class ImageUploadService {
 
       return images.sort((a, b) => (b.fileName || '').localeCompare(a.fileName || ''));
     } catch (error) {
-      console.error('저장된 이미지 조회 실패:', error);
+      if (__DEV__) console.error('저장된 이미지 조회 실패:', error);
       return [];
     }
   };
@@ -232,7 +232,7 @@ class ImageUploadService {
         }
       }
     } catch (error) {
-      console.error('이미지 삭제 실패:', error);
+      if (__DEV__) console.error('이미지 삭제 실패:', error);
     }
   };
 
@@ -266,7 +266,7 @@ class ImageUploadService {
         }
       }
     } catch (error) {
-      console.error('임시 이미지 정리 실패:', error);
+      if (__DEV__) console.error('임시 이미지 정리 실패:', error);
     }
   };
 }

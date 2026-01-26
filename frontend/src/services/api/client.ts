@@ -2,6 +2,7 @@
 import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import EncryptedStorage from 'react-native-encrypted-storage';
 import { requestQueue } from './requestQueue';
 
 // API 서버의 기본 URL 설정 - 실제 서버 사용
@@ -27,13 +28,40 @@ declare global {
   var authContextLogout: (() => void) | undefined;
 }
 
+// 토큰 갱신 상태 관리 (중복 호출 방지)
+let isRefreshing = false;
+let refreshSubscribers: Array<(token: string | null) => void> = [];
+
+// 토큰 갱신 대기자 추가
+const subscribeTokenRefresh = (callback: (token: string | null) => void) => {
+  refreshSubscribers.push(callback);
+};
+
+// 토큰 갱신 완료 알림
+const onTokenRefreshed = (token: string | null) => {
+  refreshSubscribers.forEach(callback => callback(token));
+  refreshSubscribers = [];
+};
+
 // 토큰 갱신 함수
 const refreshAuthToken = async (): Promise<string | null> => {
+  // 이미 토큰 갱신 중이면 대기
+  if (isRefreshing) {
+    if (__DEV__) console.log('⏳ 토큰 갱신 진행 중 - 대기...');
+    return new Promise((resolve) => {
+      subscribeTokenRefresh((token) => {
+        resolve(token);
+      });
+    });
+  }
+
+  isRefreshing = true;
+
   try {
     if (__DEV__) console.log('🔄 토큰 갱신 시도 중...');
 
-    // refresh_token 가져오기
-    const refreshToken = await AsyncStorage.getItem('refresh_token');
+    // refresh_token 가져오기 (EncryptedStorage 사용)
+    const refreshToken = await EncryptedStorage.getItem('refresh_token');
     if (!refreshToken) {
       if (__DEV__) console.log('❌ Refresh 토큰이 없어 갱신 불가 (비로그인 사용자)');
       throw new Error('NO_TOKEN');
@@ -49,30 +77,70 @@ const refreshAuthToken = async (): Promise<string | null> => {
         headers: {
           'Content-Type': 'application/json'
         },
-        timeout: 5000
+        timeout: 10000 // 타임아웃 10초로 증가
       }
     );
+
+    // 429 Rate Limit 처리
+    if (response.status === 429) {
+      if (__DEV__) console.log('⚠️ 토큰 갱신 Rate Limit - 3초 후 재시도');
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // 재시도
+      const retryResponse = await axios.post(
+        `${getBaseURL()}/auth/refresh`,
+        { refresh_token: refreshToken },
+        {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 10000
+        }
+      );
+
+      if (retryResponse.data.status === 'success' && retryResponse.data.data?.token) {
+        const newToken = retryResponse.data.data.token;
+        const newRefreshToken = retryResponse.data.data.refresh_token;
+        const updatedUser = retryResponse.data.data.user;
+
+        // 토큰은 EncryptedStorage, 사용자 정보는 AsyncStorage에 저장
+        await Promise.all([
+          EncryptedStorage.setItem('authToken', newToken),
+          EncryptedStorage.setItem('refresh_token', newRefreshToken),
+          AsyncStorage.setItem('user', JSON.stringify(updatedUser))
+        ]);
+
+        if (__DEV__) console.log('✅ 토큰 갱신 성공 (재시도)');
+        isRefreshing = false;
+        onTokenRefreshed(newToken);
+        return newToken;
+      }
+    }
 
     if (response.data.status === 'success' && response.data.data?.token) {
       const newToken = response.data.data.token;
       const newRefreshToken = response.data.data.refresh_token;
       const updatedUser = response.data.data.user;
 
-      // 새 토큰과 사용자 정보 저장
-      await AsyncStorage.multiSet([
-        ['authToken', newToken],
-        ['refresh_token', newRefreshToken],
-        ['user', JSON.stringify(updatedUser)]
+      // 토큰은 EncryptedStorage, 사용자 정보는 AsyncStorage에 저장
+      await Promise.all([
+        EncryptedStorage.setItem('authToken', newToken),
+        EncryptedStorage.setItem('refresh_token', newRefreshToken),
+        AsyncStorage.setItem('user', JSON.stringify(updatedUser))
       ]);
 
       if (__DEV__) console.log('✅ 토큰 갱신 성공');
+      isRefreshing = false;
+      onTokenRefreshed(newToken);
       return newToken;
     }
 
     if (__DEV__) console.log('❌ 토큰 갱신 응답 형식 오류');
+    isRefreshing = false;
+    onTokenRefreshed(null);
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (__DEV__) console.error('❌ 토큰 갱신 오류:', error.response?.status || error.message);
+    isRefreshing = false;
+    onTokenRefreshed(null);
     return null;
   }
 };
@@ -81,8 +149,8 @@ const refreshAuthToken = async (): Promise<string | null> => {
 apiClient.interceptors.request.use(
   async (config: any) => {
     try {
-      // AsyncStorage에서 토큰 가져오기 (백엔드와 일치하는 키)
-      const token = await AsyncStorage.getItem('authToken');
+      // EncryptedStorage에서 토큰 가져오기
+      const token = await EncryptedStorage.getItem('authToken');
 
       if (token) {
         if (!config.headers) {
@@ -103,18 +171,18 @@ apiClient.interceptors.request.use(
       }
 
       if (__DEV__) {
-        console.log(`🚀 API 요청: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+        if (__DEV__) console.log(`🚀 API 요청: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
         if (config.params) {
-          console.log(`🚀 요청 파라미터(URL):`, config.params);
+          if (__DEV__) console.log(`🚀 요청 파라미터(URL):`, config.params);
         }
         if (config.data && !(config.data instanceof FormData)) {
           // 민감 정보 마스킹
           const safeData = { ...config.data };
           if (safeData.password) safeData.password = '***';
           if (safeData.token) safeData.token = '***';
-          console.log(`🚀 요청 파라미터(Body):`, safeData);
+          if (__DEV__) console.log(`🚀 요청 파라미터(Body):`, safeData);
         } else if (config.data instanceof FormData) {
-          console.log(`🚀 요청 파라미터(Body): [FormData]`);
+          if (__DEV__) console.log(`🚀 요청 파라미터(Body): [FormData]`);
         }
       }
       return config;
@@ -133,6 +201,33 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   async (response: any) => {
     if (__DEV__) console.log(`✅ API 응답: ${response.status} ${response.config.baseURL}${response.config.url}`);
+
+    // 429 Rate Limit 처리 (exponential backoff)
+    if (response.status === 429) {
+      if (__DEV__) console.log(`⚠️ Rate Limit 초과: ${response.config.baseURL}${response.config.url}`);
+
+      const originalRequest = response.config as AxiosRequestConfig & { _retryAfter?: number };
+
+      // 최대 3회까지 재시도
+      if (!originalRequest._retryAfter || originalRequest._retryAfter < 3) {
+        originalRequest._retryAfter = (originalRequest._retryAfter || 0) + 1;
+
+        // Exponential backoff: 2초, 4초, 8초
+        const delayMs = Math.pow(2, originalRequest._retryAfter) * 1000;
+        if (__DEV__) console.log(`⏳ ${delayMs / 1000}초 후 재시도... (${originalRequest._retryAfter}/3)`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+
+        return apiClient.request(originalRequest);
+      }
+
+      // 최대 재시도 횟수 초과
+      return Promise.reject({
+        response: response,
+        config: response.config,
+        isAxiosError: true,
+        message: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
+      });
+    }
 
     // 401 인증 오류 처리 (토큰 갱신 시도)
     if (response.status === 401) {
@@ -217,7 +312,7 @@ apiClient.interceptors.response.use(
             // 토큰 갱신 실패 - 로그아웃 처리
             throw new Error('TOKEN_REFRESH_FAILED');
           }
-        } catch (refreshError: any) {
+        } catch (refreshError: unknown) {
           // 비로그인 사용자(토큰 없음)는 조용히 처리
           if (refreshError.message === 'NO_TOKEN') {
             if (__DEV__) console.log('ℹ️ 비로그인 사용자 - 토큰 갱신 생략');
@@ -260,18 +355,53 @@ apiClient.interceptors.response.use(
       });
     }
 
+    // 400 에러 (잘못된 요청) - 에러로 변환하여 catch에서 처리 가능하게
+    if (response.status === 400) {
+      if (__DEV__) console.log(`⚠️ API 400 에러: ${response.config.baseURL}${response.config.url}`);
+      return Promise.reject({
+        response: response,
+        config: response.config,
+        isAxiosError: true
+      });
+    }
+
     return response;
   },
   async (error: AxiosError) => {
     const originalRequest = error.config as AxiosRequestConfig & {
       _retry?: boolean;
       _retryCount?: number;
+      _retryAfter?: number;
     };
 
     // originalRequest가 undefined인 경우 처리
     if (!originalRequest) {
       if (__DEV__) console.error('❌ originalRequest가 undefined입니다:', error);
       return Promise.reject(error);
+    }
+
+    // 429 Rate Limit 에러 처리 (exponential backoff)
+    if (error.response && error.response.status === 429) {
+      if (__DEV__) console.log('⚠️ Rate Limit 초과 (에러)');
+
+      // 최대 3회까지 재시도
+      if (!originalRequest._retryAfter || originalRequest._retryAfter < 3) {
+        originalRequest._retryAfter = (originalRequest._retryAfter || 0) + 1;
+
+        // Exponential backoff: 2초, 4초, 8초
+        const delayMs = Math.pow(2, originalRequest._retryAfter) * 1000;
+        if (__DEV__) console.log(`⏳ ${delayMs / 1000}초 후 재시도... (${originalRequest._retryAfter}/3)`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+
+        return apiClient.request(originalRequest);
+      }
+
+      // 최대 재시도 횟수 초과
+      return Promise.reject({
+        ...error,
+        message: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
+        friendlyMessage: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.'
+      });
     }
 
     // 401 에러(인증 실패) 처리
@@ -359,7 +489,7 @@ apiClient.interceptors.response.use(
             throw new Error('TOKEN_REFRESH_FAILED');
           }
 
-        } catch (refreshError: any) {
+        } catch (refreshError: unknown) {
           // 비로그인 사용자(토큰 없음)는 조용히 처리
           if (refreshError.message === 'NO_TOKEN') {
             if (__DEV__) console.log('ℹ️ 비로그인 사용자 - 토큰 갱신 생략 (에러)');
@@ -423,7 +553,7 @@ apiClient.interceptors.response.use(
 
       // 첫 번째 시도일 때만 오류 유형 로깅
       if (__DEV__ && (!originalRequest._retryCount || originalRequest._retryCount === 1)) {
-        console.log(`🌐 네트워크 오류: ${networkErrorType}`);
+        if (__DEV__) console.log(`🌐 네트워크 오류: ${networkErrorType}`);
       }
 
       // 자동 재시도 로직 (최대 1번으로 축소하여 무한 로딩 방지)

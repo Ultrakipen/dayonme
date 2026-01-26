@@ -36,6 +36,6 @@ const styles = StyleSheet.create({
   message: {
     marginTop: 16,
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
 });

@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   count: {
     color: 'white',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center'
   }
 });

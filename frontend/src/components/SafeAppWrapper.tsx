@@ -16,61 +16,45 @@ class SafeAppWrapper extends Component<Props, State> {
     this.state = { hasError: false };
   }
 
+  // 알려진 React Native 0.80 호환성 오류 (구체적으로 정의)
+  private static readonly CRITICAL_COMPATIBILITY_ERRORS = [
+    'Cannot redefine property', // Hermes 프로퍼티
+    'property is not configurable and cannot be redefined',
+    'AlertProvider is not defined in scope',
+    'EventDispatcher is not defined',
+    'SafeAreaProvider is not defined',
+    'ViewManager.*is not defined', // 정규식 패턴
+    'Text strings must be rendered within a <Text> component',
+    'Unable to parse color from rgba\\(', // 구체적인 색상 파싱 오류
+    'Rendered more hooks than during the previous render',
+    'Rendered fewer hooks than during the previous render',
+    'Malformed calls from JS: field sizes are different',
+    'on a null object reference.*ViewManager', // 구체적인 null 참조
+  ];
+
+  private static isKnownCriticalError(errorMessage: string): boolean {
+    return this.CRITICAL_COMPATIBILITY_ERRORS.some(pattern =>
+      errorMessage.includes(pattern) || new RegExp(pattern).test(errorMessage)
+    );
+  }
+
   static getDerivedStateFromError(error: Error): State {
     try {
       const errorMessage = error?.message || error?.toString() || 'Unknown error';
 
-      // React Native 0.80 + Hermes 호환성 오류 무시
-      if (errorMessage.includes('property is not configurable') ||
-          errorMessage.includes('AlertProvider') ||
-          errorMessage.includes('EventDispatcher') ||
-          errorMessage.includes('getEventDispatcher') ||
-          errorMessage.includes('SafeAreaProvider') ||
-          errorMessage.includes('ViewManager') ||
-          errorMessage.includes('on a null object reference')) {
-        return { hasError: false }; // 오류 상태로 가지 않음
-      }
-
-      // ReferenceError with property access - likely a transient bundler issue
-      if (errorMessage.includes("Property") && errorMessage.includes("doesn't exist")) {
-        return { hasError: false }; // 오류 상태로 가지 않음
-      }
-
-      // Text component 오류는 무시 (React Native 0.80 호환성 문제)
-      if (errorMessage.includes('Text strings must be rendered')) {
+      // 알려진 심각한 호환성 오류만 무시
+      if (this.isKnownCriticalError(errorMessage)) {
+        if (__DEV__ && process.env.DEBUG_ERROR_FILTER === 'true') {
+          console.warn('[SafeAppWrapper] 필터링된 치명적 오류:', errorMessage);
+        }
         return { hasError: false };
       }
 
-      // View/accessibility 관련 오류도 무시 (React Native 0.80 호환성)
-      if (errorMessage.includes('accessibility') ||
-          errorMessage.includes('View') ||
-          errorMessage.includes('RCTView')) {
-        return { hasError: false };
-      }
-
-      // Color parsing 오류 무시 (객체를 색상으로 전달하는 경우)
-      if (errorMessage.includes('Unable to parse color from object')) {
-        return { hasError: false };
-      }
-
-      // Hooks 관련 오류 무시 (React Native 0.80 호환성)
-      if (errorMessage.includes('Rendered more hooks') ||
-          errorMessage.includes('Rendered fewer hooks') ||
-          errorMessage.includes('hooks than during the previous render')) {
-        return { hasError: false };
-      }
-
-      // Native Bridge 통신 오류 무시 (빠른 연속 렌더링 시 발생)
-      if (errorMessage.includes('Malformed calls from JS') ||
-          errorMessage.includes('field sizes are different') ||
-          errorMessage.includes('HostFunction')) {
-        return { hasError: false };
-      }
-
-      console.error('앱 래퍼에서 오류 캐치:', errorMessage);
+      if (__DEV__) console.error('[SafeAppWrapper] 처리되지 않은 오류:', errorMessage);
       return { hasError: true, error };
     } catch (handlerError) {
       // 오류 처리 중 오류 발생 시 앱은 계속 실행
+      if (__DEV__) console.error('[SafeAppWrapper] 오류 핸들러 실패:', handlerError);
       return { hasError: false };
     }
   }
@@ -79,33 +63,22 @@ class SafeAppWrapper extends Component<Props, State> {
     try {
       const errorMessage = error?.message || error?.toString() || 'Unknown error';
 
-      // React Native 0.80 + Hermes 호환성 오류는 무시
-      if (errorMessage.includes('property is not configurable') ||
-          errorMessage.includes('AlertProvider') ||
-          errorMessage.includes('EventDispatcher') ||
-          errorMessage.includes('getEventDispatcher') ||
-          errorMessage.includes('SafeAreaProvider') ||
-          errorMessage.includes('ViewManager') ||
-          errorMessage.includes('Text strings must be rendered') ||
-          errorMessage.includes('accessibility') ||
-          errorMessage.includes('View') ||
-          errorMessage.includes('RCTView') ||
-          errorMessage.includes('Unable to parse color from object') ||
-          errorMessage.includes('Rendered more hooks') ||
-          errorMessage.includes('Rendered fewer hooks') ||
-          errorMessage.includes('hooks than during the previous render') ||
-          errorMessage.includes('Malformed calls from JS') ||
-          errorMessage.includes('field sizes are different') ||
-          errorMessage.includes('HostFunction') ||
-          errorMessage.includes("Property") && errorMessage.includes("doesn't exist")) {
-        // 오류 무시 (로그 출력 안함 - 무한 루프 방지)
+      // 알려진 호환성 오류는 무시
+      if (SafeAppWrapper.isKnownCriticalError(errorMessage)) {
+        if (__DEV__ && process.env.DEBUG_ERROR_FILTER === 'true') {
+          console.warn('[SafeAppWrapper] componentDidCatch - 필터링된 오류:', errorMessage);
+        }
         return;
       }
 
-      // 기타 심각한 오류만 로그 출력
-      console.error('SafeAppWrapper 오류:', errorMessage);
+      // 실제 오류만 로그 출력
+      if (__DEV__) {
+        console.error('[SafeAppWrapper] 심각한 오류:', errorMessage);
+        console.error('Component Stack:', errorInfo?.componentStack);
+      }
     } catch (handlerError) {
-      // 오류 처리 중 오류 발생해도 무시
+      // 오류 처리 중 오류 발생해도 무시 (무한 루프 방지)
+      if (__DEV__) console.error('[SafeAppWrapper] 핸들러 오류:', handlerError);
     }
   }
 
@@ -135,7 +108,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     color: '#333',
     textAlign: 'center',
     marginBottom: 10,

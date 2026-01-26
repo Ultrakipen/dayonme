@@ -27,6 +27,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import postService from '../services/api/postService';
 import comfortWallService from '../services/api/comfortWallService';
+import myDayService from '../services/api/myDayService';
 import commentService from '../services/api/commentService';
 import blockService, { BlockedContent } from '../services/api/blockService';
 import { RootStackParamList } from '../types/navigation';
@@ -36,6 +37,8 @@ import { optimizeCommentTree, validateCommentContent, sanitizeCommentContent, fo
 import ClickableNickname from '../components/ClickableNickname';
 import EmotionLoginPromptModal from '../components/EmotionLoginPromptModal';
 import { FONT_SIZES } from '../constants';
+import { EMOTION_AVATARS, getTwemojiUrl } from '../constants/emotions';
+import FastImage from 'react-native-fast-image';
 
 type CommentScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Comment'>;
 type CommentScreenRouteProp = RouteProp<RootStackParamList, 'Comment'>;
@@ -94,12 +97,155 @@ const scaleFont = (size: number) => {
 };
 const scaleSize = (size: number) => (getScreenWidth() / BASE_WIDTH) * size;
 
+// 메모이즈된 입력 컴포넌트 - 타이핑 시 부모 재렌더링 방지
+interface CommentInputProps {
+  onSubmit: (text: string, isAnonymous: boolean) => Promise<void>;
+  replyingTo: Comment | null;
+  onCancelReply: () => void;
+  theme: any;
+  submitting: boolean;
+  flatListRef: React.RefObject<FlatList>;
+  insets: { bottom: number };
+  keyboardHeight: number;
+}
+
+const CommentInput = React.memo(({
+  onSubmit,
+  replyingTo,
+  onCancelReply,
+  theme,
+  submitting,
+  flatListRef,
+  insets,
+  keyboardHeight,
+}: CommentInputProps) => {
+  const [text, setText] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const textInputRef = useRef<TextInput>(null);
+
+  // replyingTo 변경 시 @멘션 추가
+  useEffect(() => {
+    if (replyingTo) {
+      const displayName = replyingTo.is_anonymous ? '익명' : replyingTo.user?.nickname || '사용자';
+      setText(`@${displayName} `);
+      textInputRef.current?.focus();
+    }
+  }, [replyingTo]);
+
+  const handleSubmit = async () => {
+    if (!text.trim() || submitting) return;
+    try {
+      await onSubmit(text.trim(), isAnonymous);
+      setText('');
+      setIsAnonymous(false);
+      // 제출 후 키보드 닫기 및 포커스 해제
+      Keyboard.dismiss();
+      textInputRef.current?.blur();
+    } catch (error) {
+      // 에러는 부모에서 처리
+    }
+  };
+
+  const handleCancelReply = () => {
+    setText('');
+    onCancelReply();
+  };
+
+  // 입력창 스타일 - 화면 하단 절대 위치, 키보드 높이만큼 올라감
+  return (
+    <View style={[
+      styles.inputContainer,
+      {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: keyboardHeight,
+        paddingBottom: keyboardHeight > 0 ? 12 : (Platform.OS === 'ios' ? insets.bottom + 12 : 12),
+        backgroundColor: theme.bg.primary,
+        borderTopColor: theme.bg.border,
+      }
+    ]}>
+      {replyingTo && (
+        <View style={[styles.replyingIndicator, { backgroundColor: theme.bg.secondary }]}>
+          <Text style={[styles.replyingText, { color: theme.text.secondary }]}>
+            {replyingTo.is_anonymous ? '익명' : replyingTo.user?.nickname}님에게 답글
+          </Text>
+          <TouchableOpacity onPress={handleCancelReply}>
+            <MaterialCommunityIcons name="close" size={scaleSize(16)} color={theme.text.secondary} />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      <View style={styles.inputRow}>
+        <TouchableOpacity
+          style={styles.anonymousToggle}
+          onPress={() => setIsAnonymous(!isAnonymous)}
+        >
+          <View style={[
+            styles.checkbox,
+            { borderColor: theme.bg.border },
+            isAnonymous && { backgroundColor: theme.text.primary, borderColor: theme.text.primary }
+          ]}>
+            {isAnonymous && (
+              <MaterialCommunityIcons name="check" size={12} color={theme.bg.primary} />
+            )}
+          </View>
+          <Text style={[styles.anonymousText, { color: theme.text.secondary }]}>익명</Text>
+        </TouchableOpacity>
+
+        <TextInput
+          ref={textInputRef}
+          style={[styles.textInput, {
+            backgroundColor: theme.bg.secondary,
+            borderColor: theme.bg.border,
+            color: theme.text.primary,
+          }]}
+          placeholder="댓글 달기..."
+          placeholderTextColor={theme.text.tertiary}
+          value={text}
+          onChangeText={setText}
+          onFocus={() => {
+            setTimeout(() => {
+              flatListRef.current?.scrollToEnd({ animated: true });
+            }, 200);
+          }}
+          multiline
+          maxLength={200}
+        />
+
+        <TouchableOpacity
+          style={[styles.sendButton, (!text.trim() || submitting) && styles.sendButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={!text.trim() || submitting}
+        >
+          {submitting ? (
+            <ActivityIndicator size="small" color={theme.text.tertiary} />
+          ) : (
+            <Text style={[
+              styles.sendButtonText,
+              { color: theme.text.primary },
+              (!text.trim() || submitting) && { color: theme.text.tertiary }
+            ]}>
+              게시
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+});
+
 const CommentScreen: React.FC = () => {
   const navigation = useNavigation<CommentScreenNavigationProp>();
   const route = useRoute<CommentScreenRouteProp>();
   const { user } = useAuth();
   const { theme, isDark } = useModernTheme();
-  const { postId } = route.params as { postId: number };
+  // showPostInfo: 알림/목록에서 직접 진입 시 true, 글 상세보기에서 진입 시 false
+  const { postId, postType, showPostInfo = true } = route.params as {
+    postId: number;
+    postType?: string;
+    showPostInfo?: boolean;
+  };
   const insets = useSafeAreaInsets();
 
   const colors = {
@@ -113,8 +259,6 @@ const CommentScreen: React.FC = () => {
 
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [commentText, setCommentText] = useState('');
-  const [isAnonymous, setIsAnonymous] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Comment | null>(null);
@@ -123,6 +267,9 @@ const CommentScreen: React.FC = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Refs
+  const flatListRef = useRef<FlatList>(null);
 
   // 감정 중심 로그인 프롬프트 모달 상태
   const [emotionLoginPromptVisible, setEmotionLoginPromptVisible] = useState(false);
@@ -170,29 +317,22 @@ const CommentScreen: React.FC = () => {
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (event: any) => {
       const height = event.endCoordinates.height;
       setKeyboardHeight(height);
-      // 키보드가 나타날 때 자동으로 맨 아래로 스크롤 (Android 전용)
-      if (Platform.OS === 'android') {
-        setTimeout(() => {
-          if (flatListRef.current) {
-            flatListRef.current.scrollToEnd({ animated: true });
-          }
-        }, 300);
-      }
+      // 키보드가 나타날 때 자동으로 맨 아래로 스크롤
+      setTimeout(() => {
+        if (flatListRef.current) {
+          flatListRef.current.scrollToEnd({ animated: true });
+        }
+      }, 100);
     });
 
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
       setKeyboardHeight(0);
     });
 
+    // iOS 전용 - 더 부드러운 애니메이션을 위해
     const keyboardWillShowListener = Platform.OS === 'ios' ?
       Keyboard.addListener('keyboardWillShow', (event: any) => {
         setKeyboardHeight(event.endCoordinates.height);
-        // iOS에서 키보드 나타날 때 스크롤
-        setTimeout(() => {
-          if (flatListRef.current) {
-            flatListRef.current.scrollToEnd({ animated: true });
-          }
-        }, 100);
       }) : null;
 
     const keyboardWillHideListener = Platform.OS === 'ios' ?
@@ -236,7 +376,7 @@ const CommentScreen: React.FC = () => {
       headerTintColor: theme.text.primary,
       headerTitleStyle: {
         fontSize: FONT_SIZES.h3,
-        fontWeight: '600',
+        fontFamily: 'Pretendard-SemiBold',
         color: theme.text.primary,
       },
       headerLeft: () => (
@@ -270,7 +410,7 @@ const CommentScreen: React.FC = () => {
             setBlockedContents(blockedList);
           }
         } catch (error) {
-          console.log('차단 목록 로딩 실패:', error);
+          if (__DEV__) console.log('차단 목록 로딩 실패:', error);
         }
       } else {
         blockedList = blockedContents;
@@ -280,44 +420,97 @@ const CommentScreen: React.FC = () => {
       if (pageNum === 1) {
         let postResponse;
         try {
-          postResponse = await comfortWallService.getPostDetail(postId);
+          // postType에 따라 적절한 서비스 사용
+          if (postType === 'comfort') {
+            postResponse = await comfortWallService.getPostDetail(postId);
+          } else if (postType === 'myday' || postType === 'my_day') {
+            postResponse = await myDayService.getPostById(postId);
+          } else {
+            postResponse = await postService.getPostById(postId);
+          }
         } catch {
-          postResponse = await postService.getPostById(postId);
+          // fallback: 다른 서비스 시도
+          try {
+            postResponse = await comfortWallService.getPostDetail(postId);
+          } catch {
+            postResponse = await postService.getPostById(postId);
+          }
         }
 
-        if (postResponse.data?.status === 'success' && postResponse.data.data) {
-          setPost(postResponse.data.data);
+        // 응답 구조 정규화 (서비스별 응답 구조 차이 처리)
+        if (postResponse) {
+          // myDayService는 response.data 반환, comfortWallService는 axios response 반환
+          const responseData = postResponse.data || postResponse;
+          const postData = responseData?.data || responseData;
+          if (postData && (postData.post_id || postData.id)) {
+            setPost(postData);
+          }
         }
       }
 
-      // 댓글 페이지네이션 로드
+      // 댓글 페이지네이션 로드 - postType에 따라 적절한 서비스 사용
       try {
-        const commentsResponse = await postService.getComments(postId, { page: pageNum.toString(), limit: '20' });
-        if (commentsResponse.status === 'success' && commentsResponse.data) {
-          const newComments = (commentsResponse.data.comments || [])
-            .map((comment: any) => ({
-              ...comment,
-              created_at: comment.created_at || new Date().toISOString()
-            }))
-            .filter((comment: any) => !blockService.isContentBlocked(blockedList, 'comment', comment.comment_id));
-
-          if (append) {
-            setComments(prev => [...prev, ...newComments]);
-          } else {
-            setComments(newComments);
-          }
-
-          setHasMore(commentsResponse.data.has_more || false);
-          setPage(pageNum);
+        let commentsResponse;
+        if (postType === 'comfort') {
+          commentsResponse = await comfortWallService.getComments(postId, { page: pageNum.toString(), limit: '20' });
+        } else if (postType === 'myday' || postType === 'my_day') {
+          commentsResponse = await myDayService.getComments(postId, { page: pageNum.toString(), limit: '20' });
+        } else {
+          commentsResponse = await postService.getComments(postId, { page: pageNum.toString(), limit: '20' });
         }
+
+        if (__DEV__) console.log('📋 [CommentScreen] 댓글 API 응답:', JSON.stringify(commentsResponse, null, 2));
+
+        // 다양한 응답 구조 처리 (Axios 래핑 여부에 따라)
+        let commentsData: any[] = [];
+        let hasMoreData = false;
+
+        // Axios 응답: { data: { status: 'success', data: { comments: [...] } } }
+        if (commentsResponse.data?.status === 'success' && commentsResponse.data?.data) {
+          commentsData = commentsResponse.data.data.comments || commentsResponse.data.data || [];
+          hasMoreData = commentsResponse.data.data.has_more || false;
+        }
+        // Axios 응답: { data: { status: 'success', comments: [...] } }
+        else if (commentsResponse.data?.status === 'success' && commentsResponse.data?.comments) {
+          commentsData = commentsResponse.data.comments || [];
+          hasMoreData = commentsResponse.data.has_more || false;
+        }
+        // 직접 응답: { status: 'success', data: { comments: [...] } }
+        else if (commentsResponse.status === 'success' && commentsResponse.data) {
+          commentsData = commentsResponse.data.comments || commentsResponse.data || [];
+          hasMoreData = commentsResponse.data.has_more || false;
+        }
+        // 배열 직접 반환
+        else if (Array.isArray(commentsResponse.data)) {
+          commentsData = commentsResponse.data;
+        }
+
+        if (__DEV__) console.log('📋 [CommentScreen] 파싱된 댓글 수:', commentsData.length);
+
+        const newComments = commentsData
+          .map((comment: any) => ({
+            ...comment,
+            user: comment.User || comment.user, // User 필드 호환성
+            created_at: comment.created_at || new Date().toISOString()
+          }))
+          .filter((comment: any) => !blockService.isContentBlocked(blockedList, 'comment', comment.comment_id));
+
+        if (append) {
+          setComments(prev => [...prev, ...newComments]);
+        } else {
+          setComments(newComments);
+        }
+
+        setHasMore(hasMoreData);
+        setPage(pageNum);
       } catch (error) {
-        console.error('댓글 로딩 오류:', error);
+        if (__DEV__) console.error('댓글 로딩 오류:', error);
         if (pageNum === 1) {
           setComments([]);
         }
       }
     } catch (error) {
-      console.error('댓글 데이터 로딩 오류:', error);
+      if (__DEV__) console.error('댓글 데이터 로딩 오류:', error);
       if (pageNum === 1) {
         Alert.alert('오류', '댓글을 불러오는 중 오류가 발생했습니다.');
       }
@@ -325,26 +518,27 @@ const CommentScreen: React.FC = () => {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [postId, blockedContents]);
+  }, [postId, postType, blockedContents]);
 
 
 
   // 댓글 작성 (Optimistic UI + 트래픽 최적화 + 보안 강화)
-  const handleSubmitComment = async () => {
+  // CommentInput 컴포넌트에서 호출하는 버전
+  const handleSubmitComment = useCallback(async (inputText: string, inputIsAnonymous: boolean) => {
     if (!user) {
       setEmotionLoginPromptAction('comment');
       setEmotionLoginPromptVisible(true);
-      return;
+      throw new Error('로그인이 필요합니다');
     }
 
     // 보안: XSS 방지를 위한 입력 정제
-    const sanitizedText = sanitizeCommentContent(commentText);
+    const sanitizedText = sanitizeCommentContent(inputText);
 
     const validation = validateCommentContent(sanitizedText);
     if (!validation.isValid) {
       ReactNativeHapticFeedback.trigger('notificationError', { enableVibrateFallback: true });
-      Alert.alert('오류', validation.error);
-      return;
+      Alert.alert('오류', validation.error || '유효하지 않은 댓글입니다');
+      throw new Error(validation.error);
     }
 
     try {
@@ -361,7 +555,7 @@ const CommentScreen: React.FC = () => {
         comment_id: tempId,
         user_id: user.user_id,
         content: normalizedContent,
-        is_anonymous: isAnonymous,
+        is_anonymous: inputIsAnonymous,
         like_count: 0,
         created_at: new Date().toISOString(),
         parent_comment_id: replyingTo?.comment_id,
@@ -370,22 +564,33 @@ const CommentScreen: React.FC = () => {
       };
 
       setComments(prev => [...prev, optimisticComment]);
-      setCommentText('');
       setReplyingTo(null);
 
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
       const commentData = {
         content: normalizedContent,
-        is_anonymous: isAnonymous,
+        is_anonymous: inputIsAnonymous,
         parent_comment_id: replyingTo?.comment_id || undefined,
       };
 
       let response;
       try {
-        response = await comfortWallService.addComment(postId, commentData);
+        // postType에 따라 적절한 서비스 사용
+        if (postType === 'comfort') {
+          response = await comfortWallService.addComment(postId, commentData);
+        } else if (postType === 'myday' || postType === 'my_day') {
+          response = await myDayService.addComment(postId, commentData);
+        } else {
+          response = await postService.addComment(postId, commentData);
+        }
       } catch {
-        response = await postService.addComment(postId, commentData);
+        // fallback
+        try {
+          response = await comfortWallService.addComment(postId, commentData);
+        } catch {
+          response = await postService.addComment(postId, commentData);
+        }
       }
 
       if (response.status === 'success') {
@@ -400,26 +605,43 @@ const CommentScreen: React.FC = () => {
         Alert.alert('오류', '댓글 작성에 실패했습니다.');
       }
     } catch (error) {
-      console.error('댓글 작성 오류:', error);
+      if (__DEV__) console.error('댓글 작성 오류:', error);
       ReactNativeHapticFeedback.trigger('notificationError', { enableVibrateFallback: true });
       Alert.alert('오류', '댓글 작성 중 문제가 발생했습니다.');
     } finally {
       setSubmitting(false);
     }
-  };
+  }, [user, postType, postId, replyingTo]);
 
-  // 답글 작성
+  // 답글 작성 - CommentInput에서 replyingTo 상태를 통해 처리
   const handleReply = useCallback((comment: Comment) => {
     ReactNativeHapticFeedback.trigger('impactLight', { enableVibrateFallback: true });
-    const displayName = comment.is_anonymous ? '익명' : comment.user?.nickname || '사용자';
     setReplyingTo(comment);
-    setCommentText(`@${displayName} `);
-    textInputRef.current?.focus();
+  }, []);
+
+  // 답글 취소
+  const handleCancelReply = useCallback(() => {
+    setReplyingTo(null);
   }, []);
 
 
+  // 익명 게시물용 감정 이모지 계산 (시드 기반)
+  const getAnonymousEmotion = useCallback((userId?: number, postIdNum?: number) => {
+    const userSeed = userId || 1;
+    const postSeed = postIdNum || 1;
+    const seed1 = (userSeed * 17 + postSeed * 37) % 1000;
+    const seed2 = (userSeed * 23 + postSeed * 41) % 500;
+    const seed3 = (userSeed + postSeed) * 13;
+    const finalSeed = (seed1 + seed2 + seed3) % EMOTION_AVATARS.length;
+    return EMOTION_AVATARS[finalSeed];
+  }, []);
+
   // 게시물 요약 렌더링 (리렌더링 최적화)
-  const renderPostSummary = useCallback(() => (
+  const renderPostSummary = useCallback(() => {
+    // 익명 게시물인 경우 감정 이모지 계산
+    const anonymousEmotion = post?.is_anonymous ? getAnonymousEmotion(post?.user_id, post?.post_id) : null;
+
+    return (
     <View style={[styles.postSummary, {
       backgroundColor: theme.bg.card,
       borderBottomColor: theme.bg.border,
@@ -437,10 +659,25 @@ const CommentScreen: React.FC = () => {
               marginRight: 12,
             }}
           />
+        ) : post?.is_anonymous && anonymousEmotion ? (
+          // 익명: 감정 이모지 아바타
+          <View style={[styles.avatar, { backgroundColor: anonymousEmotion.color + '30' }]}>
+            <FastImage
+              key={`comment-emoji-${anonymousEmotion.emojiCode}`}
+              source={{
+                uri: getTwemojiUrl(anonymousEmotion.emojiCode),
+                priority: FastImage.priority.high,
+                cache: FastImage.cacheControl.web,
+              }}
+              style={{ width: 24, height: 24 }}
+              resizeMode={FastImage.resizeMode.contain}
+            />
+          </View>
         ) : (
-          <View style={[styles.avatar, { backgroundColor: theme.text.primary }]}>
-            <Text style={[styles.avatarText, { color: theme.bg.primary }]}>
-              {post?.is_anonymous ? '익' : (post?.user?.nickname?.[0] || 'U')}
+          // 실명이지만 프로필 사진 없음: 닉네임 첫 글자
+          <View style={[styles.avatar, { backgroundColor: isDark ? '#a78bfa' : '#8b5cf6' }]}>
+            <Text style={[styles.avatarText, { color: '#ffffff' }]}>
+              {post?.user?.nickname?.[0] || 'U'}
             </Text>
           </View>
         )}
@@ -455,70 +692,88 @@ const CommentScreen: React.FC = () => {
         {post?.content}
       </Text>
     </View>
-  ), [post, theme]);
+    );
+  }, [post, theme, isDark, getAnonymousEmotion]);
 
-  // 댓글 수정 처리
+  // 댓글 수정 처리 - postType에 따라 적절한 서비스 사용
   const handleEditComment = useCallback(async (commentId: number, newContent: string) => {
-    setComments(prev => prev.map(comment => {
-      if (comment.comment_id === commentId) {
-        return { ...comment, content: newContent };
-      }
-      return comment;
-    }));
-    await fetchData(); // 서버 데이터와 동기화
-  }, [fetchData]);
+    try {
+      if (__DEV__) console.log('✏️ 댓글 수정 시작:', commentId, newContent);
 
-  // 댓글 삭제 처리
+      // 낙관적 업데이트
+      setComments(prev => prev.map(comment => {
+        if (comment.comment_id === commentId) {
+          return { ...comment, content: newContent };
+        }
+        // 답글에서도 찾기
+        if (comment.replies) {
+          return {
+            ...comment,
+            replies: comment.replies.map(reply =>
+              reply.comment_id === commentId
+                ? { ...reply, content: newContent }
+                : reply
+            ),
+          };
+        }
+        return comment;
+      }));
+
+      // postType에 따라 적절한 서비스로 댓글 수정
+      if (postType === 'comfort') {
+        await comfortWallService.updateComment(commentId, { content: newContent });
+      } else if (postType === 'myday' || postType === 'my_day') {
+        await myDayService.updateComment(commentId, { content: newContent }, postId);
+      } else {
+        await commentService.editComment(commentId, newContent);
+      }
+
+      if (__DEV__) console.log('✅ 댓글 수정 성공:', commentId);
+
+      // 서버 데이터와 동기화
+      await fetchData();
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 댓글 수정 실패:', error);
+      Alert.alert('수정 실패', '댓글 수정 중 오류가 발생했습니다.');
+      // 실패 시 원래 데이터로 새로고침
+      await fetchData();
+    }
+  }, [fetchData, postType, postId]);
+
+  // 댓글 삭제 처리 - InstagramCommentItem에서 이미 확인 모달을 표시하므로 바로 삭제 실행
   const handleDeleteComment = useCallback(async (commentId: number) => {
     try {
-      console.log('🗑️ 댓글 삭제 시작:', commentId);
+      if (__DEV__) console.log('🗑️ 댓글 삭제 시작:', commentId);
+      setSubmitting(true);
 
-      // 사용자 확인
+      // postType에 따라 적절한 서비스로 댓글 삭제
+      if (postType === 'comfort') {
+        await comfortWallService.deleteComment(commentId, postId);
+      } else if (postType === 'myday' || postType === 'my_day') {
+        await myDayService.deleteComment(commentId, postId);
+      } else {
+        await commentService.deleteComment(commentId);
+      }
+
+      if (__DEV__) console.log('✅ 댓글 삭제 성공:', commentId);
+
+      // 성공적으로 삭제된 후 전체 댓글 목록 새로고침
+      await fetchData();
+
+      // 답글이 있던 댓글이 삭제되었을 수도 있으므로 답글 상태 초기화
+      setReplyingTo(null);
+
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 댓글 삭제 실패:', error);
       Alert.alert(
-        '댓글 삭제',
-        '정말로 이 댓글을 삭제하시겠습니까?\n삭제된 댓글은 복구할 수 없습니다.',
-        [
-          {
-            text: '취소',
-            style: 'cancel',
-          },
-          {
-            text: '삭제',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                // 로딩 상태 표시 (선택적)
-                setSubmitting(true);
-
-                // API를 통해 댓글 삭제
-                await commentService.deleteComment(commentId);
-
-                console.log('✅ 댓글 삭제 성공:', commentId);
-
-                // 성공적으로 삭제된 후 전체 댓글 목록 새로고침
-                await fetchData();
-
-                // 답글이 있던 댓글이 삭제되었을 수도 있으므로 답글 상태 초기화
-                setReplyingTo(null);
-
-              } catch (error: any) {
-                console.error('❌ 댓글 삭제 실패:', error);
-                Alert.alert(
-                  '삭제 실패',
-                  error.message || '댓글 삭제 중 오류가 발생했습니다.',
-                  [{ text: '확인' }]
-                );
-              } finally {
-                setSubmitting(false);
-              }
-            },
-          },
-        ]
+        '삭제 실패',
+        (error as Error).message || '댓글 삭제 중 오류가 발생했습니다.',
+        [{ text: '확인' }]
       );
-    } catch (error) {
-      console.error('❌ 댓글 삭제 중 예외 발생:', error);
+    } finally {
+      setSubmitting(false);
     }
-  }, [fetchData]);
+  }, [fetchData, postType, postId]);
 
   // 사용자 프로필 보기
   const handleUserProfile = useCallback((userId: number, nickname?: string) => {
@@ -533,12 +788,34 @@ const CommentScreen: React.FC = () => {
 
   // 댓글 차단 처리
   const handleCommentBlocked = useCallback(async (commentId: number) => {
-    console.log('✅ 댓글 차단 완료:', commentId);
+    if (__DEV__) console.log('✅ 댓글 차단 완료:', commentId);
     // 댓글 목록에서 제거
     setComments(prev => prev.filter(comment => comment.comment_id !== commentId));
     // 전체 데이터 새로고침
     await fetchData();
   }, [fetchData]);
+
+  // 댓글 좋아요 처리 - postType에 따라 적절한 서비스 사용
+  const handleLikeComment = useCallback(async (commentId: number) => {
+    try {
+      let response;
+      if (postType === 'comfort') {
+        response = await comfortWallService.likeComment(commentId);
+      } else if (postType === 'myday' || postType === 'my_day') {
+        response = await myDayService.likeComment(commentId);
+      } else {
+        response = await commentService.likeComment(commentId);
+      }
+
+      if (response?.status === 'success' && response.data) {
+        return { is_liked: response.data.is_liked, like_count: response.data.like_count };
+      }
+      return null;
+    } catch (error) {
+      if (__DEV__) console.error('댓글 좋아요 오류:', error);
+      throw error;
+    }
+  }, [postType]);
 
   // 댓글 렌더링 (InstagramCommentItem 사용)
   const renderComment = useCallback(({ item }: { item: Comment }) => (
@@ -547,14 +824,17 @@ const CommentScreen: React.FC = () => {
       currentUserId={user?.user_id}
       isPostAuthor={post?.user_id === item.user_id}
       depth={0}
+      postType={postType}
+      postId={postId}
       onReply={handleReply}
       onEdit={handleEditComment}
       onDelete={handleDeleteComment}
+      onLike={handleLikeComment}
       onUserProfile={handleUserProfile}
       onRefresh={fetchData}
       onCommentBlocked={handleCommentBlocked}
     />
-  ), [user?.user_id, post?.user_id, handleReply, handleEditComment, handleDeleteComment, handleUserProfile, fetchData, handleCommentBlocked]);
+  ), [user?.user_id, post?.user_id, postType, postId, handleReply, handleEditComment, handleDeleteComment, handleLikeComment, handleUserProfile, fetchData, handleCommentBlocked]);
 
   const commentTree = optimizeCommentTree(comments);
 
@@ -572,151 +852,66 @@ const CommentScreen: React.FC = () => {
     );
   }
 
-  const charCount = commentText.length;
-  const maxChars = 200;
-  const charCountColor = charCount > maxChars * 0.9 ? '#FF3B30' : theme.text.tertiary;
+  // 입력창 높이 (대략)
+  const INPUT_HEIGHT = 70;
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.bg.primary }]}>
-      <KeyboardAvoidingView
-        style={[styles.container, { backgroundColor: theme.bg.primary }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
-        <FlatList
-          ref={flatListRef}
-          data={commentTree}
-          renderItem={renderComment}
-          keyExtractor={(item: Comment) => item.comment_id.toString()}
-          ListHeaderComponent={renderPostSummary}
-          contentContainerStyle={[
-            styles.commentsList,
-            {
-              paddingBottom: Platform.OS === 'android' && keyboardHeight > 0
-                ? keyboardHeight + 120
-                : 20
-            }
-          ]}
-          style={{ flex: 1 }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="interactive"
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          windowSize={10}
-          initialNumToRender={10}
-          getItemLayout={undefined}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="comment-outline" size={48} color={theme.text.tertiary} />
-              <Text style={[styles.emptyText, { color: theme.text.secondary }]}>아직 댓글이 없습니다.</Text>
-              <Text style={[styles.emptySubText, { color: theme.text.tertiary }]}>첫 번째 댓글을 남겨보세요!</Text>
-            </View>
-          }
-          ListFooterComponent={
-            loadingMore ? (
-              <View style={styles.loadingMoreContainer}>
-                <ActivityIndicator size="small" color={theme.text.secondary} />
-                <Text style={[styles.loadingMoreText, { color: theme.text.secondary }]}>댓글 불러오는 중...</Text>
-              </View>
-            ) : null
-          }
-          onRefresh={() => fetchData(1, false)}
-          refreshing={loading}
-          onEndReached={handleLoadMore}
-          onEndReachedThreshold={0.3}
-        />
-        
-        {/* 댓글 입력 */}
-        <View style={[
-          styles.inputContainer,
-          {
-            paddingBottom: insets.bottom + 12,
-            backgroundColor: theme.bg.primary,
-            borderTopColor: theme.bg.border,
-          },
-          Platform.OS === 'android' && keyboardHeight > 0 && {
-            position: 'absolute',
-            bottom: keyboardHeight,
-            left: 0,
-            right: 0,
-            zIndex: 1000,
-          }
-        ]}>
-          {replyingTo && (
-            <View style={[styles.replyingIndicator, { backgroundColor: theme.bg.secondary }]}>
-              <Text style={[styles.replyingText, { color: theme.text.secondary }]}>
-                {replyingTo.is_anonymous ? '익명' : replyingTo.user?.nickname}님에게 답글
-              </Text>
-              <TouchableOpacity
-                onPress={() => {
-                  setReplyingTo(null);
-                  setCommentText('');
-                }}
-              >
-                <MaterialCommunityIcons name="close" size={scaleSize(16)} color={theme.text.secondary} />
-              </TouchableOpacity>
-            </View>
-          )}
-          
-          <View style={styles.inputRow}>
-            <TouchableOpacity
-              style={styles.anonymousToggle}
-              onPress={() => setIsAnonymous(!isAnonymous)}
-            >
-              <View style={[
-                styles.checkbox,
-                { borderColor: theme.bg.border },
-                isAnonymous && { backgroundColor: theme.text.primary, borderColor: theme.text.primary }
-              ]}>
-                {isAnonymous && (
-                  <MaterialCommunityIcons name="check" size={12} color={theme.bg.primary} />
-                )}
-              </View>
-              <Text style={[styles.anonymousText, { color: theme.text.secondary }]}>익명</Text>
-            </TouchableOpacity>
+    <View style={[styles.container, { backgroundColor: theme.bg.primary }]}>
+      {/* 상단 SafeArea */}
+      <SafeAreaView style={{ backgroundColor: theme.bg.primary }} edges={['top']} />
 
-            <TextInput
-              ref={textInputRef}
-              style={[styles.textInput, {
-                backgroundColor: theme.bg.secondary,
-                borderColor: theme.bg.border,
-                color: theme.text.primary,
-              }]}
-              placeholder="댓글 달기..."
-              placeholderTextColor={theme.text.tertiary}
-              value={commentText}
-              onChangeText={setCommentText}
-              onFocus={() => {
-                // 포커스시 약간의 딜레이 후 스크롤
-                setTimeout(() => {
-                  flatListRef.current?.scrollToEnd({ animated: true });
-                }, 200);
-              }}
-              multiline
-              maxLength={200}
-            />
-
-            <TouchableOpacity
-              style={[styles.sendButton, (!commentText.trim() || submitting) && styles.sendButtonDisabled]}
-              onPress={handleSubmitComment}
-              disabled={!commentText.trim() || submitting}
-            >
-              {submitting ? (
-                <ActivityIndicator size="small" color={theme.text.tertiary} />
-              ) : (
-                <Text style={[
-                  styles.sendButtonText,
-                  { color: theme.text.primary },
-                  (!commentText.trim() || submitting) && { color: theme.text.tertiary }
-                ]}>
-                  게시
-                </Text>
-              )}
-            </TouchableOpacity>
+      {/* FlatList - 키보드/입력창 높이만큼 하단 여백 */}
+      <FlatList
+        ref={flatListRef}
+        data={commentTree}
+        renderItem={renderComment}
+        keyExtractor={(item: Comment) => item.comment_id.toString()}
+        ListHeaderComponent={showPostInfo ? renderPostSummary : null}
+        contentContainerStyle={[
+          styles.commentsList,
+          { paddingBottom: keyboardHeight > 0 ? keyboardHeight + INPUT_HEIGHT : INPUT_HEIGHT + insets.bottom }
+        ]}
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+        initialNumToRender={10}
+        getItemLayout={undefined}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons name="comment-outline" size={48} color={theme.text.tertiary} />
+            <Text style={[styles.emptyText, { color: theme.text.secondary }]}>아직 댓글이 없습니다.</Text>
+            <Text style={[styles.emptySubText, { color: theme.text.tertiary }]}>첫 번째 댓글을 남겨보세요!</Text>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        }
+        ListFooterComponent={
+          loadingMore ? (
+            <View style={styles.loadingMoreContainer}>
+              <ActivityIndicator size="small" color={theme.text.secondary} />
+              <Text style={[styles.loadingMoreText, { color: theme.text.secondary }]}>댓글 불러오는 중...</Text>
+            </View>
+          ) : null
+        }
+        onRefresh={() => fetchData(1, false)}
+        refreshing={loading}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.3}
+      />
+
+      {/* 댓글 입력 - 화면 하단 절대 위치, 키보드 위로 이동 */}
+      <CommentInput
+        onSubmit={handleSubmitComment}
+        replyingTo={replyingTo}
+        onCancelReply={handleCancelReply}
+        theme={theme}
+        submitting={submitting}
+        flatListRef={flatListRef}
+        insets={insets}
+        keyboardHeight={keyboardHeight}
+      />
 
       {/* 감정 중심 로그인 프롬프트 모달 */}
       <EmotionLoginPromptModal
@@ -732,7 +927,7 @@ const CommentScreen: React.FC = () => {
         }}
         actionType={emotionLoginPromptAction}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -791,14 +986,14 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   postInfo: {
     flex: 1,
   },
   postAuthor: {
     fontSize: scaleFont(15),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.2,
   },
   postTime: {
@@ -812,6 +1007,7 @@ const styles = StyleSheet.create({
   },
   commentsList: {
     flexGrow: 1,
+    paddingBottom: 16,
   },
   emptyContainer: {
     alignItems: 'center',
@@ -888,7 +1084,7 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     fontSize: scaleFont(15),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.2,
   },
   sendButtonTextDisabled: {

@@ -46,7 +46,7 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
       });
     } catch (err) {
       setError('위로 메시지를 불러오는데 실패했습니다');
-      console.error('위로 메시지 통계 로드 실패:', err);
+      if (__DEV__) console.error('위로 메시지 통계 로드 실패:', err);
       // 에러 발생 시 빈 데이터 설정
       setData({
         totalCount: 0,
@@ -103,7 +103,7 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
     >
       <Card accessible={true} accessibilityLabel="익명 위로 메시지 통계" accessibilityHint="받은 익명 위로 메시지 현황">
         <View style={[styles.header, { marginBottom: 16 * scale }]}>
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
             💌 익명의 응원
           </Text>
           {data.unreadCount > 0 && (
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   badge: {
     justifyContent: 'center',
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   mainStats: {
     flexDirection: 'row',
@@ -235,14 +235,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statsText: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   statsSubtext: {
   },
   recentMessages: {
   },
   recentTitle: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   messagePreview: {
   },
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   moreText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     textAlign: 'center',
   },
   footer: {

@@ -1,5 +1,5 @@
 // src/components/PostItem.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ActivityIndicator } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { Box, Text, HStack, VStack, Pressable, Center } from './ui';
@@ -33,6 +33,92 @@ const anonymousEmotions = [
 const getAnonymousEmotion = (userId?: number, postId?: number) => {
   const seed = userId || postId || 1;
   return anonymousEmotions[seed % anonymousEmotions.length];
+};
+
+// 감정별 기본 아이콘 매핑 (컴포넌트 외부로 이동)
+const emotionIconMap: { [key: string]: string } = {
+  '행복': '😊',
+  '기쁨': '😄',
+  '슬픔': '😢',
+  '우울': '😔',
+  '화남': '😠',
+  '분노': '😡',
+  '놀람': '😮',
+  '두려움': '😨',
+  '불안': '😰',
+  '걱정': '😟',
+  '스트레스': '😵',
+  '피곤': '😴',
+  '편안': '😌',
+  '평온': '😊',
+  '감동': '🥹',
+  '사랑': '😍',
+  '외로움': '😞',
+  '그리움': '🥺',
+  '후회': '😔',
+  '짜증': '😤',
+  '당황': '😅',
+  '부끄러움': '😳',
+  '자신감': '😎',
+  '만족': '😄',
+  '실망': '😞',
+  '좌절': '😫',
+  '희망': '🤗',
+  '감사': '🙏',
+  '용기': '💪',
+  '평범': '😐'
+};
+
+const getEmotionIcon = (emotion: Emotion): string => {
+  if (emotion.icon && emotion.icon.trim() !== '') {
+    return emotion.icon;
+  }
+
+  const emotionName = emotion.name.toLowerCase();
+  for (const [keyword, icon] of Object.entries(emotionIconMap)) {
+    if (emotionName.includes(keyword)) {
+      return icon;
+    }
+  }
+
+  // 기본 폴백: 첫 글자
+  return emotion.name.charAt(0);
+};
+
+// 감정 이모지 매핑 (컴포넌트 외부로 이동)
+const emotionEmojiMap: Record<string, string> = {
+  '행복': '😊',
+  '기쁨': '😄',
+  '감사': '🙏',
+  '위로': '🤗',
+  '감동': '🥺',
+  '슬픔': '😢',
+  '우울': '😞',
+  '불안': '😰',
+  '걱정': '😟',
+  '화남': '😠',
+  '지침': '😑',
+  '무서움': '😨',
+  '편함': '😌',
+  '궁금': '🤔',
+  '사랑': '❤️',
+  '아픔': '🤕',
+  '욕심': '🤑',
+  '추억': '🥰',
+  '설렘': '🤗',
+  '황당': '🤨',
+  '당황': '😲',
+  '고독': '😔',
+  '충격': '😱'
+};
+
+const getEmotionEmoji = (emotionName: string): string => {
+  for (const [key, emoji] of Object.entries(emotionEmojiMap)) {
+    if (emotionName.includes(key) || key.includes(emotionName)) {
+      return emoji;
+    }
+  }
+  return '😊';
 };
 
 interface Emotion {
@@ -75,69 +161,36 @@ const PostItem: React.FC<PostItemProps> = ({
   onCommentPress,
   isLiked = false,
 }) => {
-  const emotion = isAnonymous ? getAnonymousEmotion(userId, id) : null;
-  const displayName = isAnonymous ? emotion!.label : userName;
-  const emotionIcon = isAnonymous ? emotion!.icon : null;
-  const emotionColor = isAnonymous ? emotion!.color : '#262626';
-  const formattedDate = new Date(createdAt).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).replace(/\./g, '.').replace(/\s/g, ' ');
+  // 익명 감정 메모이제이션
+  const emotion = useMemo(
+    () => isAnonymous ? getAnonymousEmotion(userId, id) : null,
+    [isAnonymous, userId, id]
+  );
 
-  // 감정별 기본 아이콘 매핑
-  const getEmotionIcon = (emotion: Emotion) => {
-    if (emotion.icon && emotion.icon.trim() !== '') {
-      return emotion.icon;
-    }
-    
-    // 감정 이름을 기반으로 기본 아이콘 반환
-    const emotionName = emotion.name.toLowerCase();
-    const iconMap: { [key: string]: string } = {
-      '행복': '😊',
-      '기쁨': '😄',
-      '슬픔': '😢',
-      '우울': '😔',
-      '화남': '😠',
-      '분노': '😡',
-      '놀람': '😮',
-      '두려움': '😨',
-      '불안': '😰',
-      '걱정': '😟',
-      '스트레스': '😵',
-      '피곤': '😴',
-      '편안': '😌',
-      '평온': '😊',
-      '감동': '🥹',
-      '사랑': '😍',
-      '외로움': '😞',
-      '그리움': '🥺',
-      '후회': '😔',
-      '짜증': '😤',
-      '당황': '😅',
-      '부끄러움': '😳',
-      '자신감': '😎',
-      '만족': '😄',
-      '실망': '😞',
-      '좌절': '😫',
-      '희망': '🤗',
-      '감사': '🙏',
-      '용기': '💪',
-      '평범': '😐'
-    };
+  // 표시 정보 메모이제이션
+  const displayInfo = useMemo(() => ({
+    displayName: isAnonymous ? emotion!.label : userName,
+    emotionIcon: isAnonymous ? emotion!.icon : null,
+    emotionColor: isAnonymous ? emotion!.color : '#262626'
+  }), [isAnonymous, emotion, userName]);
 
-    for (const [keyword, icon] of Object.entries(iconMap)) {
-      if (emotionName.includes(keyword)) {
-        return icon;
-      }
-    }
+  // 날짜 포맷팅 메모이제이션
+  const formattedDate = useMemo(() => {
+    return new Date(createdAt).toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).replace(/\./g, '.').replace(/\s/g, ' ');
+  }, [createdAt]);
 
-    // 기본 폴백: 첫 글자
-    return emotion.name.charAt(0);
-  };
+  // 이미지 URL 메모이제이션
+  const finalImageUrl = useMemo(
+    () => imageUrl ? normalizeImageUrl(imageUrl) : null,
+    [imageUrl]
+  );
 
   return (
     <Pressable onPress={onPress}>
@@ -153,19 +206,19 @@ const PostItem: React.FC<PostItemProps> = ({
         <HStack justifyContent="space-between" alignItems="center" mb={12}>
           <VStack space={1}>
             <HStack alignItems="center" space={2}>
-              {emotionIcon && (
-                <MaterialCommunityIcons 
-                  name={emotionIcon} 
-                  size={32} 
-                  color={emotionColor} 
+              {displayInfo.emotionIcon && (
+                <MaterialCommunityIcons
+                  name={displayInfo.emotionIcon}
+                  size={32}
+                  color={displayInfo.emotionColor}
                 />
               )}
               <Text
                 fontSize={14}
                 fontWeight="500"
-                color={emotionColor}
+                color={displayInfo.emotionColor}
               >
-                {displayName}
+                {displayInfo.displayName}
               </Text>
             </HStack>
             <Text
@@ -175,46 +228,11 @@ const PostItem: React.FC<PostItemProps> = ({
               {formattedDate}
             </Text>
           </VStack>
-          
+
           {/* 오늘의 감정 배지 - 헤더 오른쪽 */}
           {emotions && emotions.length > 0 && (
             <Box>
               {emotions.slice(0, 1).map(emotion => {
-                const getEmotionEmoji = (emotionName: string): string => {
-                  const emojiMap: Record<string, string> = {
-                    '행복': '😊',
-                    '기쁨': '😄',
-                    '감사': '🙏',
-                    '위로': '🤗',
-                    '감동': '🥺',
-                    '슬픔': '😢',
-                    '우울': '😞',
-                    '불안': '😰',
-                    '걱정': '😟',
-                    '화남': '😠',
-                    '지침': '😑',
-                    '무서움': '😨',
-                    '편함': '😌',
-                    '궁금': '🤔',
-                    '사랑': '❤️',
-                    '아픔': '🤕',
-                    '욕심': '🤑',
-                    '추억': '🥰',
-                    '설렘': '🤗',
-                    '황당': '🤨',
-                    '당황': '😲',
-                    '고독': '😔',
-                    '충격': '😱'
-                  };
-                  
-                  for (const [key, emoji] of Object.entries(emojiMap)) {
-                    if (emotionName.includes(key) || key.includes(emotionName)) {
-                      return emoji;
-                    }
-                  }
-                  return '😊';
-                };
-
                 const emotionEmoji = getEmotionEmoji(emotion.name);
 
                 return (
@@ -268,36 +286,30 @@ const PostItem: React.FC<PostItemProps> = ({
         </Text>
 
         {/* Image */}
-        {imageUrl && (
+        {finalImageUrl && (
           <Box mb={12}>
-            {(() => {
-              const finalImageUrl = normalizeImageUrl(imageUrl);
-              
-              return (
-                <FastImage
-                  source={{
-                    uri: finalImageUrl,
-                    priority: FastImage.priority.normal,
-                    cache: FastImage.cacheControl.immutable
-                  }}
-                  style={{
-                    width: '100%',
-                    height: 200,
-                    borderRadius: 8
-                  }}
-                  resizeMode={FastImage.resizeMode.cover}
-                  onError={() => {
-                    logImageError('PostItem', imageUrl, finalImageUrl, 'FastImage load error');
-                  }}
-                  onLoad={() => {
-                    logImageSuccess('PostItem', finalImageUrl);
-                  }}
-                />
-              );
-            })()}
+            <FastImage
+              key={`post-image-${finalImageUrl}`}
+              source={{
+                uri: finalImageUrl,
+                priority: FastImage.priority.normal,
+                cache: FastImage.cacheControl.web
+              }}
+              style={{
+                width: '100%',
+                height: 200,
+                borderRadius: 8
+              }}
+              resizeMode={FastImage.resizeMode.cover}
+              onError={() => {
+                logImageError('PostItem', imageUrl || '', finalImageUrl, 'FastImage load error');
+              }}
+              onLoad={() => {
+                logImageSuccess('PostItem', finalImageUrl);
+              }}
+            />
           </Box>
         )}
-
 
         {/* Footer */}
         <Box borderWidth={0} borderColor="#F0F0F0" pt={12} style={{ borderTopWidth: 1 }}>
@@ -346,5 +358,15 @@ const PostItem: React.FC<PostItemProps> = ({
   );
 };
 
-
-export default PostItem;
+// React.memo로 메모이제이션 (props가 같으면 리렌더링 방지)
+export default React.memo(PostItem, (prevProps, nextProps) => {
+  // 성능 최적화: 중요한 props만 비교
+  return (
+    prevProps.id === nextProps.id &&
+    prevProps.content === nextProps.content &&
+    prevProps.likeCount === nextProps.likeCount &&
+    prevProps.commentCount === nextProps.commentCount &&
+    prevProps.isLiked === nextProps.isLiked &&
+    prevProps.imageUrl === nextProps.imageUrl
+  );
+});

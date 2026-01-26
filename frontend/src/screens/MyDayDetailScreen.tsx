@@ -12,11 +12,14 @@ import {
   Keyboard,
   TextInput as RNTextInput,
   Text,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Box, VStack, HStack } from '../components/ui';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { format, parseISO } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import dayjs from 'dayjs';
+import 'dayjs/locale/ko';
 import { useAuth } from '../contexts/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
 import myDayService from '../services/api/myDayService';
@@ -26,6 +29,7 @@ import { normalizeImageUrl } from '../utils/imageUtils';
 import BlockReasonModal, { BlockReason } from '../components/BlockReasonModal';
 import ClickableNickname from '../components/ClickableNickname';
 import ClickableAvatar from '../components/ClickableAvatar';
+import CommentBottomSheet, { CommentBottomSheetRef, Comment as BSComment } from '../components/CommentBottomSheet';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import ModernToast, { ToastType } from '../components/ModernToast';
 import { FONT_SIZES } from '../constants';
@@ -135,7 +139,7 @@ const PostImage = React.memo<{
         const parsed = JSON.parse(imageUrl);
         url = Array.isArray(parsed) ? parsed[0] : imageUrl;
       } catch (e) {
-        console.warn('이미지 URL JSON 파싱 실패:', e);
+        if (__DEV__) console.warn('이미지 URL JSON 파싱 실패:', e);
       }
     } else if (Array.isArray(imageUrl)) {
       url = imageUrl[0];
@@ -203,6 +207,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
   const scrollViewRef = useRef<ScrollView | null>(null);
   const commentRefs = useRef<Map<number, View | null>>(new Map());
   const textInputRef = useRef<RNTextInput | null>(null);
+  const commentBottomSheetRef = useRef<CommentBottomSheetRef>(null);
 
   const colors = {
     background: theme.bg.primary,
@@ -238,12 +243,124 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
   const [toastMessage, setToastMessage] = useState('');
   const [toastType, setToastType] = useState<ToastType>('info');
 
+  // 댓글 수정 상태
+  const [editingComment, setEditingComment] = useState<BSComment | null>(null);
+  const [editCommentText, setEditCommentText] = useState('');
+
   // Toast 표시 함수
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     setToastMessage(message);
     setToastType(type);
     setToastVisible(true);
   }, []);
+
+  // 댓글 수정 핸들러
+  const handleEditComment = useCallback((comment: BSComment) => {
+    setEditingComment(comment);
+    setEditCommentText(comment.content);
+  }, []);
+
+  // 댓글 수정 저장
+  const handleSaveCommentEdit = useCallback(async () => {
+    if (!editingComment || !editCommentText.trim()) {
+      showToast('댓글 내용을 입력해주세요', 'error');
+      return;
+    }
+
+    try {
+      const trimmedText = editCommentText.trim();
+
+      // 답글인 경우 멘션 확인 및 추가
+      let finalContent = trimmedText;
+      if (editingComment.parent_comment_id) {
+        // 멘션이 없으면 원본에서 추출하여 추가
+        const mentionMatch = editingComment.content.match(/^@(\S+)\s+/);
+        const hasMention = /^@\S+\s+/.test(trimmedText);
+
+        if (!hasMention && mentionMatch) {
+          // 멘션이 없으면 원본 멘션 추가
+          finalContent = `${mentionMatch[0]}${trimmedText}`;
+        }
+      }
+
+      await commentService.updateComment(editingComment.comment_id, {
+        content: finalContent,
+      });
+
+      // 댓글 목록 업데이트
+      setComments(prev =>
+        prev.map(c => {
+          if (c.comment_id === editingComment.comment_id) {
+            return { ...c, content: finalContent };
+          }
+          // 답글인 경우
+          if (c.replies) {
+            return {
+              ...c,
+              replies: c.replies.map(r =>
+                r.comment_id === editingComment.comment_id
+                  ? { ...r, content: finalContent }
+                  : r
+              )
+            };
+          }
+          return c;
+        })
+      );
+
+      setEditingComment(null);
+      setEditCommentText('');
+      showToast('댓글이 수정되었습니다', 'success');
+    } catch (error) {
+      if (__DEV__) console.error('댓글 수정 실패:', error);
+      showToast('댓글 수정에 실패했습니다', 'error');
+    }
+  }, [editingComment, editCommentText, showToast]);
+
+  // 댓글 삭제 핸들러
+  const handleDeleteComment = useCallback((comment: BSComment) => {
+    Alert.alert(
+      '댓글 삭제',
+      '이 댓글을 삭제하시겠습니까?\n삭제된 댓글은 복구할 수 없습니다.',
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await myDayService.deleteComment(comment.comment_id, postId);
+
+              // 댓글 목록에서 제거
+              setComments(prev => {
+                // 최상위 댓글인 경우
+                const filtered = prev.filter(c => c.comment_id !== comment.comment_id);
+
+                // 답글인 경우
+                return filtered.map(c => ({
+                  ...c,
+                  replies: c.replies?.filter(r => r.comment_id !== comment.comment_id) || []
+                }));
+              });
+
+              // 게시글의 댓글 수 업데이트
+              if (post) {
+                setPost({
+                  ...post,
+                  comment_count: Math.max(0, (post.comment_count || 0) - 1)
+                });
+              }
+
+              showToast('댓글이 삭제되었습니다', 'success');
+            } catch (error) {
+              if (__DEV__) console.error('댓글 삭제 실패:', error);
+              showToast('댓글 삭제에 실패했습니다', 'error');
+            }
+          }
+        }
+      ]
+    );
+  }, [postId, post, showToast]);
 
   // 베스트 댓글 추출 함수
   const extractBestComments = (comments: Comment[]): Comment[] => {
@@ -298,7 +415,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
         setBestComments(bestCommentsData);
 
         if (highlightCommentId) {
-          console.log('📍 [MyDayDetailScreen] 댓글 하이라이트 준비:', highlightCommentId);
+          if (__DEV__) console.log('📍 [MyDayDetailScreen] 댓글 하이라이트 준비:', highlightCommentId);
 
           // 답글인 경우 부모 댓글 확인 (디버깅용)
           const findParentCommentId = (commentId: number, allComments: Comment[]): number | null => {
@@ -320,7 +437,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
 
           const parentCommentId = findParentCommentId(highlightCommentId, commentsData);
           if (parentCommentId) {
-            console.log('📍 [MyDayDetailScreen] 답글의 부모 댓글 찾음:', parentCommentId);
+            if (__DEV__) console.log('📍 [MyDayDetailScreen] 답글의 부모 댓글 찾음:', parentCommentId);
           }
 
           // 딜레이를 1초로 늘려서 댓글이 완전히 렌더링되는 시간 확보
@@ -330,29 +447,29 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
               commentView.measureLayout(
                 scrollViewRef.current as any,
                 (x: number, y: number, width: number, height: number) => {
-                  console.log('📍 [MyDayDetailScreen] 댓글 위치 측정:', { x, y, width, height });
+                  if (__DEV__) console.log('📍 [MyDayDetailScreen] 댓글 위치 측정:', { x, y, width, height });
                   scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 100), animated: true });
                 },
                 (error: any) => {
-                  console.error('📍 [MyDayDetailScreen] 댓글 위치 측정 실패:', error);
+                  if (__DEV__) console.error('📍 [MyDayDetailScreen] 댓글 위치 측정 실패:', error);
                   scrollViewRef.current?.scrollToEnd({ animated: true });
                 }
               );
             } else {
-              console.log('📍 [MyDayDetailScreen] 댓글 ref 없음, 맨 아래로 스크롤');
+              if (__DEV__) console.log('📍 [MyDayDetailScreen] 댓글 ref 없음, 맨 아래로 스크롤');
               scrollViewRef.current?.scrollToEnd({ animated: true });
             }
           }, 1000);
 
           setTimeout(() => {
-            console.log('📍 [MyDayDetailScreen] 하이라이트 제거');
+            if (__DEV__) console.log('📍 [MyDayDetailScreen] 하이라이트 제거');
             setHighlightedCommentId(null);
           }, 4500);
         }
       }
 
     } catch (error) {
-      console.error('❌ MyDay 게시글 상세 데이터 로드 오류:', error);
+      if (__DEV__) console.error('❌ MyDay 게시글 상세 데이터 로드 오류:', error);
       showToast('데이터를 불러오는데 실패했습니다', 'error');
     } finally {
       setIsLoading(false);
@@ -413,7 +530,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
         showToast('댓글 작성에 실패했습니다', 'error');
       }
     } catch (error) {
-      console.error('❌ 댓글 작성 오류:', error);
+      if (__DEV__) console.error('❌ 댓글 작성 오류:', error);
       showToast('댓글 작성에 실패했습니다', 'error');
     } finally {
       setIsSubmittingComment(false);
@@ -456,7 +573,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
         await loadPostData();
       }
     } catch (error) {
-      console.error('❌ 댓글 좋아요 오류:', error);
+      if (__DEV__) console.error('❌ 댓글 좋아요 오류:', error);
       // 에러 시 롤백
       await loadPostData();
     }
@@ -490,7 +607,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
       await loadPostData();
       showToast('댓글이 차단되었습니다', 'success');
     } catch (error) {
-      console.error('❌ 댓글 차단 오류:', error);
+      if (__DEV__) console.error('❌ 댓글 차단 오류:', error);
       showToast('댓글 차단 중 오류가 발생했습니다', 'error');
     } finally {
       setBlockCommentId(null);
@@ -549,7 +666,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
         });
       }
     } catch (error) {
-      console.error('❌ 게시물 좋아요 오류:', error);
+      if (__DEV__) console.error('❌ 게시물 좋아요 오류:', error);
     } finally {
       setIsLikingPost(false);
     }
@@ -623,7 +740,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
                 <Text style={[styles.ownerBadge, { color: isDark ? '#E5E5E5' : '#666666' }]}> [나]</Text>
               )}
               <Text style={[styles.commentDate, { color: isDark ? '#B3B3B3' : '#999999' }]}>
-                {comment.created_at ? format(parseISO(comment.created_at), 'M월 d일 HH:mm', { locale: ko }) : '날짜 없음'}
+                {comment.created_at ? dayjs(comment.created_at).locale('ko').format('M월 D일 HH:mm') : '날짜 없음'}
               </Text>
             </HStack>
 
@@ -779,7 +896,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
                 )}
               </HStack>
               <Text style={[styles.postDate, { color: isDark ? '#B3B3B3' : '#999999' }]}>
-                {post.created_at ? format(parseISO(post.created_at), 'M월 d일 (E)', { locale: ko }) : '날짜 없음'}
+                {post.created_at ? dayjs(post.created_at).locale('ko').format('M월 D일 (ddd)') : '날짜 없음'}
               </Text>
             </VStack>
           </HStack>
@@ -827,33 +944,48 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
 
           {/* 감정 태그 */}
           {post.emotions && post.emotions.length > 0 && (
-            <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={{ fontSize: FONT_SIZES.small, color: isDark ? '#B3B3B3' : '#666666', fontWeight: '500' }}>오늘의 감정</Text>
-                <View style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  backgroundColor: isDark ? post.emotions[0].color + '30' : post.emotions[0].color + '20',
-                  paddingHorizontal: 12,
-                  paddingVertical: 6,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: isDark ? post.emotions[0].color + '60' : post.emotions[0].color + '40',
-                }}>
-                  <Text style={{ fontSize: FONT_SIZES.bodyLarge }}>
-                    {getRandomEmotion(post.user_id, post.post_id).emoji}
-                  </Text>
-                  <Text style={{
-                    fontSize: FONT_SIZES.caption,
-                    fontWeight: '600',
-                    color: isDark ? theme.text.primary : post.emotions[0].color,
-                    marginLeft: 6,
-                  }}>
-                    {post.emotions[0].name}
-                  </Text>
+            (() => {
+              const emotionColor = post.emotions[0].color || '#666666';
+              // 밝은 색상 체크
+              const isLightColor = (hexColor: string) => {
+                const hex = hexColor.replace('#', '');
+                const r = parseInt(hex.substring(0, 2), 16);
+                const g = parseInt(hex.substring(2, 4), 16);
+                const b = parseInt(hex.substring(4, 6), 16);
+                const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                return brightness > 180;
+              };
+              const textColor = isDark ? theme.text.primary : (isLightColor(emotionColor) ? '#333333' : emotionColor);
+              return (
+                <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ fontSize: FONT_SIZES.small, color: isDark ? '#B3B3B3' : '#666666', fontFamily: 'Pretendard-Medium' }}>오늘의 감정</Text>
+                    <View style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: isDark ? emotionColor + '30' : emotionColor + '25',
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 16,
+                      borderWidth: 1.5,
+                      borderColor: isDark ? emotionColor + '60' : emotionColor + '50',
+                    }}>
+                      <Text style={{ fontSize: FONT_SIZES.bodyLarge }}>
+                        {getRandomEmotion(post.user_id, post.post_id).emoji}
+                      </Text>
+                      <Text style={{
+                        fontSize: FONT_SIZES.caption,
+                        fontFamily: 'Pretendard-Bold',
+                        color: textColor,
+                        marginLeft: 6,
+                      }}>
+                        {post.emotions[0].name}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-              </View>
-            </View>
+              );
+            })()
           )}
 
           {/* 액션 버튼 영역 */}
@@ -870,7 +1002,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
               />
               <Text style={{
                 fontSize: FONT_SIZES.bodySmall,
-                fontWeight: '600',
+                fontFamily: 'Pretendard-SemiBold',
                 color: post.is_liked ? '#ef4444' : colors.textSecondary
               }}>
                 {post.like_count}
@@ -892,7 +1024,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
               />
               <Text style={{
                 fontSize: FONT_SIZES.bodySmall,
-                fontWeight: '600',
+                fontFamily: 'Pretendard-SemiBold',
                 color: colors.textSecondary
               }}>
                 {post.comment_count}
@@ -901,144 +1033,164 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
           </HStack>
         </Box>
 
-        {/* 댓글 섹션 */}
-        <Box style={[styles.commentSection, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.04 }]}>
-          <HStack style={styles.commentHeader}>
-            <Text style={[styles.commentTitle, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>댓글 {comments.length}개</Text>
+        {/* 댓글 섹션 - Bottom Sheet 열기 버튼 */}
+        <TouchableOpacity
+          onPress={() => commentBottomSheetRef.current?.open()}
+          style={{
+            margin: 12,
+            marginTop: 8,
+            padding: 16,
+            backgroundColor: theme.bg.card,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+          activeOpacity={0.7}
+        >
+          <HStack style={{ alignItems: 'center', gap: 8 }}>
+            <MaterialCommunityIcons
+              name="comment-text-outline"
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={{
+              fontSize: getResponsiveFontSize(14),
+              fontFamily: 'Pretendard-SemiBold',
+              color: isDark ? '#FFFFFF' : '#1A1A1A',
+            }}>
+              댓글 {comments.length}개
+            </Text>
+            {bestComments.length > 0 && (
+              <View style={{
+                backgroundColor: '#fbbf24',
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+                borderRadius: 4,
+              }}>
+                <Text style={{ fontSize: 10, fontFamily: 'Pretendard-SemiBold', color: '#fff' }}>
+                  베스트 {bestComments.length}
+                </Text>
+              </View>
+            )}
+          </HStack>
+          <MaterialCommunityIcons
+            name="chevron-right"
+            size={24}
+            color={isDark ? '#B3B3B3' : '#666666'}
+          />
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* 하단 액션 바 */}
+      <View style={[styles.commentInputContainer, { backgroundColor: theme.bg.card, borderTopColor: theme.bg.border }]}>
+        <HStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <HStack style={{ alignItems: 'center', gap: 20 }}>
             <TouchableOpacity
-              onPress={toggleAllCommentsCollapse}
-              style={[styles.collapseButton, { backgroundColor: theme.bg.secondary }]}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+              onPress={handlePostLike}
             >
               <MaterialCommunityIcons
-                name={allCommentsCollapsed ? 'chevron-down' : 'chevron-up'}
-                size={16}
-                color={isDark ? '#B3B3B3' : '#666666'}
+                name={post?.is_liked ? 'heart' : 'heart-outline'}
+                size={24}
+                color={post?.is_liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#64748b')}
               />
-              <Text style={[styles.collapseText, { color: isDark ? '#B3B3B3' : '#666666' }]}>
-                {allCommentsCollapsed ? '전체 펼치기' : '전체 접기'}
+              <Text style={{
+                fontSize: getResponsiveFontSize(13),
+                fontFamily: 'Pretendard-SemiBold',
+                color: post?.is_liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#64748b')
+              }}>
+                {post?.like_count || 0}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+              onPress={() => commentBottomSheetRef.current?.open()}
+            >
+              <MaterialCommunityIcons
+                name="comment-outline"
+                size={24}
+                color={isDark ? '#D1D5DB' : '#64748b'}
+              />
+              <Text style={{
+                fontSize: getResponsiveFontSize(13),
+                fontFamily: 'Pretendard-SemiBold',
+                color: isDark ? '#D1D5DB' : '#64748b'
+              }}>
+                {comments.length}
               </Text>
             </TouchableOpacity>
           </HStack>
 
-          {/* 베스트 댓글 섹션 */}
-          {!allCommentsCollapsed && bestComments.length > 0 && (
-            <Box style={styles.bestCommentsSection}>
-              <HStack style={[styles.bestCommentsHeader, { borderBottomColor: theme.bg.border }]}>
-                <MaterialCommunityIcons
-                  name="trophy-outline"
-                  size={16}
-                  color="#fbbf24"
-                />
-                <Text style={[styles.bestCommentsTitle, { color: isDark ? '#fcd34d' : '#fbbf24' }]}>베스트 댓글</Text>
-              </HStack>
-
-              {bestComments.map((bestComment, index) => (
-                <TouchableOpacity
-                  key={`best-${bestComment.comment_id}`}
-                  onPress={() => scrollToComment(bestComment.comment_id)}
-                  style={[
-                    styles.bestComment,
-                    {
-                      marginBottom: index < bestComments.length - 1 ? 8 : 0,
-                      backgroundColor: colors.cardBackground,
-                      borderColor: isDark ? '#78350f' : '#fef3c7',
-                    }
-                  ]}
-                >
-                  <View style={[
-                    styles.bestRank,
-                    { backgroundColor: index === 0 ? '#fbbf24' : index === 1 ? '#94a3b8' : '#cd7c2f' }
-                  ]}>
-                    <Text style={styles.bestRankText}>{index + 1}</Text>
-                  </View>
-
-                  <HStack style={{ alignItems: 'flex-start' }}>
-                    <ClickableAvatar
-                      userId={bestComment.user_id}
-                      nickname={bestComment.user?.nickname || getRandomEmotion(bestComment.user_id, postId, bestComment.comment_id).label}
-                      isAnonymous={bestComment.is_anonymous}
-                      avatarUrl={bestComment.user?.profile_image_url}
-                      avatarText={getRandomEmotion(bestComment.user_id, postId, bestComment.comment_id).emoji}
-                      avatarColor={getRandomEmotion(bestComment.user_id, postId, bestComment.comment_id).color}
-                      size={32}
-                    />
-
-                    <VStack style={{ flex: 1, marginLeft: 10 }}>
-                      <HStack style={{ alignItems: 'center', marginBottom: 4 }} pointerEvents="box-none">
-                        <ClickableNickname
-                          userId={bestComment.user_id}
-                          nickname={bestComment.user?.nickname || getRandomEmotion(bestComment.user_id, postId, bestComment.comment_id).label}
-                          isAnonymous={bestComment.is_anonymous}
-                          style={[styles.bestCommentUser, { color: isDark ? '#fbbf24' : '#92400e' }]}
-                        >
-                          {bestComment.is_anonymous ? getRandomEmotion(bestComment.user_id, postId, bestComment.comment_id).label : (bestComment.user?.nickname || getRandomEmotion(bestComment.user_id, postId, bestComment.comment_id).label)}
-                        </ClickableNickname>
-                        <HStack style={{ alignItems: 'center', marginLeft: 8 }}>
-                          <MaterialCommunityIcons name="heart" size={12} color="#ef4444" />
-                          <Text style={[styles.bestCommentLikes, { color: isDark ? '#fca5a5' : '#ef4444' }]}>{bestComment.like_count}</Text>
-                        </HStack>
-                      </HStack>
-                      <Text style={[styles.bestCommentContent, { color: isDark ? '#fcd34d' : '#92400e' }]} numberOfLines={2}>
-                        {bestComment.content}
-                      </Text>
-                    </VStack>
-                  </HStack>
-                </TouchableOpacity>
-              ))}
-            </Box>
-          )}
-
-          {/* 전체 댓글 목록 */}
-          {!allCommentsCollapsed && (
-            <View style={{ gap: 12 }}>
-              {comments
-                .filter(comment => !comment.parent_comment_id)
-                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-                .map(comment => renderComment(comment, false))
-              }
-            </View>
-          )}
-        </Box>
-      </ScrollView>
-
-      {/* 고정된 댓글 입력창 */}
-      <View style={[styles.commentInputContainer, { backgroundColor: theme.bg.card, borderTopColor: theme.bg.border }]}>
-        {replyingTo && (
-          <View style={[styles.replyIndicator, { backgroundColor: theme.bg.secondary }]}>
-            <Text style={[styles.replyIndicatorText, { color: isDark ? '#B3B3B3' : '#666666' }]}>답글 작성 중</Text>
-            <TouchableOpacity onPress={() => setReplyingTo(null)}>
-              <MaterialCommunityIcons name="close" size={20} color={isDark ? '#B3B3B3' : '#666666'} />
-            </TouchableOpacity>
-          </View>
-        )}
-        <HStack style={styles.commentInputRow}>
-          <RNTextInput
-            ref={textInputRef}
-            style={[styles.commentInput, { backgroundColor: theme.bg.secondary, color: isDark ? '#FFFFFF' : '#1A1A1A' }]}
-            placeholder={replyingTo ? "답글을 입력하세요..." : "댓글을 입력하세요..."}
-            placeholderTextColor={isDark ? '#B3B3B3' : '#999999'}
-            value={commentText}
-            onChangeText={setCommentText}
-            multiline
-            maxLength={500}
-          />
           <TouchableOpacity
-            style={[
-              styles.sendButton,
-              { backgroundColor: (!commentText.trim() || isSubmittingComment) ? colors.border : (isDark ? '#1e3a8a' : '#eff6ff') },
-              (!commentText.trim() || isSubmittingComment) && styles.sendButtonDisabled
-            ]}
-            onPress={handleCommentSubmit}
-            disabled={!commentText.trim() || isSubmittingComment}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: colors.primary,
+              borderRadius: 20,
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+            }}
+            onPress={() => commentBottomSheetRef.current?.expand()}
           >
-            <MaterialCommunityIcons
-              name="send"
-              size={20}
-              color={(!commentText.trim() || isSubmittingComment) ? colors.textSecondary : colors.primary}
-            />
+            <MaterialCommunityIcons name="pencil" size={16} color="#fff" />
+            <Text style={{ marginLeft: 6, color: '#fff', fontSize: getResponsiveFontSize(12), fontFamily: 'Pretendard-SemiBold' }}>
+              댓글 달기
+            </Text>
           </TouchableOpacity>
         </HStack>
       </View>
+
+      {/* CommentBottomSheet */}
+      <CommentBottomSheet
+        ref={commentBottomSheetRef}
+        comments={comments as BSComment[]}
+        bestComments={bestComments as BSComment[]}
+        totalCount={comments.length}
+        postId={postId}
+        postUserId={post?.user_id}
+        postType="myday"
+        loading={isLoading}
+        hasMore={false}
+        onSubmitComment={async (content, anonymous, parentId) => {
+          const commentData = {
+            content: parentId
+              ? `@${comments.find(c => c.comment_id === parentId)?.user?.nickname || '익명'} ${content}`
+              : content,
+            is_anonymous: anonymous,
+            parent_comment_id: parentId
+          };
+
+          const response = await myDayService.addComment(postId, commentData);
+          if (response.status === 'success' || response.data?.status === 'success') {
+            const newComment = response.data.data || response.data;
+            if (parentId) {
+              // 답글은 맨 뒤에 추가 (시간순 유지)
+              setComments(prev => prev.map(c => {
+                if (c.comment_id === parentId) {
+                  return { ...c, replies: [...(c.replies || []), { ...newComment, replies: [] }] };
+                }
+                return c;
+              }));
+            } else {
+              // 최상위 댓글은 맨 뒤에 추가 (시간순 유지)
+              setComments(prev => [...prev, { ...newComment, replies: [] }]);
+            }
+          }
+        }}
+        onLikeComment={(c: BSComment) => handleCommentLike(c.comment_id)}
+        onEditComment={handleEditComment}
+        onDeleteComment={handleDeleteComment}
+        onLongPressComment={(c: BSComment) => {
+          setBlockCommentId(c.comment_id);
+          setBlockModalVisible(true);
+        }}
+        onRefresh={loadPostData}
+        isAuthenticated={!!user}
+      />
 
       <BlockReasonModal
         visible={blockModalVisible}
@@ -1056,6 +1208,110 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
         type={toastType}
         onHide={() => setToastVisible(false)}
       />
+
+      {/* 댓글 수정 모달 */}
+      <Modal
+        visible={!!editingComment}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditingComment(null)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+        >
+          <TouchableOpacity
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            activeOpacity={1}
+            onPress={() => setEditingComment(null)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                width: '85%',
+                backgroundColor: theme.bg.card,
+                borderRadius: 16,
+                padding: 20,
+                maxHeight: '70%',
+              }}
+            >
+              <Text style={{
+                fontSize: getResponsiveFontSize(18),
+                fontFamily: 'Pretendard-Bold',
+                color: theme.text.primary,
+                marginBottom: 16,
+              }}>
+                댓글 수정
+              </Text>
+
+              <RNTextInput
+                value={editCommentText}
+                onChangeText={setEditCommentText}
+                placeholder="댓글 내용을 입력하세요"
+                placeholderTextColor={theme.text.tertiary}
+                multiline
+                maxLength={500}
+                style={{
+                  backgroundColor: theme.bg.secondary,
+                  borderRadius: 12,
+                  padding: 12,
+                  fontSize: getResponsiveFontSize(14),
+                  color: theme.text.primary,
+                  minHeight: 100,
+                  maxHeight: 200,
+                  textAlignVertical: 'top',
+                }}
+              />
+
+              <HStack style={{ marginTop: 16, gap: 12 }}>
+                <TouchableOpacity
+                  onPress={() => setEditingComment(null)}
+                  style={{
+                    flex: 1,
+                    backgroundColor: theme.bg.secondary,
+                    paddingVertical: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{
+                    fontSize: getResponsiveFontSize(14),
+                    fontFamily: 'Pretendard-SemiBold',
+                    color: theme.text.secondary,
+                  }}>
+                    취소
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleSaveCommentEdit}
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.primary,
+                    paddingVertical: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{
+                    fontSize: getResponsiveFontSize(14),
+                    fontFamily: 'Pretendard-SemiBold',
+                    color: '#FFFFFF',
+                  }}>
+                    수정
+                  </Text>
+                </TouchableOpacity>
+              </HStack>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 };
@@ -1084,7 +1340,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: FONT_SIZES.bodyLarge,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   postCard: {
     margin: 16,
@@ -1101,14 +1357,14 @@ const styles = StyleSheet.create({
   },
   postNickname: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   postDate: {
     fontSize: FONT_SIZES.caption,
   },
   ownerBadge: {
     fontSize: FONT_SIZES.tiny,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginLeft: 4,
   },
   postContent: {
@@ -1139,7 +1395,7 @@ const styles = StyleSheet.create({
   },
   commentTitle: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   collapseButton: {
     flexDirection: 'row',
@@ -1150,7 +1406,7 @@ const styles = StyleSheet.create({
   },
   collapseText: {
     fontSize: FONT_SIZES.caption,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginLeft: 4,
   },
   bestCommentsSection: {
@@ -1165,7 +1421,7 @@ const styles = StyleSheet.create({
   },
   bestCommentsTitle: {
     fontSize: FONT_SIZES.small,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginLeft: 6,
   },
   bestComment: {
@@ -1187,16 +1443,16 @@ const styles = StyleSheet.create({
   },
   bestRankText: {
     fontSize: FONT_SIZES.tiny,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#fff',
   },
   bestCommentUser: {
     fontSize: FONT_SIZES.small,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   bestCommentLikes: {
     fontSize: FONT_SIZES.small,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginLeft: 4,
   },
   bestCommentContent: {
@@ -1215,7 +1471,7 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: FONT_SIZES.caption,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   commentDate: {
     fontSize: FONT_SIZES.small,
@@ -1235,7 +1491,7 @@ const styles = StyleSheet.create({
   },
   commentActionText: {
     fontSize: FONT_SIZES.caption,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   commentInputContainer: {
     position: 'absolute',
@@ -1257,7 +1513,7 @@ const styles = StyleSheet.create({
   },
   replyIndicatorText: {
     fontSize: FONT_SIZES.caption,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   commentInputRow: {
     flexDirection: 'row',

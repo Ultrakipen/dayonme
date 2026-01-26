@@ -26,7 +26,7 @@ export const LiveComfortPreview: React.FC = React.memo(() => {
       setTotalUsers(total);
     } catch (err) {
       setError('세션을 불러오는데 실패했습니다');
-      console.error('세션 로드 실패:', err);
+      if (__DEV__) console.error('세션 로드 실패:', err);
       setActiveSessions([]);
     }
   }, []);
@@ -73,7 +73,7 @@ export const LiveComfortPreview: React.FC = React.memo(() => {
           <Text style={[styles.liveText, {
             color: activeSessions.length > 0 ? '#ff4444' : '#999',
             fontSize: FONT_SIZES.caption * scale,
-            fontWeight: '700'
+            fontFamily: 'Pretendard-Bold'
           }]}>
             {activeSessions.length > 0 ? 'LIVE' : 'READY'}
           </Text>
@@ -146,9 +146,9 @@ export const LiveComfortPreview: React.FC = React.memo(() => {
         onPress={() => {
           if (activeSessions.length > 0) {
             // navigation.navigate('LiveComfort');
-            console.log('라이브 공감 세션 화면으로 이동');
+            if (__DEV__) console.log('라이브 공감 세션 화면으로 이동');
           } else {
-            console.log('진행 중인 세션이 없습니다');
+            if (__DEV__) console.log('진행 중인 세션이 없습니다');
           }
         }}
         disabled={activeSessions.length === 0}
@@ -159,7 +159,7 @@ export const LiveComfortPreview: React.FC = React.memo(() => {
         <Text style={[styles.joinButtonText, {
           color: activeSessions.length > 0 ? '#fff' : colors.textSecondary,
           fontSize: FONT_SIZES.bodySmall * scale,
-          fontWeight: '600'
+          fontFamily: 'Pretendard-SemiBold'
         }]}>
           {activeSessions.length > 0 ? '세션 참여하기' : '준비 중...'}
         </Text>
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   liveDot: {},
   liveText: {},
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   description: {},
   sessionsPreview: {
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   },
   sessionTag: {},
   sessionTagText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   sessionUsers: {},
   joinButton: {},

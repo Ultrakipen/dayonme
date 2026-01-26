@@ -42,9 +42,9 @@ const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   container: { backgroundColor: '#FFF', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  title: { fontSize: 14, fontWeight: '700' },
+  title: { fontSize: 14, fontFamily: 'Pretendard-Bold' },
   option: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
-  optionText: { fontSize: 13, fontWeight: '500', marginLeft: 12 }
+  optionText: { fontSize: 13, fontFamily: 'Pretendard-Medium', marginLeft: 12 }
 });
 
 export default ShareModal;

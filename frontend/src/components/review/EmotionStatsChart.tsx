@@ -54,7 +54,7 @@ const EmotionStatsChart: React.FC<EmotionStatsChartProps> = ({
             labelColor: (opacity = 1) => isDark ? `rgba(255, 255, 255, ${opacity})` : `rgba(28, 28, 30, ${opacity})`,
             propsForLabels: {
               fontSize: scaleFontSize(14),
-              fontWeight: '600'
+              fontFamily: 'Pretendard-SemiBold'
             }
           }}
           accessor="count"
@@ -96,7 +96,7 @@ const EmotionStatsChart: React.FC<EmotionStatsChartProps> = ({
                   accessibilityLabel={`${emotion.name} 감정`}
                   accessibilityHint={`${emotion.count}회 기록됨. 두 번 탭하여 상세 정보 보기`}
                 >
-                  <RNText style={{ fontSize, fontWeight: "700", color: emotion.color }}>
+                  <RNText style={{ fontSize, fontFamily: 'Pretendard-Bold', color: emotion.color }}>
                     {getEmotionIcon(emotion.name)} {emotion.name}
                   </RNText>
                 </TouchableOpacity>

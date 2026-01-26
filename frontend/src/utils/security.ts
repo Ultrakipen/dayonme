@@ -73,7 +73,7 @@ export const isSecureImageUrl = (url: string): boolean => {
 export const logger = {
   log: (...args: any[]) => __DEV__ && console.log(...args),
   warn: (...args: any[]) => __DEV__ && console.warn(...args),
-  error: (...args: any[]) => console.error(...args),
+  error: (...args: any[]) => __DEV__ && console.error(...args),
   info: (...args: any[]) => __DEV__ && console.info(...args),
 };
 
@@ -82,7 +82,7 @@ export const logger = {
  */
 export const devLog = (...args: any[]) => {
   if (__DEV__) {
-    console.log(...args);
+    if (__DEV__) console.log(...args);
   }
 };
 

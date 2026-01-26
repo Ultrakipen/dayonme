@@ -13,7 +13,7 @@ export const initSentry = () => {
   // DSN이 설정되지 않으면 초기화하지 않음
   if (!dsn) {
     if (!__DEV__) {
-      console.warn('Sentry DSN이 설정되지 않았습니다. 에러 추적이 비활성화됩니다.');
+      if (__DEV__) console.warn('Sentry DSN이 설정되지 않았습니다. 에러 추적이 비활성화됩니다.');
     }
     return;
   }

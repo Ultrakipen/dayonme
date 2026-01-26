@@ -163,7 +163,7 @@ const ImagePicker: React.FC<ImagePickerProps> = ({
         });
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (__DEV__) console.error('이미지 업로드 실패:', error);
 
       let errorMessage = '이미지 업로드 중 오류가 발생했습니다.';

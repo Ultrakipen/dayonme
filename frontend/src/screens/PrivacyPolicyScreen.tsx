@@ -60,7 +60,7 @@ const PrivacyPolicyScreen: React.FC = () => {
     headerTitle: {
       flex: 1,
       fontSize: scaleFont(20),
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       textAlign: 'center',
       marginHorizontal: scaleWidth(16),
       letterSpacing: -0.3,
@@ -81,7 +81,7 @@ const PrivacyPolicyScreen: React.FC = () => {
     },
     updateText: {
       fontSize: scaleFont(15),
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       letterSpacing: -0.2,
     },
     section: {
@@ -117,18 +117,18 @@ const PrivacyPolicyScreen: React.FC = () => {
     numberText: {
       color: colors.background,
       fontSize: scaleFont(17),
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
     },
     sectionTitle: {
       fontSize: scaleFont(19),
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       flex: 1,
       letterSpacing: -0.3,
       lineHeight: scaleFont(30),
     },
     subTitle: {
       fontSize: scaleFont(17),
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       marginTop: scaleHeight(18),
       marginBottom: scaleHeight(12),
       letterSpacing: -0.2,
@@ -164,8 +164,9 @@ const PrivacyPolicyScreen: React.FC = () => {
     },
     contactLabel: {
       fontSize: scaleFont(16),
-      fontWeight: '600',
-      width: scaleWidth(70),
+      fontFamily: 'Pretendard-SemiBold',
+      minWidth: 55,
+      flexShrink: 0,
       letterSpacing: -0.2,
     },
     contactValue: {
@@ -419,7 +420,6 @@ const PrivacyPolicyScreen: React.FC = () => {
             개인정보 처리와 관련한 이용자의 불만처리 및 피해구제를 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.
           </Text>
 
-          {/* ⚠️ TODO: 실제 서비스 출시 전 아래 연락처 정보를 실제 값으로 변경 필요 */}
           <View style={[dynamicStyles.contactBox, { backgroundColor: colors.cardBg, borderColor: colors.border }]}>
             <View style={dynamicStyles.contactRow}>
               <Icon name="person-outline" size={20} color={colors.accent} />
@@ -429,15 +429,15 @@ const PrivacyPolicyScreen: React.FC = () => {
             <View style={dynamicStyles.contactRow}>
               <Icon name="mail-outline" size={20} color={colors.accent} />
               <Text style={[dynamicStyles.contactLabel, { color: colors.text }]}>이메일:</Text>
-              {/* TODO: 실제 이메일 주소로 변경 */}
-              <Text style={[dynamicStyles.contactValue, { color: colors.textSecondary }]}>admin@dayonme.com</Text>
+              <Text style={[dynamicStyles.contactValue, { color: colors.textSecondary }]}>day_admin@dayonme.com</Text>
             </View>
+            {/* 전화 부분 주석처리
             <View style={dynamicStyles.contactRow}>
               <Icon name="call-outline" size={20} color={colors.accent} />
               <Text style={[dynamicStyles.contactLabel, { color: colors.text }]}>전화:</Text>
-              {/* TODO: 실제 전화번호로 변경 */}
               <Text style={[dynamicStyles.contactValue, { color: colors.textSecondary }]}>010-4667-9824</Text>
             </View>
+            */}
           </View>
         </View>
 

@@ -195,7 +195,7 @@ const fetchTags = useCallback(async () => {
         return;
       }
     } catch (apiError) {
-      console.log('태그 API 미구현, 로컬 태그 생성 기능 사용');
+      if (__DEV__) console.log('태그 API 미구현, 로컬 태그 생성 기능 사용');
     }
 
     // API 미구현 시 빈 배열로 시작 (사용자가 직접 태그 생성)
@@ -204,7 +204,7 @@ const fetchTags = useCallback(async () => {
     
     setLoading(false);
   } catch (error) {
-    console.error('태그 가져오기 오류:', error);
+    if (__DEV__) console.error('태그 가져오기 오류:', error);
     setError('태그 목록을 불러오는데 실패했습니다.');
     setLoading(false);
   }
@@ -248,7 +248,7 @@ const fetchTags = useCallback(async () => {
         
         setFilteredTags(localResults);
       } catch (error) {
-        console.error('태그 검색 API 오류:', error);
+        if (__DEV__) console.error('태그 검색 API 오류:', error);
         setFilteredTags(localResults);
       }
       
@@ -345,7 +345,7 @@ const handleCreateTag = async () => {
     
     setLoading(false);
   } catch (error) {
-    console.error('태그 생성 오류:', error);
+    if (__DEV__) console.error('태그 생성 오류:', error);
     setError('태그 생성에 실패했습니다.');
     setLoading(false);
   }
@@ -457,14 +457,14 @@ const handleCreateTag = async () => {
             autoCorrect={false}
             blurOnSubmit={false}
             onFocus={() => {
-              console.log('태그 검색 입력 포커스');
+              if (__DEV__) console.log('태그 검색 입력 포커스');
               if (searchText.trim() !== '' || (showPopularTags && popularTags.length > 0)) {
                 setIsDropdownVisible(true);
               }
               onFocus?.();
             }}
             onBlur={() => {
-              console.log('태그 검색 입력 블러');
+              if (__DEV__) console.log('태그 검색 입력 블러');
               setTimeout(() => {
                 Animated.timing(dropdownAnim, {
                   toValue: 0,
@@ -613,7 +613,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#FFFFFF',
     color: '#262626',
-    fontWeight: '400',
+    fontFamily: 'Pretendard-Regular',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
@@ -709,7 +709,7 @@ const styles = StyleSheet.create({
     color: '#262626',
     marginLeft: 10,
     flex: 1,
-    fontWeight: '400',
+    fontFamily: 'Pretendard-Regular',
     lineHeight: 20,
   },
   dropdownItemTextDark: {
@@ -736,7 +736,7 @@ const styles = StyleSheet.create({
   createTagText: {
     fontSize: 15,
     color: '#0095F6',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginLeft: 8,
     lineHeight: 20,
   },
@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     lineHeight: 20,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   noResultsTextDark: {
     color: '#9CA3AF',
@@ -774,7 +774,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#374151',
     marginLeft: 6,
     textTransform: 'uppercase',
@@ -795,7 +795,7 @@ const styles = StyleSheet.create({
   },
   popularBadgeText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#D97706',
   },
   popularBadgeTextDark: {
@@ -820,7 +820,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#374151',
     marginLeft: 10,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 20,
   },
   recentSearchTextDark: {

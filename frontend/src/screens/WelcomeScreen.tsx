@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.5,
   },
   subtitle: {
@@ -156,13 +156,13 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   secondaryButton: {
     // paddingVertical는 인라인으로 처리
   },
   secondaryButtonText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 });
 

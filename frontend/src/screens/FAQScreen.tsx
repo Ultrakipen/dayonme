@@ -14,7 +14,7 @@ const FAQ_DATA = [
   { id: '4', q: '게시물을 수정/삭제하고 싶어요.', a: '본인이 작성한 게시물의 우측 상단 메뉴(⋯)를 탭하면 수정 또는 삭제를 선택할 수 있습니다.' },
   { id: '5', q: '다른 사용자를 차단하고 싶어요.', a: '해당 사용자의 프로필에서 우측 상단 메뉴를 탭하고 "차단하기"를 선택하세요. 차단된 사용자는 프로필 → 차단 관리에서 확인할 수 있습니다.' },
   { id: '6', q: '부적절한 게시물을 발견했어요.', a: '해당 게시물의 메뉴(⋯)에서 "신고하기"를 선택하여 신고할 수 있습니다. 운영팀이 검토 후 조치합니다.' },
-  { id: '7', q: '데이터를 백업하고 싶어요.', a: '프로필 → 계정 설정 → 데이터 내보내기에서 본인의 데이터를 다운로드할 수 있습니다.' },
+  { id: '7', q: '내 데이터를 백업하고 싶어요.', a: '프로필 → 설정 → 계정 설정 → 데이터 다운로드에서 본인의 모든 데이터를 ZIP 파일로 다운로드할 수 있습니다. 이메일로 전송됩니다.' },
 ];
 
 const FAQScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
@@ -90,12 +90,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backButton: { padding: 8 },
-  headerTitle: { fontWeight: '700' },
+  headerTitle: { fontFamily: 'Pretendard-Bold' },
   placeholder: { width: 40 },
   list: { padding: 16 },
   item: { borderRadius: 12, padding: 16, marginBottom: 10, borderWidth: 1 },
   questionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  question: { flex: 1, fontWeight: '600', marginRight: 8 },
+  question: { flex: 1, fontFamily: 'Pretendard-SemiBold', marginRight: 8 },
   answer: { marginTop: 12, paddingTop: 12, borderTopWidth: 1 },
 });
 

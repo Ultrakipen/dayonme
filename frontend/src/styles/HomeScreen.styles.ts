@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 const styles = StyleSheet.create({
     authorBadge: {
         fontSize: 12,
-        fontWeight: '700',
+        fontFamily: 'Pretendard-Bold',
         color: '#007AFF',
         backgroundColor: '#007AFF20',
         paddingHorizontal: 8,

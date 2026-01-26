@@ -118,7 +118,7 @@ const CancelConfirmModal: React.FC<CancelConfirmModalProps> = ({
           {/* 제목 */}
           <Text style={{
             fontSize: 22,
-            fontWeight: '800',
+            fontFamily: 'Pretendard-ExtraBold',
             color: '#111827',
             textAlign: 'center',
             marginBottom: 12,
@@ -160,7 +160,7 @@ const CancelConfirmModal: React.FC<CancelConfirmModalProps> = ({
             >
               <Text style={{
                 fontSize: 16,
-                fontWeight: '600',
+                fontFamily: 'Pretendard-SemiBold',
                 color: '#6B7280',
                 fontFamily: 'Pretendard-SemiBold'
               }}>
@@ -189,7 +189,7 @@ const CancelConfirmModal: React.FC<CancelConfirmModalProps> = ({
             >
               <Text style={{
                 fontSize: 16,
-                fontWeight: '700',
+                fontFamily: 'Pretendard-Bold',
                 color: 'white',
                 fontFamily: 'Pretendard-Bold'
               }}>

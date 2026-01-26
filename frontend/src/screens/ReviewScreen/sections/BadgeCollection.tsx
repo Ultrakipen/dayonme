@@ -43,7 +43,7 @@ export const BadgeCollection: React.FC<Props> = ({ onClose }) => {
         useNativeDriver: true,
       }).start();
     } catch (error) {
-      console.error('배지 로드 실패:', error);
+      if (__DEV__) console.error('배지 로드 실패:', error);
     }
   };
 
@@ -72,7 +72,7 @@ export const BadgeCollection: React.FC<Props> = ({ onClose }) => {
             accessibilityLabel="닫기"
             accessibilityRole="button"
           >
-            <Text style={[styles.closeButtonText, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>✕</Text>
+            <Text style={[styles.closeButtonText, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>✕</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -145,13 +145,13 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   modalTitle: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   closeButton: {
     padding: 8,
   },
   closeButtonText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   scrollView: {
     flex: 1,
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   subtitle: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   newBadge: {
     paddingHorizontal: 12,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   newBadgeText: {
     color: '#fff',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   badgeGrid: {
     flexDirection: 'row',
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   badgeName: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
     marginBottom: 4,
   },

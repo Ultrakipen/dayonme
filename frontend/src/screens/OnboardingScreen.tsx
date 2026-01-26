@@ -150,7 +150,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }) => {
         password: formData.password
       });
       // 성공 시 메인 화면으로 이동
-    } catch (error: any) {
+    } catch (error: unknown) {
       showAlert(
         '회원가입 실패',
         error.response?.data?.message || '회원가입 중 오류가 발생했습니다.'
@@ -171,7 +171,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }) => {
 
   const renderStep1 = () => (
     <Box className="p-5">
-      <Text style={{ fontSize: FONT_SIZES.h1, fontWeight: 'bold', color: theme.text.primary, marginBottom: 8, textAlign: 'center' }}>계정 정보 입력</Text>
+      <Text style={{ fontSize: FONT_SIZES.h1, fontFamily: 'Pretendard-Bold', color: theme.text.primary, marginBottom: 8, textAlign: 'center' }}>계정 정보 입력</Text>
       <Text style={{ fontSize: FONT_SIZES.bodyLarge, color: theme.text.secondary, marginBottom: 32, textAlign: 'center' }}>안전한 계정을 만들어주세요</Text>
 
       <TextInput
@@ -222,7 +222,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }) => {
 
   const renderStep2 = () => (
     <Box className="p-5">
-      <Text style={{ fontSize: FONT_SIZES.h1, fontWeight: 'bold', color: theme.text.primary, marginBottom: 8, textAlign: 'center' }}>프로필 설정</Text>
+      <Text style={{ fontSize: FONT_SIZES.h1, fontFamily: 'Pretendard-Bold', color: theme.text.primary, marginBottom: 8, textAlign: 'center' }}>프로필 설정</Text>
       <Text style={{ fontSize: FONT_SIZES.bodyLarge, color: theme.text.secondary, marginBottom: 32, textAlign: 'center' }}>나를 소개해주세요</Text>
 
       <TextInput
@@ -247,7 +247,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }) => {
       />
       {errors.nickname && <Text style={{ color: theme.colors.error || '#DC2626', fontSize: FONT_SIZES.small, marginBottom: 8, marginLeft: 4 }}>{errors.nickname}</Text>}
 
-      <Text style={{ fontSize: FONT_SIZES.h3, fontWeight: 'bold', color: theme.text.primary, marginTop: 20, marginBottom: 16 }}>테마 선택</Text>
+      <Text style={{ fontSize: FONT_SIZES.h3, fontFamily: 'Pretendard-Bold', color: theme.text.primary, marginTop: 20, marginBottom: 16 }}>테마 선택</Text>
       <VStack className="gap-2">
         {THEME_OPTIONS.map((themeOption) => (
           <Surface
@@ -279,7 +279,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }) => {
 
   const renderStep3 = () => (
     <Box className="p-5">
-      <Text style={{ fontSize: FONT_SIZES.h1, fontWeight: 'bold', color: theme.text.primary, marginBottom: 8, textAlign: 'center' }}>감정 선호도</Text>
+      <Text style={{ fontSize: FONT_SIZES.h1, fontFamily: 'Pretendard-Bold', color: theme.text.primary, marginBottom: 8, textAlign: 'center' }}>감정 선호도</Text>
       <Text style={{ fontSize: FONT_SIZES.bodyLarge, color: theme.text.secondary, marginBottom: 32, textAlign: 'center' }}>어떤 감정을 자주 느끼시나요? (3개 이상 선택)</Text>
 
       <Box className="flex-row flex-wrap gap-2 mb-5">
@@ -328,7 +328,7 @@ const OnboardingScreen: React.FC<OnboardingScreenProps> = ({ navigation }) => {
               iconColor={theme.text.primary}
             />
           )}
-          <Text style={{ fontSize: FONT_SIZES.bodyLarge, fontWeight: 'bold', color: theme.text.primary }}>{currentStep}/3</Text>
+          <Text style={{ fontSize: FONT_SIZES.bodyLarge, fontFamily: 'Pretendard-Bold', color: theme.text.primary }}>{currentStep}/3</Text>
         </HStack>
       </Box>
 

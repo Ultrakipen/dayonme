@@ -31,8 +31,13 @@ const BookmarksScreen = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  // Swipeable refs for closing other swipeables
   const swipeableRefs = useRef<Map<number, Swipeable>>(new Map());
+
+  useEffect(() => {
+    return () => {
+      swipeableRefs.current.clear();
+    };
+  }, []);
 
   // Haptic feedback options
   const hapticOptions = {
@@ -66,7 +71,7 @@ const BookmarksScreen = () => {
       setHasMore(pageNum < response.data.pagination.totalPages);
       setPage(pageNum);
     } catch (error) {
-      console.error('북마크 조회 오류:', error);
+      if (__DEV__) console.error('북마크 조회 오류:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -101,7 +106,7 @@ const BookmarksScreen = () => {
       // Success haptic
       ReactNativeHapticFeedback.trigger('notificationSuccess', hapticOptions);
     } catch (error) {
-      console.error('북마크 제거 오류:', error);
+      if (__DEV__) console.error('북마크 제거 오류:', error);
       ReactNativeHapticFeedback.trigger('notificationError', hapticOptions);
     }
   };
@@ -146,17 +151,18 @@ const BookmarksScreen = () => {
   const handlePostPress = (item: BookmarkItem) => {
     if (!item.post) return;
 
-    if (item.post_type === 'my_day') {
-      (navigation as any).navigate('Home', {
-        screen: 'PostDetail',
-        params: { postId: item.post.post_id },
-      });
-    } else {
-      (navigation as any).navigate('Comfort', {
-        screen: 'ComfortWallDetail',
-        params: { postId: item.post.post_id },
-      });
-    }
+    // Haptic feedback
+    ReactNativeHapticFeedback.trigger('impactLight', hapticOptions);
+
+    // 북마크에서는 항상 PostDetail로 직접 네비게이션
+    const postType = item.post_type === 'my_day' ? 'myday' : 'comfort';
+
+    (navigation as any).navigate('PostDetail', {
+      postId: item.post.post_id,
+      postType: postType,
+      sourceScreen: 'bookmarks', // 뒤로가기 시 북마크 화면으로 돌아가기 위해
+      enableSwipe: false, // 북마크에서는 스와이프 비활성화
+    });
   };
 
   // 북마크 카드 렌더링 (스와이프 가능)
@@ -353,6 +359,14 @@ const BookmarksScreen = () => {
           />
         }
         showsVerticalScrollIndicator={false}
+        onScroll={({ nativeEvent }) => {
+          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 100;
+          if (isCloseToBottom && hasMore && !loading) {
+            fetchBookmarks(page + 1);
+          }
+        }}
+        scrollEventThrottle={400}
       >
         {loading && page === 1 ? (
           <View style={styles.loadingContainer}>
@@ -398,7 +412,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: normalize(18),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -416,10 +430,10 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: normalize(14),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   activeTabText: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   scrollContent: {
     padding: normalizeSpace(16),
@@ -443,7 +457,7 @@ const styles = StyleSheet.create({
   },
   typeText: {
     fontSize: normalize(13),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   cardContent: {
     flexDirection: 'row',
@@ -483,7 +497,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: normalize(12),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   loadingContainer: {
     flex: 1,
@@ -503,7 +517,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: normalize(16),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginTop: normalizeSpace(16),
   },
   emptySubText: {
@@ -527,7 +541,7 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: '#ffffff',
     fontSize: normalize(13),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginTop: normalizeSpace(4),
   },
 });

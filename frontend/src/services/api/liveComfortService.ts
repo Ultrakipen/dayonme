@@ -3,7 +3,7 @@ import io, { Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE = '/live-comfort';
-const SOCKET_URL = 'http://localhost:3001';
+const SOCKET_URL = 'https://dayonme.com';
 
 export interface LiveSession {
   session_id: string;
@@ -39,12 +39,12 @@ class LiveComfortService {
 
     return new Promise((resolve, reject) => {
       this.socket!.on('connect', () => {
-        console.log('Socket 연결됨');
+        if (__DEV__) console.log('Socket 연결됨');
         resolve(this.socket!);
       });
 
       this.socket!.on('connect_error', (error) => {
-        console.error('Socket 연결 실패:', error);
+        if (__DEV__) console.error('Socket 연결 실패:', error);
         reject(error);
       });
     });

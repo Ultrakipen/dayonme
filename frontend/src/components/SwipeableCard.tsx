@@ -46,7 +46,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
 
   // 강제 리셋 함수
   const resetCard = useCallback(() => {
-    console.log('🔄 카드 강제 리셋');
+    if (__DEV__) console.log('🔄 카드 강제 리셋');
     setIsRevealed(false);
     // 새로운 Animated.Value 생성으로 완전 초기화
     setTranslateX(new Animated.Value(0));
@@ -55,13 +55,13 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
 
   // 컴포넌트 마운트 시 강제 초기화
   useEffect(() => {
-    console.log('🔄 SwipeableCard 마운트 - 상태 초기화');
+    if (__DEV__) console.log('🔄 SwipeableCard 마운트 - 상태 초기화');
     resetCard();
   }, []);
 
   // actions 배열이 변경될 때마다 초기화
   useEffect(() => {
-    console.log('🔄 액션 배열 변경 - 상태 초기화');
+    if (__DEV__) console.log('🔄 액션 배열 변경 - 상태 초기화');
     resetCard();
   }, [actions]);
 
@@ -70,7 +70,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
     React.useCallback(() => {
       // 화면에 포커스가 되면 모든 스와이프 상태를 초기화
       if (isRevealed) {
-        console.log('🔄 화면 포커스로 인한 스와이프 상태 초기화');
+        if (__DEV__) console.log('🔄 화면 포커스로 인한 스와이프 상태 초기화');
         closeActions();
       }
     }, [isRevealed])
@@ -94,7 +94,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
         const shouldHandle = isHorizontalSwipe && hasMinimumDistance && (isLeftSwipe || isRightSwipeWhenRevealed);
 
         if (!shouldHandle && gestureState.dx > 0) {
-          console.log('🚫 닫힌 상태에서 오른쪽 스와이프 차단');
+          if (__DEV__) console.log('🚫 닫힌 상태에서 오른쪽 스와이프 차단');
         }
 
         return shouldHandle;
@@ -121,7 +121,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
       onPanResponderRelease: (_, gestureState) => {
         translateX.flattenOffset();
         const currentValue = translateX._value;
-        console.log('🔄 스와이프 릴리즈:', {
+        if (__DEV__) console.log('🔄 스와이프 릴리즈:', {
           dx: gestureState.dx,
           currentValue,
           threshold: SWIPE_THRESHOLD,
@@ -130,7 +130,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
 
         if (gestureState.dx < -SWIPE_THRESHOLD && currentValue > -actions.length * ACTION_WIDTH / 2) {
           // 왼쪽으로 스와이프 - 액션 버튼들 표시
-          console.log('✅ 액션 버튼 표시');
+          if (__DEV__) console.log('✅ 액션 버튼 표시');
           Animated.spring(translateX, {
             toValue: -actions.length * ACTION_WIDTH,
             useNativeDriver: false,
@@ -142,7 +142,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
           onSwipeOpen?.();
         } else if (isRevealed && (gestureState.dx > SWIPE_THRESHOLD || currentValue > -actions.length * ACTION_WIDTH / 2)) {
           // 열린 상태에서 오른쪽으로 스와이프 또는 반 이상 닫힌 상태 - 원래 위치로 복귀
-          console.log('↩️ 원래 위치로 복귀');
+          if (__DEV__) console.log('↩️ 원래 위치로 복귀');
           Animated.spring(translateX, {
             toValue: 0,
             useNativeDriver: false,
@@ -152,7 +152,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
           setIsRevealed(false);
         } else if (!isRevealed && gestureState.dx > 0) {
           // 닫힌 상태에서 오른쪽 스와이프는 무시하고 항상 원래 위치 유지
-          console.log('🚫 닫힌 상태에서 오른쪽 스와이프 무시');
+          if (__DEV__) console.log('🚫 닫힌 상태에서 오른쪽 스와이프 무시');
           Animated.spring(translateX, {
             toValue: 0,
             useNativeDriver: false,
@@ -162,7 +162,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
         } else {
           // 그 외의 경우 - 현재 상태 유지 (열린 상태면 열린 상태로, 닫힌 상태면 닫힌 상태로)
           if (isRevealed) {
-            console.log('🔄 액션 버튼 상태 유지');
+            if (__DEV__) console.log('🔄 액션 버튼 상태 유지');
             Animated.spring(translateX, {
               toValue: -actions.length * ACTION_WIDTH,
               useNativeDriver: false,
@@ -183,7 +183,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
   }, [forceReset, isRevealed, actions]);
 
   const closeActions = useCallback(() => {
-    console.log('🔒 액션 닫기 실행');
+    if (__DEV__) console.log('🔒 액션 닫기 실행');
     translateX.stopAnimation();
     Animated.spring(translateX, {
       toValue: 0,
@@ -194,7 +194,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
       // 애니메이션 완료 후 추가 검증
       translateX.setValue(0);
       translateX.setOffset(0);
-      console.log('✅ 액션 닫기 완료');
+      if (__DEV__) console.log('✅ 액션 닫기 완료');
     });
     setIsRevealed(false);
   }, [translateX]);
@@ -219,7 +219,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
               },
             ]}
             onPress={() => {
-              console.log(`🎯 액션 버튼 클릭됨: ${action.id}`);
+              if (__DEV__) console.log(`🎯 액션 버튼 클릭됨: ${action.id}`);
               action.onPress();
               closeActions();
             }}
@@ -250,7 +250,7 @@ const SwipeableCard = forwardRef<SwipeableCardRef, SwipeableCardProps>(({
           activeOpacity={1}
           onPress={() => {
             if (isRevealed) {
-              console.log('🔒 카드 터치로 액션 닫기');
+              if (__DEV__) console.log('🔒 카드 터치로 액션 닫기');
               closeActions();
             }
           }}

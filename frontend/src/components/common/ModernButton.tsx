@@ -106,7 +106,7 @@ const ModernButton: React.FC<ModernButtonProps> = ({
   const getTextStyle = (): TextStyle => {
     return {
       fontSize: buttonSize.fontSize,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       textAlign: 'center',
       color: getTextColor(),
     };

@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#ffffff',
   },
   writeCard: {
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#ffffff',
     fontSize: 16,  // 14→16
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   postsList: {
     paddingBottom: 20,
@@ -368,14 +368,14 @@ const styles = StyleSheet.create({
   avatarText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   authorDetails: {
     flex: 1,
   },
   authorName: {
     fontSize: 16,  // 14→16
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#1e293b',
     marginBottom: 2,
   },
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   },
   likeCount: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#64748b',
   },
   likedCount: {
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   },
   replyAuthor: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#475569',
   },
   replyTime: {

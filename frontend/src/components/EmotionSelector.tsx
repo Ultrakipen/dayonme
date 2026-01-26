@@ -70,7 +70,7 @@ const EmotionSelector: React.FC<EmotionSelectorProps> = ({
                 style={[
                   styles.emotionName,
                   { color: isSelected ? emotion.color : '#666666' },
-                  isSelected && { fontWeight: '700' },
+                  isSelected && { fontFamily: 'Pretendard-Bold' },
                 ]}
               >
                 {emotion.name}
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginBottom: 12,
     paddingHorizontal: 16,
     color: '#333333',
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
   },
   iconText: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
     lineHeight: 26,
   },

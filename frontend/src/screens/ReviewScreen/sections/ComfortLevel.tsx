@@ -19,7 +19,7 @@ export const ComfortLevel: React.FC = React.memo(() => {
       setStats(data);
     } catch (err) {
       setError('위로 통계를 불러오는데 실패했습니다');
-      console.error('위로 통계 로드 실패:', err);
+      if (__DEV__) console.error('위로 통계 로드 실패:', err);
       setStats(null);
     }
   }, []);
@@ -138,11 +138,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   levelName: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 2,
   },
   levelNumber: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   expBarContainer: {
     gap: 6,
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statValue: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   statLabel: {},
   nextLevel: {

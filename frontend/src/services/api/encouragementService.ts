@@ -6,6 +6,11 @@ export interface AnonymousEncouragement {
   message: string;
   sent_at: string;
   is_read: boolean;
+  template_id?: number;
+  emoji?: string;
+  template_title?: string;
+  background_color?: string;
+  text_color?: string;
 }
 
 export interface SendEncouragementData {
@@ -25,13 +30,13 @@ const encouragementService = {
   // 익명 격려 메시지 전송
   sendEncouragement: async (data: SendEncouragementData) => {
     try {
-      console.log('💌 익명 격려 메시지 전송 요청:', data);
+      if (__DEV__) console.log('💌 익명 격려 메시지 전송 요청:', data);
       const response = await apiClient.post('/encouragement/send', data);
-      console.log('💌 익명 격려 메시지 전송 응답:', response.data);
+      if (__DEV__) console.log('💌 익명 격려 메시지 전송 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ 익명 격려 메시지 전송 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 익명 격려 메시지 전송 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -43,13 +48,13 @@ const encouragementService = {
     unreadOnly?: boolean;
   }) => {
     try {
-      console.log('💌 받은 격려 메시지 조회 요청:', params);
+      if (__DEV__) console.log('💌 받은 격려 메시지 조회 요청:', params);
       const response = await apiClient.get('/encouragement/received', { params });
-      console.log('💌 받은 격려 메시지 조회 응답:', response.data);
+      if (__DEV__) console.log('💌 받은 격려 메시지 조회 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ 받은 격려 메시지 조회 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 받은 격려 메시지 조회 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -57,13 +62,13 @@ const encouragementService = {
   // 격려 메시지 읽음 처리
   markAsRead: async (encouragementId: number) => {
     try {
-      console.log('✅ 격려 메시지 읽음 처리 요청:', encouragementId);
+      if (__DEV__) console.log('✅ 격려 메시지 읽음 처리 요청:', encouragementId);
       const response = await apiClient.patch(`/encouragement/${encouragementId}/read`);
-      console.log('✅ 격려 메시지 읽음 처리 응답:', response.data);
+      if (__DEV__) console.log('✅ 격려 메시지 읽음 처리 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ 격려 메시지 읽음 처리 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 격려 메시지 읽음 처리 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },
@@ -71,13 +76,13 @@ const encouragementService = {
   // 전체 읽음 처리
   markAllAsRead: async () => {
     try {
-      console.log('✅ 전체 격려 메시지 읽음 처리 요청');
+      if (__DEV__) console.log('✅ 전체 격려 메시지 읽음 처리 요청');
       const response = await apiClient.patch('/encouragement/read-all');
-      console.log('✅ 전체 격려 메시지 읽음 처리 응답:', response.data);
+      if (__DEV__) console.log('✅ 전체 격려 메시지 읽음 처리 응답:', response.data);
       return response.data;
-    } catch (error: any) {
-      console.error('❌ 전체 격려 메시지 읽음 처리 오류:', error);
-      console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 전체 격려 메시지 읽음 처리 오류:', error);
+      if (__DEV__) console.error('❌ API 응답 오류 [' + (error.response?.status || 'UNKNOWN') + ']:', error.response?.data);
       throw error;
     }
   },

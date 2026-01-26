@@ -25,25 +25,25 @@ const SearchInput: React.FC<SearchInputProps> = ({
   useEffect(() => {
     if (clearTrigger) {
       setInputText('');
-      console.log('🗑️ 외부 트리거에 의한 SearchInput 클리어');
+      if (__DEV__) console.log('🗑️ 외부 트리거에 의한 SearchInput 클리어');
     }
   }, [clearTrigger]);
 
   const handleSearch = useCallback(() => {
-    console.log('🔍 검색 실행:', inputText);
+    if (__DEV__) console.log('🔍 검색 실행:', inputText);
     onSearch(inputText.trim());
   }, [inputText, onSearch]);
 
   const handleClear = useCallback(() => {
     setInputText('');
-    console.log('🗑️ SearchInput 클리어');
+    if (__DEV__) console.log('🗑️ SearchInput 클리어');
     onClear();
   }, [onClear]);
 
   const handleTextChange = useCallback((text: string) => {
     const sanitized = sanitizeInput(text);
     setInputText(sanitized);
-    console.log('📝 텍스트 변경 (자동 검색 없음):', sanitized);
+    if (__DEV__) console.log('📝 텍스트 변경 (자동 검색 없음):', sanitized);
   }, []);
 
   return (
@@ -73,7 +73,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
           flex: 1,
           fontSize: 16,
           color: 'white',
-          fontWeight: '500',
+          fontFamily: 'Pretendard-Medium',
           paddingVertical: 0,
         }}
         placeholder={placeholder}

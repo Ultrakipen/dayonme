@@ -42,7 +42,7 @@ const GuestWelcomeBanner: React.FC<GuestWelcomeBannerProps> = ({
         useNativeDriver: true,
       }).start();
     } catch (error) {
-      console.log('배너 표시 확인 오류:', error);
+      if (__DEV__) console.log('배너 표시 확인 오류:', error);
     }
   };
 
@@ -154,13 +154,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
     marginBottom: 2,
   },
   subtitle: {
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     letterSpacing: -0.2,
   },
   buttonsContainer: {
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.2,
   },
   closeButton: {

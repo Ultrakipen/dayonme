@@ -1,5 +1,5 @@
 // src/contexts/EmotionContext.tsx
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef, ReactNode } from 'react';
 import emotionService, { Emotion } from '../services/api/emotionService';
 
 // EmotionLog 타입 정의
@@ -49,26 +49,37 @@ export const EmotionProvider: React.FC<EmotionProviderProps> = ({ children }) =>
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 중복 호출 방지를 위한 ref
+  const isFetchingRef = useRef<boolean>(false);
+  const hasInitializedRef = useRef<boolean>(false);
+
   // 감정 목록 조회 (백엔드 /api/emotions)
   const fetchEmotions = async () => {
+    // 이미 조회 중이거나 초기화 완료된 경우 스킵
+    if (isFetchingRef.current || hasInitializedRef.current) {
+      if (__DEV__) console.log('⏭️ 감정 목록 조회 스킵 (이미 진행 중 또는 완료)');
+      return;
+    }
+
+    isFetchingRef.current = true;
     try {
       setIsLoading(true);
       setError(null);
-      console.log('🔄 감정 목록 조회 시작');
+      if (__DEV__) console.log('🔄 감정 목록 조회 시작');
       
       const response = await emotionService.getAllEmotions();
       
       // 백엔드 응답 구조에 맞춰 데이터 추출
       if (response.data && response.data.status === 'success') {
         setEmotions(response.data.data);
-        console.log(`✅ 감정 목록 조회 성공: ${response.data.data.length}개`);
+        if (__DEV__) console.log(`✅ 감정 목록 조회 성공: ${response.data.data.length}개`);
       } else {
         throw new Error('감정 목록 조회 실패');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       const errorMessage = err.message || '감정 목록을 불러오는데 실패했습니다.';
       setError(errorMessage);
-      console.error('❌ 감정 목록 불러오기 오류:', err);
+      if (__DEV__) console.error('❌ 감정 목록 불러오기 오류:', err);
       
       // 기본 감정 데이터로 fallback
       setEmotions([
@@ -85,9 +96,11 @@ export const EmotionProvider: React.FC<EmotionProviderProps> = ({ children }) =>
         { emotion_id: 11, name: '충격', icon: 'lightning-bolt', color: '#9932CC' },
         { emotion_id: 12, name: '편함', icon: 'sofa-outline', color: '#32CD32' }
       ]);
-      console.log('⚠️ 기본 감정 데이터로 설정됨');
+      if (__DEV__) console.log('⚠️ 기본 감정 데이터로 설정됨');
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
+      hasInitializedRef.current = true;
     }
   };
 
@@ -96,12 +109,12 @@ const fetchUserEmotions = async () => {
   try {
     setIsLoading(true);
     setError(null);
-    console.log('🔄 사용자 감정 기록 조회 시작');
+    if (__DEV__) console.log('🔄 사용자 감정 기록 조회 시작');
     
     // 현재 백엔드에 /emotions/logs 엔드포인트가 없으므로 
     // 임시로 빈 배열로 설정하거나 다른 API 사용
     setUserEmotions([]);
-    console.log(`✅ 사용자 감정 기록 조회 완료 (임시)`);
+    if (__DEV__) console.log(`✅ 사용자 감정 기록 조회 완료 (임시)`);
     
     // 대안: 일일 감정 체크 API 사용 (존재하는 경우)
     // const response = await emotionService.getDailyEmotionCheck();
@@ -109,10 +122,10 @@ const fetchUserEmotions = async () => {
     //   setUserEmotions(response.data.data || []);
     // }
     
-  } catch (err: any) {
+  } catch (err: unknown) {
     const errorMessage = err.message || '사용자 감정 기록을 불러오는데 실패했습니다.';
     setError(errorMessage);
-    console.error('❌ 사용자 감정 기록 불러오기 오류:', err);
+    if (__DEV__) console.error('❌ 사용자 감정 기록 불러오기 오류:', err);
     setUserEmotions([]);
   } finally {
     setIsLoading(false);
@@ -124,7 +137,7 @@ const logEmotion = async (emotionId: number, note?: string) => {
   try {
     setIsLoading(true);
     setError(null);
-    console.log('🔄 감정 기록 시작:', { emotionId, note });
+    if (__DEV__) console.log('🔄 감정 기록 시작:', { emotionId, note });
     
     const response = await emotionService.recordEmotions({
       emotion_ids: [emotionId],
@@ -133,7 +146,7 @@ const logEmotion = async (emotionId: number, note?: string) => {
     
     // HTTP 상태코드가 2xx이면 성공으로 처리
     if (response.status === 200 || response.status === 201) {
-      console.log('✅ 감정 기록 성공');
+      if (__DEV__) console.log('✅ 감정 기록 성공');
       // 기록 후 사용자 감정 목록 새로고침
       await fetchUserEmotions();
       return; // 성공 시 함수 종료
@@ -141,7 +154,7 @@ const logEmotion = async (emotionId: number, note?: string) => {
     
     // status 필드 체크 (백업)
     if (response.data && response.data.status === 'success') {
-      console.log('✅ 감정 기록 성공');
+      if (__DEV__) console.log('✅ 감정 기록 성공');
       await fetchUserEmotions();
       return;
     }
@@ -149,10 +162,10 @@ const logEmotion = async (emotionId: number, note?: string) => {
     // 여기까지 오면 예상치 못한 응답
     throw new Error('예상치 못한 서버 응답입니다.');
     
-  } catch (err: any) {
+  } catch (err: unknown) {
     const errorMessage = err.message || '감정 기록에 실패했습니다.';
     setError(errorMessage);
-    console.error('❌ 감정 기록 오류:', err);
+    if (__DEV__) console.error('❌ 감정 기록 오류:', err);
     throw err;
   } finally {
     setIsLoading(false);
@@ -162,20 +175,20 @@ const logEmotion = async (emotionId: number, note?: string) => {
 const selectEmotion = (emotionId: number) => {
   if (!selectedEmotions.includes(emotionId)) {
     setSelectedEmotions([...selectedEmotions, emotionId]);
-    console.log('✅ 감정 선택:', emotionId);
+    if (__DEV__) console.log('✅ 감정 선택:', emotionId);
   }
 };
 
 // 감정 선택 해제 (기존)
 const unselectEmotion = (emotionId: number) => {
   setSelectedEmotions(selectedEmotions.filter(id => id !== emotionId));
-  console.log('❌ 감정 선택 해제:', emotionId);
+  if (__DEV__) console.log('❌ 감정 선택 해제:', emotionId);
 };
 
   // 선택된 감정 모두 해제
   const clearSelectedEmotions = () => {
     setSelectedEmotions([]);
-    console.log('🧹 선택된 감정 모두 해제');
+    if (__DEV__) console.log('🧹 선택된 감정 모두 해제');
   };
 
   // 컴포넌트 마운트 시 감정 목록 로드

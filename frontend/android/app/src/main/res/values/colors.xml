@@ -10,4 +10,7 @@
 
     <!-- 다크 모드용 색상 -->
     <color name="splashscreen_bg_dark">#000000</color>
+
+    <!-- 앱 아이콘 배경색 -->
+    <color name="ic_launcher_background">#6B7FD7</color>
 </resources>

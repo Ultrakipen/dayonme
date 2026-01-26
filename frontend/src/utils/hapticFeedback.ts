@@ -46,7 +46,7 @@ export const triggerHaptic = (type: HapticType = 'impactLight'): void => {
       ReactNativeHapticFeedback.trigger(type, options);
     } catch (error) {
       // 라이브러리 미설치 시 무시
-      console.log('Haptic feedback not available');
+      if (__DEV__) console.log('Haptic feedback not available');
     }
   } else if (Platform.OS === 'android') {
     try {
@@ -60,7 +60,7 @@ export const triggerHaptic = (type: HapticType = 'impactLight'): void => {
         ignoreAndroidSystemSettings: false,
       });
     } catch (error) {
-      console.log('Haptic feedback not available');
+      if (__DEV__) console.log('Haptic feedback not available');
     }
   }
 };

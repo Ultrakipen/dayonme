@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 8,
     textAlign: 'center',
   },
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
   },
   buttonLabel: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   
   // 인라인 에러 메시지 스타일
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 8,
     textAlign: 'center',
   },

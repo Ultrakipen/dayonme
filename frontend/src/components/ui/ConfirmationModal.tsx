@@ -94,14 +94,14 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     },
     title: {
       fontSize: normalize(18),
-      fontWeight: '700' as const,
+      fontFamily: 'Pretendard-Bold' as const,
       textAlign: 'center' as const,
       marginBottom: normalize(8),
       letterSpacing: -0.4,
     },
     message: {
       fontSize: normalize(14.5),
-      fontWeight: '500' as const,
+      fontFamily: 'Pretendard-Medium' as const,
       textAlign: 'center' as const,
       lineHeight: normalize(21),
       marginBottom: normalize(24),
@@ -129,12 +129,12 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     },
     cancelButtonText: {
       fontSize: normalize(14.5),
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       letterSpacing: -0.3,
     },
     confirmButtonText: {
       fontSize: normalize(14.5),
-      fontWeight: '700' as const,
+      fontFamily: 'Pretendard-Bold' as const,
       color: '#FFFFFF',
       letterSpacing: -0.3,
     },

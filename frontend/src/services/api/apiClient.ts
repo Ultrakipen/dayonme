@@ -1,6 +1,6 @@
 // src/services/api/apiClient.ts
 import axios, { AxiosRequestConfig } from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import EncryptedStorage from 'react-native-encrypted-storage';
 import { API_CONFIG } from '../../config/api';
 import { authEvents, AUTH_EVENTS } from '../../utils/authEvents';
 import logger from '../../utils/logger';
@@ -19,7 +19,7 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   async (config: any) => {
     try {
-      const token = await AsyncStorage.getItem('authToken');
+      const token = await EncryptedStorage.getItem('authToken');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -60,10 +60,10 @@ apiClient.interceptors.response.use(
 
       if (!isAuthEndpoint) {
         // 토큰이 있는 경우에만 토큰 만료로 처리 (비로그인 사용자의 401은 무시)
-        const token = await AsyncStorage.getItem('authToken');
+        const token = await EncryptedStorage.getItem('authToken');
         if (token) {
           // 인증이 필요한 엔드포인트에서 401 발생 시 AuthContext에 이벤트 전송
-          // AsyncStorage 클리어는 AuthContext에서 처리하여 타이밍 이슈 방지
+          // 저장소 클리어는 AuthContext에서 처리하여 타이밍 이슈 방지
           logger.warn('401 에러 - AuthContext에 토큰 만료 이벤트 전송');
           authEvents.emit(AUTH_EVENTS.TOKEN_EXPIRED);
         } else {

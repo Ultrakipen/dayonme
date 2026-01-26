@@ -51,12 +51,13 @@ const ProfileStack: React.FC = () => {
         }} 
       />
       
-      <Stack.Screen 
-        name="MyPosts" 
-        component={MyPostsScreen} 
-        options={{ 
-          title: '내 게시물'
-        }} 
+      <Stack.Screen
+        name="MyPosts"
+        component={MyPostsScreen}
+        options={{
+          title: '내 게시물',
+          headerShown: true
+        }}
       />
       
       <Stack.Screen 

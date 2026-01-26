@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
   // 섹션 제목
   sectionTitle: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     paddingHorizontal: 16,
     paddingVertical: 8,
     textTransform: 'uppercase',

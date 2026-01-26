@@ -33,6 +33,7 @@ local.properties
 .cxx/
 *.keystore
 !debug.keystore
+keystore.properties
 .kotlin/
 
 # node.js
@@ -80,6 +81,13 @@ yarn-error.log
 .env.development
 .env.production
 .env.test
+# Backend는 SSH 서버에서 관리 (root@222.122.203.18:/var/www/dayonme/backend)
+backend/
+backend_local/
+backend_temp/
+C:app_buildIexistbackend_temp/
+
+# Backend 환경 변수 (보안)
 backend/.env
 backend/.env.local
 backend/.env.production
@@ -103,3 +111,13 @@ backend/uploads/
 *.sqlite
 backend/*.db
 backend/*.sqlite
+
+# 백업 및 임시 파일
+*.backup
+*.temp
+*.bak
+*.tmp
+
+# Admin 페이지
+admin/node_modules/
+admin/dist/

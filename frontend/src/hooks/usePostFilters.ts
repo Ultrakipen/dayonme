@@ -8,30 +8,30 @@ export const usePostFilters = (
   sortOrder: 'recent' | 'popular'
 ): DisplayPost[] => {
   return useMemo(() => {
-    console.log('🔍 [usePostFilters] 시작:', {
+    if (__DEV__) console.log('🔍 [usePostFilters] 시작:', {
       postsCount: posts?.length,
       selectedEmotion,
       sortOrder
     });
 
     if (!posts || !Array.isArray(posts)) {
-      console.log('❌ [usePostFilters] posts가 유효하지 않음');
+      if (__DEV__) console.log('❌ [usePostFilters] posts가 유효하지 않음');
       return [];
     }
 
     let filtered = [...posts];
     // 첫 게시물의 emotions 확인
     if (filtered.length > 0) {
-      console.log("📊 [usePostFilters] 첫 게시물 emotions:", {
+      if (__DEV__) console.log("📊 [usePostFilters] 첫 게시물 emotions:", {
         post_id: filtered[0].post_id,
         emotions: filtered[0].emotions,
         emotions_length: filtered[0].emotions?.length
       });
     }
-    console.log('📊 [usePostFilters] 복사 후:', filtered.length);
+    if (__DEV__) console.log('📊 [usePostFilters] 복사 후:', filtered.length);
 
     // 감정 필터링
-    if (selectedEmotion !== '전체') {
+    if (selectedEmotion && selectedEmotion !== '') {
       const beforeFilter = filtered.length;
       filtered = filtered.filter(post => {
         if (!post.emotions || post.emotions.length === 0) return false;
@@ -39,42 +39,25 @@ export const usePostFilters = (
           typeof emotion.name === 'string' && emotion.name === selectedEmotion
         );
       });
-      console.log(`📊 [usePostFilters] 감정 필터링: ${beforeFilter} -> ${filtered.length}`);
+      if (__DEV__) console.log(`📊 [usePostFilters] 감정 필터링: ${beforeFilter} -> ${filtered.length}`);
     }
 
     // 정렬 (안전하게)
     try {
       if (sortOrder === 'popular') {
-        // 인기순
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        const recentPosts = filtered.filter(post => {
-          const date = new Date(post.created_at);
-          return !isNaN(date.getTime()) && date >= thirtyDaysAgo;
-        });
-        
-        const oldPosts = filtered.filter(post => {
-          const date = new Date(post.created_at);
-          return !isNaN(date.getTime()) && date < thirtyDaysAgo;
-        });
-
-        recentPosts.sort((a, b) => {
-          if (b.like_count === a.like_count) {
-            const dateA = new Date(a.created_at).getTime();
-            const dateB = new Date(b.created_at).getTime();
-            return dateB - dateA;
+        // 인기순: 좋아요 수 기준 정렬 (같으면 최신순)
+        filtered.sort((a, b) => {
+          const likeA = a.like_count || 0;
+          const likeB = b.like_count || 0;
+          if (likeB !== likeA) {
+            return likeB - likeA;
           }
-          return b.like_count - a.like_count;
-        });
-
-        oldPosts.sort((a, b) => {
-          const dateA = new Date(a.created_at).getTime();
-          const dateB = new Date(b.created_at).getTime();
+          // 좋아요 수 같으면 최신순
+          const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
           return dateB - dateA;
         });
-
-        filtered = [...recentPosts, ...oldPosts];
+        if (__DEV__) console.log('✅ [usePostFilters] 인기순 정렬 완료:', filtered.length);
       } else {
         // 최신순 (안전하게 - undefined 날짜는 맨 뒤로)
         filtered.sort((a, b) => {
@@ -92,9 +75,9 @@ export const usePostFilters = (
         });
       }
       
-      console.log('✅ [usePostFilters] 최종 결과:', filtered.length);
+      if (__DEV__) console.log('✅ [usePostFilters] 최종 결과:', filtered.length);
     } catch (error) {
-      console.error('❌ [usePostFilters] 정렬 오류:', error);
+      if (__DEV__) console.error('❌ [usePostFilters] 정렬 오류:', error);
     }
 
     return filtered;

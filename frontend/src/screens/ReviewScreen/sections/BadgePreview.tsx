@@ -48,7 +48,7 @@ export const BadgePreview: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('배지 정보를 불러오는데 실패했습니다');
-      console.error('배지 로드 실패:', err);
+      if (__DEV__) console.error('배지 로드 실패:', err);
     }
   }, []);
 
@@ -84,8 +84,8 @@ export const BadgePreview: React.FC = React.memo(() => {
     <Card accessible={true} accessibilityLabel="나의 배지 섹션">
       <View style={[styles.header, { marginBottom: 16 * scale }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TwemojiImage emoji="🏆" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>나의 배지</Text>
+          <TwemojiImage emoji="🏆" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>나의 배지</Text>
         </View>
         <TouchableOpacity
           onPress={handleViewAll}
@@ -173,10 +173,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   moreButton: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   badgesContainer: {
     flexDirection: 'row',
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   badgeName: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     textAlign: 'center',
   },
   progressBar: {
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   summary: {
   },
   summaryText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     textAlign: 'center',
   },
   errorContainer: {

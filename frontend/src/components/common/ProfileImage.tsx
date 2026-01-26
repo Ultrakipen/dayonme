@@ -32,7 +32,7 @@ const ProfileImage: React.FC<ProfileImageProps> = ({
 }) => {
   const { colors, spacing } = useModernTheme();
   const [imageError, setImageError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // 초기값을 true로 변경
 
   const imageSize = SIZES[size];
 
@@ -40,11 +40,28 @@ const ProfileImage: React.FC<ProfileImageProps> = ({
   const processedImageUrl = imageUrl && imageUrl.trim() !== '' ? imageService.getImageUrl(imageUrl) : null;
   const shouldShowDefaultImage = !processedImageUrl || imageError;
 
-  // 🔥 최적화: imageUrl 변경 시에만 에러 상태 초기화 (버전 업데이트 제거)
+  // 🔍 디버깅
   React.useEffect(() => {
-    setImageError(false);
-    setIsLoading(false);
-  }, [imageUrl]);
+    if (__DEV__ && imageUrl) {
+      if (__DEV__) console.log('🖼️ ProfileImage 렌더링:', {
+        original: imageUrl,
+        processed: processedImageUrl,
+        shouldShowDefault: shouldShowDefaultImage,
+        imageError,
+        size
+      });
+    }
+  }, [imageUrl, processedImageUrl, shouldShowDefaultImage, imageError, size]);
+
+  // 🔥 최적화: imageUrl 변경 시 상태 초기화 및 로딩 시작
+  React.useEffect(() => {
+    if (processedImageUrl) {
+      setImageError(false);
+      setIsLoading(true); // 새 이미지 로드 시작
+    } else {
+      setIsLoading(false); // URL이 없으면 로딩 중지
+    }
+  }, [processedImageUrl]);
 
   const handleImageError = () => {
     setImageError(true);
@@ -108,17 +125,18 @@ const ProfileImage: React.FC<ProfileImageProps> = ({
 
     return (
       <FastImage
-        key={`profile-${processedImageUrl}`}
+        key={`profile-${optimizedUrl}`} // URL 기반 key로 변경
         source={{
           uri: optimizedUrl,
           priority: size === 'large' || size === 'xlarge' ? FastImage.priority.high : FastImage.priority.normal,
-          cache: FastImage.cacheControl.immutable, // 적극적 캐싱
+          cache: FastImage.cacheControl.web, // immutable에서 web으로 변경
         }}
         style={imageStyle}
         resizeMode={FastImage.resizeMode.cover}
         onError={handleImageError}
         onLoad={handleImageLoad}
         onLoadStart={() => setIsLoading(true)}
+        onLoadEnd={() => setIsLoading(false)}
       />
     );
   };

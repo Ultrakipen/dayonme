@@ -36,7 +36,7 @@ export const withErrorHandling = <P extends object>(
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
       this.setState({ errorInfo });
-      console.error('컴포넌트 오류:', error, errorInfo);
+      if (__DEV__) console.error('컴포넌트 오류:', error, errorInfo);
     }
 
     resetError = (): void => {
@@ -77,7 +77,7 @@ export const withErrorHandling = <P extends object>(
     },
     errorTitle: {
       fontSize: 18,
-      fontWeight: 'bold',
+      fontFamily: 'Pretendard-Bold',
       marginBottom: 10,
       color: 'red',
     },
@@ -101,7 +101,7 @@ export const withErrorHandling = <P extends object>(
     },
     buttonText: {
       color: 'white',
-      fontWeight: 'bold',
+      fontFamily: 'Pretendard-Bold',
     },
   });
 

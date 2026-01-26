@@ -1,5 +1,5 @@
 // src/components/ModernToast.tsx
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { Animated, Text, StyleSheet, Dimensions, Platform } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useModernTheme } from '../contexts/ModernThemeContext';
@@ -15,28 +15,49 @@ const getScreenWidth = () => {
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
-interface ModernToastProps {
-  visible: boolean;
-  message: string;
-  type?: ToastType;
-  duration?: number;
-  onHide?: () => void;
+interface ModernToastProps {}
+
+export interface ToastMethods {
+  show: (type: ToastType, message: string, duration?: number) => void;
 }
 
-const ModernToast: React.FC<ModernToastProps> = ({
-  visible,
-  message,
-  type = 'info',
-  duration = 3000,
-  onHide,
-}) => {
+// 전역 ref
+let toastRef: ToastMethods | null = null;
+
+// 전역 함수
+export const showModernToast = (type: ToastType, message: string, duration: number = 3000) => {
+  if (toastRef) {
+    toastRef.show(type, message, duration);
+  } else {
+    console.warn('ModernToast ref not initialized');
+  }
+};
+
+export const setToastRef = (ref: ToastMethods | null) => {
+  toastRef = ref;
+};
+
+const ModernToast = forwardRef((props: ModernToastProps, ref: React.Ref<ToastMethods>) => {
   const { isDark } = useModernTheme();
+  const [visible, setVisible] = useState(false);
+  const [message, setMessage] = useState('');
+  const [type, setType] = useState<ToastType>('info');
   const translateY = useRef(new Animated.Value(-100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    if (visible) {
-      // 토스트 표시
+  useImperativeHandle(ref, () => ({
+    show: (toastType: ToastType, toastMessage: string, duration: number = 3000) => {
+      // 기존 타이머 클리어
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current);
+      }
+
+      setType(toastType);
+      setMessage(toastMessage);
+      setVisible(true);
+
+      // 토스트 표시 애니메이션
       Animated.parallel([
         Animated.spring(translateY, {
           toValue: 0,
@@ -52,13 +73,11 @@ const ModernToast: React.FC<ModernToastProps> = ({
       ]).start();
 
       // 일정 시간 후 자동 숨김
-      const timer = setTimeout(() => {
+      hideTimerRef.current = setTimeout(() => {
         hideToast();
       }, duration);
-
-      return () => clearTimeout(timer);
-    }
-  }, [visible]);
+    },
+  }));
 
   const hideToast = () => {
     Animated.parallel([
@@ -73,11 +92,11 @@ const ModernToast: React.FC<ModernToastProps> = ({
         useNativeDriver: true,
       }),
     ]).start(() => {
-      onHide?.();
+      setVisible(false);
     });
   };
 
-  if (!visible && translateY.__getValue() === -100) {
+  if (!visible) {
     return null;
   }
 
@@ -138,7 +157,7 @@ const ModernToast: React.FC<ModernToastProps> = ({
       </Text>
     </Animated.View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -164,9 +183,11 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     lineHeight: 20,
   },
 });
+
+ModernToast.displayName = 'ModernToast';
 
 export default ModernToast;

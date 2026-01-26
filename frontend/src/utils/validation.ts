@@ -13,18 +13,17 @@ export const isValidEmail = (email: string): boolean => {
 
 /**
  * 비밀번호 강도를 검사합니다.
- * - 최소 6자 이상
- * - 영문자 포함
+ * - 최소 8자 이상
+ * - 영문 대문자 포함 (A-Z)
+ * - 영문 소문자 포함 (a-z)
  * - 숫자 포함
  * - 특수문자 포함
  * @param password 검사할 비밀번호
  * @returns 유효한 비밀번호이면 true, 아니면 false
  */
 export const isValidPassword = (password: string): boolean => {
-  // 최소 6자 이상, 영문, 숫자, 특수문자 포함
-  // 'Pass1!'은 6자지만 테스트에서는 이를 너무 짧다고 판단해야 함
-  // 따라서 최소 길이를 더 늘려야 함
-  const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
+  // 최소 8자 이상, 영문 대소문자, 숫자, 특수문자 모두 포함
+  const passwordRegex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
   return passwordRegex.test(password);
 };
 
@@ -236,8 +235,8 @@ export const sanitizeUrl = (url: string, allowedDomains?: string[]): string => {
 
   // 개발/프로덕션 허용 도메인
   const defaultDomains = __DEV__
-    ? ['localhost', '10.0.2.2', '192.168', '127.0.0.1']
-    : ['localhost', '10.0.2.2', '192.168', '127.0.0.1']; // 프로덕션에서도 로컬 서버 허용
+    ? ['localhost', '10.0.2.2', '192.168', '127.0.0.1', 'dayonme.com']
+    : ['localhost', '10.0.2.2', '192.168', '127.0.0.1', 'dayonme.com']; // dayonme.com 프로덕션 서버 허용
 
   const domains = allowedDomains || defaultDomains;
 

@@ -104,7 +104,7 @@ useEffect(() => {
         const errorMessage = err instanceof Error ? err.message : '검색 중 오류가 발생했습니다.';
         setError(errorMessage);
         setResults([]);
-        console.error('검색 오류:', err);
+        if (__DEV__) console.error('검색 오류:', err);
       }
     } finally {
       if (!abortControllerRef.current?.signal.aborted) {

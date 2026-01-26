@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginLeft: 10,
     paddingVertical: 0,
   },
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   searchButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   content: {
     flex: 1,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 16,
   },
   popularItem: {
@@ -209,11 +209,11 @@ const styles = StyleSheet.create({
   popularRank: {
     width: 28,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   popularText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 });
 

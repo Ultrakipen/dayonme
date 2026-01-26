@@ -6,60 +6,60 @@ export const TYPOGRAPHY = {
   // Display - 헤더, 중요 숫자
   display: {
     fontSize: 32,
-    fontWeight: '700' as const,
+    fontFamily: 'Pretendard-Bold' as const,
     lineHeight: 40,
   },
 
   // Headline - 페이지 제목, 카드 제목
   h1: {
     fontSize: 24,
-    fontWeight: '700' as const,
+    fontFamily: 'Pretendard-Bold' as const,
     lineHeight: 32,
   },
   h2: {
     fontSize: 20,
-    fontWeight: '600' as const,
+    fontFamily: 'Pretendard-SemiBold' as const,
     lineHeight: 28,
   },
   h3: {
     fontSize: 18,
-    fontWeight: '600' as const,
+    fontFamily: 'Pretendard-SemiBold' as const,
     lineHeight: 26,
   },
 
   // Body - 본문 (인스타그램 기본 17px)
   body1: {
     fontSize: 17,
-    fontWeight: '400' as const,
+    fontFamily: 'Pretendard-Regular' as const,
     lineHeight: 26,
   },
   body2: {
     fontSize: 16,
-    fontWeight: '400' as const,
+    fontFamily: 'Pretendard-Regular' as const,
     lineHeight: 24,
   },
 
   // Label - 버튼, 라벨
   label1: {
     fontSize: 15,
-    fontWeight: '600' as const,
+    fontFamily: 'Pretendard-SemiBold' as const,
     lineHeight: 22,
   },
   label2: {
     fontSize: 14,
-    fontWeight: '600' as const,
+    fontFamily: 'Pretendard-SemiBold' as const,
     lineHeight: 20,
   },
 
   // Caption - 보조 정보 (최소 13px)
   caption1: {
     fontSize: 13,
-    fontWeight: '500' as const,
+    fontFamily: 'Pretendard-Medium' as const,
     lineHeight: 18,
   },
   caption2: {
     fontSize: 13,
-    fontWeight: '400' as const,
+    fontFamily: 'Pretendard-Regular' as const,
     lineHeight: 18,
   },
 };

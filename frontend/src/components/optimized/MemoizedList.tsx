@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   authorName: {
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     fontSize: 14,
     color: '#333',
   },
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 8,
     color: '#333',
   },
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
   },
   likedText: {
     color: '#3b82f6',
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
   },
   footer: {
     marginTop: 12,

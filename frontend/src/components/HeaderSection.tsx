@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#1f2937',
     marginBottom: 4,
     letterSpacing: -0.3,
@@ -200,7 +200,7 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 14,
     color: '#6b7280',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   settingsButton: {
     width: 44,
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
   emotionLabel: {
     fontSize: 12,
     color: '#9ca3af',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     borderColor: '#fcd34d',
   },
   emotionEmoji: {
-    fontSize: 18,
+    fontSize: 22,
   },
 });
 

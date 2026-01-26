@@ -117,7 +117,7 @@ const SimpleEditChallengeModal: React.FC<SimpleEditChallengeModalProps> = ({
       await onUpdateChallenge(updateData);
       resetForm();
     } catch (error) {
-      console.error('챌린지 수정 오류:', error);
+      if (__DEV__) console.error('챌린지 수정 오류:', error);
     }
   };
 
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     flex: 1,
     textAlign: 'center',
   },
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   content: {
     flex: 1,
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginBottom: 8,
   },
   textInput: {

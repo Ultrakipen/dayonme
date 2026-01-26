@@ -64,7 +64,7 @@ export const ModernThemeProvider: React.FC<ModernThemeProviderProps> = ({ childr
         
         setIsLoaded(true);
       } catch (error) {
-        console.error('Failed to load theme preference:', error);
+        if (__DEV__) console.error('Failed to load theme preference:', error);
         setPreference('system');
         setTheme(lightTheme);
         setIsLoaded(true);
@@ -92,7 +92,7 @@ export const ModernThemeProvider: React.FC<ModernThemeProviderProps> = ({ childr
       
       await AsyncStorage.setItem(THEME_STORAGE_KEY, newPreference);
     } catch (error) {
-      console.error('Failed to save theme preference:', error);
+      if (__DEV__) console.error('Failed to save theme preference:', error);
     }
   };
 

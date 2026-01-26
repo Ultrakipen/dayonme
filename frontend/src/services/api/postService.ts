@@ -53,8 +53,8 @@ const postService = {
     try {
       const response = await apiClient.post('/posts', data);
       return response.data;
-    } catch (error: any) {
-      console.error('게시물 생성 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('게시물 생성 오류:', error);
       throw error;
     }
   },
@@ -71,8 +71,8 @@ const postService = {
     try {
       const response = await apiClient.get('/posts', { params });
       return response.data;
-    } catch (error: any) {
-      console.error('게시물 목록 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('게시물 목록 조회 오류:', error);
       throw error;
     }
   },
@@ -86,8 +86,8 @@ const postService = {
     try {
       const response = await apiClient.get('/posts/me', { params });
       return response.data;
-    } catch (error: any) {
-      console.error('내 게시물 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('내 게시물 조회 오류:', error);
       throw error;
     }
   },
@@ -96,9 +96,9 @@ const postService = {
   getPostById: async (postId: number) => {
     try {
       const response = await apiClient.get(`/my-day/posts/${postId}`);
-      return response.data;
-    } catch (error: any) {
-      console.error('게시물 조회 오류:', error);
+      return response; // PostDetail과 호환을 위해 response 전체 반환
+    } catch (error: unknown) {
+      if (__DEV__) console.error('게시물 조회 오류:', error);
       throw error;
     }
   },
@@ -108,8 +108,8 @@ const postService = {
     try {
       const response = await apiClient.put(`/posts/${postId}`, data);
       return response.data;
-    } catch (error: any) {
-      console.error('게시물 수정 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('게시물 수정 오류:', error);
       throw error;
     }
   },
@@ -119,8 +119,8 @@ const postService = {
     try {
       const response = await apiClient.delete(`/posts/${postId}`);
       return response.data;
-    } catch (error: any) {
-      console.error('게시물 삭제 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('게시물 삭제 오류:', error);
       throw error;
     }
   },
@@ -130,8 +130,8 @@ const postService = {
     try {
       const response = await apiClient.post(`/posts/${postId}/like`);
       return response.data;
-    } catch (error: any) {
-      console.error('게시물 좋아요 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('게시물 좋아요 오류:', error);
       throw error;
     }
   },
@@ -141,8 +141,8 @@ const postService = {
     try {
       const response = await apiClient.post(`/posts/${postId}/like`);
       return response.data;
-    } catch (error: any) {
-      console.error('게시물 좋아요 취소 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('게시물 좋아요 취소 오류:', error);
       throw error;
     }
   },
@@ -157,8 +157,8 @@ const postService = {
     try {
       const response = await apiClient.get(`/posts/${postId}/comments`, { params });
       return response.data;
-    } catch (error: any) {
-      console.error('댓글 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 조회 오류:', error);
       throw error;
     }
   },
@@ -172,8 +172,8 @@ const postService = {
     try {
       const response = await apiClient.post(`/posts/${postId}/comments`, data);
       return response.data;
-    } catch (error: any) {
-      console.error('댓글 작성 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 작성 오류:', error);
       throw error;
     }
   },
@@ -187,8 +187,8 @@ const postService = {
     try {
       const response = await apiClient.post(`/posts/${postId}/comments`, data);
       return response.data;
-    } catch (error: any) {
-      console.error('댓글 작성 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 작성 오류:', error);
       throw error;
     }
   },
@@ -200,8 +200,8 @@ const postService = {
     try {
       const response = await apiClient.put(`/comments/${commentId}`, data);
       return response.data;
-    } catch (error: any) {
-      console.error('댓글 수정 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 수정 오류:', error);
       throw error;
     }
   },
@@ -211,8 +211,8 @@ const postService = {
     try {
       const response = await apiClient.delete(`/comments/${commentId}`);
       return response.data;
-    } catch (error: any) {
-      console.error('댓글 삭제 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 삭제 오류:', error);
       throw error;
     }
   },
@@ -222,8 +222,8 @@ const postService = {
     try {
       const response = await apiClient.post(`/comments/${commentId}/like`);
       return response.data;
-    } catch (error: any) {
-      console.error('댓글 좋아요 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 좋아요 오류:', error);
       throw error;
     }
   },
@@ -233,8 +233,8 @@ const postService = {
     try {
       const response = await apiClient.delete(`/comments/${commentId}/like`);
       return response.data;
-    } catch (error: any) {
-      console.error('댓글 좋아요 취소 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 좋아요 취소 오류:', error);
       throw error;
     }
   },
@@ -247,8 +247,8 @@ const postService = {
     try {
       const response = await apiClient.post(`/posts/${postId}/report`, data);
       return response.data;
-    } catch (error: any) {
-      console.error('게시물 신고 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('게시물 신고 오류:', error);
       throw error;
     }
   },
@@ -261,8 +261,8 @@ const postService = {
     try {
       const response = await apiClient.get('/posts/best', { params });
       return response.data;
-    } catch (error: any) {
-      console.error('베스트 게시물 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('베스트 게시물 조회 오류:', error);
       throw error;
     }
   },
@@ -275,8 +275,8 @@ const postService = {
     try {
       const response = await apiClient.get('/posts/recommended', { params });
       return response.data;
-    } catch (error: any) {
-      console.error('추천 게시물 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('추천 게시물 조회 오류:', error);
       throw error;
     }
   },
@@ -293,8 +293,8 @@ const postService = {
     try {
       const response = await apiClient.get('/posts', { params });
       return response.data;
-    } catch (error: any) {
-      console.error('모든 게시물 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('모든 게시물 조회 오류:', error);
       throw error;
     }
   }

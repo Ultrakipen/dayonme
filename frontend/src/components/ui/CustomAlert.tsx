@@ -20,16 +20,19 @@ import { sanitizeText } from '../../utils/sanitize';
 const getScaledValues = () => ({
   ms20: moderateScale(20),
   ms16: moderateScale(16),
+  ms14: moderateScale(14),
   ms12: moderateScale(12),
   ms10: moderateScale(10),
   ms8: moderateScale(8),
   ms6: moderateScale(6),
   ms4: moderateScale(4),
   ms24: moderateScale(24),
+  ms28: moderateScale(28),
   ms40: moderateScale(40),
   ms44: moderateScale(44),
   ms48: moderateScale(48),
-  ms300: moderateScale(300),
+  ms56: moderateScale(56),
+  ms320: moderateScale(320),
   vs12: verticalScale(12),
 });
 
@@ -198,7 +201,8 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
     }
   };
 
-  const alertWidth = Math.min(width - sv.ms48, sv.ms300);
+  // 화면 너비의 88%로 설정하여 텍스트 줄바꿈 문제 해결
+  const alertWidth = Math.min(width * 0.88, 380);
 
   return (
     <Modal
@@ -221,10 +225,10 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
               backgroundColor: colors.background,
               borderColor: colors.border,
               width: alertWidth,
-              borderRadius: sv.ms20,
-              padding: SPACING.md,
-              paddingTop: sv.ms20,
-              paddingBottom: sv.ms16,
+              borderRadius: sv.ms24,
+              paddingHorizontal: sv.ms24,
+              paddingTop: sv.ms28,
+              paddingBottom: sv.ms20,
               transform: [{ scale: scaleAnim }],
               opacity: fadeAnim,
               ...Platform.select({
@@ -244,15 +248,15 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
           {/* 아이콘 - 텍스트 기반으로 브릿지 오류 방지 */}
           {iconConfig && iconReady && (
             <View style={[styles.iconContainer, {
-              backgroundColor: iconConfig.color + '12',
-              width: sv.ms40,
-              height: sv.ms40,
-              borderRadius: sv.ms20,
-              marginBottom: sv.ms10,
+              backgroundColor: iconConfig.color + '15',
+              width: sv.ms56,
+              height: sv.ms56,
+              borderRadius: sv.ms28,
+              marginBottom: sv.ms14,
             }]}>
               <Text style={{
-                fontSize: sv.ms20,
-                fontWeight: '700',
+                fontSize: sv.ms24,
+                fontFamily: 'Pretendard-Bold',
                 color: iconConfig.color,
               }}>
                 {iconConfig.emoji}
@@ -261,17 +265,32 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
           )}
 
           {/* 제목 */}
-          <Text style={[styles.title, { color: colors.text, marginBottom: sv.ms6 }]} numberOfLines={2}>
+          <Text style={[styles.title, {
+            color: colors.text,
+            marginBottom: sv.ms8,
+            fontSize: sv.ms16 + 2,
+          }]} numberOfLines={2}>
             {sanitizeText(title)}
           </Text>
 
           {/* 메시지 */}
-          <Text style={[styles.message, { color: colors.textSecondary }]} numberOfLines={4}>
+          <Text style={[styles.message, {
+            color: colors.textSecondary,
+            fontSize: sv.ms14 - 1,
+            lineHeight: (sv.ms14 - 1) * 1.7,
+            paddingHorizontal: sv.ms8,
+          }]} numberOfLines={8}>
             {sanitizeText(message)}
           </Text>
 
           {/* 버튼 */}
-          <View style={[styles.buttonsContainer, { gap: sv.ms8, marginTop: sv.ms4 }, defaultButtons.length === 2 && styles.buttonsRow]}>
+          <View style={[
+            styles.buttonsContainer,
+            {
+              gap: sv.ms10,
+              marginTop: sv.ms16,
+            },
+          ]}>
             {defaultButtons.map((button, index) => {
               const buttonStyles = getButtonStyle(button.style);
               return (
@@ -281,18 +300,20 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
                     styles.button,
                     {
                       backgroundColor: buttonStyles.backgroundColor,
-                      paddingVertical: sv.ms12,
-                      borderRadius: sv.ms12,
-                      minHeight: sv.ms44,
+                      paddingVertical: sv.ms14,
+                      borderRadius: sv.ms14,
+                      minHeight: sv.ms48,
                     },
-                    defaultButtons.length === 2 && styles.buttonHalf,
                   ]}
                   onPress={() => handleButtonPress(button)}
                   activeOpacity={0.8}
                   accessibilityRole="button"
                   accessibilityLabel={button.text}
                 >
-                  <Text style={[styles.buttonText, { color: buttonStyles.textColor }]}>
+                  <Text style={[styles.buttonText, {
+                    color: buttonStyles.textColor,
+                    fontSize: sv.ms14 + 1,
+                  }]}>
                     {button.text}
                   </Text>
                 </TouchableOpacity>
@@ -330,36 +351,31 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: FONT_SIZES.h5 || 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
-    letterSpacing: -0.4,
-    lineHeight: (FONT_SIZES.h5 || 16) * 1.3,
+    letterSpacing: -0.3,
+    lineHeight: (FONT_SIZES.h5 || 16) * 1.35,
   },
   message: {
     fontSize: FONT_SIZES.bodySmall || 14,
     textAlign: 'center',
-    lineHeight: (FONT_SIZES.bodySmall || 14) * 1.5,
+    lineHeight: (FONT_SIZES.bodySmall || 14) * 1.6,
     marginBottom: SPACING.sm,
-    letterSpacing: -0.2,
+    letterSpacing: -0.1,
   },
   buttonsContainer: {
     width: '100%',
-  },
-  buttonsRow: {
-    flexDirection: 'row',
+    flexDirection: 'column',
   },
   button: {
     paddingHorizontal: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonHalf: {
-    flex: 1,
-  },
   buttonText: {
     fontSize: FONT_SIZES.body || 15,
-    fontWeight: '600',
-    letterSpacing: -0.2,
+    fontFamily: 'Pretendard-SemiBold',
+    letterSpacing: -0.1,
     lineHeight: (FONT_SIZES.body || 15) * 1.3,
   },
 });

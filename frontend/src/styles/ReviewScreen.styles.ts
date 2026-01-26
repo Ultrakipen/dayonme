@@ -24,7 +24,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   loginRequiredText: {
     fontSize: scaleFontSize(16),
     color: colors.text.secondary,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     lineHeight: scaleFontSize(22)
   },
   header: {
@@ -47,7 +47,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   mainTitle: {
     fontSize: scaleFontSize(20),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
     marginBottom: scaleSpacing(3),
     letterSpacing: -0.5,
@@ -66,7 +66,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   subtitle: {
     fontSize: scaleFontSize(16),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: 'rgba(255, 255, 255, 0.95)',
     lineHeight: scaleFontSize(22)
   },
@@ -96,13 +96,13 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   periodButtonText: {
     fontSize: scaleFontSize(15),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: 'rgba(255, 255, 255, 0.8)',
     lineHeight: scaleFontSize(20)
   },
   selectedPeriodButtonText: {
     color: '#667eea',
-    fontWeight: '700'
+    fontFamily: 'Pretendard-Bold'
   },
   scrollView: {
     flex: 1
@@ -143,7 +143,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   ctaTitle: {
     fontSize: scaleFontSize(16),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginTop: scaleSpacing(4),
     marginBottom: scaleSpacing(2),
@@ -151,7 +151,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   ctaSubtitle: {
     fontSize: scaleFontSize(13),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     textAlign: 'center',
     marginBottom: scaleSpacing(8),
@@ -173,7 +173,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   ctaButtonText: {
     fontSize: scaleFontSize(16),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
     lineHeight: scaleFontSize(20)
   },
@@ -203,14 +203,14 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   treeName: {
     fontSize: scaleFontSize(17),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(2),
     lineHeight: scaleFontSize(21)
   },
   treeDescription: {
     fontSize: scaleFontSize(12),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     lineHeight: scaleFontSize(16)
   },
@@ -230,7 +230,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   treeDaysText: {
     fontSize: scaleFontSize(14),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     lineHeight: scaleFontSize(20)
   },
@@ -251,7 +251,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   missionTitle: {
     fontSize: scaleFontSize(15),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(2),
     lineHeight: scaleFontSize(19)
@@ -262,7 +262,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   missionDescription: {
     fontSize: scaleFontSize(13),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     marginTop: scaleSpacing(2),
     lineHeight: scaleFontSize(18)
@@ -275,7 +275,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   missionBadgeText: {
     fontSize: scaleFontSize(13),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
     lineHeight: scaleFontSize(17)
   },
@@ -304,14 +304,14 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   streakNumber: {
     fontSize: scaleFontSize(28),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FF5722',
     letterSpacing: -1,
     lineHeight: scaleFontSize(32)
   },
   streakLabel: {
     fontSize: scaleFontSize(16),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.secondary,
     marginTop: scaleSpacing(2),
     lineHeight: scaleFontSize(20)
@@ -332,7 +332,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   streakGoalText: {
     fontSize: scaleFontSize(13),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: scaleSpacing(4),
@@ -386,7 +386,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   modernSectionTitle: {
     fontSize: scaleFontSize(17),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(1),
     letterSpacing: -0.5,
@@ -395,7 +395,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   modernSectionSubtitle: {
     fontSize: scaleFontSize(13),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     letterSpacing: 0.2,
     textAlign: 'left',
@@ -474,7 +474,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   modernCalendarDate: {
     fontSize: scaleFontSize(17),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.secondary,
     marginBottom: scaleSpacing(2),
     lineHeight: scaleFontSize(21)
@@ -482,12 +482,12 @@ export const createStyles = (isDark: boolean, colors: any) => {
   todayDate: {
     color: themeColors.primary,
     fontSize: scaleFontSize(19),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     lineHeight: scaleFontSize(24)
   },
   modernEmotionName: {
     fontSize: scaleFontSize(14),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     textAlign: 'center',
     letterSpacing: 0.3,
     lineHeight: scaleFontSize(18)
@@ -514,7 +514,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   modernLikeBadgeText: {
     fontSize: scaleFontSize(11),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
     lineHeight: scaleFontSize(15)
   },
@@ -537,7 +537,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   postCountText: {
     fontSize: scaleFontSize(11),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
     lineHeight: scaleFontSize(14)
   },
@@ -551,7 +551,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   todayIndicatorText: {
     fontSize: scaleFontSize(12),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
     letterSpacing: 0.5,
     lineHeight: scaleFontSize(17)
@@ -582,7 +582,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   sectionTitle: {
     fontSize: scaleFontSize(17),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     letterSpacing: -0.3,
     lineHeight: scaleFontSize(21),
@@ -611,14 +611,14 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   comparisonLabel: {
     fontSize: scaleFontSize(13),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     marginBottom: scaleSpacing(2),
     lineHeight: scaleFontSize(17)
   },
   comparisonValue: {
     fontSize: scaleFontSize(22),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(3),
     lineHeight: scaleFontSize(26)
@@ -639,7 +639,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   comparisonChangeText: {
     fontSize: scaleFontSize(12),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     lineHeight: scaleFontSize(17)
   },
   comparisonUpText: {
@@ -671,7 +671,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   highlightCount: {
     fontSize: scaleFontSize(23),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(2),
     letterSpacing: -0.5,
@@ -679,7 +679,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   highlightTitle: {
     fontSize: scaleFontSize(14),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     textAlign: 'center',
     marginBottom: scaleSpacing(1),
@@ -687,7 +687,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   highlightDescription: {
     fontSize: scaleFontSize(12),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: scaleFontSize(16)
@@ -711,7 +711,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   insightNumber: {
     fontSize: scaleFontSize(21),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginTop: scaleSpacing(3),
     marginBottom: scaleSpacing(2),
@@ -720,7 +720,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   insightEmotionText: {
     fontSize: scaleFontSize(15),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginTop: scaleSpacing(3),
     marginBottom: scaleSpacing(2),
@@ -728,7 +728,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   insightLabel: {
     fontSize: scaleFontSize(12),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: scaleFontSize(16)
@@ -742,7 +742,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   chartHint: {
     fontSize: scaleFontSize(13),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: scaleSpacing(6),
@@ -768,7 +768,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   legendText: {
     fontSize: scaleFontSize(13),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     lineHeight: scaleFontSize(18)
   },
@@ -797,7 +797,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   messageTitle: {
     fontSize: scaleFontSize(17),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     flex: 1,
     letterSpacing: -0.3,
@@ -807,7 +807,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
     fontSize: scaleFontSize(14),
     lineHeight: scaleFontSize(20),
     color: colors.text.secondary,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     paddingRight: scaleSpacing(4)
   },
   // 성취 관련 스타일
@@ -851,7 +851,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   achievementTitle: {
     fontSize: scaleFontSize(16),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     textAlign: 'center',
     marginBottom: scaleSpacing(2),
@@ -859,7 +859,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   achievementDescription: {
     fontSize: scaleFontSize(13),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: scaleFontSize(17),
@@ -892,14 +892,14 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   goalTitle: {
     fontSize: scaleFontSize(15),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     flex: 1,
     lineHeight: scaleFontSize(20)
   },
   goalProgress: {
     fontSize: scaleFontSize(18),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(6),
     letterSpacing: -0.5,
@@ -907,7 +907,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   goalSubtext: {
     fontSize: scaleFontSize(14),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     marginTop: scaleSpacing(4),
     lineHeight: scaleFontSize(17)
@@ -927,7 +927,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   progressText: {
     fontSize: scaleFontSize(13),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     marginTop: scaleSpacing(4),
     textAlign: 'center',
@@ -939,7 +939,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   comfortSummary: {
     fontSize: scaleFontSize(16),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     textAlign: 'center',
     marginBottom: scaleSpacing(4),
@@ -947,7 +947,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   sectionSubtitle: {
     fontSize: scaleFontSize(14),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.secondary,
     marginTop: scaleSpacing(6),
     marginBottom: scaleSpacing(4),
@@ -966,14 +966,14 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   commentText: {
     fontSize: scaleFontSize(13),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.primary,
     lineHeight: scaleFontSize(18),
     marginBottom: scaleSpacing(4),
   },
   commentMeta: {
     fontSize: scaleFontSize(11),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     lineHeight: scaleFontSize(16)
   },
@@ -988,13 +988,13 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   encouragementText: {
     fontSize: scaleFontSize(13),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.primary,
     lineHeight: scaleFontSize(18),
   },
   encouragementDate: {
     fontSize: scaleFontSize(11),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     lineHeight: scaleFontSize(16)
   },
@@ -1013,7 +1013,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   journeyText: {
     flex: 1,
     fontSize: scaleFontSize(14),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.primary,
     lineHeight: scaleFontSize(20),
   },
@@ -1026,14 +1026,14 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   intentionText: {
     fontSize: scaleFontSize(17),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#9C27B0',
     marginBottom: scaleSpacing(4),
     lineHeight: scaleFontSize(21)
   },
   intentionSubtext: {
     fontSize: scaleFontSize(12),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     lineHeight: scaleFontSize(17)
   },
@@ -1056,7 +1056,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   joyText: {
     fontSize: scaleFontSize(12),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.primary,
     lineHeight: scaleFontSize(17)
   },
@@ -1086,13 +1086,13 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   timeCapsuleTitle: {
     fontSize: scaleFontSize(14),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     lineHeight: scaleFontSize(19)
   },
   timeCapsuleSubtext: {
     fontSize: scaleFontSize(11),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     lineHeight: scaleFontSize(16)
   },
@@ -1105,13 +1105,13 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   empathySummary: {
     fontSize: scaleFontSize(16),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#4CAF50',
     lineHeight: scaleFontSize(20)
   },
   empathySubtext: {
     fontSize: scaleFontSize(12),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: scaleFontSize(17)
@@ -1130,19 +1130,19 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   givenEmpathyNumber: {
     fontSize: scaleFontSize(24),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     lineHeight: scaleFontSize(29),
     color: colors.text.primary,
   },
   givenEmpathyLabel: {
     fontSize: scaleFontSize(13),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     lineHeight: scaleFontSize(17)
   },
   givenEmpathySubtext: {
     fontSize: scaleFontSize(11),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: scaleSpacing(3),
@@ -1197,7 +1197,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
     },
     modalTitle: {
       fontSize: scaleFontSize(17),
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       color: colors.text.primary,
       letterSpacing: -0.3,
       lineHeight: scaleFontSize(22)
@@ -1208,7 +1208,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
     },
     modalSubtitle: {
       fontSize: scaleFontSize(13),
-      fontWeight: '500',
+      fontFamily: 'Pretendard-Medium',
       color: colors.text.secondary,
       marginBottom: scaleSpacing(8),
       lineHeight: scaleFontSize(18),
@@ -1251,14 +1251,14 @@ export const createStyles = (isDark: boolean, colors: any) => {
     },
     modalButtonTextCancel: {
       fontSize: scaleFontSize(14),
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       color: colors.text.primary,
       letterSpacing: -0.2,
       lineHeight: scaleFontSize(19)
     },
     modalButtonTextSave: {
       fontSize: scaleFontSize(14),
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       color: '#FFFFFF',
       letterSpacing: -0.2,
       lineHeight: scaleFontSize(19)
@@ -1305,7 +1305,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   infoModalTitle: {
     fontSize: scaleFontSize(16),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     textAlign: 'center',
     marginBottom: scaleSpacing(8),
@@ -1314,7 +1314,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   infoModalMessage: {
     fontSize: scaleFontSize(14),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: scaleFontSize(19),
@@ -1330,7 +1330,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   infoModalButtonText: {
     fontSize: scaleFontSize(14),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#FFFFFF',
     letterSpacing: -0.2,
     lineHeight: scaleFontSize(19)
@@ -1364,7 +1364,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   achievementModalTitle: {
     fontSize: scaleFontSize(20),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     textAlign: 'center',
     marginBottom: scaleSpacing(8),
@@ -1373,7 +1373,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   achievementModalDescription: {
     fontSize: scaleFontSize(15),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: scaleFontSize(21),
@@ -1402,7 +1402,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   achievementModalProgressText: {
     fontSize: scaleFontSize(14),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.secondary,
     textAlign: 'center',
     letterSpacing: -0.2,
@@ -1422,7 +1422,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   achievementModalButtonText: {
     fontSize: scaleFontSize(15),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
     letterSpacing: -0.3,
     lineHeight: scaleFontSize(20)
@@ -1442,7 +1442,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   patternSummaryTitle: {
     fontSize: scaleFontSize(13),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(6),
     lineHeight: scaleFontSize(17)
@@ -1463,7 +1463,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   topEmotionRank: {
     fontSize: scaleFontSize(11),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFD700',
     marginBottom: scaleSpacing(3),
     lineHeight: scaleFontSize(16)
@@ -1474,14 +1474,14 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   topEmotionName: {
     fontSize: scaleFontSize(12),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: scaleSpacing(1),
     textAlign: 'center',
     lineHeight: scaleFontSize(16)
   },
   topEmotionCount: {
     fontSize: scaleFontSize(11),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     lineHeight: scaleFontSize(16)
   },
@@ -1500,13 +1500,13 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   dayGroupTitle: {
     fontSize: scaleFontSize(12),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     lineHeight: scaleFontSize(17)
   },
   dayGroupCount: {
     fontSize: scaleFontSize(11),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     lineHeight: scaleFontSize(16)
   },
@@ -1524,7 +1524,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   weatherTitle: {
     fontSize: scaleFontSize(13),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(6),
     lineHeight: scaleFontSize(17)
@@ -1538,13 +1538,13 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   weatherTempNumber: {
     fontSize: scaleFontSize(32),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: emotionColors.primary,
     lineHeight: scaleFontSize(36)
   },
   weatherTempMessage: {
     fontSize: scaleFontSize(12),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     marginTop: scaleSpacing(4),
     lineHeight: scaleFontSize(17)
@@ -1562,7 +1562,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   weatherDay: {
     fontSize: scaleFontSize(11),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     marginBottom: scaleSpacing(3),
     lineHeight: scaleFontSize(16)
@@ -1573,7 +1573,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   weatherDesc: {
     fontSize: scaleFontSize(11),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: emotionColors.textLight,
     lineHeight: scaleFontSize(16)
   },
@@ -1591,7 +1591,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   badgesTitle: {
     fontSize: scaleFontSize(13),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(6),
     lineHeight: scaleFontSize(17)
@@ -1622,7 +1622,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   badgeName: {
     fontSize: scaleFontSize(11),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(2),
     textAlign: 'center',
@@ -1630,14 +1630,14 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   badgeDesc: {
     fontSize: scaleFontSize(11),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: scaleFontSize(16)
   },
   noBadgesText: {
     fontSize: scaleFontSize(11),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     textAlign: 'center',
     paddingVertical: scaleSpacing(8),
@@ -1658,7 +1658,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   paletteTitle: {
     fontSize: scaleFontSize(14),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(8),
     textAlign: 'center',
@@ -1686,7 +1686,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   legendMore: {
     fontSize: scaleFontSize(11),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     marginTop: scaleSpacing(3),
     fontStyle: 'italic',
@@ -1701,7 +1701,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   paletteMessage: {
     fontSize: scaleFontSize(12),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -1741,14 +1741,14 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   emotionBubbleName: {
     fontSize: scaleFontSize(13),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
     marginBottom: scaleSpacing(2),
     lineHeight: scaleFontSize(17)
   },
   emotionBubbleTime: {
     fontSize: scaleFontSize(11),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: emotionColors.textLight,
     textAlign: 'center',
     lineHeight: scaleFontSize(16)
@@ -1759,7 +1759,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   emptyStateText: {
     fontSize: scaleFontSize(14),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     marginTop: scaleSpacing(8),
     textAlign: 'center',
@@ -1792,7 +1792,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   rankingNumber: {
     fontSize: scaleFontSize(14),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
     lineHeight: scaleFontSize(19)
   },
@@ -1814,14 +1814,14 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   rankingEmotionName: {
     fontSize: scaleFontSize(15),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(2),
     lineHeight: scaleFontSize(19)
   },
   rankingEmotionCount: {
     fontSize: scaleFontSize(12),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     lineHeight: scaleFontSize(17)
   },
@@ -1839,7 +1839,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   rankingPercentage: {
     fontSize: scaleFontSize(11),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.secondary,
     minWidth: scaleSpacing(38),
     textAlign: 'right',
@@ -1855,7 +1855,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   avatarsTitle: {
     fontSize: scaleFontSize(16),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(8),
     textAlign: 'center',
@@ -1877,7 +1877,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   avatarDay: {
     fontSize: scaleFontSize(11),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     marginTop: scaleSpacing(1),
     textAlign: 'center',
@@ -1903,7 +1903,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   avatarLabel: {
     fontSize: scaleFontSize(12),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
     lineHeight: scaleFontSize(16)
   },
@@ -1917,7 +1917,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   diversityTitle: {
     fontSize: scaleFontSize(16),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(10),
     textAlign: 'center',
@@ -1950,21 +1950,21 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   diversityAvatarLabel: {
     fontSize: scaleFontSize(11),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
     marginBottom: scaleSpacing(1),
     lineHeight: scaleFontSize(15)
   },
   diversityAvatarCount: {
     fontSize: scaleFontSize(11),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     textAlign: 'center',
     lineHeight: scaleFontSize(14)
   },
   diversityMessage: {
     fontSize: scaleFontSize(13),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -1998,7 +1998,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   modernEmotionLabel: {
     fontSize: scaleFontSize(14),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
     marginBottom: scaleSpacing(2),
     letterSpacing: -0.2,
@@ -2006,7 +2006,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   modernEmotionDay: {
     fontSize: scaleFontSize(13),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: scaleSpacing(2),
@@ -2014,7 +2014,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   modernEmotionCount: {
     fontSize: scaleFontSize(13),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: scaleSpacing(2),
@@ -2022,7 +2022,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   modernDiversityMessage: {
     fontSize: scaleFontSize(14),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: emotionColors.textLight,
     textAlign: 'center',
     marginTop: scaleSpacing(14),
@@ -2056,7 +2056,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   wordCloudTitle: {
     fontSize: scaleFontSize(15),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(12),
     textAlign: 'center',
@@ -2072,7 +2072,7 @@ export const createStyles = (isDark: boolean, colors: any) => {
   },
   wordCloudHint: {
     fontSize: scaleFontSize(13),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: colors.text.secondary,
     textAlign: 'center',
     marginTop: scaleSpacing(12),

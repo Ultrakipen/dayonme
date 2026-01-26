@@ -70,7 +70,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       }
     } catch (err) {
       setError('알림을 불러오는데 실패했습니다.');
-      console.error('알림 불러오기 오류:', err);
+      if (__DEV__) console.error('알림 불러오기 오류:', err);
     } finally {
       setIsLoading(false);
     }
@@ -84,7 +84,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       await fetchNotifications();
     } catch (err) {
       setError('알림을 읽음 처리하는데 실패했습니다.');
-      console.error('알림 읽음 처리 오류:', err);
+      if (__DEV__) console.error('알림 읽음 처리 오류:', err);
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +98,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       await fetchNotifications();
     } catch (err) {
       setError('모든 알림을 읽음 처리하는데 실패했습니다.');
-      console.error('모든 알림 읽음 처리 오류:', err);
+      if (__DEV__) console.error('모든 알림 읽음 처리 오류:', err);
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +113,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
       await fetchNotifications();
     } catch (err) {
       setError('알림을 삭제하는데 실패했습니다.');
-      console.error('알림 삭제 오류:', err);
+      if (__DEV__) console.error('알림 삭제 오류:', err);
     } finally {
       setIsLoading(false);
     }

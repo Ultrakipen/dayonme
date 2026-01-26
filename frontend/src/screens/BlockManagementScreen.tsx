@@ -55,13 +55,25 @@ export interface BlockedUser {
 
 export interface Report {
   report_id: number;
-  target_type: 'post' | 'comment' | 'user';
-  target_id: number;
-  reason: string;
+  item_type?: 'post' | 'comment' | 'user' | 'challenge';
+  post_id?: number;
+  challenge_id?: number;
+  report_type: string;
   description?: string;
-  status: 'pending' | 'resolved' | 'rejected';
-  created_at: string;
+  status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+  created_at?: string;
+  createdAt?: string;
   admin_note?: string;
+  // 서버에서 JOIN으로 가져오는 관련 데이터
+  post?: {
+    post_id: number;
+    content: string;
+  };
+  challenge?: {
+    challenge_id: number;
+    title: string;
+    description?: string;
+  };
 }
 
 const BlockManagementScreen: React.FC = () => {
@@ -113,48 +125,60 @@ const BlockManagementScreen: React.FC = () => {
     });
   }, [navigation]);
 
-  const loadData = useCallback(async (tab?: 'users' | 'contents' | 'reports') => {
+  const [dataCache, setDataCache] = useState<{
+    users?: BlockedUser[];
+    contents?: BlockedContent[];
+    reports?: Report[];
+  }>({});
+
+  const loadData = useCallback(async (tab?: 'users' | 'contents' | 'reports', showLoading = true, forceRefresh = false) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const targetTab = tab || activeTab;
 
-      if (targetTab === 'users') {
-        const usersResponse = await blockService.getBlockedUsers();
-        if (usersResponse?.status === 'success' && Array.isArray(usersResponse.data)) {
-          setBlockedUsers(usersResponse.data);
+      if (targetTab === 'users' && (!dataCache.users || forceRefresh)) {
+        const response = await blockService.getBlockedUsers();
+        if (response?.status === 'success' && Array.isArray(response.data)) {
+          setBlockedUsers(response.data);
+          setDataCache(prev => ({ ...prev, users: response.data }));
         }
-      } else if (targetTab === 'contents') {
-        const contentsResponse = await blockService.getBlockedContents();
-        if (contentsResponse?.status === 'success' && Array.isArray(contentsResponse.data)) {
-          setBlockedContents(contentsResponse.data);
+      } else if (targetTab === 'contents' && (!dataCache.contents || forceRefresh)) {
+        const response = await blockService.getBlockedContents();
+        if (response?.status === 'success' && Array.isArray(response.data)) {
+          setBlockedContents(response.data);
+          setDataCache(prev => ({ ...prev, contents: response.data }));
         }
-      } else if (targetTab === 'reports') {
-        const reportsResponse = await reportService.getMyReports();
-        if (reportsResponse?.status === 'success' && Array.isArray(reportsResponse.data)) {
-          setMyReports(reportsResponse.data);
+      } else if (targetTab === 'reports' && (!dataCache.reports || forceRefresh)) {
+        const response = await reportService.getMyReports();
+        if (response?.status === 'success' && Array.isArray(response.data)) {
+          setMyReports(response.data);
+          setDataCache(prev => ({ ...prev, reports: response.data }));
         }
+      } else {
+        if (dataCache.users) setBlockedUsers(dataCache.users);
+        if (dataCache.contents) setBlockedContents(dataCache.contents);
+        if (dataCache.reports) setMyReports(dataCache.reports);
       }
       setDataLoaded(true);
     } catch (error) {
-      console.error('차단 목록 로드 오류:', error);
+      if (__DEV__) console.error('차단 목록 로드 오류:', error);
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [activeTab, dataCache]);
 
   useFocusEffect(
     useCallback(() => {
-      if (!dataLoaded) {
-        loadData(activeTab);
-      }
-    }, [dataLoaded, activeTab])
+      // 화면 진입 시 항상 새로 로드
+      loadData(activeTab);
+    }, [])
   );
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadData();
+    await loadData(activeTab, false, true);
     setRefreshing(false);
-  }, [loadData]);
+  }, [loadData, activeTab]);
 
   const handleUnblockUser = async (userId: number, username: string) => {
     ReactNativeHapticFeedback.trigger('impactMedium');
@@ -170,12 +194,14 @@ const BlockManagementScreen: React.FC = () => {
             ReactNativeHapticFeedback.trigger('notificationSuccess');
             try {
               await blockService.unblockUser(userId);
-              setBlockedUsers(blockedUsers.filter((u) => u.blocked_id !== userId));
+              const updated = blockedUsers.filter((u) => u.blocked_id !== userId);
+              setBlockedUsers(updated);
+              setDataCache(prev => ({ ...prev, users: updated }));
               showModal('완료', '차단이 해제되었습니다.', [
                 { text: '확인', onPress: () => {}, style: 'default' },
               ], 'checkmark-circle', '#34C759');
             } catch (error) {
-              console.error('차단 해제 오류:', error);
+              if (__DEV__) console.error('차단 해제 오류:', error);
               showModal('오류', '차단 해제 중 오류가 발생했습니다.', [
                 { text: '확인', onPress: () => {}, style: 'default' },
               ], 'alert-circle', '#FF6B6B');
@@ -214,11 +240,11 @@ const BlockManagementScreen: React.FC = () => {
                 onPress: async () => {
                   try {
                     await blockService.unblockContent(contentType, contentId);
-                    setBlockedContents(
-                      blockedContents.filter(
-                        (c) => !(c.content_type === contentType && c.content_id === contentId)
-                      )
+                    const updated = blockedContents.filter(
+                      (c) => !(c.content_type === contentType && c.content_id === contentId)
                     );
+                    setBlockedContents(updated);
+                    setDataCache(prev => ({ ...prev, contents: updated }));
                     showModal(
                       '완료',
                       '댓글 차단이 해제되었습니다.\n(게시물은 여전히 차단되어 있습니다)',
@@ -227,7 +253,7 @@ const BlockManagementScreen: React.FC = () => {
                       '#34C759'
                     );
                   } catch (error) {
-                    console.error('차단 해제 오류:', error);
+                    if (__DEV__) console.error('차단 해제 오류:', error);
                     showModal('오류', '차단 해제 중 오류가 발생했습니다.', [
                       { text: '확인', onPress: () => {}, style: 'default' },
                     ], 'alert-circle', '#FF6B6B');
@@ -254,7 +280,7 @@ const BlockManagementScreen: React.FC = () => {
                       { text: '확인', onPress: () => {}, style: 'default' },
                     ], 'checkmark-circle', '#34C759');
                   } catch (error) {
-                    console.error('차단 해제 오류:', error);
+                    if (__DEV__) console.error('차단 해제 오류:', error);
                     showModal('오류', '차단 해제 중 오류가 발생했습니다.', [
                       { text: '확인', onPress: () => {}, style: 'default' },
                     ], 'alert-circle', '#FF6B6B');
@@ -281,16 +307,16 @@ const BlockManagementScreen: React.FC = () => {
           onPress: async () => {
             try {
               await blockService.unblockContent(contentType, contentId);
-              setBlockedContents(
-                blockedContents.filter(
-                  (c) => !(c.content_type === contentType && c.content_id === contentId)
-                )
+              const updated = blockedContents.filter(
+                (c) => !(c.content_type === contentType && c.content_id === contentId)
               );
+              setBlockedContents(updated);
+              setDataCache(prev => ({ ...prev, contents: updated }));
               showModal('완료', '차단이 해제되었습니다.', [
                 { text: '확인', onPress: () => {}, style: 'default' },
               ], 'checkmark-circle', '#34C759');
             } catch (error) {
-              console.error('차단 해제 오류:', error);
+              if (__DEV__) console.error('차단 해제 오류:', error);
               showModal('오류', '차단 해제 중 오류가 발생했습니다.', [
                 { text: '확인', onPress: () => {}, style: 'default' },
               ], 'alert-circle', '#FF6B6B');
@@ -343,6 +369,30 @@ const BlockManagementScreen: React.FC = () => {
         color: theme.colors.alwaysWhite || '#FFFFFF',
         backgroundColor: isDark ? '#4645AB' : '#5856D6',
         icon: 'lock-closed',
+      },
+      violence: {
+        label: '폭력',
+        color: theme.colors.alwaysWhite || '#FFFFFF',
+        backgroundColor: isDark ? '#B91C1C' : '#DC2626',
+        icon: 'skull',
+      },
+      misinformation: {
+        label: '허위정보',
+        color: theme.colors.alwaysWhite || '#FFFFFF',
+        backgroundColor: isDark ? '#B45309' : '#D97706',
+        icon: 'information-circle',
+      },
+      copyright: {
+        label: '저작권',
+        color: theme.colors.alwaysWhite || '#FFFFFF',
+        backgroundColor: isDark ? '#6D28D9' : '#7C3AED',
+        icon: 'document-lock',
+      },
+      content: {
+        label: '콘텐츠',
+        color: theme.colors.alwaysWhite || '#FFFFFF',
+        backgroundColor: isDark ? '#0369A1' : '#0284C7',
+        icon: 'document-text',
       },
       other: {
         label: '기타',
@@ -575,10 +625,17 @@ const BlockManagementScreen: React.FC = () => {
   );
 
   const renderReportItem = ({ item: report }: { item: Report }) => {
-    const reasonBadge = getReasonBadge(report.reason);
-    const targetTypeLabel = report.target_type === 'post' ? '게시물' :
-      report.target_type === 'comment' ? '댓글' :
-        report.target_type === 'user' ? '사용자' : '알 수 없음';
+    const reasonBadge = getReasonBadge(report.report_type);
+
+    // 신고 타입 결정: item_type이 있으면 사용, 없으면 post_id/challenge_id로 판단
+    const targetType = report.item_type || (report.post_id ? 'post' : report.challenge_id ? 'challenge' : 'post');
+    const targetTypeLabel = targetType === 'post' ? '게시물' :
+      targetType === 'comment' ? '댓글' :
+      targetType === 'challenge' ? '챌린지' :
+      targetType === 'user' ? '사용자' : '알 수 없음';
+
+    // 날짜 필드 처리 (snake_case 또는 camelCase)
+    const reportDate = report.created_at || report.createdAt;
 
     const getStatusBadge = (status?: string) => {
       const statusMap: { [key: string]: { label: string; color: string; bg: string } } = {
@@ -587,12 +644,17 @@ const BlockManagementScreen: React.FC = () => {
           color: isDark ? '#FFB340' : '#FF9500',
           bg: isDark ? 'rgba(255, 179, 64, 0.15)' : '#FFF4E6'
         },
+        reviewed: {
+          label: '검토됨',
+          color: isDark ? '#60A5FA' : '#007AFF',
+          bg: isDark ? 'rgba(96, 165, 250, 0.15)' : '#E3F2FD'
+        },
         resolved: {
           label: '처리완료',
           color: isDark ? '#4ADE80' : '#34C759',
           bg: isDark ? 'rgba(74, 222, 128, 0.15)' : '#E8F5E9'
         },
-        rejected: {
+        dismissed: {
           label: '반려됨',
           color: isDark ? '#FB7185' : '#FF3B30',
           bg: isDark ? 'rgba(251, 113, 133, 0.15)' : '#FFEBEE'
@@ -613,7 +675,7 @@ const BlockManagementScreen: React.FC = () => {
             <View style={styles.contentInfo}>
               <Text style={[styles.contentType, { color: theme.colors.text.primary }]}>신고: {targetTypeLabel}</Text>
               <Text style={[styles.authorText, { color: theme.colors.text.secondary }]}>
-                신고일: {formatDate(report.created_at)}
+                신고일: {formatDate(reportDate || '')}
               </Text>
             </View>
           </View>
@@ -639,12 +701,26 @@ const BlockManagementScreen: React.FC = () => {
           </View>
         </View>
 
-        {report.description && (
+        {(report.description || report.report_type) && (
           <View style={styles.contentTextContainer}>
             <Text style={[styles.contentTextLabel, { color: theme.colors.text.primary }]}>신고 사유:</Text>
             <View style={[styles.contentTextBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
               <Text style={[styles.contentTextFull, { color: theme.colors.text.primary }]} numberOfLines={3}>
-                {report.description}
+                {reasonBadge?.label || report.description || report.report_type}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* 신고된 게시물/챌린지 내용 표시 */}
+        {(report.post?.content || report.challenge?.title) && (
+          <View style={[styles.contentTextContainer, { marginTop: moderateScale(8) }]}>
+            <Text style={[styles.contentTextLabel, { color: theme.colors.text.primary }]}>
+              {report.post ? '게시물 내용:' : '챌린지:'}
+            </Text>
+            <View style={[styles.contentTextBox, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}>
+              <Text style={[styles.contentTextFull, { color: theme.colors.text.primary }]} numberOfLines={3}>
+                {report.post?.content || report.challenge?.title}
               </Text>
             </View>
           </View>
@@ -698,7 +774,7 @@ const BlockManagementScreen: React.FC = () => {
     headerTitle: {
       flex: 1,
       fontSize: FONT_SIZES.h4,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       textAlign: 'center',
       marginHorizontal: SPACING.md,
       letterSpacing: -0.3,
@@ -722,11 +798,11 @@ const BlockManagementScreen: React.FC = () => {
     },
     tabText: {
       fontSize: FONT_SIZES.body,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       letterSpacing: -0.2,
     },
     activeTabText: {
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
     },
     content: {
       flex: 1,
@@ -744,7 +820,7 @@ const BlockManagementScreen: React.FC = () => {
     loadingText: {
       marginTop: SPACING.md,
       fontSize: FONT_SIZES.body,
-      fontWeight: '500',
+      fontFamily: 'Pretendard-Medium',
       letterSpacing: -0.2,
     },
     emptyContainer: {
@@ -757,7 +833,7 @@ const BlockManagementScreen: React.FC = () => {
     emptyTitle: {
       marginTop: SPACING.lg,
       fontSize: FONT_SIZES.h3,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       textAlign: 'center',
       letterSpacing: -0.3,
     },
@@ -766,7 +842,7 @@ const BlockManagementScreen: React.FC = () => {
       fontSize: FONT_SIZES.body,
       textAlign: 'center',
       lineHeight: moderateScale(22),
-      fontWeight: '500',
+      fontFamily: 'Pretendard-Medium',
       letterSpacing: -0.2,
     },
     userCard: {
@@ -809,7 +885,7 @@ const BlockManagementScreen: React.FC = () => {
     },
     avatarText: {
       fontSize: FONT_SIZES.h3,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       lineHeight: FONT_SIZES.h3 * 1.2,
     },
     userDetails: {
@@ -818,7 +894,7 @@ const BlockManagementScreen: React.FC = () => {
     },
     userNickname: {
       fontSize: FONT_SIZES.body,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       marginBottom: moderateScale(3),
       letterSpacing: -0.3,
       lineHeight: FONT_SIZES.body * 1.3,
@@ -826,13 +902,13 @@ const BlockManagementScreen: React.FC = () => {
     userUsername: {
       fontSize: FONT_SIZES.bodySmall,
       marginBottom: SPACING.xs,
-      fontWeight: '500',
+      fontFamily: 'Pretendard-Medium',
       letterSpacing: -0.2,
       lineHeight: FONT_SIZES.bodySmall * 1.4,
     },
     userDate: {
       fontSize: FONT_SIZES.small,
-      fontWeight: '500',
+      fontFamily: 'Pretendard-Medium',
       lineHeight: FONT_SIZES.small * 1.4,
     },
     reasonBadge: {
@@ -847,7 +923,7 @@ const BlockManagementScreen: React.FC = () => {
     },
     reasonBadgeText: {
       fontSize: FONT_SIZES.tiny,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       marginLeft: moderateScale(3),
       letterSpacing: -0.1,
       lineHeight: FONT_SIZES.tiny * 1.4,
@@ -899,13 +975,13 @@ const BlockManagementScreen: React.FC = () => {
     },
     contentType: {
       fontSize: FONT_SIZES.body,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       marginBottom: moderateScale(2),
       letterSpacing: -0.3,
     },
     authorText: {
       fontSize: FONT_SIZES.bodySmall,
-      fontWeight: '500',
+      fontFamily: 'Pretendard-Medium',
       letterSpacing: -0.2,
     },
     contentMetaRow: {
@@ -916,7 +992,7 @@ const BlockManagementScreen: React.FC = () => {
     },
     contentMetaText: {
       fontSize: FONT_SIZES.small,
-      fontWeight: '500',
+      fontFamily: 'Pretendard-Medium',
       marginLeft: SPACING.xxs,
       lineHeight: FONT_SIZES.small * 1.4,
     },
@@ -925,7 +1001,7 @@ const BlockManagementScreen: React.FC = () => {
     },
     contentTextLabel: {
       fontSize: FONT_SIZES.small,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       marginBottom: SPACING.xs,
       paddingHorizontal: moderateScale(2),
     },
@@ -937,7 +1013,7 @@ const BlockManagementScreen: React.FC = () => {
     contentTextFull: {
       fontSize: FONT_SIZES.body,
       lineHeight: moderateScale(22),
-      fontWeight: '500',
+      fontFamily: 'Pretendard-Medium',
       letterSpacing: -0.2,
     },
     statusBadge: {
@@ -947,7 +1023,7 @@ const BlockManagementScreen: React.FC = () => {
     },
     statusBadgeText: {
       fontSize: FONT_SIZES.tiny,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       letterSpacing: -0.1,
       lineHeight: FONT_SIZES.tiny * 1.4,
     },
@@ -969,7 +1045,7 @@ const BlockManagementScreen: React.FC = () => {
     },
     unblockButtonText: {
       fontSize: FONT_SIZES.body,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       letterSpacing: -0.2,
     },
     skeleton: {
@@ -991,7 +1067,7 @@ const BlockManagementScreen: React.FC = () => {
     },
     swipeButtonText: {
       fontSize: FONT_SIZES.bodySmall,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       marginTop: moderateScale(4),
     },
   }), [theme, isDark]);
@@ -1086,7 +1162,7 @@ const BlockManagementScreen: React.FC = () => {
           keyExtractor={(item, index) =>
             activeTab === 'users' ? `user-${item.blocked_id}` :
             activeTab === 'contents' ? `content-${item.block_id}` :
-            `report-${item.report_id || index}`
+            `report-${item.report_id}-${index}`
           }
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={[

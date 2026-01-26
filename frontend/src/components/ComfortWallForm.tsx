@@ -66,7 +66,7 @@ const ComfortWallForm: React.FC<ComfortWallFormProps> = ({
       setTagIds([]);
       setIsAnonymous(true);
     } catch (error) {
-      console.error('게시물 제출 오류:', error);
+      if (__DEV__) console.error('게시물 제출 오류:', error);
       Alert.alert('오류', '게시물 작성 중 문제가 발생했습니다. 다시 시도해주세요.');
     }
   };
@@ -91,7 +91,7 @@ const ComfortWallForm: React.FC<ComfortWallFormProps> = ({
     },
     title: {
       fontSize: 22,
-      fontWeight: 'bold',
+      fontFamily: 'Pretendard-Bold',
       color: theme.text.primary,
       textAlign: 'center',
       marginBottom: 8,
@@ -104,12 +104,12 @@ const ComfortWallForm: React.FC<ComfortWallFormProps> = ({
     },
     label: {
       fontSize: 16,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       color: theme.text.primary,
       marginBottom: 8,
     },
     optional: {
-      fontWeight: 'normal',
+      fontFamily: 'Pretendard-Regular',
       fontSize: 14,
       color: theme.text.primarySecondary,
     },
@@ -186,7 +186,7 @@ const ComfortWallForm: React.FC<ComfortWallFormProps> = ({
     submitButtonText: {
       color: '#FFFFFF',
       fontSize: 16,
-      fontWeight: 'bold',
+      fontFamily: 'Pretendard-Bold',
     },
     supportText: {
       fontSize: 14,
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   checkmark: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
   },
 });
 

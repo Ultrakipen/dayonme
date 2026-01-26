@@ -35,6 +35,8 @@ const MainTabNavigator = () => {
   return (
     <Tab.Navigator
       screenOptions={{
+        // 키보드가 올라오면 탭바 숨김 (Android)
+        tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: isDarkMode ? '#60a5fa' : '#405DE6',
         tabBarInactiveTintColor: isDarkMode ? '#a0a0a0' : '#6b7280',
         tabBarStyle: {

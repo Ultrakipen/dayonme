@@ -59,7 +59,7 @@ export const improvedChallengeCardStyles = StyleSheet.create({
   // 타이틀
   cardTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     lineHeight: 28,
     marginBottom: 8,
     letterSpacing: -0.3,
@@ -67,7 +67,7 @@ export const improvedChallengeCardStyles = StyleSheet.create({
 
   cardDescription: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 22,
     marginBottom: 12,
     letterSpacing: -0.2,
@@ -92,7 +92,7 @@ export const improvedChallengeCardStyles = StyleSheet.create({
 
   metaText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.2,
   },
 
@@ -119,14 +119,14 @@ export const improvedTextStyles = StyleSheet.create({
   // 다크모드 대비 개선된 텍스트
   primaryText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     lineHeight: 24,
     letterSpacing: -0.3,
   },
 
   secondaryText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 20,
     letterSpacing: -0.2,
     opacity: 0.88,
@@ -134,7 +134,7 @@ export const improvedTextStyles = StyleSheet.create({
 
   captionText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 18,
     letterSpacing: -0.1,
     opacity: 0.72,
@@ -142,14 +142,14 @@ export const improvedTextStyles = StyleSheet.create({
 
   titleLarge: {
     fontSize: 24,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     lineHeight: 32,
     letterSpacing: -0.5,
   },
 
   bodyText: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 22,
     letterSpacing: -0.2,
   },

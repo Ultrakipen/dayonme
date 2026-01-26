@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
   },
   authorName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Pretendard-Bold',
     color: '#333',
     marginBottom: 4,
   },
@@ -462,7 +462,7 @@ const styles = StyleSheet.create({
   expandButtonText: {
     fontSize: 14,
     color: '#6200ee',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   imageContainer: {
     marginVertical: 12,
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 14,
     color: '#666',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   likedText: {
     color: '#ff4757',
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
   },
   commentUser: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: '#333',
     marginRight: 6,
   },
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
   moreComments: {
     fontSize: 14,
     color: '#6200ee',
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginTop: 6,
   },
   tagsContainer: {
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     color: '#0095F6',
   },
 });

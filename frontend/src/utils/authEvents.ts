@@ -30,7 +30,7 @@ class SimpleEventEmitter {
         try {
           listener(...args);
         } catch (error) {
-          console.error(`이벤트 리스너 오류 (${event}):`, error);
+          if (__DEV__) console.error(`이벤트 리스너 오류 (${event}):`, error);
         }
       });
     }

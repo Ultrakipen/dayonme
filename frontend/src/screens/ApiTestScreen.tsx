@@ -18,7 +18,7 @@ const ApiTestScreen: React.FC = () => {
     try {
       const response = await apiCall();
       addResult(title, JSON.stringify(response.data, null, 2));
-    } catch (error: any) {
+    } catch (error: unknown) {
       addResult(title, `Error: ${error.message}`);
     }
   };

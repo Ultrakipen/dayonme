@@ -78,13 +78,13 @@ const MenuModal: React.FC<MenuModalProps> = ({
     },
     logoutText: {
       fontSize: normalize(14),
-      fontWeight: '400' as const,
+      fontFamily: 'Pretendard-Regular' as const,
       letterSpacing: -0.3,
       textAlign: 'center' as const,
     },
     cancelText: {
       fontSize: normalize(14),
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       letterSpacing: -0.3,
       textAlign: 'center' as const,
     },

@@ -29,8 +29,8 @@ class CommentService {
         // comfort_wall 댓글 조회 로직은 추후 구현
         throw new Error('Comfort wall comments not implemented yet');
       }
-    } catch (error: any) {
-      console.error('댓글 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 조회 오류:', error);
       throw error.response?.data || { status: 'error', message: '댓글 조회 중 오류가 발생했습니다.' };
     }
   }
@@ -62,8 +62,8 @@ class CommentService {
         // comfort_wall 댓글 작성 로직은 추후 구현
         throw new Error('Comfort wall comments not implemented yet');
       }
-    } catch (error: any) {
-      console.error('댓글 작성 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 작성 오류:', error);
       throw error.response?.data || { status: 'error', message: '댓글 작성 중 오류가 발생했습니다.' };
     }
   }
@@ -80,8 +80,8 @@ class CommentService {
         response = await apiClient.post(`/comfort-wall/comments/${commentId}/like`);
       }
       return response.data;
-    } catch (error: any) {
-      console.error('댓글 좋아요 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 좋아요 오류:', error);
       throw error.response?.data || { status: 'error', message: '댓글 좋아요 처리 중 오류가 발생했습니다.' };
     }
   }
@@ -98,8 +98,8 @@ class CommentService {
         reason
       });
       return response.data;
-    } catch (error: any) {
-      console.error('댓글 신고 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 신고 오류:', error);
       throw error.response?.data || { status: 'error', message: '댓글 신고 중 오류가 발생했습니다.' };
     }
   }
@@ -114,8 +114,8 @@ class CommentService {
 
       const response = await apiClient.delete(endpoint);
       return response.data;
-    } catch (error: any) {
-      console.error('댓글 삭제 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 삭제 오류:', error);
       throw error.response?.data || { status: 'error', message: '댓글 삭제 중 오류가 발생했습니다.' };
     }
   }
@@ -132,8 +132,8 @@ class CommentService {
         content: content.normalize('NFC')
       });
       return response.data;
-    } catch (error: any) {
-      console.error('댓글 수정 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 수정 오류:', error);
       throw error.response?.data || { status: 'error', message: '댓글 수정 중 오류가 발생했습니다.' };
     }
   }

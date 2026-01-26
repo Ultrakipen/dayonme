@@ -96,7 +96,7 @@ const AdminReportListScreen: React.FC<Props> = ({ navigation, route }) => {
       const response = await reportService.getReports(filters);
       setReports(response.data || []);
     } catch (error) {
-      console.error('신고 목록 로드 오류:', error);
+      if (__DEV__) console.error('신고 목록 로드 오류:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -146,19 +146,19 @@ const AdminReportListScreen: React.FC<Props> = ({ navigation, route }) => {
       other: '기타',
       OTHER: '기타',
     };
-    console.log('신고 타입:', type, '변환:', typeMap[type] || type);
+    if (__DEV__) console.log('신고 타입:', type, '변환:', typeMap[type] || type);
     return typeMap[type] || typeMap[type.toLowerCase()] || type;
   };
 
   const formatDate = (dateString: string) => {
     if (!dateString) {
-      console.log('날짜 없음:', dateString);
+      if (__DEV__) console.log('날짜 없음:', dateString);
       return '-';
     }
     try {
       const date = new Date(dateString);
       if (isNaN(date.getTime())) {
-        console.log('잘못된 날짜:', dateString);
+        if (__DEV__) console.log('잘못된 날짜:', dateString);
         return '-';
       }
       const year = date.getFullYear();
@@ -167,10 +167,10 @@ const AdminReportListScreen: React.FC<Props> = ({ navigation, route }) => {
       const hours = date.getHours().toString().padStart(2, '0');
       const minutes = date.getMinutes().toString().padStart(2, '0');
       const formatted = `${year}.${month}.${day} ${hours}:${minutes}`;
-      console.log('날짜 변환:', dateString, '→', formatted);
+      if (__DEV__) console.log('날짜 변환:', dateString, '→', formatted);
       return formatted;
     } catch (error) {
-      console.log('날짜 오류:', dateString, error);
+      if (__DEV__) console.log('날짜 오류:', dateString, error);
       return '-';
     }
   };
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: SPACING.md,
     fontSize: FONT_SIZES.body,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   header: {
     flexDirection: 'row',
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: FONT_SIZES.h4,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
   },
   refreshButton: {
@@ -587,12 +587,12 @@ const styles = StyleSheet.create({
   },
   filterSegmentText: {
     fontSize: moderateScale(11),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginTop: moderateScale(4),
   },
   filterSegmentTextActive: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   filterSegmentIndicator: {
     position: 'absolute',
@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: FONT_SIZES.small,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
   },
   typeBadge: {
@@ -645,11 +645,11 @@ const styles = StyleSheet.create({
   },
   typeText: {
     fontSize: FONT_SIZES.small,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   contentTitle: {
     fontSize: FONT_SIZES.body,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: moderateScale(14),
     letterSpacing: -0.2,
     lineHeight: FONT_SIZES.body * 1.3,
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   cardFooter: {
     flexDirection: 'row',
@@ -682,7 +682,7 @@ const styles = StyleSheet.create({
   },
   reportDate: {
     fontSize: FONT_SIZES.small,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   viewDetailContainer: {
     flexDirection: 'row',
@@ -691,7 +691,7 @@ const styles = StyleSheet.create({
   },
   viewDetailText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   emptyContainer: {
     flex: 1,
@@ -710,12 +710,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     marginTop: SPACING.md,
     fontSize: FONT_SIZES.h5,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   emptyText: {
     marginTop: SPACING.xs,
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
   },
 });

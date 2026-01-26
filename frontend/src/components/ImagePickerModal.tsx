@@ -69,7 +69,7 @@ const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
 
           <Text style={{
             fontSize: 24,
-            fontWeight: '800',
+            fontFamily: 'Pretendard-ExtraBold',
             color: '#111827',
             textAlign: 'center',
             marginBottom: 8,
@@ -123,7 +123,7 @@ const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
               />
               <Text style={{
                 fontSize: 18,
-                fontWeight: '700',
+                fontFamily: 'Pretendard-Bold',
                 color: 'white',
                 fontFamily: 'Pretendard-Bold',
                 letterSpacing: -0.3
@@ -166,7 +166,7 @@ const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
               />
               <Text style={{
                 fontSize: 18,
-                fontWeight: '700',
+                fontFamily: 'Pretendard-Bold',
                 color: 'white',
                 fontFamily: 'Pretendard-Bold',
                 letterSpacing: -0.3
@@ -194,7 +194,7 @@ const ImagePickerModal: React.FC<ImagePickerModalProps> = ({
             >
               <Text style={{
                 fontSize: 16,
-                fontWeight: '600',
+                fontFamily: 'Pretendard-SemiBold',
                 color: '#6B7280',
                 fontFamily: 'Pretendard-SemiBold'
               }}>

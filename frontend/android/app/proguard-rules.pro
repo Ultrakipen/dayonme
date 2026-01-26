@@ -33,6 +33,9 @@
 
 # React Native Reanimated
 -keep class com.swmansion.reanimated.** { *; }
+-keep class com.swmansion.worklets.** { *; }
+-dontwarn com.swmansion.reanimated.**
+-dontwarn com.swmansion.worklets.**
 
 # React Native Screens
 -keep class com.swmansion.rnscreens.** { *; }

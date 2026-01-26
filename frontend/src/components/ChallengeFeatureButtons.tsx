@@ -59,75 +59,74 @@ const ChallengeFeatureButtons: React.FC<ChallengeFeatureButtonsProps> = ({
 
   return (
     <>
-      {/* 기능 버튼들 */}
-      <View style={[styles.container, { paddingHorizontal: 16 * scale, paddingVertical: 12 * scale }]}>
-        <Text style={[styles.sectionTitle, { color: colors.text, fontSize: 14 * scale, marginBottom: 12 * scale }]}>
-          🌟 챌린지 기능
-        </Text>
-
-        <View style={styles.buttonsRow}>
-          {/* 익명 응원 버튼 */}
+      {/* 기능 버튼들 - 한 줄 배치용 */}
+      <View style={styles.buttonsRow}>
+          {/* 익명 응원 버튼 - 흰색 배경 */}
           <TouchableOpacity
             style={[
               styles.featureButton,
               {
-                backgroundColor: colors.card,
-                padding: 12 * scale,
+                backgroundColor: isDark ? '#2a2a2a' : '#FFFFFF',
+                paddingVertical: 8 * scale,
+                paddingHorizontal: 8 * scale,
                 borderRadius: 12 * scale,
-                borderColor: colors.border,
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
               }
             ]}
             onPress={() => setShowEncouragement(true)}
             activeOpacity={0.7}
           >
-            <Text style={{ fontSize: 24 * scale }}>💝</Text>
-            <Text style={[styles.buttonLabel, { color: colors.text, fontSize: 12 * scale, marginTop: 4 * scale }]}>
-              익명 응원
+            <Text style={{ fontSize: 20 * scale, marginBottom: 2 * scale }}>💝</Text>
+            <Text style={[styles.buttonLabel, { color: colors.text, fontSize: 10 * scale, fontFamily: 'Pretendard-SemiBold' }]}>
+              익명응원
             </Text>
           </TouchableOpacity>
 
-          {/* 감정 리포트 버튼 */}
+          {/* 감정 리포트 버튼 - 흰색 배경 */}
           <TouchableOpacity
             style={[
               styles.featureButton,
               {
-                backgroundColor: colors.card,
-                padding: 12 * scale,
+                backgroundColor: isDark ? '#2a2a2a' : '#FFFFFF',
+                paddingVertical: 8 * scale,
+                paddingHorizontal: 8 * scale,
                 borderRadius: 12 * scale,
-                borderColor: colors.border,
+                borderWidth: 1,
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
               }
             ]}
             onPress={handleGoToReport}
             activeOpacity={0.7}
           >
-            <Text style={{ fontSize: 24 * scale }}>📊</Text>
-            <Text style={[styles.buttonLabel, { color: colors.text, fontSize: 12 * scale, marginTop: 4 * scale }]}>
-              감정 리포트
+            <Text style={{ fontSize: 20 * scale, marginBottom: 2 * scale }}>📊</Text>
+            <Text style={[styles.buttonLabel, { color: colors.text, fontSize: 10 * scale, fontFamily: 'Pretendard-SemiBold' }]}>
+              감정리포트
             </Text>
           </TouchableOpacity>
 
-          {/* 완주 카드 버튼 (완주 시에만) */}
+          {/* 완주 카드 버튼 (완주 시에만) - 흰색 배경 */}
           {completionId && (
             <TouchableOpacity
               style={[
                 styles.featureButton,
                 {
-                  backgroundColor: colors.primary + '20',
-                  padding: 12 * scale,
-                  borderRadius: 12 * scale,
-                  borderColor: colors.primary,
+                  backgroundColor: isDark ? '#2a2a2a' : '#FFFFFF',
+                  padding: 16 * scale,
+                  borderRadius: 16 * scale,
+                  borderWidth: 1,
+                  borderColor: isDark ? 'rgba(255, 215, 0, 0.4)' : 'rgba(255, 215, 0, 0.3)',
                 }
               ]}
               onPress={() => setShowCompletionCard(true)}
               activeOpacity={0.7}
             >
-              <Text style={{ fontSize: 24 * scale }}>🏆</Text>
-              <Text style={[styles.buttonLabel, { color: colors.primary, fontSize: 12 * scale, marginTop: 4 * scale }]}>
+              <Text style={{ fontSize: 28 * scale, marginBottom: 6 * scale }}>🏆</Text>
+              <Text style={[styles.buttonLabel, { color: isDark ? '#FFD700' : '#B8860B', fontSize: 13 * scale, fontFamily: 'Pretendard-SemiBold' }]}>
                 완주 카드
               </Text>
             </TouchableOpacity>
           )}
-        </View>
       </View>
 
       {/* 익명 응원 모달 */}
@@ -176,23 +175,25 @@ const ChallengeFeatureButtons: React.FC<ChallengeFeatureButtonsProps> = ({
 const styles = StyleSheet.create({
   container: {},
   sectionTitle: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-SemiBold',
+    letterSpacing: -0.3,
   },
   buttonsRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
-    gap: 12,
+    justifyContent: 'center',
+    gap: 8,
+    flex: 1,
   },
   featureButton: {
     alignItems: 'center',
-    minWidth: 80,
-    borderWidth: 1,
+    flex: 1,
+    minWidth: 60,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
       },
       android: {
         elevation: 2,
@@ -200,7 +201,8 @@ const styles = StyleSheet.create({
     }),
   },
   buttonLabel: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
+    letterSpacing: -0.3,
   },
   modalOverlay: {
     flex: 1,
@@ -217,7 +219,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   closeModalText: {
-    fontWeight: '300',
+    fontFamily: 'Pretendard-Light',
   },
 });
 

@@ -172,7 +172,7 @@ export const useHomeData = ({ isAuthenticated, isConnected, processCommentsWithA
 
       const validPosts = displayPosts.filter((post): post is DisplayPost => post !== null);
       setPosts(validPosts);
-    } catch (error: any) {
+    } catch (error: unknown) {
       devLog('게시물 로드 오류:', error);
       Alert.alert('오류', '게시물을 불러오는 중 문제가 발생했습니다.');
     } finally {

@@ -124,7 +124,7 @@ export const usePostSwipe = (options: UsePostSwipeOptions): UsePostSwipeReturn =
       const cacheKey = getCacheKey(1);
       let cachedPosts = getCache<Post[]>(cacheKey);
 
-      if (!cachedPosts || cachedPosts.length === 0) {
+      if (!cachedPosts || !Array.isArray(cachedPosts) || cachedPosts.length === 0) {
         // 캐시 없으면 API 호출
         logger.log('📡 [usePostSwipe] API에서 게시물 목록 로드');
         const response = await service.getPosts({
@@ -134,16 +134,31 @@ export const usePostSwipe = (options: UsePostSwipeOptions): UsePostSwipeReturn =
           sortBy: filterOptions?.sortOrder,
         });
 
-        cachedPosts = response.data || [];
+        // 응답 구조에 따라 배열 추출
+        const responseData = response?.data || response;
+        cachedPosts = Array.isArray(responseData)
+          ? responseData
+          : (responseData?.posts || responseData?.data || []);
+
+        // 배열이 아닌 경우 빈 배열로 초기화
+        if (!Array.isArray(cachedPosts)) {
+          logger.warn('⚠️ [usePostSwipe] 응답이 배열이 아님:', typeof cachedPosts);
+          cachedPosts = [];
+        }
+
         const ttl = getCacheTTL();
-        setCache(cacheKey, cachedPosts, ttl);
-        logger.log(`💾 [usePostSwipe] 캐시 저장 (TTL: ${ttl}초)`);
+        if (cachedPosts.length > 0) {
+          setCache(cacheKey, cachedPosts, ttl);
+          logger.log(`💾 [usePostSwipe] 캐시 저장 (TTL: ${ttl}초)`);
+        }
       } else {
         logger.log('✅ [usePostSwipe] 캐시에서 게시물 목록 로드');
       }
 
-      // 현재 게시물의 인덱스 찾기
-      const currentIdx = cachedPosts.findIndex((p: Post) => p.post_id === initialPostId);
+      // 현재 게시물의 인덱스 찾기 (배열 확인)
+      const currentIdx = Array.isArray(cachedPosts)
+        ? cachedPosts.findIndex((p: Post) => p.post_id === initialPostId)
+        : -1;
 
       if (currentIdx >= 0) {
         setPosts(cachedPosts);
@@ -193,7 +208,7 @@ export const usePostSwipe = (options: UsePostSwipeOptions): UsePostSwipeReturn =
       const cacheKey = getCacheKey(nextPage);
       let newPosts = getCache<Post[]>(cacheKey);
 
-      if (!newPosts) {
+      if (!newPosts || !Array.isArray(newPosts)) {
         const service = getService();
         const response = await service.getPosts({
           page: nextPage,
@@ -202,11 +217,22 @@ export const usePostSwipe = (options: UsePostSwipeOptions): UsePostSwipeReturn =
           sortBy: filterOptions?.sortOrder,
         });
 
-        newPosts = response.data || [];
-        setCache(cacheKey, newPosts, CACHE_TTL);
+        // 응답 구조에 따라 배열 추출
+        const responseData = response?.data || response;
+        newPosts = Array.isArray(responseData)
+          ? responseData
+          : (responseData?.posts || responseData?.data || []);
+
+        if (!Array.isArray(newPosts)) {
+          newPosts = [];
+        }
+
+        if (newPosts.length > 0) {
+          setCache(cacheKey, newPosts, CACHE_TTL);
+        }
       }
 
-      if (newPosts.length > 0) {
+      if (Array.isArray(newPosts) && newPosts.length > 0) {
         setPosts(prev => [...prev, ...newPosts]);
         currentPageRef.current = nextPage;
         setHasMore(newPosts.length >= PAGE_SIZE);
@@ -242,7 +268,7 @@ export const usePostSwipe = (options: UsePostSwipeOptions): UsePostSwipeReturn =
       const cacheKey = getCacheKey(prevPage);
       let prevPosts = getCache<Post[]>(cacheKey);
 
-      if (!prevPosts) {
+      if (!prevPosts || !Array.isArray(prevPosts)) {
         const service = getService();
         const response = await service.getPosts({
           page: prevPage,
@@ -251,11 +277,22 @@ export const usePostSwipe = (options: UsePostSwipeOptions): UsePostSwipeReturn =
           sortBy: filterOptions?.sortOrder,
         });
 
-        prevPosts = response.data || [];
-        setCache(cacheKey, prevPosts, CACHE_TTL);
+        // 응답 구조에 따라 배열 추출
+        const responseData = response?.data || response;
+        prevPosts = Array.isArray(responseData)
+          ? responseData
+          : (responseData?.posts || responseData?.data || []);
+
+        if (!Array.isArray(prevPosts)) {
+          prevPosts = [];
+        }
+
+        if (prevPosts.length > 0) {
+          setCache(cacheKey, prevPosts, CACHE_TTL);
+        }
       }
 
-      if (prevPosts.length > 0) {
+      if (Array.isArray(prevPosts) && prevPosts.length > 0) {
         setPosts(prev => [...prevPosts, ...prev]);
         setCurrentIndex(prev => prev + prevPosts.length);
         previousPageRef.current = prevPage - 1;

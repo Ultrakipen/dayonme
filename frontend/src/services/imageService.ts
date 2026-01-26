@@ -117,7 +117,10 @@ class ImageService {
 
   // 🔒 보안 강화: 이미지 URL 생성 (백엔드 URL 기반 + 화이트리스트 + CDN 지원)
   getImageUrl(path: string): string {
-    if (!path) return '';
+    if (!path) {
+      if (__DEV__) console.log('🖼️ getImageUrl: path가 비어있음');
+      return '';
+    }
 
     // CDN 활성화 시 CDN URL 사용
     if (CDN_CONFIG.enabled && CDN_CONFIG.baseUrl) {
@@ -133,11 +136,8 @@ class ImageService {
       try {
         const url = new URL(path);
         const allowedHosts = [
-          'localhost:3001',
-          'localhost',
-          '127.0.0.1:3001',
-          '127.0.0.1',
           'dayonme.com',
+          'www.dayonme.com',
         ];
 
         // CDN 도메인 허용
@@ -166,8 +166,18 @@ class ImageService {
     }
 
     // 상대 경로 처리
-    const baseUrl = apiClient.defaults.baseURL || 'http://localhost:3001/api';
-    return path.startsWith('/') ? `${baseUrl.replace('/api', '')}${path}` : `${baseUrl}/${path}`;
+    const baseUrl = apiClient.defaults.baseURL || 'https://dayonme.com/api';
+    const finalUrl = path.startsWith('/') ? `${baseUrl.replace('/api', '')}${path}` : `${baseUrl}/${path}`;
+
+    if (__DEV__) {
+      if (__DEV__) console.log('🖼️ getImageUrl 변환:', {
+        input: path,
+        baseUrl,
+        output: finalUrl
+      });
+    }
+
+    return finalUrl;
   }
 
   // CDN 설정 업데이트 (런타임에서 설정 변경 가능)

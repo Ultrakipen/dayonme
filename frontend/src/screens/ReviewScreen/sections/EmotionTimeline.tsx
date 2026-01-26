@@ -36,7 +36,7 @@ export const EmotionTimeline: React.FC<Props> = React.memo(({ period = 'week', p
       setItems(response.data.items || []);
     } catch (err) {
       setError('감정 타임라인을 불러오는데 실패했습니다');
-      console.error('개인 감정 타임라인 로드 실패:', err);
+      if (__DEV__) console.error('개인 감정 타임라인 로드 실패:', err);
       setItems([]);
     } finally {
       setLoading(false);
@@ -249,7 +249,7 @@ export const EmotionTimeline: React.FC<Props> = React.memo(({ period = 'week', p
                 }]}>
                   <Text style={{ fontSize: 32 * scale }}>{item.icon}</Text>
                 </View>
-                <Text style={[styles.emotion, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>{item.emotion}</Text>
+                <Text style={[styles.emotion, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>{item.emotion}</Text>
               </View>
 
               <View style={[styles.temperatureBar, {
@@ -306,7 +306,7 @@ export const EmotionTimeline: React.FC<Props> = React.memo(({ period = 'week', p
 
 const styles = StyleSheet.create({
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   timeline: {
   },
@@ -323,12 +323,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   time: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   temperatureChip: {
   },
   temperature: {
-    fontWeight: '800',
+    fontFamily: 'Pretendard-ExtraBold',
   },
   emotionContainer: {
     flexDirection: 'row',
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emotion: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   temperatureBar: {
     overflow: 'hidden',
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   },
   insightText: {
     flex: 1,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   errorContainer: {
     alignItems: 'center',

@@ -53,7 +53,7 @@ const MyGoalsScreen = () => {
       setGoals(goalsResponse.data.data);
       setEmotions(emotionsResponse.data.data);
     } catch (err) {
-      console.error('데이터 로딩 오류:', err);
+      if (__DEV__) console.error('데이터 로딩 오류:', err);
       setError('데이터를 불러오는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
@@ -88,7 +88,7 @@ const MyGoalsScreen = () => {
       resetForm();
       Alert.alert('성공', '새로운 감정 목표가 생성되었습니다.');
     } catch (err) {
-      console.error('목표 생성 오류:', err);
+      if (__DEV__) console.error('목표 생성 오류:', err);
       Alert.alert('오류', '목표 생성 중 문제가 발생했습니다.');
     } finally {
       setSubmitting(false);
@@ -109,7 +109,7 @@ const MyGoalsScreen = () => {
               setGoals(goals.filter(goal => goal.goal_id !== goalId));
               Alert.alert('성공', '목표가 삭제되었습니다.');
             } catch (err) {
-              console.error('목표 삭제 오류:', err);
+              if (__DEV__) console.error('목표 삭제 오류:', err);
               Alert.alert('오류', '목표 삭제 중 문제가 발생했습니다.');
             }
           },

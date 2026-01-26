@@ -19,8 +19,8 @@ import {
   Menu
 } from 'react-native-paper';
 import { Box, Text, VStack, HStack, Center, Pressable } from '../components/ui';
-import { format, parseISO } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import dayjs from 'dayjs';
+import 'dayjs/locale/ko';
 import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { useFocusEffect } from '@react-navigation/native';
@@ -126,17 +126,17 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
             .filter((item: BlockedContent) => item.content_type === 'post')
             .map((item: BlockedContent) => item.content_id);
           setBlockedContentIds(currentBlockedContentIds);
-          console.log('🚫 차단된 게시물 수:', currentBlockedContentIds.length);
+          if (__DEV__) console.log('🚫 차단된 게시물 수:', currentBlockedContentIds.length);
         }
 
         if (blockedUsersRes?.status === 'success') {
           currentBlockedUserIds = (blockedUsersRes.data || [])
             .map((user: BlockedUser) => user.blocked_id);
           setBlockedUserIds(currentBlockedUserIds);
-          console.log('🚫 차단된 사용자 수:', currentBlockedUserIds.length);
+          if (__DEV__) console.log('🚫 차단된 사용자 수:', currentBlockedUserIds.length);
         }
       } catch (blockError) {
-        console.warn('⚠️ 차단 목록 로드 실패 (계속 진행):', blockError);
+        if (__DEV__) console.warn('⚠️ 차단 목록 로드 실패 (계속 진행):', blockError);
       }
 
       // MyDay 게시물 로드
@@ -146,12 +146,12 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
         sort_by: 'latest'
       });
 
-      console.log('🔍 MyDay API 응답 구조:', JSON.stringify(response, null, 2));
+      if (__DEV__) console.log('🔍 MyDay API 응답 구조:', JSON.stringify(response, null, 2));
 
       if (response?.status === 'success') {
         // posts가 직접적으로 있는 경우와 data.posts에 있는 경우 모두 처리
         const apiPosts: ApiMyDayPost[] = response.data?.posts || response.posts || response.data || [];
-        console.log('🔍 찾은 게시물 수:', apiPosts.length);
+        if (__DEV__) console.log('🔍 찾은 게시물 수:', apiPosts.length);
 
         if (apiPosts.length > 0) {
           // API 데이터를 로컬 형식으로 변환
@@ -184,12 +184,12 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
           const filteredLocalPosts = localPosts.filter(post => {
             // 차단된 게시물 제외
             if (currentBlockedContentIds.includes(post.post_id)) {
-              console.log('🚫 차단된 게시물 필터링:', post.post_id);
+              if (__DEV__) console.log('🚫 차단된 게시물 필터링:', post.post_id);
               return false;
             }
             // 차단된 사용자의 게시물 제외
             if (currentBlockedUserIds.includes(post.user_id)) {
-              console.log('🚫 차단된 사용자 게시물 필터링:', post.user_id);
+              if (__DEV__) console.log('🚫 차단된 사용자 게시물 필터링:', post.user_id);
               return false;
             }
             return true;
@@ -197,19 +197,19 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
 
           setPosts(filteredLocalPosts);
           setFilteredPosts(filteredLocalPosts);
-          console.log(`✅ MyDay 게시물 로드 성공: ${filteredLocalPosts.length}개 (필터링 후)`, filteredLocalPosts.map(p => p.post_id));
+          if (__DEV__) console.log(`✅ MyDay 게시물 로드 성공: ${filteredLocalPosts.length}개 (필터링 후)`, filteredLocalPosts.map(p => p.post_id));
         } else {
           setPosts([]);
           setFilteredPosts([]);
-          console.log('표시할 MyDay 게시물이 없습니다. (빈 배열)');
+          if (__DEV__) console.log('표시할 MyDay 게시물이 없습니다. (빈 배열)');
         }
       } else {
         setPosts([]);
         setFilteredPosts([]);
-        console.log('❌ API 응답 상태가 success가 아닙니다:', response?.status);
+        if (__DEV__) console.log('❌ API 응답 상태가 success가 아닙니다:', response?.status);
       }
-    } catch (error: any) {
-      console.error('❌ MyDay 게시물 로드 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ MyDay 게시물 로드 오류:', error);
       setPosts([]);
       setFilteredPosts([]);
       showAlert.error('오류', 'MyDay 게시물을 불러오는데 실패했습니다.');
@@ -281,7 +281,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
         setFilteredPosts(updatePosts);
       }
     } catch (error) {
-      console.error('❌ MyDay 게시물 좋아요 오류:', error);
+      if (__DEV__) console.error('❌ MyDay 게시물 좋아요 오류:', error);
       showAlert.error('오류', '좋아요 처리에 실패했습니다.');
     } finally {
       // 로딩 상태 제거
@@ -316,14 +316,14 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     if (blockPostId === null) return;
 
     try {
-      console.log('🚫 나의하루 게시물 차단 시도:', blockPostId);
+      if (__DEV__) console.log('🚫 나의하루 게시물 차단 시도:', blockPostId);
       await blockService.blockContent({
         contentType: 'post',
         contentId: blockPostId,
         reason,
       });
 
-      console.log('✅ 게시물 차단 성공');
+      if (__DEV__) console.log('✅ 게시물 차단 성공');
 
       // 로컬 상태 업데이트 - 차단 목록에 추가
       setBlockedContentIds(prev => [...prev, blockPostId]);
@@ -335,7 +335,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
 
       showAlert.success('완료', '게시물이 차단되었습니다.');
     } catch (error) {
-      console.error('❌ 게시물 차단 오류:', error);
+      if (__DEV__) console.error('❌ 게시물 차단 오류:', error);
       showAlert.error('오류', '게시물 차단 중 오류가 발생했습니다.');
     } finally {
       setBlockPostId(null);
@@ -345,11 +345,11 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
   // 포커스 시 데이터 새로고침
   useFocusEffect(
     useCallback(() => {
-      console.log('🔄 MyDayScreen - 화면 포커스, 데이터 새로고침 시작');
+      if (__DEV__) console.log('🔄 MyDayScreen - 화면 포커스, 데이터 새로고침 시작');
 
       // 프로필 이미지 업데이트 시 강제 새로고침
       if (global.homeScreenRefresh?.profileImageUpdated) {
-        console.log('🔄 MyDayScreen - 프로필 이미지 업데이트 감지, 강제 새로고침');
+        if (__DEV__) console.log('🔄 MyDayScreen - 프로필 이미지 업데이트 감지, 강제 새로고침');
       }
 
       loadPosts();
@@ -390,7 +390,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     },
     mainTitle: {
       fontSize: 32,
-      fontWeight: '800',
+      fontFamily: 'Pretendard-ExtraBold',
       color: theme.text.primary,
       marginBottom: 6,
       letterSpacing: -0.8,
@@ -408,7 +408,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     },
     subtitle: {
       fontSize: FONT_SIZES.body,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       color: theme.text.secondary,
       letterSpacing: 0.2,
     },
@@ -426,7 +426,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     profileButtonText: {
       color: isDark ? '#000' : '#ffffff',
       fontSize: FONT_SIZES.caption,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
     },
     searchSection: {
       gap: 12,
@@ -441,7 +441,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     searchInput: {
       fontSize: FONT_SIZES.bodyLarge,
       color: theme.text.primary,
-      fontWeight: '500',
+      fontFamily: 'Pretendard-Medium',
     },
     statsRow: {
       justifyContent: 'space-between',
@@ -450,12 +450,12 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     statsText: {
       fontSize: FONT_SIZES.caption,
       color: theme.text.secondary,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
     },
     clearFilterText: {
       fontSize: FONT_SIZES.caption,
       color: emotionColors.primary,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
     },
 
     // 포스트 카드 스타일
@@ -483,7 +483,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     dateText: {
       fontSize: FONT_SIZES.caption,
       color: theme.text.secondary,
-      fontWeight: '500',
+      fontFamily: 'Pretendard-Medium',
       lineHeight: 18,
     },
     emotionChip: {
@@ -500,7 +500,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     },
     emotionText: {
       fontSize: FONT_SIZES.caption,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       lineHeight: 18,
     },
     contentText: {
@@ -542,7 +542,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     statText: {
       fontSize: FONT_SIZES.caption,
       color: theme.text.secondary,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       lineHeight: 18,
     },
     likedStatText: {
@@ -560,13 +560,13 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     moreButtonText: {
       fontSize: FONT_SIZES.caption,
       color: isDark ? '#000' : '#ffffff',
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       lineHeight: 18,
     },
     chevronIcon: {
       fontSize: FONT_SIZES.bodyLarge,
       color: isDark ? '#000' : '#ffffff',
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
     },
 
     // 로딩 상태
@@ -596,7 +596,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     },
     emptyTitle: {
       fontSize: FONT_SIZES.h3,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       color: theme.text.primary,
       textAlign: 'center',
       marginBottom: 8,
@@ -627,9 +627,9 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
     let formattedDate = '방금 전';
     try {
       const safeCreatedAt = item.created_at || new Date().toISOString();
-      formattedDate = format(parseISO(safeCreatedAt), 'M월 d일 (E) HH:mm', { locale: ko });
+      formattedDate = dayjs(safeCreatedAt).locale('ko').format('M월 D일 (ddd) HH:mm');
     } catch (error) {
-      console.warn('📅 MyDayScreen 날짜 포맷팅 오류:', error, 'created_at:', item.created_at);
+      if (__DEV__) console.warn('📅 MyDayScreen 날짜 포맷팅 오류:', error, 'created_at:', item.created_at);
       formattedDate = '방금 전';
     }
     
@@ -683,7 +683,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
             {item.image_url && (
               (() => {
                 const finalImageUrl = normalizeImageUrl(item.image_url);
-                console.log('🖼️ MyDay 이미지 URL 처리:', {
+                if (__DEV__) console.log('🖼️ MyDay 이미지 URL 처리:', {
                   original: item.image_url,
                   final: finalImageUrl,
                   post_id: item.post_id
@@ -701,7 +701,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
                     }}
                     resizeMode="cover"
                     onError={(error: any) => {
-                      console.error('❌ MyDay 이미지 로드 실패:', {
+                      if (__DEV__) console.error('❌ MyDay 이미지 로드 실패:', {
                         original: item.image_url,
                         final: finalImageUrl,
                         error: error.nativeEvent?.error,
@@ -710,7 +710,7 @@ const MyDayScreen: React.FC<MyDayScreenProps> = ({ navigation }) => {
                       logImageError('MyDay Post', item.image_url, finalImageUrl, error.nativeEvent?.error);
                     }}
                     onLoad={() => {
-                      console.log('✅ MyDay 이미지 로드 성공:', finalImageUrl);
+                      if (__DEV__) console.log('✅ MyDay 이미지 로드 성공:', finalImageUrl);
                       logImageSuccess('MyDay Post', finalImageUrl);
                     }}
                   />

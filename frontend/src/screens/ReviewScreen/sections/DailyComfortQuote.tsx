@@ -30,7 +30,7 @@ export const DailyComfortQuote: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('위로의 한 줄을 불러오는데 실패했습니다');
-      console.error('위로의 한 줄 로드 실패:', err);
+      if (__DEV__) console.error('위로의 한 줄 로드 실패:', err);
     } finally {
       setLoading(false);
     }
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     flex: 1,
   },
   loadingText: {
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   likeText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   errorContainer: {
     alignItems: 'center',

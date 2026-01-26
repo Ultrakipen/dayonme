@@ -396,12 +396,12 @@ const styles = StyleSheet.create({
   },
   textContainer: {},
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
     letterSpacing: -0.4,
   },
   message: {
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
     letterSpacing: -0.2,
   },
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   buttonText: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
     letterSpacing: -0.2,
     includeFontPadding: false,
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   compactButtonText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     textAlign: 'center',
     letterSpacing: -0.2,
     includeFontPadding: false,
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   toastMessage: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.2,
     flex: 1,
   },
@@ -531,7 +531,7 @@ export const AlertProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   if (__DEV__) {
-    console.log('🎭 AlertProvider 렌더링:', { hasChildren: !!children, alertVisible: alert.visible });
+    if (__DEV__) console.log('🎭 AlertProvider 렌더링:', { hasChildren: !!children, alertVisible: alert.visible });
   }
 
   try {

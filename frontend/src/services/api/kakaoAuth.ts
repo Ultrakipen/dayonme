@@ -57,7 +57,7 @@ export const getKakaoAccessToken = async (code: string): Promise<string> => {
       throw new Error('액세스 토큰을 받지 못했습니다.');
     }
   } catch (error) {
-    console.error('카카오 액세스 토큰 요청 실패:', error);
+    if (__DEV__) console.error('카카오 액세스 토큰 요청 실패:', error);
     throw error;
   }
 };
@@ -67,7 +67,7 @@ export const getKakaoAccessToken = async (code: string): Promise<string> => {
  */
 export const kakaoLogin = async (accessToken: string): Promise<KakaoAuthResponse> => {
   try {
-    console.log('🔄 카카오 로그인 시도');
+    if (__DEV__) console.log('🔄 카카오 로그인 시도');
     const response = await apiClient.post<KakaoAuthResponse>('/auth/kakao', {
       access_token: accessToken,
     });
@@ -81,12 +81,12 @@ export const kakaoLogin = async (accessToken: string): Promise<KakaoAuthResponse
         ['user', JSON.stringify(user)],
       ]);
 
-      console.log('✅ 카카오 로그인 성공:', user.email);
+      if (__DEV__) console.log('✅ 카카오 로그인 성공:', user.email);
     }
 
     return response.data;
-  } catch (error: any) {
-    console.error('❌ 카카오 로그인 오류:', error);
+  } catch (error: unknown) {
+    if (__DEV__) console.error('❌ 카카오 로그인 오류:', error);
     throw error.response?.data || {
       status: 'error',
       message: '카카오 로그인에 실패했습니다.',
@@ -101,11 +101,11 @@ export const kakaoLogin = async (accessToken: string): Promise<KakaoAuthResponse
 export const startKakaoLogin = async (): Promise<void> => {
   try {
     const authUrl = getKakaoAuthUrl();
-    console.log('🔐 카카오 로그인 시작...' , authUrl);
+    if (__DEV__) console.log('🔐 카카오 로그인 시작...' , authUrl);
     await Linking.openURL(authUrl);
-    console.log('✅ 카카오 로그인 페이지 열림');
-  } catch (error: any) {
-    console.error('❌ 카카오 로그인 시작 실패:', error.message);
+    if (__DEV__) console.log('✅ 카카오 로그인 페이지 열림');
+  } catch (error: unknown) {
+    if (__DEV__) console.error('❌ 카카오 로그인 시작 실패:', error.message);
   }
 };
 

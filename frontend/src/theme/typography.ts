@@ -60,109 +60,109 @@ export const Typography = {
     // Headers
     h1: {
       fontSize: 28,
-      fontWeight: '700' as const,
+      fontFamily: 'Pretendard-Bold' as const,
       lineHeight: 32,
     },
     h2: {
       fontSize: 24,
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       lineHeight: 28,
     },
     h3: {
       fontSize: 20,
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       lineHeight: 24,
     },
     h4: {
       fontSize: 18,
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       lineHeight: 22,
     },
     
     // Body Text (가독성 개선)
     body: {
       fontSize: 15,
-      fontWeight: '400' as const,
+      fontFamily: 'Pretendard-Regular' as const,
       lineHeight: 20,
     },
     bodyLarge: {
       fontSize: 17,
-      fontWeight: '400' as const,
+      fontFamily: 'Pretendard-Regular' as const,
       lineHeight: 22,
     },
     bodySmall: {
       fontSize: 13,
-      fontWeight: '400' as const,
+      fontFamily: 'Pretendard-Regular' as const,
       lineHeight: 17,
     },
     
     // Labels
     label: {
       fontSize: 14,
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       lineHeight: 18,
     },
     labelSmall: {
       fontSize: 12,
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       lineHeight: 16,
     },
     
     // Captions
     caption: {
       fontSize: 12,
-      fontWeight: '400' as const,
+      fontFamily: 'Pretendard-Regular' as const,
       lineHeight: 16,
     },
     captionSmall: {
       fontSize: 10,
-      fontWeight: '400' as const,
+      fontFamily: 'Pretendard-Regular' as const,
       lineHeight: 14,
     },
     
     // Buttons
     button: {
       fontSize: 14,
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       lineHeight: 18,
     },
     buttonLarge: {
       fontSize: 16,
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       lineHeight: 20,
     },
     buttonSmall: {
       fontSize: 12,
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       lineHeight: 16,
     },
     
     // App-specific styles
     username: {
       fontSize: 15,
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       lineHeight: 19,
     },
     postText: {
       fontSize: 15,
-      fontWeight: '400' as const,
+      fontFamily: 'Pretendard-Regular' as const,
       lineHeight: 21,
     },
     hashtag: {
       fontSize: 15,
-      fontWeight: '500' as const,
+      fontFamily: 'Pretendard-Medium' as const,
       lineHeight: 19,
       color: '#0ea5e9', // App blue
     },
     mention: {
       fontSize: 15,
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       lineHeight: 19,
       color: '#0ea5e9', // App blue
     },
     timestamp: {
       fontSize: 13,
-      fontWeight: '400' as const,
+      fontFamily: 'Pretendard-Regular' as const,
       lineHeight: 17,
       color: '#9ca3af', // App gray
     },

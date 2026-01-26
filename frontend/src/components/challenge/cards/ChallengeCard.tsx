@@ -6,6 +6,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { useNavigation } from '@react-navigation/native';
 import { useModernTheme } from '../../../contexts/ModernThemeContext';
 import { CHALLENGE_COLORS, getGradientColors } from '../../../constants/challenge';
+import { getImageProps } from '../../../utils/imageOptimization';
 
 interface Challenge {
   challenge_id: number;
@@ -30,7 +31,8 @@ export const ChallengeCard = memo<ChallengeCardProps>(({ challenge, index }) => 
   const { theme, isDark } = useModernTheme();
   const cardAnim = useRef(new Animated.Value(0)).current;
   const ddayPulse = useRef(new Animated.Value(1)).current;
-  const [imageLoading, setImageLoading] = useState(true);
+  const [imageLoading, setImageLoading] = useState(false);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     Animated.timing(cardAnim, {
@@ -40,6 +42,38 @@ export const ChallengeCard = memo<ChallengeCardProps>(({ challenge, index }) => 
       useNativeDriver: true,
     }).start();
   }, [cardAnim, index]);
+
+  // 챌린지 변경 시 이미지 로딩 상태 초기화 및 프리로드
+  useEffect(() => {
+    // 타이머 정리
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+
+    setImageLoading(false);
+
+    // 이미지가 있으면 프리로드 (백그라운드에서 비동기 실행)
+    if (challenge.image_urls && challenge.image_urls.length > 0) {
+      const imageUri = getImageProps(challenge.image_urls[0], 'card').uri;
+      if (imageUri && imageUri.trim()) {
+        // 첫 번째 이미지는 높은 우선순위로 프리로드
+        FastImage.preload([{
+          uri: imageUri,
+          priority: FastImage.priority.high
+        }]);
+      }
+    }
+
+    // cleanup: 컴포넌트 언마운트 시 타이머 정리
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+      setImageLoading(false);
+    };
+  }, [challenge.challenge_id, challenge.image_urls]);
 
   const getDdayInfo = () => {
     if (!challenge.end_date) return { text: '상시', color: theme.text.secondary };
@@ -99,16 +133,37 @@ export const ChallengeCard = memo<ChallengeCardProps>(({ challenge, index }) => 
           {challenge.image_urls && challenge.image_urls.length > 0 ? (
             <>
               <FastImage
+                key={`challenge-card-${getImageProps(challenge.image_urls[0], 'card').uri}`}
                 source={{
-                  uri: challenge.image_urls[0],
-                  priority: FastImage.priority.normal,
-                  cache: FastImage.cacheControl.immutable,
+                  uri: getImageProps(challenge.image_urls[0], 'card').uri,
+                  priority: FastImage.priority.high, // 카드 이미지는 높은 우선순위
+                  cache: FastImage.cacheControl.web, // web 캐시 사용
                 }}
                 style={styles.image}
                 resizeMode={FastImage.resizeMode.cover}
-                onLoadStart={() => setImageLoading(true)}
-                onLoadEnd={() => setImageLoading(false)}
-                onError={() => setImageLoading(false)}
+                onLoadStart={() => {
+                  setImageLoading(true);
+                  // 타임아웃 설정: 2초 후에도 로딩 중이면 강제 종료 (캐시된 이미지는 즉시 표시됨)
+                  loadingTimeoutRef.current = setTimeout(() => {
+                    setImageLoading(false);
+                    loadingTimeoutRef.current = null;
+                  }, 2000);
+                }}
+                onLoadEnd={() => {
+                  if (loadingTimeoutRef.current) {
+                    clearTimeout(loadingTimeoutRef.current);
+                    loadingTimeoutRef.current = null;
+                  }
+                  setImageLoading(false);
+                }}
+                onError={() => {
+                  if (__DEV__) console.warn('[ChallengeCard] 이미지 로드 실패:', challenge.image_urls[0]);
+                  if (loadingTimeoutRef.current) {
+                    clearTimeout(loadingTimeoutRef.current);
+                    loadingTimeoutRef.current = null;
+                  }
+                  setImageLoading(false);
+                }}
               />
               {imageLoading && (
                 <View style={styles.loadingOverlay}>
@@ -190,14 +245,14 @@ const styles = StyleSheet.create({
   loadingOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255, 255, 255, 0.8)', justifyContent: 'center', alignItems: 'center' },
   gradient: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
   ddayBadge: { position: 'absolute', top: 12, right: 12, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  ddayText: { color: 'white', fontSize: 14, fontWeight: '700' },
+  ddayText: { color: 'white', fontSize: 14, fontFamily: 'Pretendard-Bold' },
   content: { padding: 16 },
-  title: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
+  title: { fontSize: 16, fontFamily: 'Pretendard-Bold', marginBottom: 8 },
   tagsContainer: { flexDirection: 'row', marginBottom: 12 },
   tag: { backgroundColor: 'rgba(99, 102, 241, 0.1)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginRight: 6 },
-  tagText: { fontSize: 14, color: CHALLENGE_COLORS.primary, fontWeight: '600' },
+  tagText: { fontSize: 14, color: CHALLENGE_COLORS.primary, fontFamily: 'Pretendard-SemiBold' },
   footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   socialItem: { flexDirection: 'row', alignItems: 'center', marginRight: 12 },
   socialRow: { flexDirection: 'row' },
-  socialText: { fontSize: 14, marginLeft: 4, fontWeight: '600' },
+  socialText: { fontSize: 14, marginLeft: 4, fontFamily: 'Pretendard-SemiBold' },
 });

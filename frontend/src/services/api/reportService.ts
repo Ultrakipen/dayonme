@@ -20,7 +20,7 @@ const reportService = {
       const response = await apiClient.post('/reports', reportData);
       return response.data;
     } catch (error) {
-      console.error('신고 제출 오류:', error);
+      if (__DEV__) console.error('신고 제출 오류:', error);
       throw error;
     }
   },
@@ -42,7 +42,7 @@ const reportService = {
       };
       return await reportService.submitReport(reportData);
     } catch (error) {
-      console.error('게시물 신고 오류:', error);
+      if (__DEV__) console.error('게시물 신고 오류:', error);
       throw error;
     }
   },
@@ -64,7 +64,7 @@ const reportService = {
       };
       return await reportService.submitReport(reportData);
     } catch (error) {
-      console.error('댓글 신고 오류:', error);
+      if (__DEV__) console.error('댓글 신고 오류:', error);
       throw error;
     }
   },
@@ -86,7 +86,7 @@ const reportService = {
       };
       return await reportService.submitReport(reportData);
     } catch (error) {
-      console.error('사용자 신고 오류:', error);
+      if (__DEV__) console.error('사용자 신고 오류:', error);
       throw error;
     }
   },
@@ -97,7 +97,7 @@ const reportService = {
       const response = await apiClient.get('/reports', { params: filters });
       return response.data;
     } catch (error) {
-      console.error('신고 목록 조회 오류:', error);
+      if (__DEV__) console.error('신고 목록 조회 오류:', error);
       throw error;
     }
   },
@@ -108,7 +108,7 @@ const reportService = {
       const response = await apiClient.get('/reports/my', { params: filters });
       return response.data;
     } catch (error) {
-      console.error('내 신고 목록 조회 오류:', error);
+      if (__DEV__) console.error('내 신고 목록 조회 오류:', error);
       throw error;
     }
   },
@@ -119,7 +119,7 @@ const reportService = {
       const response = await apiClient.get(`/reports/${reportId}`);
       return response.data.data || response.data;
     } catch (error) {
-      console.error('신고 상세 조회 오류:', error);
+      if (__DEV__) console.error('신고 상세 조회 오류:', error);
       throw error;
     }
   },
@@ -134,7 +134,7 @@ const reportService = {
       const data = { status, resolution_note: resolutionNote };
       await apiClient.patch(`/reports/${reportId}/review`, data);
     } catch (error) {
-      console.error('신고 처리 오류:', error);
+      if (__DEV__) console.error('신고 처리 오류:', error);
       throw error;
     }
   },
@@ -145,7 +145,7 @@ const reportService = {
       const response = await apiClient.get('/reports/stats');
       return response.data;
     } catch (error) {
-      console.error('신고 통계 조회 오류:', error);
+      if (__DEV__) console.error('신고 통계 조회 오류:', error);
       throw error;
     }
   },
@@ -155,7 +155,7 @@ const reportService = {
     try {
       await apiClient.post('/users/block', blockData);
     } catch (error) {
-      console.error('사용자 차단 오류:', error);
+      if (__DEV__) console.error('사용자 차단 오류:', error);
       throw error;
     }
   },
@@ -165,7 +165,7 @@ const reportService = {
     try {
       await apiClient.delete(`/users/block/${userId}`);
     } catch (error) {
-      console.error('사용자 차단 해제 오류:', error);
+      if (__DEV__) console.error('사용자 차단 해제 오류:', error);
       throw error;
     }
   },
@@ -176,7 +176,7 @@ const reportService = {
       const response = await apiClient.get('/users/blocked');
       return response.data;
     } catch (error) {
-      console.error('차단된 사용자 목록 조회 오류:', error);
+      if (__DEV__) console.error('차단된 사용자 목록 조회 오류:', error);
       throw error;
     }
   },
@@ -187,7 +187,7 @@ const reportService = {
       const response = await apiClient.get(`/users/block/${userId}/status`);
       return response.data.is_blocked;
     } catch (error) {
-      console.error('사용자 차단 상태 확인 오류:', error);
+      if (__DEV__) console.error('사용자 차단 상태 확인 오류:', error);
       return false;
     }
   },
@@ -202,7 +202,7 @@ const reportService = {
       const response = await apiClient.get('/moderation/actions', { params });
       return response.data;
     } catch (error) {
-      console.error('모더레이션 액션 조회 오류:', error);
+      if (__DEV__) console.error('모더레이션 액션 조회 오류:', error);
       throw error;
     }
   },
@@ -222,7 +222,7 @@ const reportService = {
       };
       await apiClient.post('/moderation/actions', data);
     } catch (error) {
-      console.error('콘텐츠 숨기기 오류:', error);
+      if (__DEV__) console.error('콘텐츠 숨기기 오류:', error);
       throw error;
     }
   },
@@ -239,7 +239,7 @@ const reportService = {
       };
       await apiClient.post('/moderation/actions', data);
     } catch (error) {
-      console.error('사용자 경고 오류:', error);
+      if (__DEV__) console.error('사용자 경고 오류:', error);
       throw error;
     }
   },
@@ -262,7 +262,7 @@ const reportService = {
       };
       await apiClient.post('/moderation/actions', data);
     } catch (error) {
-      console.error('사용자 임시 정지 오류:', error);
+      if (__DEV__) console.error('사용자 임시 정지 오류:', error);
       throw error;
     }
   },
@@ -279,7 +279,7 @@ const reportService = {
       };
       await apiClient.post('/moderation/actions', data);
     } catch (error) {
-      console.error('사용자 영구 정지 오류:', error);
+      if (__DEV__) console.error('사용자 영구 정지 오류:', error);
       throw error;
     }
   },
@@ -295,7 +295,7 @@ const reportService = {
       const response = await apiClient.get(`/reports/reasons/${itemType}`);
       return response.data;
     } catch (error) {
-      console.error('신고 사유 템플릿 조회 오류:', error);
+      if (__DEV__) console.error('신고 사유 템플릿 조회 오류:', error);
       // 기본 신고 사유 반환
       return [
         {
@@ -343,7 +343,7 @@ const reportService = {
     try {
       await apiClient.patch(`/reports/${reportId}/acknowledge`);
     } catch (error) {
-      console.error('신고 접수 확인 오류:', error);
+      if (__DEV__) console.error('신고 접수 확인 오류:', error);
       throw error;
     }
   },

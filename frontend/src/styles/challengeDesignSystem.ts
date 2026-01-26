@@ -4,15 +4,15 @@ import { normalize } from '../utils/responsive';
 
 // 기본값 (런타임 전)
 const DEFAULT_TYPOGRAPHY = {
-  h1: { fontSize: 18, fontWeight: '700' as const, lineHeight: 25 },
-  h2: { fontSize: 16, fontWeight: '700' as const, lineHeight: 23 },
-  h3: { fontSize: 15, fontWeight: '600' as const, lineHeight: 21 },
-  h4: { fontSize: 14, fontWeight: '600' as const, lineHeight: 19 },
-  body1: { fontSize: 13, fontWeight: '400' as const, lineHeight: 19 },
-  body2: { fontSize: 12, fontWeight: '400' as const, lineHeight: 18 },
-  caption: { fontSize: 11, fontWeight: '500' as const, lineHeight: 16 },
-  subtitle: { fontSize: 11, fontWeight: '400' as const, lineHeight: 16 },
-  tiny: { fontSize: 10, fontWeight: '500' as const, lineHeight: 14 },
+  h1: { fontSize: 18, fontFamily: 'Pretendard-Bold' as const, lineHeight: 25 },
+  h2: { fontSize: 16, fontFamily: 'Pretendard-Bold' as const, lineHeight: 23 },
+  h3: { fontSize: 15, fontFamily: 'Pretendard-SemiBold' as const, lineHeight: 21 },
+  h4: { fontSize: 14, fontFamily: 'Pretendard-SemiBold' as const, lineHeight: 19 },
+  body1: { fontSize: 13, fontFamily: 'Pretendard-Regular' as const, lineHeight: 19 },
+  body2: { fontSize: 12, fontFamily: 'Pretendard-Regular' as const, lineHeight: 18 },
+  caption: { fontSize: 11, fontFamily: 'Pretendard-Medium' as const, lineHeight: 16 },
+  subtitle: { fontSize: 11, fontFamily: 'Pretendard-Regular' as const, lineHeight: 16 },
+  tiny: { fontSize: 10, fontFamily: 'Pretendard-Medium' as const, lineHeight: 14 },
 };
 
 const DEFAULT_SPACING = {
@@ -46,15 +46,15 @@ let _radiusCache: typeof DEFAULT_RADIUS | null = null;
 export const getTypography = () => {
   if (!_typographyCache) {
     _typographyCache = {
-      h1: { fontSize: normalize(18), fontWeight: '700' as const, lineHeight: normalize(25) },
-      h2: { fontSize: normalize(16), fontWeight: '700' as const, lineHeight: normalize(23) },
-      h3: { fontSize: normalize(15), fontWeight: '600' as const, lineHeight: normalize(21) },
-      h4: { fontSize: normalize(14), fontWeight: '600' as const, lineHeight: normalize(19) },
-      body1: { fontSize: normalize(13), fontWeight: '400' as const, lineHeight: normalize(19) },
-      body2: { fontSize: normalize(12), fontWeight: '400' as const, lineHeight: normalize(18) },
-      caption: { fontSize: normalize(11), fontWeight: '500' as const, lineHeight: normalize(16) },
-      subtitle: { fontSize: normalize(11), fontWeight: '400' as const, lineHeight: normalize(16) },
-      tiny: { fontSize: normalize(10), fontWeight: '500' as const, lineHeight: normalize(14) },
+      h1: { fontSize: normalize(18), fontFamily: 'Pretendard-Bold' as const, lineHeight: normalize(25) },
+      h2: { fontSize: normalize(16), fontFamily: 'Pretendard-Bold' as const, lineHeight: normalize(23) },
+      h3: { fontSize: normalize(15), fontFamily: 'Pretendard-SemiBold' as const, lineHeight: normalize(21) },
+      h4: { fontSize: normalize(14), fontFamily: 'Pretendard-SemiBold' as const, lineHeight: normalize(19) },
+      body1: { fontSize: normalize(13), fontFamily: 'Pretendard-Regular' as const, lineHeight: normalize(19) },
+      body2: { fontSize: normalize(12), fontFamily: 'Pretendard-Regular' as const, lineHeight: normalize(18) },
+      caption: { fontSize: normalize(11), fontFamily: 'Pretendard-Medium' as const, lineHeight: normalize(16) },
+      subtitle: { fontSize: normalize(11), fontFamily: 'Pretendard-Regular' as const, lineHeight: normalize(16) },
+      tiny: { fontSize: normalize(10), fontFamily: 'Pretendard-Medium' as const, lineHeight: normalize(14) },
     };
   }
   return _typographyCache;

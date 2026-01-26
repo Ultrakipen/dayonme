@@ -89,7 +89,7 @@ export const useSocket = (options: UseSocketOptions = {}) => {
   // 이벤트 발신 함수
   const emit = useCallback((event: string, data?: any) => {
     if (!socketService.isConnected()) {
-      console.warn('소켓이 연결되지 않았습니다.');
+      if (__DEV__) console.warn('소켓이 연결되지 않았습니다.');
       return;
     }
     socketService.emit(event, data);

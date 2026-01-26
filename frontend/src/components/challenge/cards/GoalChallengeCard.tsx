@@ -63,20 +63,35 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
   const isDarkMode = parentIsDarkMode !== undefined ? parentIsDarkMode : isDark;
   const scaleValue = useRef(new Animated.Value(1)).current;
   const participatingPulse = useRef(new Animated.Value(1)).current;
-  const [imageLoadStates, setImageLoadStates] = useState<boolean[]>([]);
+  const [imageLoadStates, setImageLoadStates] = useState<Record<number, 'loading' | 'loaded' | 'error'>>({});
+  const loadingTimersRef = useRef<Record<number, NodeJS.Timeout>>({});
 
   // 이미지 상태 초기화 및 프리로드
   useEffect(() => {
-    // 이미지 URL이 변경되면 로딩 상태 초기화
-    setImageLoadStates([]);
+    // 기존 타이머 정리
+    Object.values(loadingTimersRef.current).forEach(timer => clearTimeout(timer));
+    loadingTimersRef.current = {};
 
+    // 이미지 URL이 변경되면 로딩 상태 초기화
+    setImageLoadStates({});
+
+    // 이미지가 있으면 프리로드
     if (challenge.image_urls && challenge.image_urls.length > 0) {
-      FastImage.preload([{
-        uri: getImageProps(challenge.image_urls[0], 'card').uri,
-        priority: FastImage.priority.high
-      }]);
+      const preloadList = challenge.image_urls.map((uri, idx) => ({
+        uri: getImageProps(uri, 'card', idx).uri,
+        priority: idx === 0 ? FastImage.priority.high : FastImage.priority.normal,
+      }));
+
+      FastImage.preload(preloadList);
     }
-  }, [challenge.image_urls, challenge.challenge_id]);
+
+    // cleanup: 컴포넌트 언마운트 시 타이머와 상태 정리
+    return () => {
+      Object.values(loadingTimersRef.current).forEach(timer => clearTimeout(timer));
+      loadingTimersRef.current = {};
+      setImageLoadStates({});
+    };
+  }, [challenge.challenge_id, challenge.image_urls]);
 
   const handlePressIn = () => {
     Animated.timing(scaleValue, {
@@ -136,6 +151,9 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
         onPressOut={handlePressOut}
         activeOpacity={0.9}
         style={styles.challengeCardContent}
+        accessibilityLabel={`챌린지, ${challenge.title}, ${challenge.is_participating ? '참여중' : '미참여'}`}
+        accessibilityHint={`참여자 ${challenge.participant_count}명, 좋아요 ${challenge.like_count || 0}개, 상세 정보를 보려면 두 번 탭하세요`}
+        accessibilityRole="button"
       >
         {/* 헤더 - 상태 정보 (한 줄 배치) */}
         <View style={styles.challengeCardHeader}>
@@ -220,7 +238,22 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
               pagingEnabled={false}
             >
               {challenge.image_urls.map((url, index) => {
-                const isLoading = imageLoadStates[index] === true;
+                // URL 기본 유효성 검증 (빈 문자열 체크)
+                if (!url || !url.trim()) {
+                  return null;
+                }
+
+                const imageUri = getImageProps(url, 'card').uri;
+                const loadState = imageLoadStates[index];
+                const isLoading = loadState === 'loading';
+                const hasError = loadState === 'error';
+
+                // 최종 URL이 없거나 빈 문자열이면 렌더링 안함
+                if (!imageUri || imageUri.trim() === '') {
+                  if (__DEV__) console.warn(`[GoalChallengeCard] 유효하지 않은 이미지 URL: ${url}`);
+                  return null;
+                }
+
                 return (
                   <View key={`${challenge.challenge_id}-img-${index}`} style={styles.imageWrapper}>
                     {isLoading && (
@@ -231,36 +264,61 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
                         <ActivityIndicator size="small" color={COLORS.primary} />
                       </View>
                     )}
-                    <FastImage
-                      source={{
-                        uri: getImageProps(url, 'card').uri,
-                        priority: index === 0 ? FastImage.priority.high : FastImage.priority.normal,
-                        cache: FastImage.cacheControl.web
-                      }}
-                      style={[styles.cardImage, isLoading && { opacity: 0 }]}
-                      resizeMode={FastImage.resizeMode.cover}
-                      onLoadStart={() => {
-                        setImageLoadStates(prev => {
-                          const newStates = [...prev];
-                          newStates[index] = true;
-                          return newStates;
-                        });
-                      }}
-                      onLoad={() => {
-                        setImageLoadStates(prev => {
-                          const newStates = [...prev];
-                          newStates[index] = false;
-                          return newStates;
-                        });
-                      }}
-                      onError={() => {
-                        setImageLoadStates(prev => {
-                          const newStates = [...prev];
-                          newStates[index] = false;
-                          return newStates;
-                        });
-                      }}
-                    />
+                    {hasError ? (
+                      <View style={[
+                        styles.cardImage,
+                        styles.errorImage,
+                        { backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }
+                      ]}>
+                        <MaterialCommunityIcons name="image-off-outline" size={32} color={COLORS.textSecondary} />
+                      </View>
+                    ) : (
+                      <FastImage
+                        source={{
+                          ...getImageProps(url, 'card', index),
+                          priority: index === 0 ? FastImage.priority.high : FastImage.priority.normal,
+                        }}
+                        style={[styles.cardImage, isLoading && { opacity: 0 }]}
+                        resizeMode={FastImage.resizeMode.cover}
+                        onLoadStart={() => {
+                          setImageLoadStates(prev => ({
+                            ...prev,
+                            [index]: 'loading'
+                          }));
+                          // 타임아웃 설정: 2초 후에도 로딩 중이면 loaded로 전환 (캐시된 이미지는 즉시 표시됨)
+                          loadingTimersRef.current[index] = setTimeout(() => {
+                            setImageLoadStates(prev => {
+                              if (prev[index] === 'loading') {
+                                return { ...prev, [index]: 'loaded' };
+                              }
+                              return prev;
+                            });
+                            delete loadingTimersRef.current[index];
+                          }, 2000);
+                        }}
+                        onLoad={() => {
+                          if (loadingTimersRef.current[index]) {
+                            clearTimeout(loadingTimersRef.current[index]);
+                            delete loadingTimersRef.current[index];
+                          }
+                          setImageLoadStates(prev => ({
+                            ...prev,
+                            [index]: 'loaded'
+                          }));
+                        }}
+                        onError={() => {
+                          if (__DEV__) console.warn(`[GoalChallengeCard] 이미지 로드 실패: ${url}`);
+                          if (loadingTimersRef.current[index]) {
+                            clearTimeout(loadingTimersRef.current[index]);
+                            delete loadingTimersRef.current[index];
+                          }
+                          setImageLoadStates(prev => ({
+                            ...prev,
+                            [index]: 'error'
+                          }));
+                        }}
+                      />
+                    )}
                   </View>
                 );
               })}
@@ -377,7 +435,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
                   end={{ x: 1, y: 0 }}
                 >
                   <MaterialCommunityIcons name="check-circle" size={20} color="white" />
-                  <Text style={[styles.joinButtonText, { marginLeft: 4, fontWeight: '700', fontSize: 14 }]}>
+                  <Text style={[styles.joinButtonText, { marginLeft: 4, fontFamily: 'Pretendard-Bold', fontSize: 14 }]}>
                     참여중
                   </Text>
                 </LinearGradient>
@@ -453,7 +511,7 @@ const styles = StyleSheet.create({
   },
   activeBadgeText: {
     fontSize: 10,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.2,
     lineHeight: 14,
   },
@@ -467,8 +525,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   challengeTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: normalize(16, 15, 18),
+    fontFamily: 'Pretendard-SemiBold',
     lineHeight: 22,
     marginBottom: 8,
     letterSpacing: -0.3,
@@ -482,8 +540,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(245, 158, 11, 0.3)',
   },
   ddayText: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: normalize(10, 9, 11),
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: 0.2,
     lineHeight: 14,
   },
@@ -497,7 +555,7 @@ const styles = StyleSheet.create({
   },
   miniProgressText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.1,
     lineHeight: 14,
   },
@@ -519,7 +577,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     lineHeight: 16,
     letterSpacing: -0.2,
   },
@@ -547,6 +605,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 1,
   },
+  errorImage: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
   textCard: {
     width: '100%' as any,
     minHeight: 130,
@@ -557,7 +621,7 @@ const styles = StyleSheet.create({
   },
   textCardTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     lineHeight: 26,
     textAlign: 'center',
     letterSpacing: -0.3,
@@ -572,7 +636,7 @@ const styles = StyleSheet.create({
   },
   textCardTag: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.2,
   },
   participantInfoContainer: {
@@ -596,7 +660,7 @@ const styles = StyleSheet.create({
   // 참여자 수
   participantText: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.1,
     lineHeight: 18,
   },
@@ -608,7 +672,7 @@ const styles = StyleSheet.create({
   },
   socialInteractionText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginLeft: 0,
     marginRight: 0,
     letterSpacing: -0.1,
@@ -628,7 +692,7 @@ const styles = StyleSheet.create({
   },
   participatingBadgeText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: 'white',
     letterSpacing: -0.2,
     lineHeight: 14,
@@ -653,7 +717,7 @@ const styles = StyleSheet.create({
   joinButtonText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.1,
     lineHeight: 20,
   },

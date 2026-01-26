@@ -1,5 +1,6 @@
 // authService.ts - 기존 users 라우터와 호환되도록 수정
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import EncryptedStorage from 'react-native-encrypted-storage';
 import apiClient from './client';
 import logger from '../../utils/logger';
 
@@ -13,12 +14,19 @@ export interface User {
 }
 
 export interface AuthResponse {
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'pending_deletion';
   message: string;
   data?: {
-    token: string;
-    refresh_token: string;
-    user: User;
+    token?: string;
+    refresh_token?: string;
+    refreshToken?: string;
+    user?: User;
+    user_id?: number;
+    deleted_at?: string;
+    days_remaining?: number;
+    can_recover?: boolean;
+    scheduled_deletion_date?: string;
+    grace_period_days?: number;
   };
 }
 
@@ -32,6 +40,7 @@ export interface RegisterData {
   email: string;
   password: string;
   nickname?: string;
+  age_range?: string;
 }
 
 const authService = {
@@ -48,9 +57,11 @@ const authService = {
       }
 
       return response.data;
-    } catch (error: any) {
-      logger.error('로그인 오류:', error);
-      throw error.response?.data || {
+    } catch (error: unknown) {
+      logger.error('로그인 오류');
+      const axiosError = error as { response?: { data?: any } };
+      const errorData = axiosError.response?.data;
+      throw errorData || {
         status: 'error',
         message: '로그인에 실패했습니다.'
       };
@@ -68,7 +79,7 @@ const authService = {
       }
 
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('회원가입 오류:', error);
       throw error.response?.data || {
         status: 'error',
@@ -120,7 +131,7 @@ const authService = {
           user: response.data.data.user
         } : undefined
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('토큰 검증 실패:', error);
       throw error.response?.data || {
         status: 'error',
@@ -143,7 +154,7 @@ const authService = {
       }
 
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('토큰 갱신 오류:', error);
       throw error.response?.data || {
         status: 'error',
@@ -155,7 +166,7 @@ const authService = {
   // 자동 토큰 갱신을 위한 토큰 만료 시간 검사
   isTokenNearExpiry: async (): Promise<boolean> => {
     try {
-      const token = await AsyncStorage.getItem('authToken');
+      const token = await EncryptedStorage.getItem('authToken');
       if (!token) return true;
 
       // JWT 페이로드 디코딩
@@ -203,7 +214,7 @@ const authService = {
   // 토큰 유효성 검사
   validateToken: async (): Promise<boolean> => {
     try {
-      const token = await AsyncStorage.getItem('authToken');
+      const token = await EncryptedStorage.getItem('authToken');
 
       if (!token) {
         logger.debug('토큰이 없음');
@@ -220,12 +231,16 @@ const authService = {
         logger.debug('토큰 무효함');
         return false;
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.debug('토큰 검증 실패:', error.response?.status || error.message);
 
       // 401 오류는 토큰 만료/무효를 의미
       if (error.response?.status === 401) {
-        await AsyncStorage.multiRemove(['authToken', 'user']);
+        await Promise.all([
+          EncryptedStorage.removeItem('authToken'),
+          EncryptedStorage.removeItem('refresh_token'),
+          AsyncStorage.removeItem('user')
+        ]);
       }
 
       return false;
@@ -250,7 +265,7 @@ const authService = {
       }
       
       return null;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.debug('사용자 정보 API 조회 실패:', error.response?.status || error.message);
       return null;
     }
@@ -298,7 +313,7 @@ const authService = {
       }
       
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('API 응답 오류:', error.response?.data || error.message);
       logger.debug('토큰 검증 실패:', error.response?.status || 404);
       throw error;
@@ -311,10 +326,10 @@ const authService = {
       logger.debug('이메일 중복 검사:', email);
       const response = await apiClient.get(`/users/check-email?email=${encodeURIComponent(email)}`);
 
-      if (response.data.status === 'success') {
+      if (response.data.status === 'success' && response.data.data) {
         return {
-          available: response.data.available,
-          message: response.data.message || ''
+          available: response.data.data.available,
+          message: response.data.data.message || ''
         };
       } else {
         return {
@@ -322,7 +337,7 @@ const authService = {
           message: response.data.message || '이메일 검사 실패'
         };
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('이메일 검사 오류:', error);
       
       // 409 상태코드면 이미 사용중
@@ -361,7 +376,7 @@ const authService = {
       }
 
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('네이버 로그인 오류:', error);
       throw error.response?.data || {
         status: 'error',
@@ -376,7 +391,7 @@ const authService = {
       const response = await apiClient.post('/auth/send-verification-code', { email });
       logger.debug('인증 코드 전송 성공');
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('인증 코드 전송 오류:', error);
       throw error.response?.data || {
         status: 'error',
@@ -392,11 +407,31 @@ const authService = {
       const response = await apiClient.post('/auth/verify-code', { email, code });
       logger.debug('인증 코드 검증 성공');
       return response.data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('인증 코드 검증 오류:', error);
       throw error.response?.data || {
         status: 'error',
         message: '잘못된 인증 코드입니다.'
+      };
+    }
+  },
+
+  // 계정 복구 (30일 유예기간 내)
+  recoverAccount: async (email: string, password: string): Promise<AuthResponse> => {
+    try {
+      logger.debug('계정 복구 요청:', email);
+      const response = await apiClient.post<AuthResponse>('/auth/recover', { email, password });
+
+      if (response.data.status === 'success' && response.data.data) {
+        logger.debug('계정 복구 성공:', email);
+      }
+
+      return response.data;
+    } catch (error: unknown) {
+      logger.error('계정 복구 오류:', error);
+      throw error.response?.data || {
+        status: 'error',
+        message: '계정 복구에 실패했습니다.'
       };
     }
   }

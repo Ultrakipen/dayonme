@@ -100,24 +100,24 @@ const createTheme = (colorScheme: 'light' | 'dark') => {
 // 기본 색상 (하위 호환성을 위해)
 export const COLORS = createTheme('light');
   
-// 타이포그래피 - 인스타그램 스타일 + 가독성 최적화
+// 타이포그래피 - 인스타그램 스타일 + 가독성 최적화 + Pretendard 폰트
 export const TYPOGRAPHY = {
   // 헤더
-  H1: { fontSize: 24, fontWeight: '700', lineHeight: 32 },
-  H2: { fontSize: 20, fontWeight: '600', lineHeight: 28 },
-  H3: { fontSize: 18, fontWeight: '600', lineHeight: 24 },
-  
+  H1: { fontSize: 24, fontFamily: 'Pretendard-Bold', lineHeight: 32, letterSpacing: -0.3 },
+  H2: { fontSize: 20, fontFamily: 'Pretendard-SemiBold', lineHeight: 28, letterSpacing: -0.3 },
+  H3: { fontSize: 18, fontFamily: 'Pretendard-SemiBold', lineHeight: 24, letterSpacing: -0.1 },
+
   // 본문
-  BODY: { fontSize: 15, fontWeight: '400', lineHeight: 22 },
-  BODY_MEDIUM: { fontSize: 15, fontWeight: '500', lineHeight: 22 },
-  
+  BODY: { fontSize: 15, fontFamily: 'Pretendard-Regular', lineHeight: 22, letterSpacing: -0.1 },
+  BODY_MEDIUM: { fontSize: 15, fontFamily: 'Pretendard-Medium', lineHeight: 22, letterSpacing: -0.1 },
+
   // 작은 텍스트
-  CAPTION: { fontSize: 13, fontWeight: '400', lineHeight: 18 },
-  CAPTION_MEDIUM: { fontSize: 13, fontWeight: '500', lineHeight: 18 },
-  
+  CAPTION: { fontSize: 13, fontFamily: 'Pretendard-Regular', lineHeight: 18, letterSpacing: -0.1 },
+  CAPTION_MEDIUM: { fontSize: 13, fontFamily: 'Pretendard-Medium', lineHeight: 18, letterSpacing: -0.1 },
+
   // 라벨
-  LABEL: { fontSize: 14, fontWeight: '500', lineHeight: 20 },
-  LABEL_SMALL: { fontSize: 12, fontWeight: '500', lineHeight: 16 },
+  LABEL: { fontSize: 14, fontFamily: 'Pretendard-Medium', lineHeight: 20, letterSpacing: -0.1 },
+  LABEL_SMALL: { fontSize: 12, fontFamily: 'Pretendard-Medium', lineHeight: 16, letterSpacing: -0.1 },
 };
 
 // 간격 시스템 - 8pt 그리드 기반

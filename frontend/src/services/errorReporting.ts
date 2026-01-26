@@ -7,8 +7,8 @@ import { ErrorInfo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Sentry 설정 (프로덕션에서 활성화)
-// npm install @sentry/react-native 설치 후 주석 해제
-// import * as Sentry from '@sentry/react-native';
+import * as Sentry from '@sentry/react-native';
+import { ENV } from '../config/env';
 
 interface ErrorReport {
   timestamp: string;
@@ -32,31 +32,30 @@ const MAX_ERROR_LOGS = 50; // 최대 저장할 에러 로그 수
  */
 export const initErrorReporting = async (): Promise<void> => {
   if (__DEV__) {
-    console.log('📊 [ErrorReporting] 개발 모드 - 로컬 에러 로깅만 활성화');
+    if (__DEV__) console.log('📊 [ErrorReporting] 개발 모드 - 로컬 에러 로깅만 활성화');
     return;
   }
 
   // Sentry 초기화 (프로덕션)
-  // 주석 해제하여 활성화:
-  /*
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN || 'YOUR_SENTRY_DSN_HERE',
-    environment: __DEV__ ? 'development' : 'production',
-    enableAutoSessionTracking: true,
-    sessionTrackingIntervalMillis: 30000,
-    tracesSampleRate: 0.2, // 성능 모니터링 20% 샘플링
-    beforeSend(event) {
-      // 민감한 정보 제거
-      if (event.user) {
-        delete event.user.email;
-        delete event.user.ip_address;
-      }
-      return event;
-    },
-  });
-  */
+  if (ENV.SENTRY_DSN) {
+    Sentry.init({
+      dsn: ENV.SENTRY_DSN,
+      environment: __DEV__ ? 'development' : 'production',
+      enableAutoSessionTracking: true,
+      sessionTrackingIntervalMillis: 30000,
+      tracesSampleRate: 0.2,
+      beforeSend(event) {
+        if (event.user) {
+          delete event.user.email;
+          delete event.user.ip_address;
+        }
+        return event;
+      },
+    });
+    if (__DEV__) console.log('📊 Sentry 초기화 완료');
+  }
 
-  console.log('📊 [ErrorReporting] 프로덕션 모드 - 에러 리포팅 활성화');
+  if (__DEV__) console.log('📊 [ErrorReporting] 프로덕션 모드 - 에러 리포팅 활성화');
 };
 
 /**
@@ -67,12 +66,10 @@ export const setUserContext = (userId: string, nickname?: string): void => {
   if (__DEV__) return;
 
   // Sentry 사용자 설정
-  /*
   Sentry.setUser({
     id: userId,
     username: nickname,
   });
-  */
 };
 
 /**
@@ -83,7 +80,7 @@ export const clearUserContext = (): void => {
   if (__DEV__) return;
 
   // Sentry 사용자 초기화
-  // Sentry.setUser(null);
+  Sentry.setUser(null);
 };
 
 /**
@@ -105,7 +102,7 @@ export const reportError = async (
 
   // 개발 환경: 콘솔 출력
   if (__DEV__) {
-    console.error('🚨 [ErrorReporting] 에러 발생:', {
+    if (__DEV__) console.error('🚨 [ErrorReporting] 에러 발생:', {
       message: error.message,
       stack: error.stack,
       componentStack: errorInfo?.componentStack,
@@ -118,12 +115,12 @@ export const reportError = async (
 
   // 프로덕션: Sentry 전송
   if (!__DEV__) {
-    // Sentry.captureException(error, {
-    //   extra: {
-    //     componentStack: errorInfo?.componentStack,
-    //     ...additionalInfo,
-    //   },
-    // });
+    Sentry.captureException(error, {
+      extra: {
+        componentStack: errorInfo?.componentStack,
+        ...additionalInfo,
+      },
+    });
   }
 };
 
@@ -136,14 +133,14 @@ export const reportWarning = (
   additionalInfo?: Record<string, unknown>
 ): void => {
   if (__DEV__) {
-    console.warn('⚠️ [ErrorReporting] 경고:', message, additionalInfo);
+    if (__DEV__) console.warn('⚠️ [ErrorReporting] 경고:', message, additionalInfo);
     return;
   }
 
-  // Sentry.captureMessage(message, {
-  //   level: 'warning',
-  //   extra: additionalInfo,
-  // });
+  Sentry.captureMessage(message, {
+    level: 'warning',
+    extra: additionalInfo,
+  });
 };
 
 /**
@@ -156,7 +153,7 @@ export const startPerformanceTrace = (name: string): (() => void) => {
   return () => {
     const duration = Date.now() - startTime;
     if (__DEV__) {
-      console.log(`⏱️ [Performance] ${name}: ${duration}ms`);
+      if (__DEV__) console.log(`⏱️ [Performance] ${name}: ${duration}ms`);
     }
 
     // 프로덕션: 성능 데이터 전송
@@ -186,7 +183,7 @@ const saveErrorLocally = async (errorReport: ErrorReport): Promise<void> => {
   } catch (e) {
     // 에러 저장 실패는 무시 (무한 루프 방지)
     if (__DEV__) {
-      console.error('에러 로그 저장 실패:', e);
+      if (__DEV__) console.error('에러 로그 저장 실패:', e);
     }
   }
 };
@@ -211,7 +208,7 @@ export const clearStoredErrorLogs = async (): Promise<void> => {
     await AsyncStorage.removeItem(ERROR_LOG_KEY);
   } catch (e) {
     if (__DEV__) {
-      console.error('에러 로그 삭제 실패:', e);
+      if (__DEV__) console.error('에러 로그 삭제 실패:', e);
     }
   }
 };
@@ -221,7 +218,7 @@ export const clearStoredErrorLogs = async (): Promise<void> => {
  */
 export const trackScreenView = (screenName: string): void => {
   if (__DEV__) {
-    console.log(`📱 [Navigation] 화면 전환: ${screenName}`);
+    if (__DEV__) console.log(`📱 [Navigation] 화면 전환: ${screenName}`);
     return;
   }
 
@@ -241,7 +238,7 @@ export const trackUserAction = (
   data?: Record<string, unknown>
 ): void => {
   if (__DEV__) {
-    console.log(`👆 [Action] ${category}: ${action}`, data);
+    if (__DEV__) console.log(`👆 [Action] ${category}: ${action}`, data);
     return;
   }
 

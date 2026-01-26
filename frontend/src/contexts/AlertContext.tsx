@@ -59,7 +59,7 @@ class AlertManager {
     if (this.showAlertFunc) {
       this.showAlertFunc(title, message || '', buttons, type);
     } else if (__DEV__) {
-      console.warn('AlertManager: showAlert not registered');
+      if (__DEV__) console.warn('AlertManager: showAlert not registered');
     }
   }
 

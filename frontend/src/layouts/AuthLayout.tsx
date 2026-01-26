@@ -46,7 +46,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         Keyboard.dismiss();
       }
     } catch (error) {
-      console.error('키보드 닫기 오류', error);
+      if (__DEV__) console.error('키보드 닫기 오류', error);
     }
   };
   

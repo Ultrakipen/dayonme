@@ -3,7 +3,7 @@ import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import ComfortScreen from '../screens/ComfortScreen';
 import WriteComfortPostScreen from '../screens/WriteComfortPostScreen';
-import PostDetailScreen from '../screens/PostDetail';
+import PostDetailRouter from '../screens/PostDetail/PostDetailRouter';
 import ComfortMyPostsScreen from '../screens/ComfortMyPostsScreen';
 import MyPostsScreen from '../screens/MyPostsScreen';
 import BestPostsScreen from '../screens/BestPostsScreen';
@@ -71,7 +71,7 @@ const ComfortStack = () => {
         },
         headerTintColor: theme.text.primary,
         headerTitleStyle: {
-          fontWeight: '700',
+          fontFamily: 'Pretendard-Bold',
           fontSize: 16,
           color: theme.text.primary,
         },
@@ -102,10 +102,10 @@ const ComfortStack = () => {
       />
       <Stack.Screen
         name="PostDetail"
-        component={PostDetailScreen}
+        component={PostDetailRouter}
         options={{
           title: '게시물 상세',
-          headerShown: true,
+          headerShown: false,
         }}
       />
       <Stack.Screen

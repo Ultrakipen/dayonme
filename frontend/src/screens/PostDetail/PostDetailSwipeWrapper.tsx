@@ -10,17 +10,23 @@ import {
   TouchableOpacity,
   Text as RNText,
   useWindowDimensions,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useModernTheme } from '../../contexts/ModernThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { usePostSwipe } from '../../hooks/usePostSwipe';
 import PostDetailSkeleton from '../../components/PostDetailSkeleton';
+import CommentBottomSheet, { CommentBottomSheetRef, Comment as BSComment } from '../../components/CommentBottomSheet';
 import { RootStackParamList } from '../../types/navigation';
 import { normalize, normalizeSpace, normalizeIcon } from '../../utils/responsive';
 import logger from '../../utils/logger';
+import comfortWallService from '../../services/api/comfortWallService';
+import myDayService from '../../services/api/myDayService';
+import postService from '../../services/api/postService';
 
 // PostDetailScreen을 동적으로 import (기존 컴포넌트 재사용)
 import PostDetailScreen from './index';
@@ -69,7 +75,7 @@ const PostDetailSwipeWrapper: React.FC = () => {
   const { theme: modernTheme, isDark } = useModernTheme();
   const { height: screenHeight } = useWindowDimensions();
 
-  const { postId, postType = 'post', highlightCommentId, sourceScreen } = route.params;
+  const { postId, postType = 'post', highlightCommentId, sourceScreen, openComments } = route.params;
 
   const colors = {
     background: modernTheme.bg.primary,
@@ -98,6 +104,126 @@ const PostDetailSwipeWrapper: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
   const [viewableIndex, setViewableIndex] = useState(0);
   const [showScrollHint, setShowScrollHint] = useState(true);
+
+  // 댓글 바텀시트 관련 상태
+  const { user } = useAuth();
+  const commentBottomSheetRef = useRef<CommentBottomSheetRef>(null);
+  const [commentPostId, setCommentPostId] = useState<number | null>(null);
+  const [commentPostUserId, setCommentPostUserId] = useState<number | undefined>(undefined);
+  const [comments, setComments] = useState<BSComment[]>([]);
+  const [bestComments, setBestComments] = useState<BSComment[]>([]);
+  const [totalCommentCount, setTotalCommentCount] = useState(0);
+
+  // 댓글 바텀시트 열기 핸들러
+  const handleOpenComments = useCallback(async (targetPostId: number, targetPostUserId?: number) => {
+    setCommentPostId(targetPostId);
+    setCommentPostUserId(targetPostUserId);
+    setComments([]);
+    setBestComments([]);
+    setTotalCommentCount(0);
+
+    try {
+      let response;
+      const normalizedType = postType === 'comfort' ? 'comfort' : postType === 'myday' ? 'myday' : 'post';
+
+      if (normalizedType === 'comfort') {
+        response = await comfortWallService.getComments(targetPostId);
+      } else if (normalizedType === 'myday') {
+        response = await myDayService.getComments(targetPostId);
+      } else {
+        response = await postService.getComments(targetPostId);
+      }
+
+      const data = response?.data?.data || response?.data || response;
+      const commentsList = data?.comments || data || [];
+      const best = data?.best_comments || data?.bestComments || [];
+      const total = data?.total_count || data?.totalCount || commentsList.length;
+
+      setComments(Array.isArray(commentsList) ? commentsList : []);
+      setBestComments(Array.isArray(best) ? best : []);
+      setTotalCommentCount(total);
+
+      commentBottomSheetRef.current?.expand();
+    } catch (error) {
+      logger.log('[PostDetailSwipeWrapper] 댓글 로드 실패:', error);
+      commentBottomSheetRef.current?.expand();
+    }
+  }, [postType]);
+
+  // 댓글 작성 핸들러
+  const handleSubmitComment = useCallback(async (content: string, isAnonymous: boolean, parentCommentId?: number) => {
+    if (!commentPostId) return;
+
+    try {
+      const normalizedType = postType === 'comfort' ? 'comfort' : postType === 'myday' ? 'myday' : 'post';
+
+      if (normalizedType === 'comfort') {
+        await comfortWallService.addComment(commentPostId, { content, is_anonymous: isAnonymous });
+      } else if (normalizedType === 'myday') {
+        await myDayService.createComment(commentPostId, { content, is_anonymous: isAnonymous });
+      } else {
+        await postService.createComment(commentPostId, { content, is_anonymous: isAnonymous });
+      }
+
+      // 댓글 목록 새로고침
+      handleOpenComments(commentPostId, commentPostUserId);
+    } catch (error) {
+      logger.log('[PostDetailSwipeWrapper] 댓글 작성 실패:', error);
+      Alert.alert('오류', '댓글 작성에 실패했습니다.');
+    }
+  }, [commentPostId, commentPostUserId, postType, handleOpenComments]);
+
+  // 댓글 좋아요 핸들러
+  const handleLikeComment = useCallback(async (comment: BSComment) => {
+    if (!commentPostId) return;
+    try {
+      const normalizedType = postType === 'comfort' ? 'comfort' : postType === 'myday' ? 'myday' : 'post';
+      if (normalizedType === 'comfort') {
+        await comfortWallService.likeComment(comment.comment_id);
+      } else if (normalizedType === 'myday') {
+        await myDayService.likeComment(comment.comment_id);
+      } else {
+        await postService.likeComment(comment.comment_id);
+      }
+      handleOpenComments(commentPostId, commentPostUserId);
+    } catch (error) {
+      logger.log('[PostDetailSwipeWrapper] 댓글 좋아요 실패:', error);
+    }
+  }, [commentPostId, commentPostUserId, postType, handleOpenComments]);
+
+  // 댓글 삭제 핸들러
+  const handleDeleteComment = useCallback(async (comment: BSComment) => {
+    if (!commentPostId) return;
+
+    Alert.alert('댓글 삭제', '정말로 이 댓글을 삭제하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            const normalizedType = postType === 'comfort' ? 'comfort' : postType === 'myday' ? 'myday' : 'post';
+            if (normalizedType === 'comfort') {
+              await comfortWallService.deleteComment(comment.comment_id);
+            } else if (normalizedType === 'myday') {
+              await myDayService.deleteComment(comment.comment_id);
+            } else {
+              await postService.deleteComment(comment.comment_id);
+            }
+            handleOpenComments(commentPostId, commentPostUserId);
+          } catch (error) {
+            logger.log('[PostDetailSwipeWrapper] 댓글 삭제 실패:', error);
+            Alert.alert('오류', '댓글 삭제에 실패했습니다.');
+          }
+        }
+      }
+    ]);
+  }, [commentPostId, commentPostUserId, postType, handleOpenComments]);
+
+  // 댓글 수정 핸들러 (placeholder)
+  const handleEditComment = useCallback((comment: BSComment) => {
+    Alert.alert('알림', '댓글 수정 기능은 준비 중입니다.');
+  }, []);
 
   // 현재 보이는 아이템 추적
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
@@ -151,14 +277,17 @@ const PostDetailSwipeWrapper: React.FC = () => {
                 postId: item.post_id,
                 postType,
                 highlightCommentId: index === currentIndex ? highlightCommentId : undefined,
+                openComments: index === currentIndex ? openComments : undefined, // 첫 번째 게시물에만 자동 열기
+                isSwipeMode: true, // 스와이프 모드 플래그 추가
               },
             }}
             navigation={navigation}
+            onOpenComments={() => handleOpenComments(item.post_id, item.user_id)}
           />
         </View>
       );
     },
-    [viewableIndex, currentIndex, highlightCommentId, postType, colors.background, navigation, route, screenHeight]
+    [viewableIndex, currentIndex, highlightCommentId, postType, colors.background, navigation, route, screenHeight, openComments, handleOpenComments]
   );
 
   // 로딩 footer
@@ -258,6 +387,79 @@ const PostDetailSwipeWrapper: React.FC = () => {
         disableIntervalMomentum={true}
         decelerationRate="fast"
       />
+
+      {/* 하단 고정 액션바 */}
+      <View style={[styles.bottomActionBar, { backgroundColor: colors.cardBackground, borderTopColor: colors.border }]}>
+        <View style={styles.actionBarLeft}>
+          <TouchableOpacity
+            style={styles.actionBarButton}
+            onPress={() => {
+              // 좋아요 기능은 개별 PostDetailScreen에서 처리
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialCommunityIcons
+              name="heart-outline"
+              size={normalizeIcon(24)}
+              color={isDark ? '#D1D5DB' : '#64748b'}
+            />
+            <RNText style={[styles.actionBarCount, { color: isDark ? '#D1D5DB' : '#64748b' }]}>
+              {posts[viewableIndex]?.like_count || 0}
+            </RNText>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionBarButton}
+            onPress={() => {
+              const currentPost = posts[viewableIndex];
+              if (currentPost) {
+                handleOpenComments(currentPost.post_id, currentPost.user_id);
+              }
+            }}
+            activeOpacity={0.7}
+          >
+            <MaterialCommunityIcons
+              name="comment-outline"
+              size={normalizeIcon(24)}
+              color={isDark ? '#D1D5DB' : '#64748b'}
+            />
+            <RNText style={[styles.actionBarCount, { color: isDark ? '#D1D5DB' : '#64748b' }]}>
+              {posts[viewableIndex]?.comment_count || 0}
+            </RNText>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.commentButton, { backgroundColor: colors.primary }]}
+          onPress={() => {
+            const currentPost = posts[viewableIndex];
+            if (currentPost) {
+              handleOpenComments(currentPost.post_id, currentPost.user_id);
+            }
+          }}
+        >
+          <MaterialCommunityIcons name="pencil" size={normalizeIcon(16)} color="#fff" />
+          <RNText style={styles.commentButtonText}>댓글 달기</RNText>
+        </TouchableOpacity>
+      </View>
+
+      {/* 댓글 바텀시트 - 스와이프 모드에서 최상위 레벨로 렌더링 */}
+      {commentPostId && (
+        <CommentBottomSheet
+          ref={commentBottomSheetRef}
+          postId={commentPostId}
+          postUserId={commentPostUserId}
+          postType={postType || 'post'}
+          totalCount={totalCommentCount}
+          isAuthenticated={!!user}
+          comments={comments}
+          bestComments={bestComments}
+          onSubmitComment={handleSubmitComment}
+          onLikeComment={handleLikeComment}
+          onEditComment={handleEditComment}
+          onDeleteComment={handleDeleteComment}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -279,12 +481,12 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     fontSize: normalize(16),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginLeft: normalizeSpace(12),
   },
   positionIndicator: {
     fontSize: normalize(13),
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   postContainer: {
     // height는 컴포넌트에서 동적으로 설정
@@ -318,8 +520,43 @@ const styles = StyleSheet.create({
   hintText: {
     color: '#fff',
     fontSize: normalize(13),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginLeft: normalizeSpace(8),
+  },
+  bottomActionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: normalizeSpace(16),
+    paddingVertical: normalizeSpace(12),
+    borderTopWidth: 1,
+  },
+  actionBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: normalizeSpace(20),
+  },
+  actionBarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: normalizeSpace(6),
+  },
+  actionBarCount: {
+    fontSize: normalize(14),
+    fontFamily: 'Pretendard-SemiBold',
+  },
+  commentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: normalizeSpace(20),
+    paddingHorizontal: normalizeSpace(16),
+    paddingVertical: normalizeSpace(8),
+  },
+  commentButtonText: {
+    color: '#fff',
+    fontSize: normalize(12),
+    fontFamily: 'Pretendard-SemiBold',
+    marginLeft: normalizeSpace(6),
   },
 });
 

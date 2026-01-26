@@ -65,10 +65,11 @@ const ProfileAvatar: React.FC<ProfileAvatarProps> = ({
       >
         {imageUrl ? (
           <FastImage
+            key={`profile-avatar-${imageUrl}`}
             source={{
               uri: imageUrl,
               priority: FastImage.priority.normal,
-              cache: FastImage.cacheControl.immutable
+              cache: FastImage.cacheControl.web
             }}
             style={[styles.image, { width: size, height: size, borderRadius: size / 2 }]}
             resizeMode={FastImage.resizeMode.cover}
@@ -93,7 +94,7 @@ const styles = StyleSheet.create({
   container: { alignItems: 'center' },
   avatar: { justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   image: { resizeMode: 'cover' },
-  initial: { fontWeight: 'bold' },
+  initial: { fontFamily: 'Pretendard-Bold' },
   name: { marginTop: 4, fontSize: 12 },
 });
 

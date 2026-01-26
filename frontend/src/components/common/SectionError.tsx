@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   retryText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   loadingContainer: {
     alignItems: 'center',
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   emptyTitle: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginBottom: 4,
   },
   emptyMessage: {
@@ -162,6 +162,6 @@ const styles = StyleSheet.create({
   },
   actionText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
 });

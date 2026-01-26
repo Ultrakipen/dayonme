@@ -32,7 +32,8 @@ export const useWeeklyEmotions = (userId?: number) => {
 
       const response = await emotionService.getEmotionStats({
         start_date: weekAgo.toISOString().split('T')[0],
-        end_date: today.toISOString().split('T')[0]
+        end_date: today.toISOString().split('T')[0],
+        source: 'post' // 글 작성 시 기록된 감정만 조회
       });
 
       setWeeklyEmotions(response?.data?.data || []);

@@ -16,7 +16,7 @@ const searchService = {
       const response = await apiClient.get('/search', { params });
       return response.data;
     } catch (error) {
-      console.error('통합 검색 오류:', error);
+      if (__DEV__) console.error('통합 검색 오류:', error);
       throw error;
     }
   },
@@ -27,7 +27,7 @@ const searchService = {
       const response = await apiClient.get('/search/posts', { params });
       return response.data;
     } catch (error) {
-      console.error('게시물 검색 오류:', error);
+      if (__DEV__) console.error('게시물 검색 오류:', error);
       throw error;
     }
   },
@@ -38,7 +38,7 @@ const searchService = {
       const response = await apiClient.get('/search/users', { params });
       return response.data;
     } catch (error) {
-      console.error('사용자 검색 오류:', error);
+      if (__DEV__) console.error('사용자 검색 오류:', error);
       throw error;
     }
   },
@@ -49,7 +49,7 @@ const searchService = {
       const response = await apiClient.get('/search/tags', { params });
       return response.data;
     } catch (error) {
-      console.error('태그 검색 오류:', error);
+      if (__DEV__) console.error('태그 검색 오류:', error);
       throw error;
     }
   },
@@ -61,7 +61,7 @@ const searchService = {
       const response = await apiClient.get('/search/autocomplete', { params });
       return response.data;
     } catch (error) {
-      console.error('자동완성 검색 오류:', error);
+      if (__DEV__) console.error('자동완성 검색 오류:', error);
       throw error;
     }
   },
@@ -76,7 +76,7 @@ const searchService = {
       const response = await apiClient.get('/search/advanced', { params });
       return response.data;
     } catch (error) {
-      console.error('고급 검색 오류:', error);
+      if (__DEV__) console.error('고급 검색 오류:', error);
       throw error;
     }
   },
@@ -89,7 +89,7 @@ const searchService = {
       });
       return response.data;
     } catch (error) {
-      console.error('인기 검색어 조회 오류:', error);
+      if (__DEV__) console.error('인기 검색어 조회 오류:', error);
       throw error;
     }
   },
@@ -101,7 +101,7 @@ const searchService = {
       const recent = await AsyncStorage.getItem('recent_searches');
       return recent ? JSON.parse(recent) : [];
     } catch (error) {
-      console.error('최근 검색어 조회 오류:', error);
+      if (__DEV__) console.error('최근 검색어 조회 오류:', error);
       return [];
     }
   },
@@ -115,7 +115,7 @@ const searchService = {
       const updated = [query, ...filtered].slice(0, 10); // 최대 10개
       await AsyncStorage.setItem('recent_searches', JSON.stringify(updated));
     } catch (error) {
-      console.error('최근 검색어 저장 오류:', error);
+      if (__DEV__) console.error('최근 검색어 저장 오류:', error);
     }
   },
 
@@ -127,7 +127,7 @@ const searchService = {
       const filtered = recent.filter(item => item !== query);
       await AsyncStorage.setItem('recent_searches', JSON.stringify(filtered));
     } catch (error) {
-      console.error('최근 검색어 삭제 오류:', error);
+      if (__DEV__) console.error('최근 검색어 삭제 오류:', error);
     }
   },
 
@@ -137,7 +137,7 @@ const searchService = {
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       await AsyncStorage.removeItem('recent_searches');
     } catch (error) {
-      console.error('최근 검색어 전체 삭제 오류:', error);
+      if (__DEV__) console.error('최근 검색어 전체 삭제 오류:', error);
     }
   },
 
@@ -147,7 +147,7 @@ const searchService = {
       const data = { query, filters };
       await apiClient.post('/search/saved', data);
     } catch (error) {
-      console.error('검색 결과 저장 오류:', error);
+      if (__DEV__) console.error('검색 결과 저장 오류:', error);
       throw error;
     }
   },
@@ -158,7 +158,7 @@ const searchService = {
       const response = await apiClient.get('/search/saved');
       return response.data;
     } catch (error) {
-      console.error('저장된 검색 조회 오류:', error);
+      if (__DEV__) console.error('저장된 검색 조회 오류:', error);
       throw error;
     }
   },
@@ -168,7 +168,7 @@ const searchService = {
     try {
       await apiClient.delete(`/search/saved/${searchId}`);
     } catch (error) {
-      console.error('저장된 검색 삭제 오류:', error);
+      if (__DEV__) console.error('저장된 검색 삭제 오류:', error);
       throw error;
     }
   },
@@ -184,7 +184,7 @@ const searchService = {
       const response = await apiClient.get('/search/stats');
       return response.data;
     } catch (error) {
-      console.error('검색 통계 조회 오류:', error);
+      if (__DEV__) console.error('검색 통계 조회 오류:', error);
       throw error;
     }
   }

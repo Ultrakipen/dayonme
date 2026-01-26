@@ -1,14 +1,16 @@
 // src/services/api/naverNativeLogin.ts - 네이버 네이티브 SDK 로그인
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import apiClient from './apiClient';
+import EncryptedStorage from 'react-native-encrypted-storage';
+import Config from 'react-native-config';
+import apiClient from './client';
 import { authEvents, AUTH_EVENTS } from '../../utils/authEvents';
 import { showAlert } from '../../contexts/AlertContext';
 
-// 네이버 Native App 설정
-const NAVER_CLIENT_ID = 'lX6cDQ4s3ZncTBOWQZzu';
-const NAVER_CLIENT_SECRET = '0zHQPwjoB5';
-const NAVER_APP_NAME = 'Dayonme';
+// 네이버 Native App 설정 (.env에서 로드, 없으면 하드코딩 값 사용)
+const NAVER_CLIENT_ID = Config.NAVER_CLIENT_ID || 'lX6cDQ4s3ZncTBOWQZzu';
+const NAVER_CLIENT_SECRET = Config.NAVER_CLIENT_SECRET || '0zHQPwjoB5';
+const NAVER_APP_NAME = Config.NAVER_CLIENT_NAME || 'Dayonme';
 
 export interface NaverAuthResponse {
   status: 'success' | 'error';
@@ -32,7 +34,7 @@ let NaverLogin: any = null;
 try {
   NaverLogin = require('@react-native-seoul/naver-login');
 } catch (e) {
-  console.log('네이버 로그인 SDK가 설치되지 않았습니다.');
+  if (__DEV__) console.log('네이버 로그인 SDK가 설치되지 않았습니다.');
 }
 
 /**
@@ -40,7 +42,7 @@ try {
  */
 export const initNaverSDK = async (): Promise<boolean> => {
   if (!NaverLogin) {
-    console.warn('네이버 로그인 SDK가 설치되지 않았습니다.');
+    if (__DEV__) console.warn('네이버 로그인 SDK가 설치되지 않았습니다.');
     return false;
   }
 
@@ -52,10 +54,10 @@ export const initNaverSDK = async (): Promise<boolean> => {
       serviceUrlScheme: `naver${NAVER_CLIENT_ID}`, // iOS용
       disableNaverAppAuthIOS: true, // iOS에서 네이버 앱 미설치 시 웹뷰 사용
     });
-    console.log('✅ 네이버 SDK 초기화 완료');
+    if (__DEV__) console.log('✅ 네이버 SDK 초기화 완료');
     return true;
   } catch (error) {
-    console.error('❌ 네이버 SDK 초기화 실패:', error);
+    if (__DEV__) console.error('❌ 네이버 SDK 초기화 실패:', error);
     return false;
   }
 };
@@ -83,18 +85,24 @@ export const naverNativeLogin = async (): Promise<void> => {
     }
 
     // 네이버 로그인 실행
-    console.log('🔄 네이버 로그인 시도 중...');
+    if (__DEV__) console.log('🔄 네이버 로그인 시도 중...');
     const result = await NaverLogin.default.login();
 
+    // result 객체 유효성 검사
+    if (!result) {
+      if (__DEV__) console.log('⚠️ 네이버 로그인 결과가 없습니다.');
+      return;
+    }
+
     // 디버그: 전체 결과 로그
-    console.log('📋 네이버 로그인 결과:', JSON.stringify(result, null, 2));
+    if (__DEV__) console.log('📋 네이버 로그인 결과:', JSON.stringify(result, null, 2));
 
     if (!result.isSuccess) {
       // 사용자가 취소한 경우 조용히 리턴
       const errorMessage = result.failureResponse?.message || result.failureResponse?.lastErrorCode || '';
       const errorCode = result.failureResponse?.lastErrorCode || '';
 
-      console.log('❌ 네이버 로그인 실패 상세:', {
+      if (__DEV__) console.log('❌ 네이버 로그인 실패 상세:', {
         isSuccess: result.isSuccess,
         failureResponse: result.failureResponse,
         errorMessage,
@@ -106,9 +114,12 @@ export const naverNativeLogin = async (): Promise<void> => {
         errorMessage.includes('CANCELED') ||
         errorMessage.includes('cancelled') ||
         errorMessage.includes('canceled') ||
-        errorCode === 'user_cancel'
+        errorMessage.includes('consent_cancelled') ||
+        errorMessage.includes('동의 취소') ||
+        errorCode === 'user_cancel' ||
+        errorCode === 'consent_cancelled'
       ) {
-        console.log('ℹ️ 사용자가 네이버 로그인을 취소했습니다.');
+        if (__DEV__) console.log('ℹ️ 사용자가 네이버 로그인을 취소했습니다.');
         return;
       }
       throw new Error(errorMessage || `로그인 실패 (코드: ${errorCode || 'unknown'})`);
@@ -117,10 +128,12 @@ export const naverNativeLogin = async (): Promise<void> => {
     const accessToken = result.successResponse?.accessToken;
 
     if (!accessToken) {
-      throw new Error('액세스 토큰을 받지 못했습니다.');
+      if (__DEV__) console.log('⚠️ 액세스 토큰을 받지 못했습니다.');
+      showAlert.error('로그인 실패', '네이버 인증에 실패했습니다.\n필수 정보 제공에 동의해주세요.');
+      return;
     }
 
-    console.log('✅ 네이버 로그인 성공, 액세스 토큰:', accessToken.substring(0, 20) + '...');
+    if (__DEV__) console.log('✅ 네이버 로그인 성공, 액세스 토큰:', accessToken.substring(0, 20) + '...');
 
     // 백엔드로 액세스 토큰 전송하여 JWT 받기
     const response = await apiClient.post<NaverAuthResponse>('/auth/naver', {
@@ -130,39 +143,60 @@ export const naverNativeLogin = async (): Promise<void> => {
     if (response.data.status === 'success' && response.data.data) {
       const { token, user } = response.data.data;
 
-      // JWT 토큰과 사용자 정보 저장
-      await AsyncStorage.multiSet([
-        ['authToken', token],
-        ['user', JSON.stringify(user)],
+      // JWT 토큰과 사용자 정보 저장 (토큰은 암호화 저장소, 사용자 정보는 일반 저장소)
+      await Promise.all([
+        EncryptedStorage.setItem('authToken', token),
+        AsyncStorage.setItem('user', JSON.stringify(user)),
       ]);
 
-      console.log('✅ 네이버 로그인 완료 - 인증 상태 업데이트 이벤트 발생');
+      if (__DEV__) console.log('✅ 네이버 로그인 완료 - 인증 상태 업데이트 이벤트 발생');
 
       // 로그인 이벤트 발생 -> AuthContext가 자동으로 상태 업데이트
       authEvents.emit(AUTH_EVENTS.LOGIN);
 
-      showAlert.success('로그인 성공', `${user.nickname || user.username}님 환영합니다!`);
+      // 닉네임이 naver_/kakao_로 시작하면 닉네임 생략
+      const displayName = (user.nickname && !user.nickname.startsWith('naver_') && !user.nickname.startsWith('kakao_'))
+        ? `${user.nickname}님 `
+        : '';
+      showAlert.success('로그인 성공', `${displayName}환영합니다!`);
     } else {
       throw new Error(response.data.message || '로그인 처리 중 오류가 발생했습니다.');
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     // 사용자가 취소한 경우 조용히 리턴 (최종 안전망)
     const errorMessage = error?.message || error?.toString() || '';
+    if (__DEV__) console.log('🔍 최종 에러 핸들러:', errorMessage);
+
     if (
       errorMessage.includes('user_cancel') ||
       errorMessage.includes('CANCELED') ||
       errorMessage.includes('cancelled') ||
-      errorMessage.includes('canceled')
+      errorMessage.includes('canceled') ||
+      errorMessage.includes('consent_cancelled') ||
+      errorMessage.includes('동의 취소')
     ) {
-      console.log('ℹ️ 사용자가 네이버 로그인을 취소했습니다.');
+      if (__DEV__) console.log('ℹ️ 사용자가 네이버 로그인을 취소했습니다.');
       return;
     }
 
-    console.error('❌ 네이버 로그인 실패:', error);
-    showAlert.error(
-      '로그인 실패',
-      error.message || '네이버 로그인 중 오류가 발생했습니다.'
-    );
+    if (__DEV__) console.error('❌ 네이버 로그인 실패:', error);
+
+    // 사용자 친화적인 에러 메시지 변환
+    let userMessage = '네이버 로그인 중 오류가 발생했습니다.';
+    const errMsg = error?.message || error?.toString() || '';
+
+    if (errMsg.includes('401') || errMsg.includes('status code 401')) {
+      userMessage = '네이버 인증에 실패했습니다.\n잠시 후 다시 시도해주세요.';
+    } else if (errMsg.includes('Network') || errMsg.includes('network')) {
+      userMessage = '네트워크 연결을 확인해주세요.';
+    } else if (errMsg.includes('timeout')) {
+      userMessage = '요청 시간이 초과되었습니다.\n잠시 후 다시 시도해주세요.';
+    } else if (errMsg.includes('액세스 토큰')) {
+      // 이미 사용자 메시지가 표시되었으므로 중복 표시하지 않음
+      return;
+    }
+
+    showAlert.error('로그인 실패', userMessage);
   }
 };
 
@@ -171,15 +205,15 @@ export const naverNativeLogin = async (): Promise<void> => {
  */
 export const naverLogout = async (): Promise<void> => {
   if (!NaverLogin) {
-    console.warn('네이버 로그인 SDK가 설치되지 않았습니다.');
+    if (__DEV__) console.warn('네이버 로그인 SDK가 설치되지 않았습니다.');
     return;
   }
 
   try {
     await NaverLogin.default.logout();
-    console.log('✅ 네이버 로그아웃 완료');
+    if (__DEV__) console.log('✅ 네이버 로그아웃 완료');
   } catch (error) {
-    console.error('❌ 네이버 로그아웃 실패:', error);
+    if (__DEV__) console.error('❌ 네이버 로그아웃 실패:', error);
   }
 };
 
@@ -188,15 +222,15 @@ export const naverLogout = async (): Promise<void> => {
  */
 export const naverDeleteToken = async (): Promise<void> => {
   if (!NaverLogin) {
-    console.warn('네이버 로그인 SDK가 설치되지 않았습니다.');
+    if (__DEV__) console.warn('네이버 로그인 SDK가 설치되지 않았습니다.');
     return;
   }
 
   try {
     await NaverLogin.default.deleteToken();
-    console.log('✅ 네이버 토큰 삭제 완료');
+    if (__DEV__) console.log('✅ 네이버 토큰 삭제 완료');
   } catch (error) {
-    console.error('❌ 네이버 토큰 삭제 실패:', error);
+    if (__DEV__) console.error('❌ 네이버 토큰 삭제 실패:', error);
   }
 };
 
@@ -205,7 +239,7 @@ export const naverDeleteToken = async (): Promise<void> => {
  */
 export const getNaverProfile = async (): Promise<any> => {
   if (!NaverLogin) {
-    console.warn('네이버 로그인 SDK가 설치되지 않았습니다.');
+    if (__DEV__) console.warn('네이버 로그인 SDK가 설치되지 않았습니다.');
     return null;
   }
 
@@ -220,7 +254,7 @@ export const getNaverProfile = async (): Promise<any> => {
       throw new Error('프로필 조회 실패');
     }
   } catch (error) {
-    console.error('❌ 네이버 프로필 조회 실패:', error);
+    if (__DEV__) console.error('❌ 네이버 프로필 조회 실패:', error);
     return null;
   }
 };

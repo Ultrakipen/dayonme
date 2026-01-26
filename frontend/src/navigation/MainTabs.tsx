@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ActivityIndicator, View, Dimensions, PixelRatio, Platform } from 'react-native';
 import { NavigationProp } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HomeStack from './HomeStack';
 import ComfortStack from './ComfortStack';
 import ChallengeStack from './ChallengeStack';
@@ -42,6 +43,7 @@ const getResponsiveSizes = () => {
 const MainTabs = () => {
   const { isDark } = useModernTheme();
   const { isAuthenticated, isLoading } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // 반응형 크기 가져오기
   const sizes = getResponsiveSizes();
@@ -61,15 +63,17 @@ const MainTabs = () => {
   return (
     <Tab.Navigator
       screenOptions={{
+        // 키보드가 올라오면 탭바 숨김 (Android)
+        tabBarHideOnKeyboard: true,
         // 진하고 뚜렷한 감정 앱 컬러 팔레트
         tabBarActiveTintColor: isDark ? '#A78BFA' : '#667eea', // 더 선명한 보라색
         tabBarInactiveTintColor: isDark ? '#9ca3af' : '#9ca3af',
         tabBarStyle: {
           backgroundColor: isDark ? '#1f2937' : '#FFFFFF', // 순백으로 변경 (대비 향상)
           borderTopWidth: 0,
-          paddingBottom: sizes.PADDING_BOTTOM,
+          paddingBottom: Math.max(sizes.PADDING_BOTTOM, insets.bottom),
           paddingTop: sizes.PADDING_TOP,
-          height: sizes.TAB_BAR_HEIGHT,
+          height: sizes.TAB_BAR_HEIGHT + insets.bottom,
           // 부드럽고 자연스러운 그림자
           elevation: 16,
           shadowColor: isDark ? '#000' : '#667eea',
@@ -88,7 +92,7 @@ const MainTabs = () => {
         },
         tabBarLabelStyle: {
           fontSize: sizes.FONT_SIZE,
-          fontWeight: '700', // Bold로 강화
+          fontFamily: 'Pretendard-Bold', // Bold로 강화
           marginTop: sizes.MARGIN_TOP_LABEL,
           marginBottom: sizes.MARGIN_BOTTOM,
           letterSpacing: -0.2, // 글자 간격 조정

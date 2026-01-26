@@ -126,7 +126,7 @@ export const useForm = <T extends Record<string, any>>({
     try {
       await onSubmit(values);
     } catch (error) {
-      console.error('Form submission error:', error);
+      if (__DEV__) console.error('Form submission error:', error);
     } finally {
       setIsSubmitting(false);
     }

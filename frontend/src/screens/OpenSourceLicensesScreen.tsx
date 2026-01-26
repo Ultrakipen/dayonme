@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
   },
   backButton: { padding: 8 },
-  headerTitle: { fontSize: FONT_SIZES.bodyLarge, fontWeight: '600' },
+  headerTitle: { fontSize: FONT_SIZES.bodyLarge, fontFamily: 'Pretendard-SemiBold' },
   placeholder: { width: 40 },
   content: { flex: 1 },
   contentContainer: { padding: 16, paddingBottom: 40 },
@@ -84,9 +84,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
   },
-  licenseName: { fontSize: FONT_SIZES.body, fontWeight: '600' },
+  licenseName: { fontSize: FONT_SIZES.body, fontFamily: 'Pretendard-SemiBold' },
   licenseVersion: { fontSize: FONT_SIZES.bodySmall },
-  licenseType: { fontSize: FONT_SIZES.bodySmall, fontWeight: '500' },
+  licenseType: { fontSize: FONT_SIZES.bodySmall, fontFamily: 'Pretendard-Medium' },
   footer: { fontSize: FONT_SIZES.caption, textAlign: 'center', marginTop: 20, lineHeight: 18 },
 });
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,14 @@ import {
   Modal,
   Pressable,
   Dimensions,
+  TextInput,
+  Animated,
+  KeyboardAvoidingView,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import commentService from '../services/api/commentService';
 import blockService from '../services/api/blockService';
+import reportService from '../services/api/reportService';
 import { parseTaggedText, formatInstagramTime } from '../utils/commentUtils';
 import { normalizeImageUrl } from '../utils/imageUtils';
 import BlockReasonModal, { BlockReason } from './BlockReasonModal';
@@ -36,6 +40,36 @@ const scaleFont = (size: number) => {
 };
 const scaleSize = (size: number) => (getScreenWidth() / BASE_WIDTH) * size;
 
+// 익명 사용자용 감정 캐릭터 배열
+const EMOTION_CHARACTERS = [
+  { label: '기쁨이', emoji: '😊', color: '#FFD700' },
+  { label: '행복이', emoji: '😄', color: '#FFA500' },
+  { label: '슬픔이', emoji: '😢', color: '#4682B4' },
+  { label: '우울이', emoji: '😞', color: '#708090' },
+  { label: '지루미', emoji: '😑', color: '#A9A9A9' },
+  { label: '버럭이', emoji: '😠', color: '#FF4500' },
+  { label: '불안이', emoji: '😰', color: '#DDA0DD' },
+  { label: '걱정이', emoji: '😟', color: '#FFA07A' },
+  { label: '감동이', emoji: '🥺', color: '#FF6347' },
+  { label: '황당이', emoji: '🤨', color: '#20B2AA' },
+  { label: '당황이', emoji: '😲', color: '#FF8C00' },
+  { label: '짜증이', emoji: '😤', color: '#DC143C' },
+  { label: '무섭이', emoji: '😨', color: '#9370DB' },
+  { label: '추억이', emoji: '🥰', color: '#87CEEB' },
+  { label: '설렘이', emoji: '🤗', color: '#FF69B4' },
+  { label: '편안이', emoji: '😌', color: '#98FB98' },
+  { label: '궁금이', emoji: '🤔', color: '#DAA520' },
+  { label: '사랑이', emoji: '❤️', color: '#E91E63' },
+];
+
+// 익명 감정 생성 함수 - 사용자 ID와 댓글 ID 기반으로 일관된 캐릭터 생성
+const getAnonymousEmotion = (userId?: number, commentId?: number) => {
+  const userSeed = userId || 1;
+  const commentSeed = commentId || 0;
+  const seed = (userSeed * 17 + commentSeed * 7) % EMOTION_CHARACTERS.length;
+  return EMOTION_CHARACTERS[seed];
+};
+
 interface Comment {
   comment_id: number;
   user_id: number;
@@ -44,6 +78,7 @@ interface Comment {
   like_count: number;
   created_at: string;
   parent_comment_id?: number;
+  emotion_tag?: string; // 감정 태그
   user?: {
     nickname: string;
     profile_image_url?: string;
@@ -59,9 +94,12 @@ interface InstagramCommentItemProps {
   isPostAuthor?: boolean;
   isReply?: boolean;
   depth?: number; // 답글 깊이 추가
+  postType?: string; // 게시물 타입 (myday, comfort, etc.)
+  postId?: number; // 게시물 ID
   onReply?: (comment: Comment) => void;
   onEdit?: (commentId: number, newContent: string) => void;
   onDelete?: (commentId: number) => void;
+  onLike?: (commentId: number) => Promise<{ is_liked: boolean; like_count: number } | null>; // 좋아요 콜백
   onUserProfile?: (userId: number) => void;
   onRefresh?: () => void;
   onCommentBlocked?: (commentId: number) => void;
@@ -73,9 +111,12 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
   isPostAuthor = false,
   isReply = false,
   depth = 0,
+  postType,
+  postId,
   onReply,
   onEdit,
   onDelete,
+  onLike,
   onUserProfile,
   onRefresh,
   onCommentBlocked,
@@ -86,7 +127,20 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
   const [showActionSheet, setShowActionSheet] = useState(false);
   const [blockModalVisible, setBlockModalVisible] = useState(false);
 
-  const displayName = comment.is_anonymous ? '익명' : comment.user?.nickname || '사용자';
+  // 수정/삭제 모달 상태
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editText, setEditText] = useState(comment.content);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const editInputRef = useRef<TextInput>(null);
+
+  // 익명 사용자의 경우 감정 캐릭터 생성
+  const anonymousEmotion = comment.is_anonymous
+    ? getAnonymousEmotion(comment.user_id, comment.comment_id)
+    : null;
+  const displayName = comment.is_anonymous
+    ? '익명'
+    : comment.user?.nickname || '사용자';
   const isOwner = comment.user_id === currentUserId;
   const isCommentAuthor = comment.user?.is_author || isPostAuthor;
 
@@ -124,19 +178,27 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
     );
   };
 
-  // 댓글 좋아요
+  // 댓글 좋아요 - 부모 컴포넌트의 onLike 콜백 사용
   const handleLike = async () => {
+    // 낙관적 업데이트
+    const previousLiked = liked;
+    const previousCount = likeCount;
+    setLiked(!liked);
+    setLikeCount(liked ? likeCount - 1 : likeCount + 1);
+
     try {
-      const response = await commentService.likeComment(comment.comment_id);
-      if (response.status === 'success' && response.data) {
-        setLiked(response.data.is_liked);
-        setLikeCount(response.data.like_count);
+      if (onLike) {
+        const result = await onLike(comment.comment_id);
+        if (result) {
+          setLiked(result.is_liked);
+          setLikeCount(result.like_count);
+        }
       }
     } catch (error) {
-      console.error('댓글 좋아요 오류:', error);
+      if (__DEV__) console.error('댓글 좋아요 오류:', error);
       // 낙관적 업데이트 롤백
-      setLiked(!liked);
-      setLikeCount(liked ? likeCount + 1 : likeCount - 1);
+      setLiked(previousLiked);
+      setLikeCount(previousCount);
     }
   };
 
@@ -178,67 +240,42 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
     }
   };
 
-  // 댓글 수정
+  // 댓글 수정 - 커스텀 모달 열기
   const handleEdit = () => {
     setShowActionSheet(false);
-    if (Platform.OS === 'ios') {
-      // iOS에서만 Alert.prompt 사용
-      (Alert as any).prompt(
-        '댓글 수정',
-        '댓글을 수정해주세요.',
-        [
-          { text: '취소', style: 'cancel' },
-          {
-            text: '저장',
-            onPress: async (newContent: string) => {
-              if (newContent && newContent.trim() && onEdit) {
-                try {
-                  await commentService.editComment(comment.comment_id, newContent.trim());
-                  onEdit(comment.comment_id, newContent.trim());
-                  onRefresh?.();
-                } catch (error) {
-                  Alert.alert('오류', '댓글 수정 중 오류가 발생했습니다.');
-                }
-              }
-            },
-          },
-        ],
-        'plain-text',
-        comment.content
-      );
-    } else {
-      // Android에서는 일반 알림으로 처리
-      Alert.alert(
-        '댓글 수정',
-        '댓글 수정 기능은 현재 개발 중입니다.',
-        [{ text: '확인', style: 'default' }]
-      );
+    setEditText(comment.content);
+    setShowEditModal(true);
+    setTimeout(() => editInputRef.current?.focus(), 100);
+  };
+
+  // 댓글 수정 제출
+  const handleEditSubmit = async () => {
+    if (!editText.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      if (onEdit) {
+        onEdit(comment.comment_id, editText.trim());
+      }
+      setShowEditModal(false);
+      onRefresh?.();
+    } catch (error) {
+      Alert.alert('오류', '댓글 수정 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // 댓글 삭제 확인
+  // 댓글 삭제 확인 - 커스텀 모달 열기
   const handleDeleteConfirm = () => {
     setShowActionSheet(false);
-    Alert.alert(
-      '댓글 삭제',
-      '이 댓글을 삭제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '삭제',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await commentService.deleteComment(comment.comment_id);
-              onDelete?.(comment.comment_id);
-              onRefresh?.();
-            } catch (error) {
-              Alert.alert('오류', '댓글 삭제 중 오류가 발생했습니다.');
-            }
-          },
-        },
-      ]
-    );
+    setShowDeleteModal(true);
+  };
+
+  // 댓글 삭제 실행
+  const handleDeleteExecute = () => {
+    setShowDeleteModal(false);
+    onDelete?.(comment.comment_id);
   };
 
   // 댓글 신고
@@ -259,10 +296,28 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
 
   const submitReport = async (reason: string) => {
     try {
-      await commentService.reportComment(comment.comment_id, reason);
+      // reason을 report_type으로 매핑
+      const reportTypeMap: { [key: string]: string } = {
+        '스팸': 'spam',
+        '부적절한 내용': 'inappropriate',
+        '욕설/혐오표현': 'harassment',
+        '기타': 'other',
+      };
+
+      const reportType = reportTypeMap[reason] || 'other';
+
+      await reportService.reportComment(
+        comment.comment_id,
+        reportType as 'spam' | 'inappropriate' | 'harassment' | 'violence' | 'misinformation' | 'other',
+        reason,
+        '사용자 신고'
+      );
+
       Alert.alert('신고 완료', '신고가 접수되었습니다. 검토 후 조치하겠습니다.');
-    } catch (error) {
-      Alert.alert('오류', '신고 접수 중 오류가 발생했습니다.');
+    } catch (error: any) {
+      if (__DEV__) console.error('댓글 신고 오류:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || '신고 접수 중 오류가 발생했습니다.';
+      Alert.alert('오류', errorMessage);
     }
   };
 
@@ -274,7 +329,7 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
 
   const handleBlockConfirm = async (reason?: BlockReason) => {
     try {
-      console.log('🚫 댓글 차단 시도:', comment.comment_id);
+      if (__DEV__) console.log('🚫 댓글 차단 시도:', comment.comment_id);
       await blockService.blockContent({
         contentType: 'comment',
         contentId: comment.comment_id,
@@ -285,9 +340,14 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
         onCommentBlocked(comment.comment_id);
       }
       onRefresh?.();
-    } catch (error) {
-      console.error('❌ 댓글 차단 오류:', error);
-      Alert.alert('오류', '댓글 차단에 실패했습니다.');
+    } catch (error: any) {
+      if (__DEV__) console.error('❌ 댓글 차단 오류:', error);
+      const errorMessage = error?.response?.data?.message;
+      if (errorMessage?.includes('이미 차단')) {
+        Alert.alert('알림', '이미 차단한 댓글입니다.');
+      } else {
+        Alert.alert('오류', '댓글 차단에 실패했습니다.');
+      }
     }
   };
 
@@ -314,7 +374,19 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
                     { backgroundColor: 'transparent' }
                   ]}
                 />
+              ) : comment.is_anonymous && anonymousEmotion ? (
+                // 익명 사용자: 감정 이모지 아바타
+                <View style={[
+                  styles.avatar,
+                  isReply && styles.replyAvatar,
+                  { backgroundColor: anonymousEmotion.color }
+                ]}>
+                  <Text style={[styles.avatarEmoji, isReply && styles.replyAvatarEmoji]}>
+                    {anonymousEmotion.emoji}
+                  </Text>
+                </View>
               ) : (
+                // 일반 사용자 (프로필 사진 없음)
                 <View style={[styles.avatar, isReply && styles.replyAvatar]}>
                   <Text style={[styles.avatarText, isReply && styles.replyAvatarText]}>
                     {displayName[0]}
@@ -326,36 +398,33 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
             {/* 댓글 본문 */}
             <View style={styles.commentBody}>
               <View style={styles.commentHeader}>
-                <TouchableOpacity onPress={handleUserPress} disabled={comment.is_anonymous}>
-                  <Text style={styles.userName}>
-                    {displayName}
-                    {isCommentAuthor && <Text style={styles.authorBadge}> 작성자</Text>}
-                    <Text style={styles.commentTime}> {formatInstagramTime(comment.created_at)}</Text>
-                  </Text>
-                </TouchableOpacity>
+                <Text style={styles.userName}>
+                  {displayName}
+                </Text>
+                {/* 감정 태그 배지 */}
+                {comment.emotion_tag && (() => {
+                  const emotion = EMOTION_CHARACTERS.find(e => e.label === comment.emotion_tag);
+                  const emotionColor = emotion?.color || '#FFD700';
+                  return (
+                    <View style={[
+                      styles.emotionTagBadge,
+                      { backgroundColor: emotionColor + '30', borderColor: emotionColor }
+                    ]}>
+                      <Text style={[styles.emotionTagText, { color: emotionColor }]}>
+                        #{comment.emotion_tag}
+                      </Text>
+                    </View>
+                  );
+                })()}
+                {isCommentAuthor && (
+                  <View style={styles.authorBadgeContainer}>
+                    <Text style={styles.authorBadge}>작성자</Text>
+                  </View>
+                )}
+                <Text style={styles.commentTime}> {formatInstagramTime(comment.created_at)}</Text>
               </View>
 
               {renderTaggedContent(comment.content)}
-
-              {/* 감정 아이콘 섹션 */}
-              <View style={styles.emotionSection}>
-                <TouchableOpacity style={styles.emotionButton}>
-                  <Text style={styles.emotionIcon}>❤️</Text>
-                  <Text style={styles.emotionText}>사랑</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.emotionButton}>
-                  <Text style={styles.emotionIcon}>😊</Text>
-                  <Text style={styles.emotionText}>기쁨</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.emotionButton}>
-                  <Text style={styles.emotionIcon}>😭</Text>
-                  <Text style={styles.emotionText}>슬픔</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.emotionButton}>
-                  <Text style={styles.emotionIcon}>😮</Text>
-                  <Text style={styles.emotionText}>놀람</Text>
-                </TouchableOpacity>
-              </View>
 
               {/* 댓글 액션들 */}
               <View style={styles.commentActions}>
@@ -388,8 +457,8 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
           </View>
         </TouchableWithoutFeedback>
 
-        {/* 답글 렌더링 */}
-        {comment.replies && comment.replies.length > 0 && (
+        {/* 답글 렌더링 - 최대 1단계 들여쓰기만 허용 (인스타그램 스타일) */}
+        {comment.replies && comment.replies.length > 0 && depth < 1 && (
           <View style={styles.repliesContainer}>
             {comment.replies.map((reply) => (
               <InstagramCommentItem
@@ -398,16 +467,43 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
                 currentUserId={currentUserId}
                 isPostAuthor={isPostAuthor}
                 isReply={true}
-                depth={depth + 1}
+                depth={1}
+                postType={postType}
+                postId={postId}
                 onReply={onReply}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onLike={onLike}
                 onUserProfile={onUserProfile}
                 onRefresh={onRefresh}
                 onCommentBlocked={onCommentBlocked}
               />
             ))}
           </View>
+        )}
+        {/* depth >= 1인 경우 답글의 답글은 같은 레벨로 표시 */}
+        {comment.replies && comment.replies.length > 0 && depth >= 1 && (
+          <>
+            {comment.replies.map((reply) => (
+              <InstagramCommentItem
+                key={reply.comment_id}
+                comment={reply}
+                currentUserId={currentUserId}
+                isPostAuthor={isPostAuthor}
+                isReply={true}
+                depth={1}
+                postType={postType}
+                postId={postId}
+                onReply={onReply}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onLike={onLike}
+                onUserProfile={onUserProfile}
+                onRefresh={onRefresh}
+                onCommentBlocked={onCommentBlocked}
+              />
+            ))}
+          </>
         )}
       </View>
 
@@ -449,6 +545,113 @@ const InstagramCommentItem: React.FC<InstagramCommentItemProps> = ({
         onBlock={handleBlockConfirm}
         targetName="이 댓글"
       />
+
+      {/* 댓글 수정 모달 */}
+      <Modal
+        visible={showEditModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.editModalOverlay}
+        >
+          <Pressable
+            style={styles.editModalOverlay}
+            onPress={() => setShowEditModal(false)}
+          >
+            <Pressable style={[styles.editModalContainer, { backgroundColor: theme.bg.card }]} onPress={e => e.stopPropagation()}>
+              <View style={styles.editModalHeader}>
+                <Text style={[styles.editModalTitle, { color: theme.text.primary }]}>댓글 수정</Text>
+                <TouchableOpacity onPress={() => setShowEditModal(false)}>
+                  <MaterialCommunityIcons name="close" size={24} color={theme.text.secondary} />
+                </TouchableOpacity>
+              </View>
+
+              <TextInput
+                ref={editInputRef}
+                style={[styles.editTextInput, {
+                  backgroundColor: theme.bg.secondary,
+                  color: theme.text.primary,
+                  borderColor: theme.bg.border,
+                }]}
+                value={editText}
+                onChangeText={setEditText}
+                placeholder="댓글을 입력하세요..."
+                placeholderTextColor={theme.text.tertiary}
+                multiline
+                maxLength={500}
+                autoFocus
+              />
+
+              <View style={styles.editModalFooter}>
+                <Text style={[styles.charCount, { color: theme.text.tertiary }]}>
+                  {editText.length}/500
+                </Text>
+                <View style={styles.editModalButtons}>
+                  <TouchableOpacity
+                    style={[styles.editModalButton, styles.cancelButton, { borderColor: theme.bg.border }]}
+                    onPress={() => setShowEditModal(false)}
+                  >
+                    <Text style={[styles.editModalButtonText, { color: theme.text.secondary }]}>취소</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.editModalButton,
+                      styles.saveButton,
+                      (!editText.trim() || isSubmitting) && styles.disabledButton
+                    ]}
+                    onPress={handleEditSubmit}
+                    disabled={!editText.trim() || isSubmitting}
+                  >
+                    <Text style={styles.saveButtonText}>
+                      {isSubmitting ? '저장 중...' : '저장'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* 댓글 삭제 확인 모달 */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <Pressable
+          style={styles.deleteModalOverlay}
+          onPress={() => setShowDeleteModal(false)}
+        >
+          <View style={[styles.deleteModalContainer, { backgroundColor: theme.bg.card }]}>
+            <View style={styles.deleteModalIcon}>
+              <MaterialCommunityIcons name="delete-outline" size={48} color="#FF3B30" />
+            </View>
+            <Text style={[styles.deleteModalTitle, { color: theme.text.primary }]}>댓글 삭제</Text>
+            <Text style={[styles.deleteModalMessage, { color: theme.text.secondary }]}>
+              이 댓글을 삭제하시겠습니까?{'\n'}삭제된 댓글은 복구할 수 없습니다.
+            </Text>
+            <View style={styles.deleteModalButtons}>
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.deleteCancelButton, { borderColor: theme.bg.border }]}
+                onPress={() => setShowDeleteModal(false)}
+              >
+                <Text style={[styles.deleteModalButtonText, { color: theme.text.secondary }]}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.deleteConfirmButton]}
+                onPress={handleDeleteExecute}
+              >
+                <Text style={styles.deleteConfirmButtonText}>삭제</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
     </>
   );
 };
@@ -486,10 +689,16 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   avatarText: {
     color: theme.bg.primary,
     fontSize: scaleFont(14),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   replyAvatarText: {
     fontSize: scaleFont(12),
+  },
+  avatarEmoji: {
+    fontSize: scaleFont(22),
+  },
+  replyAvatarEmoji: {
+    fontSize: scaleFont(18),
   },
   commentBody: {
     flex: 1,
@@ -501,24 +710,42 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   userName: {
     fontSize: scaleFont(14),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: theme.text.primary,
-    marginRight: scaleSize(8),
+    marginRight: scaleSize(6),
     letterSpacing: -0.2,
   },
+  emotionTagBadge: {
+    paddingHorizontal: scaleSize(8),
+    paddingVertical: scaleSize(2),
+    borderRadius: scaleSize(10),
+    marginRight: scaleSize(6),
+    borderWidth: 1,
+  },
+  emotionTagText: {
+    fontSize: scaleFont(11),
+    fontFamily: 'Pretendard-SemiBold',
+  },
+  authorBadgeContainer: {
+    backgroundColor: '#6C5CE7',
+    paddingHorizontal: scaleSize(8),
+    paddingVertical: scaleSize(2),
+    borderRadius: scaleSize(10),
+    marginRight: scaleSize(6),
+  },
   authorBadge: {
-    fontSize: scaleFont(12),
-    fontWeight: '400',
-    color: theme.text.tertiary,
+    fontSize: scaleFont(11),
+    fontFamily: 'Pretendard-SemiBold',
+    color: '#FFFFFF',
   },
   commentTime: {
     fontSize: scaleFont(12),
-    fontWeight: '400',
+    fontFamily: 'Pretendard-Regular',
     color: theme.text.tertiary,
   },
   commentText: {
-    fontSize: scaleFont(15),
-    lineHeight: scaleFont(22),
+    fontSize: scaleFont(13),
+    lineHeight: scaleFont(20),
     color: theme.text.primary,
     marginBottom: scaleSize(4),
     letterSpacing: -0.1,
@@ -527,7 +754,7 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     fontSize: scaleFont(15),
     lineHeight: scaleFont(22),
     color: isDark ? '#60a5fa' : '#3b82f6',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   commentActions: {
     flexDirection: 'row',
@@ -536,26 +763,26 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   timeText: {
     fontSize: scaleFont(12),
-    fontWeight: '400',
+    fontFamily: 'Pretendard-Regular',
     color: theme.text.tertiary,
     marginRight: scaleSize(16),
   },
   likeCountText: {
     fontSize: scaleFont(13),
     color: theme.text.secondary,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginRight: scaleSize(16),
   },
   replyText: {
     fontSize: scaleFont(13),
     color: theme.text.secondary,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginRight: scaleSize(16),
   },
   likeActionText: {
     fontSize: scaleFont(13),
     color: '#e91e63',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginRight: scaleSize(16),
   },
   likeButton: {
@@ -563,37 +790,6 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: scaleSize(8),
-  },
-  emotionSection: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: scaleSize(4),
-    marginBottom: scaleSize(8),
-    paddingTop: scaleSize(8),
-    borderTopWidth: 0.5,
-    borderTopColor: theme.bg.border,
-  },
-  emotionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: scaleSize(8),
-    paddingVertical: scaleSize(4),
-    backgroundColor: theme.bg.secondary,
-    borderRadius: scaleSize(16),
-    borderWidth: 0.5,
-    borderColor: theme.bg.border,
-    marginRight: scaleSize(8),
-    marginBottom: scaleSize(4),
-  },
-  emotionIcon: {
-    fontSize: scaleFont(16),
-    marginRight: scaleSize(4),
-  },
-  emotionText: {
-    fontSize: scaleFont(13),
-    color: theme.text.secondary,
-    fontWeight: '500',
-    letterSpacing: -0.1,
   },
   repliesContainer: {
     marginTop: scaleSize(8),
@@ -628,6 +824,147 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   destructiveText: {
     color: '#FF3B30',
+  },
+
+  // 수정 모달 스타일
+  editModalOverlay: {
+    flex: 1,
+    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: scaleSize(20),
+  },
+  editModalContainer: {
+    width: '100%',
+    maxWidth: scaleSize(340),
+    borderRadius: scaleSize(16),
+    padding: scaleSize(20),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  editModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: scaleSize(16),
+  },
+  editModalTitle: {
+    fontSize: scaleFont(18),
+    fontFamily: 'Pretendard-Bold',
+    letterSpacing: -0.3,
+  },
+  editTextInput: {
+    borderWidth: 1,
+    borderRadius: scaleSize(12),
+    padding: scaleSize(14),
+    fontSize: scaleFont(15),
+    minHeight: scaleSize(100),
+    maxHeight: scaleSize(200),
+    textAlignVertical: 'top',
+    letterSpacing: -0.1,
+  },
+  editModalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: scaleSize(16),
+  },
+  charCount: {
+    fontSize: scaleFont(12),
+  },
+  editModalButtons: {
+    flexDirection: 'row',
+    gap: scaleSize(8),
+  },
+  editModalButton: {
+    paddingVertical: scaleSize(10),
+    paddingHorizontal: scaleSize(20),
+    borderRadius: scaleSize(10),
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  saveButton: {
+    backgroundColor: '#3b82f6',
+  },
+  disabledButton: {
+    backgroundColor: '#9ca3af',
+    opacity: 0.6,
+  },
+  editModalButtonText: {
+    fontSize: scaleFont(14),
+    fontFamily: 'Pretendard-SemiBold',
+  },
+  saveButtonText: {
+    fontSize: scaleFont(14),
+    fontFamily: 'Pretendard-SemiBold',
+    color: '#ffffff',
+  },
+
+  // 삭제 모달 스타일
+  deleteModalOverlay: {
+    flex: 1,
+    backgroundColor: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: scaleSize(20),
+  },
+  deleteModalContainer: {
+    width: '100%',
+    maxWidth: scaleSize(300),
+    borderRadius: scaleSize(20),
+    padding: scaleSize(24),
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  deleteModalIcon: {
+    marginBottom: scaleSize(16),
+  },
+  deleteModalTitle: {
+    fontSize: scaleFont(20),
+    fontFamily: 'Pretendard-Bold',
+    marginBottom: scaleSize(8),
+    letterSpacing: -0.3,
+  },
+  deleteModalMessage: {
+    fontSize: scaleFont(14),
+    textAlign: 'center',
+    lineHeight: scaleFont(20),
+    marginBottom: scaleSize(24),
+    letterSpacing: -0.1,
+  },
+  deleteModalButtons: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: scaleSize(12),
+  },
+  deleteModalButton: {
+    flex: 1,
+    paddingVertical: scaleSize(14),
+    borderRadius: scaleSize(12),
+    alignItems: 'center',
+  },
+  deleteCancelButton: {
+    borderWidth: 1,
+  },
+  deleteConfirmButton: {
+    backgroundColor: '#FF3B30',
+  },
+  deleteModalButtonText: {
+    fontSize: scaleFont(15),
+    fontFamily: 'Pretendard-SemiBold',
+  },
+  deleteConfirmButtonText: {
+    fontSize: scaleFont(15),
+    fontFamily: 'Pretendard-SemiBold',
+    color: '#ffffff',
   },
 });
 

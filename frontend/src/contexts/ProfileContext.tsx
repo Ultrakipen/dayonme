@@ -103,7 +103,7 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
         }));
       }
     } catch (error) {
-      console.error('프로필 로드 실패:', error);
+      if (__DEV__) console.error('프로필 로드 실패:', error);
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +133,7 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
       await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(updatedProfile));
       setProfileData(updatedProfile);
     } catch (error) {
-      console.error('프로필 업데이트 실패:', error);
+      if (__DEV__) console.error('프로필 업데이트 실패:', error);
       Alert.alert('오류', '프로필 업데이트에 실패했습니다.');
       throw error;
     }
@@ -145,7 +145,7 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
       await AsyncStorage.removeItem(PROFILE_STORAGE_KEY);
       setProfileData(defaultProfileData);
     } catch (error) {
-      console.error('프로필 초기화 실패:', error);
+      if (__DEV__) console.error('프로필 초기화 실패:', error);
       Alert.alert('오류', '프로필 초기화에 실패했습니다.');
     }
   };

@@ -2,7 +2,6 @@
 // 상업용 앱 수준 최적화 - 사용자 증가 대비 캐시/재시도, API 완성
 
 import apiClient from './client';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 향상된 메모리 캐시 구현 (인스타그램 수준)
 const cache = new Map<string, { data: any; timestamp: number; ttl: number; hits: number }>();
@@ -129,11 +128,11 @@ const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> =>
       const result = await fn();
 
       if (attempt > 1 && __DEV__) {
-        console.log(`✨ API 성공 (${attempt}번째 시도에서)`);
+        if (__DEV__) console.log(`✨ API 성공 (${attempt}번째 시도에서)`);
       }
 
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error;
 
       // 더 상세한 오류 분류
@@ -144,7 +143,7 @@ const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> =>
                               (error.response?.status >= 500 && error.response?.status < 600);
 
       if (__DEV__) {
-        console.log('🌐 네트워크 오류:', {
+        if (__DEV__) console.log('🌐 네트워크 오류:', {
           attempt,
           code: error.code,
           status: error.response?.status,
@@ -265,7 +264,7 @@ const challengeService = {
       const result = await withRetry(() => apiClient.get(urlWithParams));
       setCachedData(cacheKey, result, CACHE_TTL.LIST);
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.isOffline) {
         const offlineData = createOfflineData('challenges');
         setCachedData(cacheKey, offlineData, CACHE_TTL.LIST);
@@ -279,7 +278,7 @@ const challengeService = {
   getBestChallenges: async (params?: { limit?: number }) => {
     try {
       return await withRetry(() => apiClient.get('/challenges/best', { params }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.isOffline) {
         return createOfflineData('best');
       }
@@ -294,12 +293,9 @@ const challengeService = {
     status?: 'active' | 'completed' | 'upcoming';
   }) => {
     try {
-      const token = await AsyncStorage.getItem('authToken');
-      if (!token) {
-        return { data: [] };
-      }
+      // 인증 토큰은 apiClient의 인터셉터에서 자동으로 추가되므로 별도 확인 불필요
       return await withRetry(() => apiClient.get('/challenges/my-created', { params }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.isOffline) {
         return createOfflineData('challenges');
       }
@@ -314,12 +310,9 @@ const challengeService = {
     status?: 'active' | 'completed' | 'upcoming';
   }) => {
     try {
-      const token = await AsyncStorage.getItem('authToken');
-      if (!token) {
-        return { data: [] };
-      }
+      // 인증 토큰은 apiClient의 인터셉터에서 자동으로 추가되므로 별도 확인 불필요
       return await withRetry(() => apiClient.get('/challenges/my-participations', { params }));
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.isOffline) {
         return createOfflineData('participations');
       }
@@ -411,7 +404,7 @@ const challengeService = {
       );
       setCachedData(cacheKey, result, CACHE_TTL.EMOTIONS);
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.isOffline || error.response?.status === 404) {
         // API 미구현 또는 오프라인 시 빈 데이터 반환
         return createOfflineData('emotions');
@@ -430,7 +423,7 @@ const challengeService = {
     try {
       const response = await withRetry(() => apiClient.delete(`/challenges/challenge-emotions/${emotionRecordId}`));
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (__DEV__) console.error('❌ 감정 기록 삭제 실패:', error.response?.data);
       throw error;
     }

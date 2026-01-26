@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, useWindowDimensions, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, useWindowDimensions, RefreshControl, Modal } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { useModernTheme } from '../../hooks/useModernTheme';
 import { Card } from '../../components/common/Card';
 import encouragementService, { AnonymousEncouragement } from '../../services/api/encouragementService';
@@ -16,12 +17,186 @@ export const ReceivedTab: React.FC = () => {
     if (screenWidth >= 390) return Math.min(ratio, 1.3);
     return Math.max(0.85, Math.min(ratio, 1.1));
   }, [screenWidth]);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: 16 * scale,
+      paddingVertical: 12 * scale,
+    },
+    unreadInfo: {
+      fontSize: FONT_SIZES.sm * scale,
+      fontFamily: 'Pretendard-SemiBold',
+    },
+    markAllRead: {
+      fontSize: FONT_SIZES.sm * scale,
+    },
+    listContent: {
+      padding: 14 * scale,
+      paddingTop: 8 * scale,
+    },
+    messageCard: {
+      marginBottom: 12 * scale,
+      position: 'relative',
+      borderRadius: 16 * scale,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 5,
+      overflow: 'hidden',
+    },
+    cardInner: {
+      padding: 18 * scale,
+    },
+    messageHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 12 * scale,
+    },
+    emojiWrapper: {
+      width: 52 * scale,
+      height: 52 * scale,
+      borderRadius: 26 * scale,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    messageEmoji: {
+      fontSize: 30 * scale,
+    },
+    messageTime: {
+      fontSize: FONT_SIZES.xs * scale,
+      opacity: 0.7,
+      fontFamily: 'Pretendard-SemiBold',
+    },
+    messageText: {
+      fontSize: FONT_SIZES.bodyLarge * scale,
+      lineHeight: 24 * scale,
+      fontFamily: 'Pretendard-Medium',
+      textAlign: 'center',
+      marginBottom: 10 * scale,
+    },
+    messageFrom: {
+      fontSize: FONT_SIZES.bodySmall * scale,
+      textAlign: 'center',
+      opacity: 0.8,
+      fontStyle: 'italic',
+    },
+    unreadBadge: {
+      position: 'absolute',
+      top: 12 * scale,
+      right: 12 * scale,
+      paddingHorizontal: 10 * scale,
+      paddingVertical: 4 * scale,
+      borderRadius: 8 * scale,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.2,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    unreadText: {
+      color: '#fff',
+      fontSize: 11 * scale,
+      fontFamily: 'Pretendard-ExtraBold',
+      letterSpacing: 0.5,
+    },
+    emptyContainer: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 60 * scale,
+    },
+    emptyEmoji: {
+      fontSize: 48 * scale,
+      marginBottom: 16 * scale,
+    },
+    emptyText: {
+      fontSize: FONT_SIZES.md * scale,
+      fontFamily: 'Pretendard-SemiBold',
+      marginBottom: 8 * scale,
+    },
+    emptySubtext: {
+      fontSize: FONT_SIZES.sm * scale,
+      textAlign: 'center',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.85)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24 * scale,
+    },
+    modalCard: {
+      width: '100%',
+      maxWidth: 400 * scale,
+      borderRadius: 28 * scale,
+      padding: 32 * scale,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 12 },
+      shadowOpacity: 0.3,
+      shadowRadius: 24,
+      elevation: 12,
+    },
+    modalCloseButton: {
+      position: 'absolute',
+      top: 16 * scale,
+      right: 16 * scale,
+      width: 36 * scale,
+      height: 36 * scale,
+      borderRadius: 18 * scale,
+      backgroundColor: 'rgba(0, 0, 0, 0.2)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 10,
+    },
+    modalEmojiWrapper: {
+      width: 100 * scale,
+      height: 100 * scale,
+      borderRadius: 50 * scale,
+      justifyContent: 'center',
+      alignItems: 'center',
+      alignSelf: 'center',
+      marginBottom: 24 * scale,
+    },
+    modalEmoji: {
+      fontSize: 56 * scale,
+    },
+    modalMessage: {
+      fontSize: FONT_SIZES.h3 * scale,
+      lineHeight: 32 * scale,
+      fontFamily: 'Pretendard-SemiBold',
+      textAlign: 'center',
+      marginBottom: 24 * scale,
+    },
+    modalFrom: {
+      fontSize: FONT_SIZES.body * scale,
+      textAlign: 'center',
+      opacity: 0.8,
+      fontStyle: 'italic',
+      marginBottom: 16 * scale,
+    },
+    modalTime: {
+      fontSize: FONT_SIZES.sm * scale,
+      textAlign: 'center',
+      opacity: 0.6,
+      fontFamily: 'Pretendard-SemiBold',
+    },
+  }), [scale]);
   const [messages, setMessages] = useState<AnonymousEncouragement[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedCard, setSelectedCard] = useState<AnonymousEncouragement | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const loadMessages = useCallback(async (pageNum: number = 1, refresh: boolean = false) => {
     try {
@@ -33,7 +208,8 @@ export const ReceivedTab: React.FC = () => {
         limit: 20
       });
 
-      const newMessages = response.data || [];
+      // API 응답 구조: { status, data: { encouragements: [], pagination: {} } }
+      const newMessages = response.data?.encouragements || [];
 
       if (refresh || pageNum === 1) {
         setMessages(newMessages);
@@ -42,10 +218,10 @@ export const ReceivedTab: React.FC = () => {
       }
 
       setHasMore(newMessages.length === 20);
-      setUnreadCount(response.pagination?.unreadCount || 0);
+      setUnreadCount(response.data?.pagination?.unreadCount || 0);
       setPage(pageNum);
     } catch (error) {
-      console.error('메시지 로드 실패:', error);
+      if (__DEV__) console.error('메시지 로드 실패:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -76,7 +252,7 @@ export const ReceivedTab: React.FC = () => {
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('읽음 처리 실패:', error);
+      if (__DEV__) console.error('읽음 처리 실패:', error);
     }
   };
 
@@ -86,7 +262,16 @@ export const ReceivedTab: React.FC = () => {
       setMessages(prev => prev.map(msg => ({ ...msg, is_read: true })));
       setUnreadCount(0);
     } catch (error) {
-      console.error('전체 읽음 처리 실패:', error);
+      if (__DEV__) console.error('전체 읽음 처리 실패:', error);
+    }
+  };
+
+  const handleCardPress = async (item: AnonymousEncouragement) => {
+    setSelectedCard(item);
+    setModalVisible(true);
+
+    if (!item.is_read) {
+      await handleMarkAsRead(item.encouragement_id);
     }
   };
 
@@ -103,32 +288,64 @@ export const ReceivedTab: React.FC = () => {
     return date.toLocaleDateString('ko-KR');
   };
 
-  const renderMessage = ({ item }: { item: AnonymousEncouragement }) => (
-    <TouchableOpacity
-      onPress={() => !item.is_read && handleMarkAsRead(item.encouragement_id)}
-      activeOpacity={0.8}
-    >
-      <Card style={[
-        styles.messageCard,
-        !item.is_read && { borderLeftWidth: 3, borderLeftColor: colors.primary }
-      ]}>
-        <View style={styles.messageHeader}>
-          <Text style={[styles.messageEmoji]}>💌</Text>
-          <Text style={[styles.messageTime, { color: colors.textSecondary }]}>
-            {formatDate(item.sent_at)}
-          </Text>
-        </View>
-        <Text style={[styles.messageText, { color: colors.text }]}>
-          {item.message}
-        </Text>
-        {!item.is_read && (
-          <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
-            <Text style={styles.unreadText}>NEW</Text>
+  const getEmojiColor = (emoji?: string): string => {
+    if (!emoji) return '#667eea';
+    const emojiColorMap: { [key: string]: string } = {
+      '❤️': '#FF3B5C', '💪': '#FF6B35', '🤗': '#00D9FF', '🙏': '#A855F7',
+      '🎉': '#FACC15', '😊': '#FFA726', '🎁': '#EC4899', '🌻': '#DAA520',
+      '🦋': '#9370DB', '🌿': '#228B22', '🎈': '#00CED1', '🌴': '#32CD32',
+      '🎵': '#FF69B4', '🌅': '#FF8C00', '🍃': '#3CB371', '🌸': '#8B4789',
+      '🌟': '#FF8C00', '☕': '#8B4513', '🌈': '#0277BD', '💫': '#3F51B5',
+      '🌙': '#01579B', '🍀': '#2E7D32', '💝': '#C2185B', '🌺': '#7B1FA2',
+      '✨': '#F57F17', '⭐': '#F57F17',
+    };
+    return emojiColorMap[emoji] || '#667eea';
+  };
+
+  const renderMessage = ({ item }: { item: AnonymousEncouragement }) => {
+    const emoji = item.emoji || '💌';
+    const emojiColor = getEmojiColor(emoji);
+
+    return (
+      <TouchableOpacity
+        onPress={() => handleCardPress(item)}
+        activeOpacity={0.85}
+      >
+        <View style={[
+          styles.messageCard,
+          { backgroundColor: colors.card }
+        ]}>
+          <View style={styles.cardInner}>
+            <View style={styles.messageHeader}>
+              <View style={[
+                styles.emojiWrapper,
+                { backgroundColor: `${emojiColor}15` }
+              ]}>
+                <Text style={styles.messageEmoji}>{emoji}</Text>
+              </View>
+              <Text style={[styles.messageTime, { color: colors.textSecondary }]}>
+                {formatDate(item.sent_at)}
+              </Text>
+            </View>
+
+            <Text style={[styles.messageText, { color: colors.text }]}>
+              "{item.message}"
+            </Text>
+
+            <Text style={[styles.messageFrom, { color: colors.textSecondary }]}>
+              - 익명의 친구가
+            </Text>
           </View>
-        )}
-      </Card>
-    </TouchableOpacity>
-  );
+
+          {!item.is_read && (
+            <View style={[styles.unreadBadge, { backgroundColor: emojiColor }]}>
+              <Text style={styles.unreadText}>NEW</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
@@ -174,84 +391,59 @@ export const ReceivedTab: React.FC = () => {
         ListEmptyComponent={!loading ? renderEmpty : null}
         showsVerticalScrollIndicator={false}
       />
+
+      {selectedCard && (
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setModalVisible(false)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <View style={[
+                styles.modalCard,
+                { backgroundColor: colors.card }
+              ]}>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Icon name="close" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <View style={[
+                  styles.modalEmojiWrapper,
+                  { backgroundColor: `${getEmojiColor(selectedCard.emoji)}15` }
+                ]}>
+                  <Text style={styles.modalEmoji}>{selectedCard.emoji || '💌'}</Text>
+                </View>
+
+                <Text style={[styles.modalMessage, { color: colors.text }]}>
+                  "{selectedCard.message}"
+                </Text>
+
+                <Text style={[styles.modalFrom, { color: colors.textSecondary }]}>
+                  - 익명의 친구가
+                </Text>
+
+                <Text style={[styles.modalTime, { color: colors.textTertiary }]}>
+                  {formatDate(selectedCard.sent_at)}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  headerActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16 * scale,
-    paddingVertical: 12 * scale,
-  },
-  unreadInfo: {
-    fontSize: FONT_SIZES.sm * scale,
-    fontWeight: '600',
-  },
-  markAllRead: {
-    fontSize: FONT_SIZES.sm * scale,
-  },
-  listContent: {
-    padding: 16 * scale,
-    paddingTop: 8 * scale,
-  },
-  messageCard: {
-    marginBottom: 12 * scale,
-    position: 'relative',
-  },
-  messageHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8 * scale,
-  },
-  messageEmoji: {
-    fontSize: 20 * scale,
-  },
-  messageTime: {
-    fontSize: FONT_SIZES.xs * scale,
-  },
-  messageText: {
-    fontSize: FONT_SIZES.md * scale,
-    lineHeight: 22 * scale,
-  },
-  unreadBadge: {
-    position: 'absolute',
-    top: 8 * scale,
-    right: 8 * scale,
-    paddingHorizontal: 6 * scale,
-    paddingVertical: 2 * scale,
-    borderRadius: 4 * scale,
-  },
-  unreadText: {
-    color: '#fff',
-    fontSize: 10 * scale,
-    fontWeight: '700',
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60 * scale,
-  },
-  emptyEmoji: {
-    fontSize: 48 * scale,
-    marginBottom: 16 * scale,
-  },
-  emptyText: {
-    fontSize: FONT_SIZES.md * scale,
-    fontWeight: '600',
-    marginBottom: 8 * scale,
-  },
-  emptySubtext: {
-    fontSize: FONT_SIZES.sm * scale,
-    textAlign: 'center',
-  },
-});
 
 export default ReceivedTab;

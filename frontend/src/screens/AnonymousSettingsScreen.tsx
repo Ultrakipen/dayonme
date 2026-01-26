@@ -1,6 +1,5 @@
-// src/screens/AnonymousSettingsScreen.tsx
 import React, { useState } from 'react';
-import { ScrollView, Alert } from 'react-native';
+import { ScrollView } from 'react-native';
 import {
   Surface,
   Switch,
@@ -13,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { Box, Text, HStack, VStack, Pressable } from '../components/ui';
 import { FONT_SIZES } from '../constants';
+import { CustomAlert } from '../components/CustomAlert';
 
 interface AnonymousSettingsScreenProps {
   navigation: {
@@ -30,6 +30,7 @@ const AnonymousSettingsScreen: React.FC<AnonymousSettingsScreenProps> = ({ navig
   const [alwaysAnonymous, setAlwaysAnonymous] = useState(user?.always_anonymous_comment || false);
   const [anonymousInReplies, setAnonymousInReplies] = useState(user?.anonymous_in_replies || false);
   const [isLoading, setIsLoading] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({ visible: false, title: '', message: '', type: 'info' as const });
 
   // 헤더 설정
   React.useEffect(() => {
@@ -44,7 +45,7 @@ const AnonymousSettingsScreen: React.FC<AnonymousSettingsScreenProps> = ({ navig
       headerTintColor: theme.colors.text.primary,
       headerTitleStyle: {
         fontSize: FONT_SIZES.h2,
-        fontWeight: '700',
+        fontFamily: 'Pretendard-Bold',
         color: theme.colors.text.primary,
       },
       headerLeft: () => (
@@ -73,18 +74,18 @@ const AnonymousSettingsScreen: React.FC<AnonymousSettingsScreenProps> = ({ navig
   const handleSave = async () => {
     try {
       setIsLoading(true);
-      
+
       await updateUserSettings({
         default_anonymous_comment: defaultAnonymous,
         always_anonymous_comment: alwaysAnonymous,
         anonymous_in_replies: anonymousInReplies,
       });
-      
-      Alert.alert('저장 완료', '익명 설정이 저장되었습니다.');
-      navigation.goBack();
+
+      setAlertConfig({ visible: true, title: '저장 완료', message: '익명 설정이 저장되었습니다.', type: 'success' });
+      setTimeout(() => navigation.goBack(), 1000);
     } catch (error) {
-      console.error('설정 저장 오류:', error);
-      Alert.alert('오류', '설정 저장 중 오류가 발생했습니다.');
+      if (__DEV__) console.error('설정 저장 오류:', error);
+      setAlertConfig({ visible: true, title: '오류', message: '설정 저장 중 오류가 발생했습니다.', type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -118,7 +119,7 @@ const AnonymousSettingsScreen: React.FC<AnonymousSettingsScreenProps> = ({ navig
               <Text
                 style={{
                   fontSize: FONT_SIZES.bodyLarge,
-                  fontWeight: '700',
+                  fontFamily: 'Pretendard-Bold',
                   color: theme.colors.text.primary,
                   marginLeft: 8,
                   fontFamily: 'Pretendard-Bold'
@@ -158,7 +159,7 @@ const AnonymousSettingsScreen: React.FC<AnonymousSettingsScreenProps> = ({ navig
                     <Text
                       style={{
                         fontSize: FONT_SIZES.bodyLarge,
-                        fontWeight: '600',
+                        fontFamily: 'Pretendard-SemiBold',
                         color: theme.colors.text.primary,
                         fontFamily: 'Pretendard-SemiBold'
                       }}
@@ -198,7 +199,7 @@ const AnonymousSettingsScreen: React.FC<AnonymousSettingsScreenProps> = ({ navig
                     <Text
                       style={{
                         fontSize: FONT_SIZES.bodyLarge,
-                        fontWeight: '600',
+                        fontFamily: 'Pretendard-SemiBold',
                         color: theme.colors.text.primary,
                         fontFamily: 'Pretendard-SemiBold'
                       }}
@@ -237,7 +238,7 @@ const AnonymousSettingsScreen: React.FC<AnonymousSettingsScreenProps> = ({ navig
                     <Text
                       style={{
                         fontSize: FONT_SIZES.bodyLarge,
-                        fontWeight: '600',
+                        fontFamily: 'Pretendard-SemiBold',
                         color: theme.colors.text.primary,
                         fontFamily: 'Pretendard-SemiBold'
                       }}
@@ -286,7 +287,7 @@ const AnonymousSettingsScreen: React.FC<AnonymousSettingsScreenProps> = ({ navig
             }}
             labelStyle={{
               fontSize: FONT_SIZES.bodyLarge,
-              fontWeight: '700',
+              fontFamily: 'Pretendard-Bold',
               color: isDark ? theme.colors.text.primary : theme.colors.background,
               fontFamily: 'Pretendard-Bold'
             }}
@@ -295,6 +296,14 @@ const AnonymousSettingsScreen: React.FC<AnonymousSettingsScreenProps> = ({ navig
           </Button>
         </Box>
       </ScrollView>
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        buttons={[{ text: '확인', onPress: () => setAlertConfig(prev => ({ ...prev, visible: false })) }]}
+        onClose={() => setAlertConfig(prev => ({ ...prev, visible: false }))}
+      />
     </Box>
   );
 };

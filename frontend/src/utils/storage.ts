@@ -19,7 +19,7 @@ export enum StorageKeys {
       const jsonValue = JSON.stringify(value);
       await AsyncStorage.setItem(key, jsonValue);
     } catch (e) {
-      console.error('저장 오류:', e);
+      if (__DEV__) console.error('저장 오류:', e);
       throw new Error('데이터 저장 중 오류가 발생했습니다.');
     }
   };
@@ -34,7 +34,7 @@ export enum StorageKeys {
       const jsonValue = await AsyncStorage.getItem(key);
       return jsonValue != null ? JSON.parse(jsonValue) : null;
     } catch (e) {
-      console.error('로드 오류:', e);
+      if (__DEV__) console.error('로드 오류:', e);
       return null;
     }
   };
@@ -47,7 +47,7 @@ export enum StorageKeys {
     try {
       await AsyncStorage.removeItem(key);
     } catch (e) {
-      console.error('삭제 오류:', e);
+      if (__DEV__) console.error('삭제 오류:', e);
       throw new Error('데이터 삭제 중 오류가 발생했습니다.');
     }
   };
@@ -59,7 +59,7 @@ export enum StorageKeys {
     try {
       await AsyncStorage.clear();
     } catch (e) {
-      console.error('초기화 오류:', e);
+      if (__DEV__) console.error('초기화 오류:', e);
       throw new Error('스토리지 초기화 중 오류가 발생했습니다.');
     }
   };
@@ -74,7 +74,7 @@ export enum StorageKeys {
       const value = await AsyncStorage.getItem(key);
       return value !== null;
     } catch (e) {
-      console.error('확인 오류:', e);
+      if (__DEV__) console.error('확인 오류:', e);
       return false;
     }
   };

@@ -122,7 +122,7 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
     try {
       setLoading(true);
       const response = await notificationService.getNotificationSettings();
-      console.log('📥 [NotificationSettings] 서버에서 불러온 설정:', response);
+      if (__DEV__) console.log('📥 [NotificationSettings] 서버에서 불러온 설정:', response);
 
       if (response?.data) {
         setSettings(prev => ({
@@ -141,7 +141,7 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
         setCacheTimestamp(Date.now());
       }
     } catch (error) {
-      console.error('❌ [NotificationSettings] 알림 설정 불러오기 실패:', error);
+      if (__DEV__) console.error('❌ [NotificationSettings] 알림 설정 불러오기 실패:', error);
     } finally {
       setLoading(false);
     }
@@ -164,10 +164,10 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
 
       if (key === 'likes') {
         updateData.like_notifications = newValue;
-        console.log('📤 [toggleSetting] 좋아요 알림 업데이트:', newValue);
+        if (__DEV__) console.log('📤 [toggleSetting] 좋아요 알림 업데이트:', newValue);
       } else if (key === 'comments') {
         updateData.comment_notifications = newValue;
-        console.log('📤 [toggleSetting] 댓글 알림 업데이트:', newValue);
+        if (__DEV__) console.log('📤 [toggleSetting] 댓글 알림 업데이트:', newValue);
       } else if (key === 'my_challenges' || key === 'challenge_complete') {
         // 챌린지 알림은 두 설정 중 하나라도 켜져있으면 true
         const updatedChallengeNotifications =
@@ -176,7 +176,7 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
             : (settings.my_challenges || newValue);
 
         updateData.challenge_notifications = updatedChallengeNotifications;
-        console.log('📤 [toggleSetting] 챌린지 알림 업데이트:', {
+        if (__DEV__) console.log('📤 [toggleSetting] 챌린지 알림 업데이트:', {
           key,
           newValue,
           my_challenges: key === 'my_challenges' ? newValue : settings.my_challenges,
@@ -185,17 +185,17 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
         });
       } else {
         // all_notifications, sound, vibration, badge는 서버에 저장하지 않음 (클라이언트 측 설정)
-        console.log('📱 [toggleSetting] 클라이언트 측 설정 변경:', { key, newValue });
+        if (__DEV__) console.log('📱 [toggleSetting] 클라이언트 측 설정 변경:', { key, newValue });
         setSaving(false);
         return;
       }
 
       if (Object.keys(updateData).length > 0) {
         await notificationService.updateNotificationSettings(updateData);
-        console.log('✅ [toggleSetting] 서버 업데이트 성공');
+        if (__DEV__) console.log('✅ [toggleSetting] 서버 업데이트 성공');
       }
     } catch (error) {
-      console.error('❌ [toggleSetting] 알림 설정 저장 실패:', error);
+      if (__DEV__) console.error('❌ [toggleSetting] 알림 설정 저장 실패:', error);
       Alert.alert('오류', '알림 설정 저장에 실패했습니다.');
       // 실패 시 원래 값으로 되돌리기
       setSettings(prev => ({
@@ -250,7 +250,7 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
     const timeString = dateToTimeString(date);
     const timeType = currentTimeType;
 
-    console.log(`⏰ [NotificationSettings] 시간 선택 확인:`, { timeType, timeString });
+    if (__DEV__) console.log(`⏰ [NotificationSettings] 시간 선택 확인:`, { timeType, timeString });
 
     // UI 업데이트
     if (timeType === 'quiet_start') {
@@ -278,9 +278,9 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
       }
 
       await notificationService.updateNotificationSettings(updateData);
-      console.log('✅ [NotificationSettings] 시간 설정 저장 성공');
+      if (__DEV__) console.log('✅ [NotificationSettings] 시간 설정 저장 성공');
     } catch (error) {
-      console.error('❌ [NotificationSettings] 시간 설정 저장 실패:', error);
+      if (__DEV__) console.error('❌ [NotificationSettings] 시간 설정 저장 실패:', error);
       Alert.alert('오류', '시간 설정 저장에 실패했습니다.');
 
       // 실패 시 원래 값으로 되돌리기
@@ -371,7 +371,7 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
     },
     headerTitle: {
       fontSize: FONT_SIZES.h4,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       letterSpacing: -0.4,
       lineHeight: FONT_SIZES.h4 * 1.3,
     },
@@ -387,7 +387,7 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
     },
     sectionTitle: {
       fontSize: FONT_SIZES.small,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       textTransform: 'uppercase',
       marginLeft: SPACING.md,
       marginBottom: moderateScale(10),
@@ -420,13 +420,13 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
     },
     settingTitle: {
       fontSize: FONT_SIZES.body,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       letterSpacing: -0.3,
       lineHeight: FONT_SIZES.body * 1.4,
     },
     timeText: {
       fontSize: FONT_SIZES.body,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       letterSpacing: -0.2,
       lineHeight: FONT_SIZES.body * 1.4,
       minWidth: moderateScale(60),
@@ -456,19 +456,19 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
     },
     modalTitle: {
       fontSize: FONT_SIZES.body,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       letterSpacing: -0.4,
       lineHeight: FONT_SIZES.body * 1.4,
     },
     modalCancelText: {
       fontSize: FONT_SIZES.body,
       letterSpacing: -0.2,
-      fontWeight: '500',
+      fontFamily: 'Pretendard-Medium',
       lineHeight: FONT_SIZES.body * 1.4,
     },
     modalConfirmText: {
       fontSize: FONT_SIZES.body,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       letterSpacing: -0.2,
       lineHeight: FONT_SIZES.body * 1.4,
     },

@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   },
   guestTitle: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginTop: 24,
     marginBottom: 12,
     textAlign: 'center',
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
   },
   myStatusFilterText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
   },
   myChallengesSection: {
@@ -386,12 +386,12 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
   },
   sectionCount: {
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   twoColumnCard: {
     width: '47%',
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   },
   miniStatText: {
     fontSize: 13,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   miniStatDivider: {
     width: 1,
@@ -447,12 +447,12 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   controlBar: {
     flexDirection: 'row',

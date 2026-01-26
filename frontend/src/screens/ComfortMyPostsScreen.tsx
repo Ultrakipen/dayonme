@@ -31,7 +31,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import comfortWallService from '../services/api/comfortWallService';
 import postService from '../services/api/postService';
+import bookmarkService from '../services/api/bookmarkService';
 import { normalizeImageUrl } from '../utils/imageUtils';
+import { getThumbnailUrl } from '../utils/imageOptimizer';
 import { TYPOGRAPHY, ACCESSIBLE_COLORS } from '../utils/typography';
 import { FONT_SIZES } from '../constants';
 
@@ -82,7 +84,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
       headerTintColor: theme.text.primary.primary,
       headerTitleStyle: {
         fontSize: FONT_SIZES.h2,
-        fontWeight: '700',
+        fontFamily: 'Pretendard-Bold',
         color: theme.text.primary.primary,
       },
       headerLeft: () => (
@@ -109,16 +111,19 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
         setMyPosts(myPostsResponse.data.data);
       }
 
-      // 즐겨찾기 게시물 로드 (TODO: API 구현 필요)
-      // const favoritesResponse = await comfortWallService.getFavoritePosts();
-      // if (favoritesResponse.data?.status === 'success' && favoritesResponse.data.data) {
-      //   setFavoritesPosts(favoritesResponse.data.data);
-      // }
+      // 즐겨찾기 게시물 로드
+      const favoritesResponse = await bookmarkService.getBookmarks({ postType: 'comfort_wall' });
+      if (favoritesResponse.status === 'success' && favoritesResponse.data.bookmarks) {
+        const bookmarkedPosts = favoritesResponse.data.bookmarks
+          .map(bookmark => bookmark.post)
+          .filter((post): post is ComfortPost => post !== null) as ComfortPost[];
+        setFavoritesPosts(bookmarkedPosts);
+      }
       
     } catch (error) {
       // 운영 환경에서는 에러 로깅 서비스 사용 권장
       if (__DEV__) {
-        console.error('게시물 로드 오류:', error);
+        if (__DEV__) console.error('게시물 로드 오류:', error);
       }
       Alert.alert('오류', '게시물을 불러오는 중 오류가 발생했습니다.');
     } finally {
@@ -453,9 +458,9 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
               <View style={styles.imageContainer}>
                 <Image
                   source={{
-                    uri: normalizeImageUrl(
+                    uri: getThumbnailUrl(normalizeImageUrl(
                       post.images?.[0] || post.image_url || ''
-                    )
+                    ))
                   }}
                   style={[
                     styles.postImage,
@@ -465,7 +470,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
                   resizeMode="cover"
                   loadingIndicatorSource={{ uri: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' }}
                   fadeDuration={300}
-                  onError={() => console.log('Image load error')}
+                  onError={() => { if (__DEV__) console.log('Image load error'); }}
                   defaultSource={{ uri: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' }}
                 />
                 {post.images && post.images.length > 1 && (
@@ -640,7 +645,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
                   textStyle={[
                     styles.tagText,
                     { color: theme.text.primarySecondary },
-                    selectedTags.includes(tag) && { color: theme.primary, fontWeight: '600' }
+                    selectedTags.includes(tag) && { color: theme.primary, fontFamily: 'Pretendard-SemiBold' }
                   ]}
                   mode={selectedTags.includes(tag) ? 'flat' : 'outlined'}
                 >
@@ -798,13 +803,13 @@ const styles = StyleSheet.create({
   },
   postTitle: {
     fontSize: TYPOGRAPHY.body,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginBottom: 4,
     lineHeight: 18,
   },
   featuredTitle: {
     fontSize: TYPOGRAPHY.h2,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     lineHeight: 24,
   },
   postDate: {
@@ -812,7 +817,7 @@ const styles = StyleSheet.create({
   },
   featuredDate: {
     fontSize: TYPOGRAPHY.caption,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   featuredBadge: {
     flexDirection: 'row',
@@ -839,7 +844,7 @@ const styles = StyleSheet.create({
   },
   featuredText: {
     fontSize: TYPOGRAPHY.captionSmall,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#D97706',
     marginLeft: 2,
   },
@@ -902,7 +907,7 @@ const styles = StyleSheet.create({
   imageCountText: {
     color: '#ffffff',
     fontSize: TYPOGRAPHY.captionSmall,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   postStats: {
     flexDirection: 'row',
@@ -915,11 +920,11 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: TYPOGRAPHY.captionSmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   featuredStatText: {
     fontSize: TYPOGRAPHY.caption,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   emptyContainer: {
     flex: 1,
@@ -930,7 +935,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: TYPOGRAPHY.h2,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginTop: 16,
     marginBottom: 8,
     textAlign: 'center',
@@ -986,10 +991,10 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: TYPOGRAPHY.caption,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   selectedTagText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   activeFilters: {
     flexDirection: 'row',
@@ -1001,7 +1006,7 @@ const styles = StyleSheet.create({
   },
   activeFiltersText: {
     fontSize: TYPOGRAPHY.caption,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   clearFiltersButton: {
     flexDirection: 'row',
@@ -1014,7 +1019,7 @@ const styles = StyleSheet.create({
   },
   clearFiltersText: {
     fontSize: TYPOGRAPHY.caption,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   // 스와이프 제스처 스타일
   swipeBackground: {
@@ -1045,7 +1050,7 @@ const styles = StyleSheet.create({
   },
   swipeText: {
     fontSize: TYPOGRAPHY.caption,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginTop: 4,
   },
   swipeableCard: {

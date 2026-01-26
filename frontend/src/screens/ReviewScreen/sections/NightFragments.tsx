@@ -36,7 +36,7 @@ export const NightFragments: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('밤의 조각들을 불러오는데 실패했습니다');
-      console.log('밤의 조각들 로드 실패');
+      if (__DEV__) console.log('밤의 조각들 로드 실패');
     } finally {
       setLoading(false);
     }
@@ -70,7 +70,7 @@ export const NightFragments: React.FC = React.memo(() => {
         <View style={styles.header}>
           <Text style={[styles.icon, { fontSize: 32 * scale }]}>🌙</Text>
           <View style={styles.headerText}>
-            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>밤의 조각들</Text>
+            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>밤의 조각들</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
               {loading ? '로딩 중...' : '아직 밤에 작성한 글이 없어요'}
             </Text>
@@ -85,7 +85,7 @@ export const NightFragments: React.FC = React.memo(() => {
       <View style={styles.header}>
         <Text style={[styles.icon, { fontSize: 32 * scale }]}>🌙</Text>
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>밤의 조각들</Text>
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>밤의 조각들</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
             이 시간에도 깨어있던 당신
           </Text>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   subtitle: {
     marginTop: 2,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   fragmentTime: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   fragmentDate: {},
   fragmentContent: {},

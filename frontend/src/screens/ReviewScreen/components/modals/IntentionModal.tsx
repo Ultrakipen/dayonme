@@ -166,7 +166,7 @@ const createStyles = (isDark: boolean, colors: any, themeColors: any) => StyleSh
   },
   modalTitle: {
     fontSize: scaleFontSize(20),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF',
     marginBottom: scaleSpacing(2)
   },
@@ -234,12 +234,12 @@ const createStyles = (isDark: boolean, colors: any, themeColors: any) => StyleSh
   },
   modalButtonTextCancel: {
     fontSize: scaleFontSize(16),
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: colors.text.secondary
   },
   modalButtonTextSave: {
     fontSize: scaleFontSize(16),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF'
   }
 });

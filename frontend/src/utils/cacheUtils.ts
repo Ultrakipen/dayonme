@@ -26,9 +26,9 @@ export class CacheManager {
         version: CACHE_VERSION,
       };
       await AsyncStorage.setItem(key, JSON.stringify(cacheData));
-      console.log(`✅ 캐시 저장: ${key}`);
+      if (__DEV__) console.log(`✅ 캐시 저장: ${key}`);
     } catch (error) {
-      console.error(`❌ 캐시 저장 실패 (${key}):`, error);
+      if (__DEV__) console.error(`❌ 캐시 저장 실패 (${key}):`, error);
     }
   }
 
@@ -49,7 +49,7 @@ export class CacheManager {
 
       // 버전 체크
       if (cacheData.version !== CACHE_VERSION) {
-        console.log(`⚠️ 캐시 버전 불일치 (${key}): ${cacheData.version} → ${CACHE_VERSION}`);
+        if (__DEV__) console.log(`⚠️ 캐시 버전 불일치 (${key}): ${cacheData.version} → ${CACHE_VERSION}`);
         await this.remove(key);
         return null;
       }
@@ -57,15 +57,15 @@ export class CacheManager {
       // 만료 체크
       const age = Date.now() - cacheData.timestamp;
       if (age > expiryMs) {
-        console.log(`⏰ 캐시 만료 (${key}): ${Math.floor(age / 1000)}초 경과`);
+        if (__DEV__) console.log(`⏰ 캐시 만료 (${key}): ${Math.floor(age / 1000)}초 경과`);
         await this.remove(key);
         return null;
       }
 
-      console.log(`✅ 캐시 조회 성공 (${key}): ${Math.floor(age / 1000)}초 전 저장`);
+      if (__DEV__) console.log(`✅ 캐시 조회 성공 (${key}): ${Math.floor(age / 1000)}초 전 저장`);
       return cacheData.data;
     } catch (error) {
-      console.error(`❌ 캐시 조회 실패 (${key}):`, error);
+      if (__DEV__) console.error(`❌ 캐시 조회 실패 (${key}):`, error);
       return null;
     }
   }
@@ -76,9 +76,9 @@ export class CacheManager {
   static async remove(key: string): Promise<void> {
     try {
       await AsyncStorage.removeItem(key);
-      console.log(`🗑️ 캐시 삭제: ${key}`);
+      if (__DEV__) console.log(`🗑️ 캐시 삭제: ${key}`);
     } catch (error) {
-      console.error(`❌ 캐시 삭제 실패 (${key}):`, error);
+      if (__DEV__) console.error(`❌ 캐시 삭제 실패 (${key}):`, error);
     }
   }
 
@@ -91,10 +91,10 @@ export class CacheManager {
       const matchedKeys = keys.filter(key => key.includes(pattern));
       if (matchedKeys.length > 0) {
         await AsyncStorage.multiRemove(matchedKeys);
-        console.log(`🗑️ 패턴 캐시 삭제 (${pattern}): ${matchedKeys.length}개`);
+        if (__DEV__) console.log(`🗑️ 패턴 캐시 삭제 (${pattern}): ${matchedKeys.length}개`);
       }
     } catch (error) {
-      console.error(`❌ 패턴 캐시 삭제 실패 (${pattern}):`, error);
+      if (__DEV__) console.error(`❌ 패턴 캐시 삭제 실패 (${pattern}):`, error);
     }
   }
 
@@ -107,10 +107,10 @@ export class CacheManager {
       const cacheKeys = keys.filter(key => key.startsWith('cache_'));
       if (cacheKeys.length > 0) {
         await AsyncStorage.multiRemove(cacheKeys);
-        console.log(`🗑️ 전체 캐시 삭제: ${cacheKeys.length}개`);
+        if (__DEV__) console.log(`🗑️ 전체 캐시 삭제: ${cacheKeys.length}개`);
       }
     } catch (error) {
-      console.error('❌ 전체 캐시 삭제 실패:', error);
+      if (__DEV__) console.error('❌ 전체 캐시 삭제 실패:', error);
     }
   }
 
@@ -130,10 +130,10 @@ export class CacheManager {
         }
       }
 
-      console.log(`📊 캐시 크기: ${(totalSize / 1024).toFixed(2)} KB`);
+      if (__DEV__) console.log(`📊 캐시 크기: ${(totalSize / 1024).toFixed(2)} KB`);
       return totalSize;
     } catch (error) {
-      console.error('❌ 캐시 크기 확인 실패:', error);
+      if (__DEV__) console.error('❌ 캐시 크기 확인 실패:', error);
       return 0;
     }
   }

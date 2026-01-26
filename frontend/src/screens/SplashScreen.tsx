@@ -6,8 +6,7 @@ import { RootStackParamList } from '../types/navigation';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import LinearGradient from 'react-native-linear-gradient';
-import { FONT_SIZES } from '../constants';
-import { getScale } from '../utils/responsive';
+import { normalize } from '../utils/responsive';
 
 type SplashScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -21,11 +20,10 @@ const SplashScreen: React.FC = () => {
   const dotAnim1 = useRef(new Animated.Value(0)).current;
   const dotAnim2 = useRef(new Animated.Value(0)).current;
   const dotAnim3 = useRef(new Animated.Value(0)).current;
-
-  const scale = getScale();
+  const startTimeRef = useRef(Date.now());
 
   useEffect(() => {
-    // 로고 Fade-in 애니메이션
+    // 텍스트 Fade-in 애니메이션
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -76,13 +74,22 @@ const SplashScreen: React.FC = () => {
 
   useEffect(() => {
     if (!isLoading) {
+      const MIN_SPLASH_TIME = 800;
+      const elapsed = Date.now() - startTimeRef.current;
+      const remaining = Math.max(0, MIN_SPLASH_TIME - elapsed);
+
       const timer = setTimeout(() => {
-        if (isAuthenticated) {
-          navigation.replace('Main');
-        } else {
-          navigation.replace('Welcome');
+        try {
+          if (isAuthenticated) {
+            navigation.replace('Main');
+          } else {
+            navigation.replace('Welcome');
+          }
+        } catch (error) {
+          console.error('Navigation error:', error);
+          navigation.replace('Welcome'); // 에러 시 안전하게 Welcome으로
         }
-      }, 1500);
+      }, remaining);
 
       return () => clearTimeout(timer);
     }
@@ -99,70 +106,54 @@ const SplashScreen: React.FC = () => {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
-      {/* 메인 로고 영역 */}
+      {/* 중앙 텍스트 영역 */}
       <Animated.View
         style={[
-          styles.logoContainer,
+          styles.centerContainer,
           {
             opacity: fadeAnim,
             transform: [{ scale: scaleAnim }],
           },
         ]}
       >
-        <Text style={[styles.icon, { color: isDark ? '#A78BFA' : '#667eea' }]}>
-          💫
+        <Text style={[styles.appName, { color: isDark ? '#A78BFA' : '#667eea' }]}>
+          Day on me
         </Text>
-        <Text style={[styles.logo, { color: isDark ? theme.colors.primary[400] : theme.colors.gradient.primary[0] }]}>
-          Little Emotion
+        <Text style={[styles.tagline, { color: theme.text.tertiary }]}>
+          작은 공감들의 큰 이야기
         </Text>
-        <Text style={[styles.subtitle, { color: theme.text.secondary }]}>
-          작은 감정들의 큰 이야기
-        </Text>
+
+        {/* 로딩 인디케이터 */}
+        <View style={styles.loadingContainer}>
+          <Animated.View
+            style={[
+              styles.dot,
+              {
+                opacity: dotAnim1,
+                backgroundColor: isDark ? '#A78BFA' : '#667eea',
+              },
+            ]}
+          />
+          <Animated.View
+            style={[
+              styles.dot,
+              {
+                opacity: dotAnim2,
+                backgroundColor: isDark ? '#A78BFA' : '#667eea',
+              },
+            ]}
+          />
+          <Animated.View
+            style={[
+              styles.dot,
+              {
+                opacity: dotAnim3,
+                backgroundColor: isDark ? '#A78BFA' : '#667eea',
+              },
+            ]}
+          />
+        </View>
       </Animated.View>
-
-      {/* 로딩 인디케이터 */}
-      <View style={styles.loadingContainer}>
-        <Animated.View
-          style={[
-            styles.dot,
-            {
-              opacity: dotAnim1,
-              backgroundColor: isDark ? '#A78BFA' : theme.colors.gradient.primary[0],
-            },
-          ]}
-        />
-        <Animated.View
-          style={[
-            styles.dot,
-            {
-              opacity: dotAnim2,
-              backgroundColor: isDark ? '#A78BFA' : theme.colors.gradient.primary[0],
-            },
-          ]}
-        />
-        <Animated.View
-          style={[
-            styles.dot,
-            {
-              opacity: dotAnim3,
-              backgroundColor: isDark ? '#A78BFA' : theme.colors.gradient.primary[0],
-            },
-          ]}
-        />
-      </View>
-
-      {/* 하단 슬로건 */}
-      <Animated.Text
-        style={[
-          styles.tagline,
-          {
-            color: theme.text.tertiary,
-            opacity: fadeAnim,
-          },
-        ]}
-      >
-        당신의 마음을 나눠 보세요
-      </Animated.Text>
     </LinearGradient>
   );
 };
@@ -173,44 +164,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoContainer: {
-    position: 'absolute',
-    top: '15%',
+  centerContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  icon: {
-    fontSize: 40 * getScale(),
-    marginBottom: 16,
+  appName: {
+    fontSize: normalize(38),
+    fontFamily: 'Pretendard-Bold',
+    letterSpacing: -1,
+    marginBottom: 12,
   },
-  logo: {
-    fontSize: 52 * getScale(),
-    fontWeight: '700',
-    letterSpacing: -1.5,
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: FONT_SIZES.body * getScale(),
-    fontWeight: '400',
+  tagline: {
+    fontSize: normalize(16),
+    fontFamily: 'Pretendard-Medium',
     letterSpacing: 0.5,
+    marginBottom: 32,
   },
   loadingContainer: {
-    position: 'absolute',
-    bottom: '25%',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    marginTop: 8,
   },
   dot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-  },
-  tagline: {
-    position: 'absolute',
-    bottom: '15%',
-    fontSize: FONT_SIZES.bodySmall * getScale(),
-    fontWeight: '500',
-    letterSpacing: 0.3,
   },
 });
 

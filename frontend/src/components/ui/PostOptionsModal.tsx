@@ -268,7 +268,7 @@ const getStyles = (theme: any, isDark: boolean) => {
       fontSize: 15.5,
       color: theme.text.primary,
       marginLeft: 18,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       letterSpacing: -0.2,
     },
   });

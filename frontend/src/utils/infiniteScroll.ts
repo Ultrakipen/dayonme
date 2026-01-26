@@ -63,7 +63,7 @@ const hasMoreRef = useRef<boolean>(true);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '데이터를 불러오는 중 오류가 발생했습니다.';
       setError(errorMessage);
-      console.error('무한 스크롤 데이터 로드 오류:', err);
+      if (__DEV__) console.error('무한 스크롤 데이터 로드 오류:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);

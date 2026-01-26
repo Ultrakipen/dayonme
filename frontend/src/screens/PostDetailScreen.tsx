@@ -17,7 +17,8 @@ import {
   Animated,
   Modal,
   TextInput as RNTextInput,
-  KeyboardAvoidingView
+  KeyboardAvoidingView,
+  Alert
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -48,6 +49,7 @@ import { showAlert } from '../contexts/AlertContext';
 import ClickableNickname from '../components/ClickableNickname';
 import ClickableAvatar from '../components/ClickableAvatar';
 import EmotionLoginPromptModal from '../components/EmotionLoginPromptModal';
+import CommentBottomSheet, { CommentBottomSheetRef, Comment as BSComment } from '../components/CommentBottomSheet';
 import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import postService from '../services/api/postService';
@@ -57,6 +59,7 @@ import { RootStackParamList } from '../types/navigation';
 import blockService from '../services/api/blockService';
 import reportService from '../services/api/reportService';
 import bookmarkService from '../services/api/bookmarkService';
+import notificationService from '../services/api/notificationService';
 import { normalizeImageUrl, logImageError, logImageSuccess } from '../utils/imageUtils';
 import { TYPOGRAPHY, ACCESSIBLE_COLORS, MIN_TOUCH_SIZE } from '../utils/typography';
 import { logger, sanitizeInput } from '../utils/security';
@@ -245,6 +248,15 @@ const findCommentById = (comments: Comment[], commentId: number): Comment | null
   return null;
 };
 
+// React Native 0.80 호환성: lazy 초기화
+const getScreenDimensions = () => {
+  try {
+    const dims = Dimensions.get('window');
+    if (dims.width > 0 && dims.height > 0) return dims;
+  } catch (e) {}
+  return { width: 360, height: 800 };
+};
+
 // 메모이제이션된 이미지 컴포넌트 - 댓글 상태 변경 시 재렌더링 방지
 const PostImages = React.memo<{
     imageUrls: string | string[];
@@ -254,9 +266,16 @@ const PostImages = React.memo<{
   }>(({ imageUrls, onDoubleTap, showLikeAnimation, likeAnimationValue }) =>
   {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [fullscreenVisible, setFullscreenVisible] = useState(false);
+    const [fullscreenIndex, setFullscreenIndex] = useState(0);
     const scrollViewRef = useRef<ScrollView>(null);
+    const fullscreenScrollRef = useRef<ScrollView>(null);
     const { width: screenWidth } = useWindowDimensions();
     const { theme: modernTheme } = useModernTheme();
+
+    const SCREEN_DIMS = getScreenDimensions();
+    const SCREEN_WIDTH = SCREEN_DIMS.width;
+    const SCREEN_HEIGHT = SCREEN_DIMS.height;
 
     const normalizedUrls = React.useMemo(() => {
       let urls: string[] = [];
@@ -285,15 +304,24 @@ const PostImages = React.memo<{
       setCurrentImageIndex(index);
     };
 
+    const handleFullscreenScroll = (event: any) => {
+      const contentOffsetX = event.nativeEvent.contentOffset.x;
+      const index = Math.min(
+        Math.max(Math.round(contentOffsetX / SCREEN_WIDTH), 0),
+        normalizedUrls.length - 1
+      );
+      setFullscreenIndex(index);
+    };
+
     if (!normalizedUrls || normalizedUrls.length === 0) {
       logger.log('⏭️ PostImages 렌더링 건너뜀: 빈 URL');
       return null;
     }
 
-  logger.log('🖼️ PostImages 렌더링:', normalizedUrls.length, '개 이미지');  
+  logger.log('🖼️ PostImages 렌더링:', normalizedUrls.length, '개 이미지');
 
     return (
-      <Box style={{ paddingHorizontal: 0, paddingBottom: 24 }}>
+      <View style={{ paddingHorizontal: 0, paddingBottom: 24, position: 'relative' }}>
         <ScrollView
           ref={scrollViewRef}
           horizontal
@@ -320,14 +348,14 @@ const PostImages = React.memo<{
                 }}
                 resizeMode="cover"
                 onError={(error: any) => {
-                 logImageError('PostDetail', url, url, error.nativeEvent?.error); 
+                 logImageError('PostDetail', url, url, error.nativeEvent?.error);
                 }}
                 onLoad={() => {
                   logImageSuccess('PostDetail', url);
                 }}
               />
 
-              {/* 더블탭 하트 애니메이션 - 현재 보이는 이미지에만 표시 */}      
+              {/* 더블탭 하트 애니메이션 - 현재 보이는 이미지에만 표시 */}
               {showLikeAnimation && index === currentImageIndex && (
                 <Animated.View style={{
                   position: 'absolute',
@@ -353,29 +381,167 @@ const PostImages = React.memo<{
         {/* 페이지 인디케이터 - 이미지가 2개 이상일 때만 표시 */}
         {normalizedUrls.length > 1 && (
           <View style={{
+            position: 'absolute',
+            bottom: 12,
+            left: 0,
+            right: 0,
             flexDirection: 'row',
             justifyContent: 'center',
             alignItems: 'center',
-            paddingTop: 12,
-            gap: 6,
           }}>
             {normalizedUrls.map((_, index) => (
               <View
                 key={index}
                 style={{
-                  width: currentImageIndex === index ? 8 : 6,
-                  height: currentImageIndex === index ? 8 : 6,
+                  width: currentImageIndex === index ? 24 : 8,
+                  height: 8,
                   borderRadius: 4,
-                 backgroundColor: currentImageIndex === index ? modernTheme.colors.primary : modernTheme.colors.border,
+                  marginHorizontal: 4,
+                  backgroundColor: currentImageIndex === index ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 4,
+                  elevation: 4,
                 }}
               />
             ))}
           </View>
         )}
-      </Box>
+
+        {/* 이미지 카운터 */}
+        <View style={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          paddingHorizontal: 12,
+          paddingVertical: 6,
+          borderRadius: 16,
+          zIndex: 10,
+        }}>
+          <UIText style={{ color: '#FFFFFF', fontSize: 12, fontFamily: 'Pretendard-SemiBold' }}>
+            {currentImageIndex + 1}/{normalizedUrls.length}
+          </UIText>
+        </View>
+
+        {/* 풀스크린 버튼 */}
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 10,
+          }}
+          onPress={() => {
+            setFullscreenIndex(currentImageIndex);
+            setFullscreenVisible(true);
+          }}
+        >
+          <MaterialCommunityIcons name="arrow-expand" size={20} color="#FFFFFF" />
+        </TouchableOpacity>
+
+        {/* 풀스크린 모달 */}
+        <Modal
+          visible={fullscreenVisible}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setFullscreenVisible(false)}
+        >
+          <View style={{ flex: 1, backgroundColor: '#000000', justifyContent: 'center', alignItems: 'center' }}>
+            <TouchableOpacity
+              style={{
+                position: 'absolute',
+                top: Platform.OS === 'ios' ? 50 : 20,
+                right: 20,
+                zIndex: 1000,
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+              onPress={() => setFullscreenVisible(false)}
+            >
+              <MaterialCommunityIcons name="close" size={32} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            {/* 풀스크린 이미지 카운터 */}
+            <View style={{
+              position: 'absolute',
+              top: Platform.OS === 'ios' ? 50 : 20,
+              left: 20,
+              zIndex: 1000,
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 20,
+            }}>
+              <UIText style={{ color: '#FFFFFF', fontSize: 16, fontFamily: 'Pretendard-Bold' }}>
+                {fullscreenIndex + 1}/{normalizedUrls.length}
+              </UIText>
+            </View>
+
+            {/* 풀스크린 슬라이더 */}
+            <ScrollView
+              ref={fullscreenScrollRef}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onScroll={handleFullscreenScroll}
+              scrollEventThrottle={16}
+              decelerationRate="fast"
+              snapToInterval={SCREEN_WIDTH}
+              snapToAlignment="center"
+              contentOffset={{ x: fullscreenIndex * SCREEN_WIDTH, y: 0 }}
+            >
+              {normalizedUrls.map((url, index) => (
+                <View key={`fullscreen-${index}`} style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT, justifyContent: 'center', alignItems: 'center' }}>
+                  <Image
+                    source={{ uri: url }}
+                    style={{ width: SCREEN_WIDTH, height: SCREEN_HEIGHT }}
+                    resizeMode="contain"
+                  />
+                </View>
+              ))}
+            </ScrollView>
+
+            {/* 풀스크린 인디케이터 */}
+            <View style={{
+              position: 'absolute',
+              bottom: 40,
+              left: 0,
+              right: 0,
+              flexDirection: 'row',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}>
+              {normalizedUrls.map((_, index) => (
+                <View
+                  key={`fs-indicator-${index}`}
+                  style={{
+                    width: index === fullscreenIndex ? 30 : 10,
+                    height: 10,
+                    borderRadius: 5,
+                    marginHorizontal: 5,
+                    backgroundColor: index === fullscreenIndex ? '#FFFFFF' : 'rgba(255, 255, 255, 0.5)',
+                  }}
+                />
+              ))}
+            </View>
+          </View>
+        </Modal>
+      </View>
     );
   }, (prevProps, nextProps) => {
-    // imageUrls가 같고, showLikeAnimation 상태가 같으면 리렌더링하지 않음      
+    // imageUrls가 같고, showLikeAnimation 상태가 같으면 리렌더링하지 않음
     return JSON.stringify(prevProps.imageUrls) ===
   JSON.stringify(nextProps.imageUrls) &&
            prevProps.showLikeAnimation === nextProps.showLikeAnimation;
@@ -440,9 +606,12 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   const theme = useTheme();
   const { theme: modernTheme, isDark } = useModernTheme();
   const { user, isAuthenticated } = useAuth();
-  const { postId, postType, highlightCommentId } = route.params;
+  const { postId, postType, highlightCommentId, sourceScreen, relatedNotificationId } = route.params;
 
-  logger.log('📍 [PostDetailScreen] 렌더링:', { postId, postType, highlightCommentId });
+  logger.log('📍 [PostDetailScreen] 렌더링:', { postId, postType, highlightCommentId, sourceScreen, relatedNotificationId });
+
+  // 알림 삭제 모달 상태
+  const [deleteNotificationModalVisible, setDeleteNotificationModalVisible] = useState(false);
   logger.log('🔍 [PostDetailScreen] 현재 로그인 사용자:', {
     hasUser: !!user,
     userId: user?.user_id,
@@ -451,6 +620,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   });
   const scrollViewRef = useRef<ScrollView>(null);
   const textInputRef = useRef<any>(null);
+  const commentBottomSheetRef = useRef<CommentBottomSheetRef>(null);
+  const hasOpenedBottomSheet = useRef(false);
 
   // fetchPostData 호출을 위한 상태 (hooks 순서 문제 해결)
   const [shouldLoadData, setShouldLoadData] = useState(false);
@@ -468,6 +639,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [isCommentInputFocused, setIsCommentInputFocused] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [highlightedCommentId, setHighlightedCommentId] = useState<number | null>(highlightCommentId || null);
 
   // 댓글 위치 추적을 위한 ref 맵
@@ -598,7 +770,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           }}>
             <RNText style={{
               fontSize: TYPOGRAPHY.captionSmall,
-              fontWeight: '700',
+              fontFamily: 'Pretendard-Bold',
               color: '#ffffff'
             }}>
               {index + 1}
@@ -631,7 +803,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               }}>
                 <RNText style={{
                   fontSize: TYPOGRAPHY.caption,
-                  fontWeight: '600',
+                  fontFamily: 'Pretendard-SemiBold',
                   color: '#ffffff'
                 }}>
                   {(bestComment.user?.nickname || '사용자')[0]}
@@ -642,7 +814,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               <HStack style={{ alignItems: 'center', marginBottom: 3 }}>
                 <RNText style={{
                   fontSize: TYPOGRAPHY.caption,
-                  fontWeight: '600',
+                  fontFamily: 'Pretendard-SemiBold',
                   color: '#92400e',
                   marginRight: 6
                 }}>
@@ -658,7 +830,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   <RNText style={{
                     fontSize: TYPOGRAPHY.captionSmall,
                     color: '#ef4444',
-                    fontWeight: '500'
+                    fontFamily: 'Pretendard-Medium'
                   }}>
                     {bestComment.like_count || 0}
                   </RNText>
@@ -759,30 +931,51 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
     }
   }, [navigation, route.params]);
 
+  // 키보드 높이 감지 - Android 키보드 회피 개선
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
+
   useEffect(() => {
     const title = getScreenTitle();
     const isComfortPost = title === '마음 나누기';
     const isMyDayPost = title === '하루 이야기';
-    
-    // 동적 헤더 설정 (각 타입별로 다른 색상 적용)
-    let headerBackgroundColor = '#ffffff';
-    let borderBottomColor = 'rgba(0, 0, 0, 0.08)';
-    
-    if (isComfortPost) {
-      headerBackgroundColor = '#f8f9ff';
-      borderBottomColor = 'rgba(99, 102, 241, 0.1)';
+
+    // 동적 헤더 배경색 설정
+    let headerBackgroundColor = modernTheme.colors.primary;
+
+    if (isDark) {
+      headerBackgroundColor = modernTheme.bg.card;
+    } else if (isComfortPost) {
+      headerBackgroundColor = '#6366F1'; // Indigo for Comfort posts
     } else if (isMyDayPost) {
-      headerBackgroundColor = '#fff8f0';
-      borderBottomColor = 'rgba(255, 152, 0, 0.1)';
+      headerBackgroundColor = '#F97316'; // Orange for MyDay posts
     }
-    
-    logger.log('🎨 [헤더 설정 1] fontSize: FONT_SIZES.h3으로 설정');
+
+    logger.log('🎨 [헤더 설정] 타입에 따른 헤더 색상:', { title, isComfortPost, isMyDayPost, headerBackgroundColor });
+
     navigation.setOptions({
       headerTitle: () => (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start', paddingLeft: 40 }}>
           <RNText style={{
             fontSize: TYPOGRAPHY.h2,
-            fontWeight: '700',
+            fontFamily: 'Pretendard-Bold',
             color: '#ffffff',
             letterSpacing: 0.2,
           }}>
@@ -790,7 +983,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           </RNText>
         </View>
       ),
-      headerTitleStyle: undefined, // 전역 스타일 완전 제거
+      headerTitleStyle: undefined,
       headerStyle: {
         backgroundColor: 'transparent',
         borderBottomWidth: 0,
@@ -800,13 +993,20 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       headerBackground: () => (
         <View style={{
           flex: 1,
-          backgroundColor: isDark ? modernTheme.bg.card : modernTheme.colors.primary,
+          backgroundColor: headerBackgroundColor,
         }} />
       ),
       headerTintColor: '#ffffff',
       headerLeft: () => (
         <Pressable
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            const { sourceScreen } = route.params || {};
+            if (sourceScreen === 'bookmarks') {
+              navigation.navigate('Bookmarks' as any);
+            } else {
+              navigation.goBack();
+            }
+          }}
           style={{
             padding: 8,
             marginLeft: 8,
@@ -923,10 +1123,10 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       
       // MyDay 게시물은 트리 구조 댓글을 위해 MyDay API를 우선 호출
       // MyDay API가 트리 구조(replies 배열)를 제공하므로 댓글 들여쓰기가 가능함
-      const apiSequence = postType === 'myday' 
+      const apiSequence = postType === 'myday'
         ? ['MyDay', 'Posts', 'ComfortWall']  // MyDay 게시물은 MyDay API 먼저 (트리 구조 댓글용)
-        : postType === 'comfort'
-        ? ['ComfortWall', 'Posts', 'MyDay']  // Comfort 게시물이면 ComfortWall API 먼저, 실패 시 Posts API
+        : postType === 'comfort' || postType === 'someoneday'
+        ? ['ComfortWall', 'Posts', 'MyDay']  // Comfort/SomeoneDay 게시물이면 ComfortWall API 먼저, 실패 시 Posts API
         : ['Posts', 'MyDay', 'ComfortWall'];  // 기본 게시물이면 Posts API 먼저, 실패 시 MyDay API
         
       logger.log('🔍 API 호출 순서:', apiSequence);
@@ -958,7 +1158,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             logger.log(`✅ ${api} API로 게시물 조회 성공${attemptCount > 0 ? ` (재시도 ${attemptCount}회 후)` : ''}`);
             break; // 성공하면 전체 루프 종료
             
-          } catch (error: any) {
+          } catch (error: unknown) {
             const statusCode = error.response?.status;
             const errorMessage = error.response?.data?.message || error.message;
             
@@ -966,7 +1166,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             
             // 500 에러의 경우 더 구체적인 로깅
             if (statusCode === 500) {
-              console.error(`🔥 ${api} API 서버 에러 (500):`, {
+              if (__DEV__) console.error(`🔥 ${api} API 서버 에러 (500):`, {
                 postId,
                 attempt: attemptCount + 1,
                 maxRetries,
@@ -1093,7 +1293,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'flex-start', paddingLeft: 40 }}>
               <RNText style={{
                 fontSize: TYPOGRAPHY.h2,
-                fontWeight: '700',
+                fontFamily: 'Pretendard-Bold',
                 color: '#ffffff',
                 letterSpacing: 0.2,
               }}>
@@ -1194,67 +1394,9 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           
           setBestComments(bestCommentsData);
 
-          // 알림에서 넘어온 경우 해당 댓글로 스크롤
+          // 알림에서 넘어온 경우 CommentBottomSheet에서 처리 (finally 블록 참조)
           if (highlightCommentId) {
-            logger.log('📍 [PostDetailScreen] 댓글 하이라이트 준비:', highlightCommentId);
-
-            // 답글인 경우 부모 댓글 찾기 및 펼치기
-            const findParentCommentId = (commentId: number, allComments: Comment[]): number | null => {
-              for (const comment of allComments) {
-                if (comment.replies && comment.replies.length > 0) {
-                  const foundReply = comment.replies.find(r => r.comment_id === commentId);
-                  if (foundReply) {
-                    return comment.comment_id;
-                  }
-                  // 재귀적으로 답글의 답글 검색
-                  const parentInReplies = findParentCommentId(commentId, comment.replies);
-                  if (parentInReplies !== null) {
-                    return parentInReplies;
-                  }
-                }
-              }
-              return null;
-            };
-
-            const parentCommentId = findParentCommentId(highlightCommentId, safeComments);
-
-            if (parentCommentId) {
-              logger.log('📍 [PostDetailScreen] 답글의 부모 댓글 찾음:', parentCommentId);
-              // 부모 댓글 펼치기
-              setCollapsedComments(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(parentCommentId);
-                return newSet;
-              });
-            }
-
-            // 딜레이를 1초로 늘려서 댓글이 펼쳐지는 시간 확보
-            setTimeout(() => {
-              const commentView = commentRefs.current.get(highlightCommentId);
-              if (commentView && scrollViewRef.current) {
-                commentView.measureLayout(
-                  scrollViewRef.current as any,
-                  (x: number, y: number, width: number, height: number) => {
-                    logger.log('📍 [PostDetailScreen] 댓글 위치 측정:', { x, y, width, height });
-                    (scrollViewRef.current as any)?.scrollTo({ y: Math.max(0, y - 100), animated: true });
-                  },
-                  (error: any) => {
-                    console.error('📍 [PostDetailScreen] 댓글 위치 측정 실패:', error);
-                    // 실패 시 맨 아래로 스크롤
-                    (scrollViewRef.current as any)?.scrollToEnd({ animated: true });
-                  }
-                );
-              } else {
-                logger.log('📍 [PostDetailScreen] 댓글 ref 없음, 맨 아래로 스크롤');
-                (scrollViewRef.current as any)?.scrollToEnd({ animated: true });
-              }
-            }, 1000);
-
-            // 3.5초 후 하이라이트 제거
-            setTimeout(() => {
-              logger.log('📍 [PostDetailScreen] 하이라이트 제거');
-              setHighlightedCommentId(null);
-            }, 4500);
+            logger.log('📍 [PostDetailScreen] 댓글 하이라이트 준비:', highlightCommentId, '- CommentBottomSheet로 처리 예정');
           }
 
         } else {
@@ -1318,67 +1460,9 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               setBestComments(bestCommentsData);
               logger.log('🏆 별도 로드 베스트 댓글:', bestCommentsData.length);
 
-              // 알림에서 넘어온 경우 해당 댓글로 스크롤
+              // 알림에서 넘어온 경우 CommentBottomSheet에서 처리 (finally 블록 참조)
               if (highlightCommentId) {
-                logger.log('📍 [PostDetailScreen] 별도 로드 후 댓글 하이라이트 준비:', highlightCommentId);
-
-                // 답글인 경우 부모 댓글 찾기 및 펼치기
-                const findParentCommentId = (commentId: number, allComments: Comment[]): number | null => {
-                  for (const comment of allComments) {
-                    if (comment.replies && comment.replies.length > 0) {
-                      const foundReply = comment.replies.find(r => r.comment_id === commentId);
-                      if (foundReply) {
-                        return comment.comment_id;
-                      }
-                      // 재귀적으로 답글의 답글 검색
-                      const parentInReplies = findParentCommentId(commentId, comment.replies);
-                      if (parentInReplies !== null) {
-                        return parentInReplies;
-                      }
-                    }
-                  }
-                  return null;
-                };
-
-                const parentCommentId = findParentCommentId(highlightCommentId, safeComments);
-
-                if (parentCommentId) {
-                  logger.log('📍 [PostDetailScreen] 답글의 부모 댓글 찾음:', parentCommentId);
-                  // 부모 댓글 펼치기
-                  setCollapsedComments(prev => {
-                    const newSet = new Set(prev);
-                    newSet.delete(parentCommentId);
-                    return newSet;
-                  });
-                }
-
-                // 딜레이를 1초로 늘려서 댓글이 펼쳐지는 시간 확보
-                setTimeout(() => {
-                  const commentView = commentRefs.current.get(highlightCommentId);
-                  if (commentView && scrollViewRef.current) {
-                    commentView.measureLayout(
-                      scrollViewRef.current as any,
-                      (x: number, y: number, width: number, height: number) => {
-                        logger.log('📍 [PostDetailScreen] 댓글 위치 측정:', { x, y, width, height });
-                        (scrollViewRef.current as any)?.scrollTo({ y: Math.max(0, y - 100), animated: true });
-                      },
-                      (error: any) => {
-                        console.error('📍 [PostDetailScreen] 댓글 위치 측정 실패:', error);
-                        // 실패 시 맨 아래로 스크롤
-                        (scrollViewRef.current as any)?.scrollToEnd({ animated: true });
-                      }
-                    );
-                  } else {
-                    logger.log('📍 [PostDetailScreen] 댓글 ref 없음, 맨 아래로 스크롤');
-                    (scrollViewRef.current as any)?.scrollToEnd({ animated: true });
-                  }
-                }, 1000);
-
-                // 3.5초 후 하이라이트 제거
-                setTimeout(() => {
-                  logger.log('📍 [PostDetailScreen] 하이라이트 제거');
-                  setHighlightedCommentId(null);
-                }, 4500);
+                logger.log('📍 [PostDetailScreen] 별도 로드 후 댓글 하이라이트 준비:', highlightCommentId, '- CommentBottomSheet로 처리 예정');
               }
             } else {
               logger.log('❌ 일반 API 댓글 응답 구조 이상');
@@ -1390,7 +1474,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           }
         }
       } else {
-        console.error('❌ 모든 응답 구조 파싱 실패:', {
+        if (__DEV__) console.error('❌ 모든 응답 구조 파싱 실패:', {
           hasResponseData: !!responseData,
           responseDataType: typeof responseData,
           status: responseData?.status,
@@ -1403,8 +1487,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         throw new Error(responseData?.message || '게시물을 불러올 수 없습니다.');
       }
       
-    } catch (error: any) {
-      console.error('🔥 모든 API 실패 - 최종 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('🔥 모든 API 실패 - 최종 오류:', error);
       
       // 상태 코드별 사용자 친화적 메시지 제공
       let errorMessage = '게시물을 불러오는 중 오류가 발생했습니다.';
@@ -1416,7 +1500,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           break;
         case 500:
           errorMessage = '서버에 일시적인 문제가 발생했습니다.\n잠시 후 다시 시도해주세요.';
-          console.error('🔥 서버 에러 - 모든 재시도 실패:', {
+          if (__DEV__) console.error('🔥 서버 에러 - 모든 재시도 실패:', {
             postId,
             statusCode,
             errorData: error.response?.data,
@@ -1439,8 +1523,26 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       setPost(null); // 404 오류 시 게시물 데이터 초기화
     } finally {
       setLoading(false);
+
+      // 알림에서 온 경우 바텀시트 자동 열기
+      logger.log('📍 [PostDetailScreen] fetchPostData finally 블록 실행', {
+        highlightCommentId,
+        hasOpenedBottomSheet: hasOpenedBottomSheet.current,
+        hasCommentBottomSheetRef: !!commentBottomSheetRef.current
+      });
+
+      if (highlightCommentId && !hasOpenedBottomSheet.current) {
+        logger.log('📍 [PostDetailScreen] fetchPostData 완료 - CommentBottomSheet 자동 열기 예약');
+        hasOpenedBottomSheet.current = true;
+        setTimeout(() => {
+          logger.log('📍 [PostDetailScreen] CommentBottomSheet.open() 호출', {
+            hasRef: !!commentBottomSheetRef.current
+          });
+          commentBottomSheetRef.current?.open();
+        }, 1200);
+      }
     }
-  }, [postId, postType, navigation, getScreenTitle]);
+  }, [postId, postType, navigation, getScreenTitle, highlightCommentId]);
 
   // shouldLoadData가 true가 되면 fetchPostData 호출
   useEffect(() => {
@@ -1500,7 +1602,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       await Share.share(shareContent);
       setShowActionSheet(false);
     } catch (error) {
-      console.error('공유 오류:', error);
+      if (__DEV__) console.error('공유 오류:', error);
     }
   }, [post]);
 
@@ -1553,8 +1655,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           title: '신고 완료',
           message: '신고가 접수되었습니다. 검토 후 조치하겠습니다.',
         });
-      } catch (error: any) {
-        console.error('게시물 신고 오류:', error);
+      } catch (error: unknown) {
+        if (__DEV__) console.error('게시물 신고 오류:', error);
         setAlertConfig({
           visible: true,
           type: 'error',
@@ -1630,11 +1732,11 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       });
 
       // postType에 따른 삭제 서비스 호출
-      console.log('🗑️ 삭제 API 호출:', { postType, postId: post!.post_id });
+      if (__DEV__) console.log('🗑️ 삭제 API 호출:', { postType, postId: post!.post_id });
       if (postType === 'myday') {
         await myDayService.deletePost(post!.post_id);
       } else if (postType === 'comfort') {
-        console.log('🗑️ comfort-wall 삭제 API 호출');
+        if (__DEV__) console.log('🗑️ comfort-wall 삭제 API 호출');
         await comfortWallService.deletePost(post!.post_id);
       } else {
         await postService.deletePost(post!.post_id);
@@ -1653,8 +1755,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       } else {
         navigation.goBack();
       }
-    } catch (error: any) {
-      console.error('❌ 게시물 삭제 실패:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 게시물 삭제 실패:', error);
       const errorMessage = error.response?.data?.message || error.message || '게시물 삭제 중 오류가 발생했습니다.';
       showAlert.error('오류', errorMessage);
     }
@@ -1749,7 +1851,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   success = true;
                   logger.log('✅ 댓글 삭제 성공');
                   break;
-                } catch (error: any) {
+                } catch (error: unknown) {
                   logger.log('❌ 댓글 삭제 API 실패:', error.response?.status, error.message);
                   lastError = error;
                 }
@@ -1759,11 +1861,29 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 throw lastError;
               }
 
+              // 댓글 목록에서 제거
+              setComments(prev => {
+                // 최상위 댓글인 경우
+                const filtered = prev.filter(c => c.comment_id !== comment.comment_id);
+
+                // 답글인 경우
+                return filtered.map(c => ({
+                  ...c,
+                  replies: c.replies?.filter(r => r.comment_id !== comment.comment_id) || []
+                }));
+              });
+
+              // 게시글의 댓글 수 업데이트
+              if (post) {
+                setPost({
+                  ...post,
+                  comment_count: Math.max(0, (post.comment_count || 0) - 1)
+                });
+              }
+
               showAlert.success('완료', '댓글이 삭제되었습니다.');
-              // 데이터 새로고침
-              setShouldLoadData(true);
-            } catch (error: any) {
-              console.error('❌ 모든 댓글 삭제 API 실패:', error);
+            } catch (error: unknown) {
+              if (__DEV__) console.error('❌ 모든 댓글 삭제 API 실패:', error);
               showAlert.error('오류', '댓글 삭제 중 오류가 발생했습니다.');
             }
             setShowCommentActionSheet(false);
@@ -1783,8 +1903,23 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
     if (!editingComment) return;
 
     try {
+      const trimmedText = editCommentText.trim();
+
+      // 답글인 경우 멘션 확인 및 추가
+      let finalContent = trimmedText;
+      if (editingComment.parent_comment_id) {
+        // 멘션이 없으면 원본에서 추출하여 추가
+        const mentionMatch = editingComment.content.match(/^@(\S+)\s+/);
+        const hasMention = /^@\S+\s+/.test(trimmedText);
+
+        if (!hasMention && mentionMatch) {
+          // 멘션이 없으면 원본 멘션 추가
+          finalContent = `${mentionMatch[0]}${trimmedText}`;
+        }
+      }
+
       const commentData = {
-        content: editCommentText.trim().normalize('NFC')
+        content: finalContent.normalize('NFC')
       };
 
       logger.log('💬 댓글 수정 시작:', {
@@ -1825,7 +1960,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           success = true;
           logger.log('✅ 댓글 수정 성공');
           break;
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.log('❌ 댓글 수정 API 실패:', error.response?.status, error.message);
           lastError = error;
         }
@@ -1840,8 +1975,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       setEditCommentText('');
       // 데이터 새로고침
       setShouldLoadData(true);
-    } catch (error: any) {
-      console.error('❌ 모든 댓글 수정 API 실패:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 모든 댓글 수정 API 실패:', error);
       showAlert.error('오류', '댓글 수정 중 오류가 발생했습니다.');
     }
   }, [editCommentText, editingComment, postType, postId]);
@@ -1871,24 +2006,26 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             style: 'destructive',
             onPress: async () => {
               try {
-                // TODO: 신고 API 호출 (차후 완성 예정)
-                logger.log('📢 댓글 신고 요청:', { commentId: comment.comment_id });
+                await reportService.reportComment(
+                  comment.comment_id,
+                  'inappropriate',
+                  '부적절한 댓글'
+                );
 
-                // 임시로 성공 메시지만 표시
-                showAlert.success('신고 완료', '해당 댓글이 신고되었습니다. 검토 후 조치하겠습니다.');
+                showAlert.success('신고 완료', '해당 댓글이 신고되었습니다. 관리자가 검토 후 조치할 예정입니다.');
 
                 setSelectedComment(null);
                 setShowCommentActionSheet(false);
-              } catch (error: any) {
-                console.error('❌ 댓글 신고 오류:', error);
+              } catch (error: unknown) {
+                if (__DEV__) console.error('❌ 댓글 신고 오류:', error);
                 showAlert.error('오류', '댓글 신고 중 오류가 발생했습니다.');
               }
             }
           }
         ]
       );
-    } catch (error: any) {
-      console.error('❌ 댓글 신고 처리 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 댓글 신고 처리 오류:', error);
     }
   }, []);
 
@@ -1954,8 +2091,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         setSelectedComment(null);
         setShowCommentActionSheet(false);
       }
-    } catch (error: any) {
-      console.error('❌ 차단 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 차단 오류:', error);
       showAlert.error('오류', '차단 중 오류가 발생했습니다.');
     } finally {
       setBlockTarget(null);
@@ -2040,7 +2177,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           success = true;
           logger.log('✅ 인라인 답글 작성 성공');
           break;
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.log('❌ 인라인 답글 작성 API 실패:', error.response?.status, error.message);
           lastError = error;
         }
@@ -2063,8 +2200,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 300);
 
-    } catch (error: any) {
-      console.error('❌ 인라인 답글 작성 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 인라인 답글 작성 오류:', error);
       showAlert.error('오류', '답글 작성 중 오류가 발생했습니다.');
     } finally {
       setSubmitting(false);
@@ -2186,8 +2323,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           newCount: newLiked ? likeCount + 1 : likeCount - 1 
         });
       }
-    } catch (error: any) {
-      console.error('❌ 첫 번째 좋아요 API 실패:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 첫 번째 좋아요 API 실패:', error);
       
       // 404 오류인 경우 대체 API들을 시도
       if (error.response?.status === 404) {
@@ -2229,13 +2366,13 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 }
                 return; // 성공 시 함수 종료
               }
-            } catch (fallbackError: any) {
+            } catch (fallbackError: unknown) {
               logger.log(`❌ ${api} API도 실패:`, fallbackError.response?.status);
               continue; // 다음 API 시도
             }
           }
-        } catch (fallbackError: any) {
-          console.error('❌ 모든 대체 API 실패:', fallbackError);
+        } catch (fallbackError: unknown) {
+          if (__DEV__) console.error('❌ 모든 대체 API 실패:', fallbackError);
         }
       }
       
@@ -2280,8 +2417,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         );
         logger.log('✅ 북마크 처리 성공:', { isBookmarked: response.data.isBookmarked });
       }
-    } catch (error: any) {
-      console.error('❌ 북마크 처리 실패:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 북마크 처리 실패:', error);
       let errorMessage = '북마크 처리 중 오류가 발생했습니다.';
 
       if (error.response?.status === 404) {
@@ -2335,7 +2472,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           success = true;
           logger.log('✅ 댓글 좋아요 API 성공');
           break;
-        } catch (error: any) {
+        } catch (error: unknown) {
           logger.log('❌ 댓글 좋아요 API 실패:', error.response?.status, error.message);
           lastError = error;
           
@@ -2391,8 +2528,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       // 베스트 댓글 목록도 업데이트
       setBestComments(prevBest => updateCommentInTree(prevBest));
       
-    } catch (error: any) {
-      console.error('❌ 댓글 좋아요 처리 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 댓글 좋아요 처리 오류:', error);
       const errorMessage = error.response?.data?.message || '댓글 좋아요 처리 중 문제가 발생했습니다.';
       showAlert.error('오류', errorMessage);
     }
@@ -2445,7 +2582,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           dataKeys: response.data ? Object.keys(response.data) : [],
           comment_id: response.data?.comment_id
         });
-      } catch (apiError: any) {
+      } catch (apiError: unknown) {
         logger.log('❌ 첫 번째 API 실패, 폴백 시도');
         // 폴백으로 다른 API들 시도
         response = await postService.addComment(postId, {
@@ -2469,7 +2606,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         });
         
         if (!commentData || !commentData.comment_id) {
-          console.error('❌ 댓글 데이터에 comment_id가 없음');
+          if (__DEV__) console.error('❌ 댓글 데이터에 comment_id가 없음');
           // 전체 데이터를 다시 로드
           setShouldLoadData(true);
           setCommentText('');
@@ -2606,8 +2743,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           }, 3000);
         }, 300);
       }
-    } catch (error: any) {
-      console.error('댓글 작성 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('댓글 작성 오류:', error);
       
       const errorMessage = error.response?.data?.message || 
                           error.message || 
@@ -2654,7 +2791,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         day: 'numeric',
       });
     } catch (error) {
-      console.error('📅 Date formatting error:', error, 'for string:', dateString);
+      if (__DEV__) console.error('📅 Date formatting error:', error, 'for string:', dateString);
       return '방금 전';
     }
   };
@@ -2680,7 +2817,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
       
       return `${month}월 ${day}일 ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     } catch (error) {
-      console.error('📅 Comment time formatting error:', error, 'for string:', dateString);
+      if (__DEV__) console.error('📅 Comment time formatting error:', error, 'for string:', dateString);
       return '방금 전';
     }
   };
@@ -2819,7 +2956,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 isAnonymous={commentIsAnonymous}
                 style={{
                   fontSize: TYPOGRAPHY.body,
-                  fontWeight: '600',
+                  fontFamily: 'Pretendard-SemiBold',
                   color: modernTheme.text.primary,
                   marginRight: 4
                 }}
@@ -2861,7 +2998,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     <RNText style={{
                       fontSize: TYPOGRAPHY.captionSmall,
                       color: '#ffffff',
-                      fontWeight: '600'
+                      fontFamily: 'Pretendard-SemiBold'
                     }}>
                       나
                     </RNText>
@@ -2882,7 +3019,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   <RNText style={{
                     fontSize: TYPOGRAPHY.captionSmall,
                     color: '#ffffff',
-                    fontWeight: '600'
+                    fontFamily: 'Pretendard-SemiBold'
                   }}>
                     작성자
                   </RNText>
@@ -3014,7 +3151,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 <RNText style={{
                   fontSize: TYPOGRAPHY.captionSmall,
                   color: comment.is_liked ? "#f59e0b" : (isDark ? '#D1D5DB' : '#6b7280'),
-                  fontWeight: comment.is_liked ? '600' : '500'
+                  fontFamily: comment.is_liked ? 'Pretendard-SemiBold' : 'Pretendard-Medium'
                 }}>
                   {comment.like_count || 0}
                 </RNText>
@@ -3061,7 +3198,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     color={isDark ? '#D1D5DB' : '#6b7280'}
                     style={{ marginRight: 3 }}
                   />
-                  <RNText style={{ fontSize: TYPOGRAPHY.captionSmall, color: modernTheme.text.secondary, fontWeight: '500' }}>
+                  <RNText style={{ fontSize: TYPOGRAPHY.captionSmall, color: modernTheme.text.secondary, fontFamily: 'Pretendard-Medium' }}>
                     답글
                   </RNText>
                 </TouchableOpacity>
@@ -3087,7 +3224,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     color="#f59e0b"
                     style={{ marginRight: 2 }}
                   />
-                  <RNText style={{ fontSize: TYPOGRAPHY.captionSmall, color: '#f59e0b', fontWeight: '500' }}>
+                  <RNText style={{ fontSize: TYPOGRAPHY.captionSmall, color: '#f59e0b', fontFamily: 'Pretendard-Medium' }}>
                     수정
                   </RNText>
                 </TouchableOpacity>
@@ -3113,7 +3250,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     color="#dc2626"
                     style={{ marginRight: 2 }}
                   />
-                  <RNText style={{ fontSize: TYPOGRAPHY.captionSmall, color: '#dc2626', fontWeight: '500' }}>
+                  <RNText style={{ fontSize: TYPOGRAPHY.captionSmall, color: '#dc2626', fontFamily: 'Pretendard-Medium' }}>
                     삭제
                   </RNText>
                 </TouchableOpacity>
@@ -3214,7 +3351,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               <RNText style={{
                 fontSize: TYPOGRAPHY.captionSmall,
                 color: '#64748b',
-                fontWeight: '500'
+                fontFamily: 'Pretendard-Medium'
               }}>
                 답글 접기
               </RNText>
@@ -3251,7 +3388,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               <RNText style={{
                 fontSize: TYPOGRAPHY.caption,
                 color: '#0ea5e9',
-                fontWeight: '600'
+                fontFamily: 'Pretendard-SemiBold'
               }}>
                 답글 {comment.replies.length}개 더보기
               </RNText>
@@ -3281,23 +3418,95 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   // 오류 화면
   if (error && !post) {
     return (
-      <Center className="flex-1 px-8">
-        <MaterialCommunityIcons name="alert-circle" size={64} color="#ccc" />
-        <Text className="text-base text-gray-600 text-center my-4">{error}</Text>
-        
-        {/* 개발 중 추가 정보 표시 */}
-        <Text className="text-base text-gray-400 text-center mt-2">
-          Post ID: {postId}
-        </Text>
-        
-        <Button mode="contained" onPress={() => fetchPostData(0)} className="mt-4">
-          다시 시도
-        </Button>
-        
-        {/* 뒤로 가기 버튼 추가 */}
-        <Button mode="outlined" onPress={() => navigation.goBack()} className="mt-2">
-          뒤로 가기
-        </Button>
+      <Center className="flex-1" style={{ backgroundColor: theme.colors.background }}>
+        <View style={{ alignItems: 'center', paddingHorizontal: 24 }}>
+          {/* 아이콘 컨테이너 */}
+          <View
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: 48,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 24
+            }}
+          >
+            <MaterialCommunityIcons
+              name="alert-circle-outline"
+              size={56}
+              color={isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.25)'}
+            />
+          </View>
+
+          {/* 메인 메시지 */}
+          <Text
+            style={{
+              fontSize: FONT_SIZES.xl,
+              fontFamily: 'Pretendard-Bold',
+              color: theme.colors.onSurface,
+              textAlign: 'center',
+              marginBottom: 8,
+              letterSpacing: -0.3
+            }}
+          >
+            게시물을 찾을 수 없습니다
+          </Text>
+
+          {/* 서브 메시지 */}
+          <Text
+            style={{
+              fontSize: FONT_SIZES.sm,
+              color: theme.colors.onSurfaceVariant,
+              textAlign: 'center',
+              marginBottom: 40,
+              lineHeight: FONT_SIZES.sm * 1.5,
+              opacity: 0.8
+            }}
+          >
+            {error}
+          </Text>
+
+          {/* 버튼 컨테이너 */}
+          <VStack space={3} style={{ width: '100%', maxWidth: 320 }}>
+            <Button
+              mode="contained"
+              onPress={() => fetchPostData(0)}
+              style={{
+                borderRadius: 14,
+                height: 52,
+                backgroundColor: theme.colors.primary,
+                elevation: 0,
+                shadowOpacity: 0
+              }}
+              labelStyle={{
+                fontSize: FONT_SIZES.base,
+                fontFamily: 'Pretendard-SemiBold',
+                letterSpacing: -0.2
+              }}
+            >
+              다시 시도
+            </Button>
+
+            <Button
+              mode="text"
+              onPress={() => navigation.goBack()}
+              style={{
+                borderRadius: 14,
+                height: 52,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)'
+              }}
+              labelStyle={{
+                fontSize: FONT_SIZES.base,
+                fontFamily: 'Pretendard-SemiBold',
+                color: theme.colors.onSurface,
+                letterSpacing: -0.2
+              }}
+            >
+              뒤로 가기
+            </Button>
+          </VStack>
+        </View>
       </Center>
     );
   }
@@ -3305,12 +3514,102 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   // 게시물이 없는 경우
   if (!post) {
     return (
-      <Center className="flex-1 px-8">
-        <MaterialCommunityIcons name="file-document-outline" size={64} color="#ccc" />
-        <Text className="text-base text-gray-600 text-center my-4">게시물을 찾을 수 없습니다.</Text>
-        <Button mode="contained" onPress={() => navigation.goBack()} className="mt-4">
-          뒤로 가기
-        </Button>
+      <Center className="flex-1" style={{ backgroundColor: theme.colors.background }}>
+        <View style={{ alignItems: 'center', paddingHorizontal: 24 }}>
+          {/* 아이콘 컨테이너 */}
+          <View
+            style={{
+              width: 100,
+              height: 100,
+              borderRadius: 50,
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 24
+            }}
+          >
+            <MaterialCommunityIcons
+              name="text-box-remove-outline"
+              size={58}
+              color={isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.22)'}
+            />
+          </View>
+
+          {/* 메인 메시지 */}
+          <Text
+            style={{
+              fontSize: FONT_SIZES.xl,
+              fontFamily: 'Pretendard-Bold',
+              color: theme.colors.onSurface,
+              marginBottom: 8,
+              textAlign: 'center',
+              letterSpacing: -0.3
+            }}
+          >
+            게시물을 찾을 수 없습니다
+          </Text>
+
+          {/* 서브 메시지 */}
+          <Text
+            style={{
+              fontSize: FONT_SIZES.sm,
+              color: theme.colors.onSurfaceVariant,
+              textAlign: 'center',
+              marginBottom: 40,
+              lineHeight: FONT_SIZES.sm * 1.5,
+              opacity: 0.8
+            }}
+          >
+            삭제되었거나 존재하지 않는 게시물입니다
+          </Text>
+
+          {/* 버튼 컨테이너 */}
+          <VStack space={3} style={{ width: '100%', maxWidth: 320 }}>
+            <Button
+              mode="contained"
+              onPress={() => navigation.navigate('HomeScreen' as never)}
+              style={{
+                borderRadius: 14,
+                height: 52,
+                backgroundColor: theme.colors.primary,
+                elevation: 0,
+                shadowOpacity: 0
+              }}
+              labelStyle={{
+                fontSize: FONT_SIZES.base,
+                fontFamily: 'Pretendard-SemiBold',
+                letterSpacing: -0.2
+              }}
+            >
+              홈으로 가기
+            </Button>
+
+            <Button
+              mode="text"
+              onPress={() => {
+                // 알림에서 온 경우, 알림 삭제 옵션 제공
+                if (sourceScreen === 'notification' && relatedNotificationId) {
+                  setDeleteNotificationModalVisible(true);
+                } else {
+                  navigation.goBack();
+                }
+              }}
+              style={{
+                borderRadius: 14,
+                height: 52,
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)'
+              }}
+              labelStyle={{
+                fontSize: FONT_SIZES.base,
+                fontFamily: 'Pretendard-SemiBold',
+                color: theme.colors.onSurface,
+                letterSpacing: -0.2
+              }}
+            >
+              뒤로 가기
+            </Button>
+          </VStack>
+        </View>
       </Center>
     );
   }
@@ -3494,8 +3793,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
     <>
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: modernTheme.bg.primary }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
       <ScrollView
         ref={scrollViewRef}
@@ -3567,22 +3866,36 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                       <VStack style={{ marginLeft: 10, flex: 1 }}>
                         <HStack style={{ alignItems: 'center', marginBottom: 2 }}>
                           {/* 감정 단어만 표시 (오른쪽 이모지 제거) */}
-                          <Box style={{
-                            backgroundColor: `${emotion.color}15`,
-                            paddingHorizontal: 10,
-                            paddingVertical: 4,
-                            borderRadius: 12,
-                            borderWidth: 1,
-                            borderColor: `${emotion.color}30`,
-                          }}>
-                            <RNText style={{
-                              fontSize: TYPOGRAPHY.body,
-                              fontWeight: '700',
-                              color: emotion.color
-                            }}>
-                              {emotion.label}
-                            </RNText>
-                          </Box>
+                          {(() => {
+                            const isLightColor = (hexColor: string) => {
+                              const hex = hexColor.replace('#', '');
+                              const r = parseInt(hex.substring(0, 2), 16);
+                              const g = parseInt(hex.substring(2, 4), 16);
+                              const b = parseInt(hex.substring(4, 6), 16);
+                              const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                              return brightness > 180;
+                            };
+                            const emotionColor = emotion.color || '#666666';
+                            const textColor = isLightColor(emotionColor) ? '#333333' : emotionColor;
+                            return (
+                              <Box style={{
+                                backgroundColor: `${emotionColor}20`,
+                                paddingHorizontal: 10,
+                                paddingVertical: 4,
+                                borderRadius: 12,
+                                borderWidth: 1.5,
+                                borderColor: `${emotionColor}50`,
+                              }}>
+                                <RNText style={{
+                                  fontSize: TYPOGRAPHY.body,
+                                  fontFamily: 'Pretendard-Bold',
+                                  color: textColor
+                                }}>
+                                  {emotion.label}
+                                </RNText>
+                              </Box>
+                            );
+                          })()}
 
                           {/* 익명 게시물에서 본인이 작성한 글일 때 "나" 표시 */}
                           {(() => {
@@ -3608,7 +3921,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                                 <RNText style={{
                                   fontSize: TYPOGRAPHY.captionSmall,
                                   color: '#ffffff',
-                                  fontWeight: '600'
+                                  fontFamily: 'Pretendard-SemiBold'
                                 }}>
                                   나
                                 </RNText>
@@ -3619,7 +3932,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                         <RNText style={{
                           fontSize: TYPOGRAPHY.captionSmall,
                           color: modernTheme.text.secondary,
-                          fontWeight: '500',
+                          fontFamily: 'Pretendard-Medium',
                           letterSpacing: 0.1
                         }}>
                           {formatDate(post.created_at)}
@@ -3649,7 +3962,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                       isAnonymous={false}
                       style={{
                         fontSize: TYPOGRAPHY.body,
-                        fontWeight: '700',
+                        fontFamily: 'Pretendard-Bold',
                         color: modernTheme.text.primary,
                         marginBottom: 2,
                         letterSpacing: -0.2
@@ -3661,7 +3974,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   <RNText style={{
                     fontSize: TYPOGRAPHY.captionSmall,
                     color: modernTheme.text.secondary,
-                    fontWeight: '500',
+                    fontFamily: 'Pretendard-Medium',
                     letterSpacing: 0.1
                   }}>
                     {formatDate(post.created_at)}
@@ -3678,7 +3991,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 fontSize: FONT_SIZES.bodyLarge,
                 lineHeight: 22,
                 color: modernTheme.text.primary,
-                fontWeight: '700',
+                fontFamily: 'Pretendard-Bold',
                 letterSpacing: -0.3,
                 marginBottom: 6,
               }}>
@@ -3755,7 +4068,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               >
                 <RNText style={{
                   fontSize: TYPOGRAPHY.caption,
-                  fontWeight: '600',
+                  fontFamily: 'Pretendard-SemiBold',
                   color: '#FFFFFF',
                   letterSpacing: 0.1,
                 }}>
@@ -3803,7 +4116,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   >
                     <RNText style={{
                       fontSize: TYPOGRAPHY.caption,
-                      fontWeight: '500',
+                      fontFamily: 'Pretendard-Medium',
                       color: '#0095F6',
                     }}>
                       #{tagName}
@@ -3856,18 +4169,31 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
 
                 const emotionEmoji = getEmotionEmoji(typeof emotion.name === 'string' ? emotion.name : '감정');
 
+                // 밝은 색상 체크 함수
+                const isLightColor = (hexColor: string) => {
+                  const hex = hexColor.replace('#', '');
+                  const r = parseInt(hex.substring(0, 2), 16);
+                  const g = parseInt(hex.substring(2, 4), 16);
+                  const b = parseInt(hex.substring(4, 6), 16);
+                  const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+                  return brightness > 180;
+                };
+
+                const emotionColor = emotion.color || '#666666';
+                const textColor = isLightColor(emotionColor) ? '#333333' : emotionColor;
+
                 return (
                   <Box
                     key={`emotion-${emotion.emotion_id || index}`}
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: `${emotion.color}15`,
-                      borderWidth: 1,
-                      borderColor: `${emotion.color}30`,
+                      backgroundColor: `${emotionColor}20`,
+                      borderWidth: 1.5,
+                      borderColor: `${emotionColor}50`,
                       borderRadius: 12,
                       paddingHorizontal: 10,
-                      paddingVertical: 4,
+                      paddingVertical: 5,
                       alignSelf: 'flex-start',
                     }}
                   >
@@ -3879,8 +4205,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     </RNText>
                     <RNText style={{
                       fontSize: TYPOGRAPHY.caption,
-                      fontWeight: '600',
-                      color: emotion.color,
+                      fontFamily: 'Pretendard-Bold',
+                      color: textColor,
                     }}>
                       오늘의 감정: {typeof emotion.name === 'string' ? emotion.name : '감정'}
                     </RNText>
@@ -3930,7 +4256,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               <RNText style={{
                 marginLeft: 4,
                 fontSize: TYPOGRAPHY.body,
-                fontWeight: '600',
+                fontFamily: 'Pretendard-SemiBold',
                 color: liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#6b7280'),
                 letterSpacing: -0.1
               }}>
@@ -3962,7 +4288,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               <RNText style={{
                 marginLeft: 4,
                 fontSize: TYPOGRAPHY.body,
-                fontWeight: '600',
+                fontFamily: 'Pretendard-SemiBold',
                 color: isDark ? '#D1D5DB' : '#666666'
               }}>
                 {totalCommentCount}
@@ -3971,110 +4297,55 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           </Box>
         </Box>
 
-        {/* 댓글 섹션 */}
-        {totalCommentCount > 0 && (
-          <Box style={{ margin: 12, marginTop: 8 }}>
-            <HStack style={{
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 12
+        {/* 댓글 섹션 - Bottom Sheet 열기 버튼 */}
+        <TouchableOpacity
+          onPress={() => commentBottomSheetRef.current?.open()}
+          style={{
+            margin: 12,
+            marginTop: 8,
+            padding: 16,
+            backgroundColor: modernTheme.bg.card,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.06)',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+          activeOpacity={0.7}
+        >
+          <HStack style={{ alignItems: 'center', gap: 8 }}>
+            <MaterialCommunityIcons
+              name="comment-text-outline"
+              size={20}
+              color={modernTheme.colors.primary}
+            />
+            <RNText style={{
+              fontSize: TYPOGRAPHY.body,
+              fontFamily: 'Pretendard-SemiBold',
+              color: modernTheme.text.primary,
             }}>
-              <RNText style={{
-                fontSize: TYPOGRAPHY.body,
-                fontWeight: '700',
-                color: isDark ? '#FFFFFF' : '#1F2937'
+              댓글 {totalCommentCount}개
+            </RNText>
+            {bestComments.length > 0 && (
+              <View style={{
+                backgroundColor: '#fbbf24',
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+                borderRadius: 4,
               }}>
-                댓글 {totalCommentCount}개
-              </RNText>
-
-              <TouchableOpacity
-                onPress={toggleAllCommentsCollapse}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingVertical: 4,
-                  paddingHorizontal: 8,
-                  borderRadius: 10,
-                  backgroundColor: modernTheme.bg.secondary,
-                }}
-              >
-                <MaterialCommunityIcons
-                  name={allCommentsCollapsed ? 'chevron-down' : 'chevron-up'}
-                  size={12}
-                  color={isDark ? '#9CA3AF' : '#6b7280'}
-                  style={{ marginRight: 3 }}
-                />
-                <RNText style={{
-                  fontSize: TYPOGRAPHY.caption,
-                  fontWeight: '500',
-                  color: isDark ? '#9CA3AF' : '#6b7280'
-                }}>
-                  {allCommentsCollapsed ? '전체 펼치기' : '전체 접기'}
+                <RNText style={{ fontSize: 10, fontFamily: 'Pretendard-SemiBold', color: '#fff' }}>
+                  베스트 {bestComments.length}
                 </RNText>
-              </TouchableOpacity>
-            </HStack>
-            
-            {/* 베스트 댓글 섹션 */}
-            {!allCommentsCollapsed && bestComments.length > 0 && (
-              <Box style={{ marginBottom: 16 }}>
-                <HStack style={{
-                  alignItems: 'center',
-                  marginBottom: 12,
-                  paddingBottom: 8,
-                  borderBottomWidth: 1,
-                  borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#f3f4f6'
-                }}>
-                  <MaterialCommunityIcons
-                    name="trophy-outline"
-                    size={14}
-                    color="#fbbf24"
-                    style={{ marginRight: 6 }}
-                  />
-                  <RNText style={{
-                    fontSize: TYPOGRAPHY.body,
-                    fontWeight: '600',
-                    color: '#fbbf24'
-                  }}>
-                    베스트 댓글
-                  </RNText>
-                </HStack>
-
-                {/* 베스트 댓글 목록 */}
-                {bestCommentsView}
-              </Box>
+              </View>
             )}
-            
-            {/* 전체 접기 상태가 아닐 때만 댓글 표시 - 최신순 정렬 */}
-            {!allCommentsCollapsed && sortedComments.map((comment, commentIndex) => (
-              <React.Fragment key={`comment-${comment.comment_id || `temp-${commentIndex}`}`}>
-                {renderComment(comment)}
-              </React.Fragment>
-            ))}
-
-            {/* 무한 스크롤 로딩 인디케이터 */}
-            {!allCommentsCollapsed && loadingMoreComments && (
-              <Box style={{ paddingVertical: 20, alignItems: 'center' }}>
-                <ActivityIndicator size="small" color={modernTheme.colors.primary} />
-                <RNText style={{
-                  marginTop: 8,
-                  fontSize: TYPOGRAPHY.caption,
-                  color: modernTheme.text.secondary
-                }}>
-                  댓글 로딩 중...
-                </RNText>
-              </Box>
-            )}
-
-            {/* 더 이상 댓글 없음 표시 */}
-            {!allCommentsCollapsed && !hasMoreComments && totalCommentCount > 10 && (
-              <Box style={{ paddingVertical: 16, alignItems: 'center' }}>
-                <RNText style={{ fontSize: TYPOGRAPHY.caption, color: modernTheme.text.tertiary }}>
-                  모든 댓글을 불러왔습니다
-                </RNText>
-              </Box>
-            )}
-          </Box>
-        )}
+          </HStack>
+          <MaterialCommunityIcons
+            name="chevron-right"
+            size={24}
+            color={modernTheme.text.tertiary}
+          />
+        </TouchableOpacity>
 
         {/* 댓글 입력 섹션은 ScrollView 밖으로 이동함 */}
       </ScrollView>
@@ -4105,7 +4376,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         </TouchableOpacity>
       )}
 
-      {/* 고정된 댓글 입력창 - flex 기반 (키보드 회피 개선) */}
+      {/* 고정된 하단 액션 바 - Bottom Sheet 스타일 */}
       <Box
         style={{
           backgroundColor: modernTheme.bg.card,
@@ -4115,337 +4386,243 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           paddingBottom: Platform.OS === 'ios' ? 34 : 16,
         }}
       >
-        {(() => {
-          const shouldShowSimpleView = !isCommentInputFocused || !isAuthenticated;
-          logger.log('🔍 [PostDetailScreen] 댓글창 렌더링 조건', {
-            isCommentInputFocused,
-            isAuthenticated,
-            shouldShowSimpleView,
-            viewType: shouldShowSimpleView ? '간단한 버튼' : '전체 입력창'
-          });
-          return shouldShowSimpleView;
-        })() ? (
-          /* 간단한 댓글 달기 버튼과 액션 버튼들 */
-          <HStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
-            {/* 좌측: 좋아요와 댓글 카운트 */}
-            <HStack style={{ alignItems: 'center', gap: 20 }}>
-              <TouchableOpacity
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                onPress={(!post && !loading) || (error && !post) ? undefined : handleLikePress}
-                activeOpacity={(!post && !loading) || (error && !post) ? 1 : 0.7}
-                disabled={(!post && !loading) || (error && !post)}
-              >
-                <MaterialCommunityIcons
-                  name={liked ? 'heart' : 'heart-outline'}
-                  size={24}
-                  color={liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#64748b')}
-                />
-                <RNText style={{
-                  fontSize: FONT_SIZES.bodySmall,
-                  fontWeight: '600',
-                  color: liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#64748b')
-                }}>
-                  {likeCount}
-                </RNText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                onPress={() => {
-                  if (isAuthenticated) {
-                    setIsCommentInputFocused(true);
-                    setTimeout(() => {
-                      textInputRef.current?.focus();
-                    }, 100);
-                  }
-                }}
-                activeOpacity={0.7}
-              >
-                <MaterialCommunityIcons
-                  name="comment-outline"
-                  size={24}
-                  color={isDark ? '#D1D5DB' : '#64748b'}
-                />
-                <RNText style={{
-                  fontSize: FONT_SIZES.bodySmall,
-                  fontWeight: '600',
-                  color: isDark ? '#D1D5DB' : '#64748b'
-                }}>
-                  {comments.length}
-                </RNText>
-              </TouchableOpacity>
-            </HStack>
-
-            {/* 우측: 댓글 달기 버튼 - 모든 사용자에게 표시 */}
+        <HStack style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          {/* 좌측: 좋아요 버튼 */}
+          <HStack style={{ alignItems: 'center', gap: 20 }}>
             <TouchableOpacity
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: modernTheme.bg.secondary,
-                borderRadius: 20,
-                paddingHorizontal: 16,
-                paddingVertical: 8,
-                borderWidth: 1,
-                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
-              }}
-              onPress={() => {
-                logger.log('💬 [PostDetailScreen] 댓글 달기 버튼 클릭됨', {
-                  isAuthenticated,
-                  hasUser: !!user,
-                  userId: user?.user_id
-                });
-
-                if (!isAuthenticated || !user) {
-                  logger.log('❌ [PostDetailScreen] 비로그인 사용자 - 모달 표시');
-                  setEmotionLoginPromptAction('comment');
-                  setEmotionLoginPromptVisible(true);
-                  return;
-                }
-
-                logger.log('✅ [PostDetailScreen] 로그인 사용자 - 댓글 입력창 열기');
-                setIsCommentInputFocused(true);
-                setTimeout(() => {
-                  textInputRef.current?.focus();
-                }, 100);
-              }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+              onPress={(!post && !loading) || (error && !post) ? undefined : handleLikePress}
+              activeOpacity={(!post && !loading) || (error && !post) ? 1 : 0.7}
+              disabled={(!post && !loading) || (error && !post)}
             >
-              <MaterialCommunityIcons name="pencil" size={16} color={isDark ? '#D1D5DB' : '#6B7280'} />
-              <RNText style={{ marginLeft: 6, color: isDark ? '#D1D5DB' : '#6B7280', fontSize: TYPOGRAPHY.caption, fontWeight: '500' }}>
-                댓글 달기
+              <MaterialCommunityIcons
+                name={liked ? 'heart' : 'heart-outline'}
+                size={24}
+                color={liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#64748b')}
+              />
+              <RNText style={{
+                fontSize: FONT_SIZES.bodySmall,
+                fontFamily: 'Pretendard-SemiBold',
+                color: liked ? '#FF3B30' : (isDark ? '#E5E7EB' : '#64748b')
+              }}>
+                {likeCount}
+              </RNText>
+            </TouchableOpacity>
+
+            {/* 댓글 버튼 - Bottom Sheet 열기 */}
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+              onPress={() => commentBottomSheetRef.current?.open()}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons
+                name="comment-outline"
+                size={24}
+                color={isDark ? '#D1D5DB' : '#64748b'}
+              />
+              <RNText style={{
+                fontSize: FONT_SIZES.bodySmall,
+                fontFamily: 'Pretendard-SemiBold',
+                color: isDark ? '#D1D5DB' : '#64748b'
+              }}>
+                {totalCommentCount}
               </RNText>
             </TouchableOpacity>
           </HStack>
-        ) : (
-          /* 전체 댓글 입력창 */
-          <Box>
-            {/* 답글 표시 */}
-            {replyingTo && (
-          <Box
+
+          {/* 우측: 댓글 달기 버튼 */}
+          <TouchableOpacity
             style={{
-            backgroundColor: modernTheme.bg.secondary,
-            padding: 12,
-            borderRadius: 8,
-            marginBottom: 12,
-            borderLeftWidth: 4,
-            borderLeftColor: '#8B5CF6'
-          }}>
-            <HStack style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <RNText style={{ fontSize: TYPOGRAPHY.caption, color: isDark ? '#9CA3AF' : '#6B7280', fontWeight: '600' }}>
-                답글 작성 중
-              </RNText>
-              <TouchableOpacity onPress={() => {
-                setReplyingTo(null);
-                setIsCommentInputFocused(false);
-                if (textInputRef.current) {
-                  textInputRef.current.blur();
-                }
-              }}>
-                <MaterialCommunityIcons name="close" size={18} color={isDark ? '#9CA3AF' : '#6B7280'} />
-              </TouchableOpacity>
-            </HStack>
-            <RNText style={{ fontSize: TYPOGRAPHY.caption, color: isDark ? '#D1D5DB' : '#4B5563' }} numberOfLines={2}>
-              @{replyingTo.is_anonymous ? '익명' : (replyingTo.user?.nickname || '사용자')}: {replyingTo.content}
-            </RNText>
-          </Box>
-        )}
-
-        {/* 익명 댓글 토글 */}
-        <HStack style={{ alignItems: 'center', marginBottom: 12 }}>
-          <Switch
-            value={isAnonymous}
-            onValueChange={setIsAnonymous}
-            color="#8B5CF6"
-          />
-          <RNText style={{ marginLeft: 8, fontSize: TYPOGRAPHY.body, color: isDark ? '#D1D5DB' : '#4B5563' }}>
-            익명으로 댓글 작성
-          </RNText>
-        </HStack>
-
-        {/* 댓글 입력 필드 */}
-        <View style={{
-          backgroundColor: modernTheme.bg.secondary,
-          borderRadius: 12,
-          borderWidth: 1,
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
-        }}>
-          <RNTextInput
-            ref={textInputRef}
-            placeholder={replyingTo ? "답글을 입력해주세요..." : "댓글을 입력해주세요..."}
-            value={commentText}
-            onChangeText={(text) => {
-              console.log('✍️ 텍스트 입력:', text);
-              setCommentText(text);
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: modernTheme.colors.primary,
+              borderRadius: 20,
+              paddingHorizontal: 16,
+              paddingVertical: 8,
             }}
-            onFocus={() => {
-              console.log('🔒🔒🔒 [PostDetailScreen] TextInput onFocus 호출됨', {
-                isAuthenticated,
-                hasUser: !!user,
-                userId: user?.user_id,
-                isDark
-              });
-
+            onPress={() => {
               if (!isAuthenticated || !user) {
-                console.log('❌❌❌ [PostDetailScreen] 비로그인 사용자 차단! 모달 표시');
-                textInputRef.current?.blur();
                 setEmotionLoginPromptAction('comment');
                 setEmotionLoginPromptVisible(true);
                 return;
               }
-
-              console.log('✅✅✅ [PostDetailScreen] 로그인 사용자 - 댓글 입력 허용');
-              setIsCommentInputFocused(true);
+              // Bottom Sheet 열고 확장
+              commentBottomSheetRef.current?.expand();
             }}
-            multiline={true}
-            numberOfLines={4}
-            autoCorrect={false}
-            underlineColorAndroid="transparent"
-            keyboardAppearance="dark"
-            importantForAutofill="no"
-            style={{
-              fontSize: TYPOGRAPHY.body,
-              padding: 12,
-              minHeight: 80,
-              textAlignVertical: 'top',
-              color: '#FFFFFF',
-              backgroundColor: 'transparent',
-            }}
-            placeholderTextColor="#9CA3AF"
-            selectionColor="#6366F1"
-          />
-        </View>
-
-        {/* 취소 및 작성 버튼 */}
-        <View style={{ marginTop: 12, flexDirection: 'row', gap: 8 }}>
-          {/* 취소 버튼 */}
-          <Pressable
-            onPress={() => {
-              console.log('🔙🔙🔙 [PostDetailScreen] 취소 버튼 클릭됨', {
-                commentText: commentText,
-                commentTextLength: commentText.length,
-                trimmedLength: commentText.trim().length,
-                isCommentInputFocused,
-                hasReplyingTo: !!replyingTo
-              });
-
-              // 키보드를 먼저 닫습니다
-              Keyboard.dismiss();
-
-              // 내용이 없으면 바로 취소
-              if (!commentText.trim()) {
-                console.log('⚪ 빈 내용 - 바로 취소');
-                setCommentText('');
-                setReplyingTo(null);
-                setIsAnonymous(false);
-                setIsCommentInputFocused(false);
-                textInputRef.current?.blur();
-                return;
-              }
-
-              // 작성 중인 내용이 있으면 확인
-              console.log('🟡 내용 있음 - Alert 표시');
-              setTimeout(() => {
-                showAlert.show(
-                  '작성 취소',
-                  '작성 중인 내용이 삭제됩니다. 취소하시겠습니까?',
-                  [
-                    {
-                      text: '계속 작성',
-                      style: 'cancel',
-                      onPress: () => {
-                        console.log('▶️ 계속 작성 선택');
-                      }
-                    },
-                    {
-                      text: '삭제',
-                      style: 'destructive',
-                      onPress: () => {
-                        console.log('🗑️ 삭제 선택 - 취소 처리');
-                        setCommentText('');
-                        setReplyingTo(null);
-                        setIsAnonymous(false);
-                        setIsCommentInputFocused(false);
-                        textInputRef.current?.blur();
-                      }
-                    }
-                  ]
-                );
-              }, 100);
-            }}
-            style={({ pressed }) => ({
-              flex: 1,
-              borderRadius: 12,
-              backgroundColor: modernTheme.bg.secondary,
-              borderWidth: 1,
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#E5E7EB',
-              paddingVertical: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.7 : 1,
-            })}
           >
-            <RNText style={{
-              fontSize: FONT_SIZES.bodySmall,
-              fontWeight: '600',
-              color: isDark ? '#9CA3AF' : '#6B7280'
-            }}>
-              취소
+            <MaterialCommunityIcons name="pencil" size={16} color="#fff" />
+            <RNText style={{ marginLeft: 6, color: '#fff', fontSize: TYPOGRAPHY.caption, fontFamily: 'Pretendard-SemiBold' }}>
+              댓글 달기
             </RNText>
-          </Pressable>
-
-          {/* 작성 버튼 */}
-          <Pressable
-            onPress={handleSubmitComment}
-            disabled={!commentText.trim() || submitting}
-            style={({ pressed }) => ({
-              flex: 2,
-              borderRadius: 12,
-              backgroundColor: (!commentText.trim() || submitting) ? '#d1d5db' : '#6366F1',
-              borderWidth: 1,
-              borderColor: 'rgba(99, 102, 241, 0.2)',
-              shadowColor: '#6366F1',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.1,
-              shadowRadius: 3,
-              elevation: 2,
-              paddingVertical: 12,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: (!commentText.trim() || submitting) ? 0.5 : (pressed ? 0.7 : 1),
-            })}
-          >
-            <RNText style={{
-              fontSize: FONT_SIZES.bodySmall,
-              fontWeight: '600',
-              color: 'white'
-            }}>
-              {submitting ? '작성 중...' : (replyingTo ? '답글 작성' : '댓글 작성')}
-            </RNText>
-          </Pressable>
-        </View>
-        </Box>
-        )}
+          </TouchableOpacity>
+        </HStack>
       </Box>
 
-      {/* 게시물 옵션 모달 - 로그인한 사용자만 표시 */}
-      {isAuthenticated && (
-        <PostOptionsModal
-          visible={showActionSheet}
-          isOwner={post != null && user != null && post.user_id === user.user_id}
-          isAnonymous={post?.is_anonymous || false}
-          onShare={handleShare}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onReport={handleReport}
-          onBlockPost={handleBlockPost}
-          onBlockUser={handleBlockUser}
-          onClose={() => setShowActionSheet(false)}
-        />
-      )}
+      {/* CommentBottomSheet */}
+      <CommentBottomSheet
+        ref={commentBottomSheetRef}
+        comments={comments as BSComment[]}
+        bestComments={bestComments as BSComment[]}
+        totalCount={totalCommentCount}
+        postId={postId}
+        postUserId={post?.user_id}
+        postType={postType || 'someoneday'}
+        loading={loading}
+        hasMore={hasMoreComments}
+        highlightCommentId={highlightedCommentId}
+        onLoadMore={() => {
+          if (!loadingMoreComments && hasMoreComments) {
+            setCommentPage(prev => prev + 1);
+          }
+        }}
+        onSubmitComment={async (content, anonymous, parentId) => {
+          const commentData = {
+            content: parentId
+              ? `@${comments.find(c => c.comment_id === parentId)?.user?.nickname || '익명'} ${content}`
+              : content,
+            is_anonymous: anonymous,
+            parent_comment_id: parentId
+          };
 
-      {/* 댓글 액션 시트 모달 - 로그인한 사용자만 표시 */}
-      {isAuthenticated && showCommentActionSheet && selectedComment && (() => {
+          let response;
+          if (postType === 'myday') {
+            response = await myDayService.addComment(postId, commentData);
+          } else if (postType === 'comfort') {
+            response = await comfortWallService.addComment(postId, commentData);
+          } else {
+            response = await postService.addComment(postId, commentData);
+          }
+
+          if (response.status === 'success' || response.data?.status === 'success') {
+            const newComment = response.data.data || response.data;
+            if (parentId) {
+              // 답글은 맨 뒤에 추가 (시간순 유지)
+              setComments(prev => prev.map(c => {
+                if (c.comment_id === parentId) {
+                  return { ...c, replies: [...(c.replies || []), { ...newComment, replies: [] }] };
+                }
+                return c;
+              }));
+            } else {
+              // 최상위 댓글은 맨 뒤에 추가 (시간순 유지)
+              setComments(prev => [...prev, { ...newComment, replies: [] }]);
+            }
+          }
+        }}
+        onLikeComment={(c: BSComment) => handleCommentLike(c as any)}
+        onEditComment={(c: BSComment) => handleEditComment(c as any)}
+        onDeleteComment={(c: BSComment) => handleDeleteComment(c as any)}
+        onLongPressComment={(c: BSComment) => handleCommentLongPress(c as any)}
+        isAuthenticated={isAuthenticated}
+      />
+
+      {/* 댓글 수정 모달 */}
+      <Modal
+        visible={!!editingComment}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditingComment(null)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+        >
+          <TouchableOpacity
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+            activeOpacity={1}
+            onPress={() => setEditingComment(null)}
+          >
+            <TouchableOpacity
+              activeOpacity={1}
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                width: '85%',
+                backgroundColor: isDark ? '#1a1a1a' : '#ffffff',
+                borderRadius: 16,
+                padding: 20,
+                maxHeight: '70%',
+              }}
+            >
+              <Text style={{
+                fontSize: 18,
+                fontFamily: 'Pretendard-Bold',
+                color: isDark ? '#ffffff' : '#1a1a1a',
+                marginBottom: 16,
+              }}>
+                댓글 수정
+              </Text>
+
+              <TextInput
+                value={editCommentText}
+                onChangeText={setEditCommentText}
+                placeholder="댓글 내용을 입력하세요"
+                placeholderTextColor={isDark ? '#666666' : '#999999'}
+                multiline
+                maxLength={500}
+                style={{
+                  backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+                  borderRadius: 12,
+                  padding: 12,
+                  fontSize: 14,
+                  color: isDark ? '#ffffff' : '#1a1a1a',
+                  minHeight: 100,
+                  maxHeight: 200,
+                  textAlignVertical: 'top',
+                }}
+              />
+
+              <View style={{ flexDirection: 'row', marginTop: 16, gap: 12 }}>
+                <TouchableOpacity
+                  onPress={() => setEditingComment(null)}
+                  style={{
+                    flex: 1,
+                    backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5',
+                    paddingVertical: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{
+                    fontSize: 14,
+                    fontFamily: 'Pretendard-SemiBold',
+                    color: isDark ? '#cccccc' : '#666666',
+                  }}>
+                    취소
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleSaveCommentEdit}
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.primary,
+                    paddingVertical: 12,
+                    borderRadius: 8,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{
+                    fontSize: 14,
+                    fontFamily: 'Pretendard-SemiBold',
+                    color: '#FFFFFF',
+                  }}>
+                    수정
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* 댓글 액션 시트 - 롱프레스 메뉴 (기존 유지) */}
+      {showCommentActionSheet && selectedComment && ((() => {
         const isMyComment = user && selectedComment.user_id === user.user_id;
-        
         return (
           <TouchableOpacity
             style={styles.actionSheetOverlay}
@@ -4453,18 +4630,21 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             onPress={() => setShowCommentActionSheet(false)}
           >
             <TouchableOpacity
-              style={styles.actionSheetContainer}
               activeOpacity={1}
+              style={styles.actionSheetContainer}
+              onPress={(e: any) => e.stopPropagation()}
             >
+              <View style={{ width: 40, height: 4, backgroundColor: '#D1D5DB', borderRadius: 2, alignSelf: 'center', marginBottom: 16 }} />
+              <RNText style={{ fontSize: 16, fontFamily: 'Pretendard-SemiBold', color: modernTheme.text.primary, textAlign: 'center', marginBottom: 16 }}>댓글 옵션</RNText>
+
               {isMyComment ? (
                 <>
-                  {/* 내 댓글 - 수정/삭제 옵션 */}
                   <TouchableOpacity
                     style={styles.actionSheetItem}
                     onPress={() => handleEditComment(selectedComment)}
                   >
-                    <MaterialCommunityIcons name="pencil" size={24} color="#10B981" />
-                    <Text style={[styles.actionSheetText, { color: '#10B981' }]}>댓글 수정</Text>
+                    <MaterialCommunityIcons name="pencil" size={24} color={modernTheme.colors.primary} />
+                    <Text style={styles.actionSheetText}>댓글 수정</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -4477,7 +4657,6 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 </>
               ) : (
                 <>
-                  {/* 타인 댓글 - 차단 및 신고 옵션 */}
                   <TouchableOpacity
                     style={styles.actionSheetItem}
                     onPress={() => handleBlockComment(selectedComment)}
@@ -4496,7 +4675,6 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 </>
               )}
 
-              {/* 취소 */}
               <TouchableOpacity
                 style={[styles.actionSheetItem, styles.actionSheetCancel]}
                 onPress={() => setShowCommentActionSheet(false)}
@@ -4506,9 +4684,26 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             </TouchableOpacity>
           </TouchableOpacity>
         );
-      })()}
+      })())}
 
     </KeyboardAvoidingView>
+
+      {/* 게시물 옵션 모달 - 로그인한 사용자만 표시 */}
+      {isAuthenticated && (
+        <PostOptionsModal
+          visible={showActionSheet}
+          isOwner={post != null && user != null && post.user_id === user.user_id}
+          isAnonymous={post?.is_anonymous || false}
+          onShare={handleShare}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onReport={handleReport}
+          onBlockPost={handleBlockPost}
+          onBlockUser={handleBlockUser}
+          onClose={() => setShowActionSheet(false)}
+        />
+      )}
+
       <ConfirmationModal
         visible={showDeleteModal}
         title="게시물 삭제"
@@ -4576,6 +4771,31 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             }, 100);
           }}
           actionType={emotionLoginPromptAction}
+        />
+
+        {/* 알림 삭제 확인 모달 */}
+        <ConfirmationModal
+          visible={deleteNotificationModalVisible}
+          title="게시물 없음"
+          message="이 게시물은 삭제되었거나 존재하지 않습니다.\n관련 알림을 삭제하시겠습니까?"
+          confirmText="알림 삭제"
+          cancelText="취소"
+          type="danger"
+          onConfirm={async () => {
+            if (relatedNotificationId) {
+              try {
+                await notificationService.deleteNotification(relatedNotificationId);
+              } catch (err) {
+                if (__DEV__) console.error('알림 삭제 오류:', err);
+              }
+            }
+            setDeleteNotificationModalVisible(false);
+            navigation.goBack();
+          }}
+          onCancel={() => {
+            setDeleteNotificationModalVisible(false);
+            navigation.goBack();
+          }}
         />
       </>
 
@@ -4655,7 +4875,7 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   actionSheetText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     flex: 1,
   },
   modalHeader: {
@@ -4667,7 +4887,7 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   modalTitle: {
     fontSize: FONT_SIZES.h4,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: theme.text.primary,
   },
   modalItem: {
@@ -4679,7 +4899,7 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   modalItemText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     flex: 1,
   },
   modalDivider: {
@@ -4723,7 +4943,7 @@ highlightedComment: {
     },
     reportModalTitle: {
       fontSize: TYPOGRAPHY.h2,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       color: isDark ? '#FAFAFA' : theme.text.primary,
       letterSpacing: -0.6,
     },
@@ -4769,14 +4989,14 @@ highlightedComment: {
     },
     reportReasonLabel: {
       fontSize: FONT_SIZES.bodyLarge,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       color: isDark ? '#E8E8E8' : theme.text.primary,
       marginBottom: 5,
       letterSpacing: -0.3,
     },
     reportReasonLabelSelected: {
       color: '#FFD60A',
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
     },
     reportReasonDescription: {
       fontSize: TYPOGRAPHY.body,
@@ -4817,7 +5037,7 @@ highlightedComment: {
     },
     reportCancelButtonText: {
       fontSize: FONT_SIZES.bodyLarge,
-      fontWeight: '600',
+      fontFamily: 'Pretendard-SemiBold',
       color: isDark ? '#E8E8E8' : theme.text.primary,
       letterSpacing: -0.3,
     },
@@ -4835,7 +5055,7 @@ highlightedComment: {
     },
     reportSubmitButtonText: {
       fontSize: FONT_SIZES.bodyLarge,
-      fontWeight: '700',
+      fontFamily: 'Pretendard-Bold',
       color: '#1C1C1E',
       letterSpacing: -0.3,
     },

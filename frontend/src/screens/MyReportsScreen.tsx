@@ -115,7 +115,7 @@ const MyReportsScreen: React.FC = () => {
     } catch (err) {
       setError(sanitizeText('신고 내역을 불러올 수 없습니다'));
       if (__DEV__) {
-        console.error('신고 목록 조회 실패:', err);
+        if (__DEV__) console.error('신고 목록 조회 실패:', err);
       }
     } finally {
       setLoading(false);
@@ -234,7 +234,7 @@ const MyReportsScreen: React.FC = () => {
       }),
     },
     backButton: { padding: SPACING.xxs, width: moderateScale(40), height: moderateScale(40), justifyContent: 'center', alignItems: 'center' },
-    headerTitle: { fontSize: FONT_SIZES.h4, fontWeight: '700', letterSpacing: -0.3, lineHeight: FONT_SIZES.h4 * 1.3 },
+    headerTitle: { fontSize: FONT_SIZES.h4, fontFamily: 'Pretendard-Bold', letterSpacing: -0.3, lineHeight: FONT_SIZES.h4 * 1.3 },
     refreshButton: { padding: SPACING.xxs, width: moderateScale(40), height: moderateScale(40), justifyContent: 'center', alignItems: 'center' },
     tabContainer: { flexDirection: 'row', borderBottomWidth: 1 },
     tab: { flex: 1, paddingVertical: SPACING.sm, alignItems: 'center', borderBottomWidth: moderateScale(3), borderBottomColor: 'transparent' },
@@ -245,23 +245,23 @@ const MyReportsScreen: React.FC = () => {
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
     headerLeft: { flexDirection: 'row' },
     statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: moderateScale(8), paddingVertical: moderateScale(5), borderRadius: moderateScale(10), marginRight: moderateScale(6) },
-    statusText: { fontSize: FONT_SIZES.tiny, fontWeight: '700', letterSpacing: -0.1, lineHeight: FONT_SIZES.tiny * 1.3 },
+    statusText: { fontSize: FONT_SIZES.tiny, fontFamily: 'Pretendard-Bold', letterSpacing: -0.1, lineHeight: FONT_SIZES.tiny * 1.3 },
     typeBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: moderateScale(8), paddingVertical: moderateScale(5), borderRadius: moderateScale(10) },
-    typeText: { fontSize: FONT_SIZES.tiny, fontWeight: '700', letterSpacing: -0.1, lineHeight: FONT_SIZES.tiny * 1.3 },
-    dateText: { fontSize: FONT_SIZES.small, fontWeight: '500', lineHeight: FONT_SIZES.small * 1.4, letterSpacing: -0.1 },
-    contentTitle: { fontSize: FONT_SIZES.body, fontWeight: '700', marginBottom: moderateScale(8), letterSpacing: -0.3, lineHeight: FONT_SIZES.body * 1.4 },
+    typeText: { fontSize: FONT_SIZES.tiny, fontFamily: 'Pretendard-Bold', letterSpacing: -0.1, lineHeight: FONT_SIZES.tiny * 1.3 },
+    dateText: { fontSize: FONT_SIZES.small, fontFamily: 'Pretendard-Medium', lineHeight: FONT_SIZES.small * 1.4, letterSpacing: -0.1 },
+    contentTitle: { fontSize: FONT_SIZES.body, fontFamily: 'Pretendard-Bold', marginBottom: moderateScale(8), letterSpacing: -0.3, lineHeight: FONT_SIZES.body * 1.4 },
     infoRow: { flexDirection: 'row', alignItems: 'center' },
-    infoText: { fontSize: FONT_SIZES.bodySmall, fontWeight: '600', letterSpacing: -0.2, lineHeight: FONT_SIZES.bodySmall * 1.4 },
+    infoText: { fontSize: FONT_SIZES.bodySmall, fontFamily: 'Pretendard-SemiBold', letterSpacing: -0.2, lineHeight: FONT_SIZES.bodySmall * 1.4 },
     loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: SPACING.lg },
-    loadingText: { marginTop: SPACING.md, fontSize: FONT_SIZES.body, fontWeight: '500', lineHeight: FONT_SIZES.body * 1.4 },
+    loadingText: { marginTop: SPACING.md, fontSize: FONT_SIZES.body, fontFamily: 'Pretendard-Medium', lineHeight: FONT_SIZES.body * 1.4 },
     emptyContainer: { justifyContent: 'center', alignItems: 'center', paddingVertical: moderateScale(80), paddingHorizontal: SPACING.xl, minHeight: moderateScale(400) },
     emptyIconContainer: { width: moderateScale(96), height: moderateScale(96), borderRadius: moderateScale(48), justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md },
-    emptyTitle: { fontSize: FONT_SIZES.h4, fontWeight: '700', marginBottom: moderateScale(8), letterSpacing: -0.3, lineHeight: FONT_SIZES.h4 * 1.3 },
-    emptyText: { fontSize: FONT_SIZES.body, textAlign: 'center', fontWeight: '500', lineHeight: FONT_SIZES.body * 1.5, letterSpacing: -0.2 },
+    emptyTitle: { fontSize: FONT_SIZES.h4, fontFamily: 'Pretendard-Bold', marginBottom: moderateScale(8), letterSpacing: -0.3, lineHeight: FONT_SIZES.h4 * 1.3 },
+    emptyText: { fontSize: FONT_SIZES.body, textAlign: 'center', fontFamily: 'Pretendard-Medium', lineHeight: FONT_SIZES.body * 1.5, letterSpacing: -0.2 },
     footerLoader: { paddingVertical: SPACING.md },
     skeleton: { backgroundColor: colors.border, borderRadius: moderateScale(8), opacity: 0.5 },
     retryButton: { marginTop: SPACING.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, borderRadius: moderateScale(12) },
-    retryText: { color: '#FFFFFF', fontSize: FONT_SIZES.body, fontWeight: '600', lineHeight: FONT_SIZES.body * 1.4 },
+    retryText: { color: '#FFFFFF', fontSize: FONT_SIZES.body, fontFamily: 'Pretendard-SemiBold', lineHeight: FONT_SIZES.body * 1.4 },
     tabLoadingBar: {
       height: moderateScale(2),
       backgroundColor: colors.primary,

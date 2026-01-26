@@ -42,7 +42,7 @@ export const useEmotions = (): UseEmotionsReturn => {
       
       const data = await response.json();
       setEmotions(data);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // 명시적으로 한국어 에러 메시지 설정
       setError('감정 목록을 불러오는데 실패했습니다.');
     } finally {

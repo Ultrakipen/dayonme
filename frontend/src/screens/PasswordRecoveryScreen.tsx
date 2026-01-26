@@ -17,7 +17,7 @@ import { TextInput, ActivityIndicator } from 'react-native-paper';
 import LinearGradient from 'react-native-linear-gradient';
 import { Text, VStack } from '../components/ui';
 import { API_CONFIG } from '../config/api';
-import { showAlert } from '../contexts/AlertContext';
+import { showModernToast } from '../components/ModernToast';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
@@ -75,11 +75,13 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string }>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [lastSentTime, setLastSentTime] = useState<number>(0);
 
   const emailRef = useRef<any>(null);
+  const RESEND_COOLDOWN = 60000; // 1분
 
-  // 반응형 헬퍼
-  const { normalize, normalizeFontSize, spacing } = useMemo(() => {
+  // 반응형 계산을 useMemo로 한 번만 수행
+  const responsiveValues = useMemo(() => {
     const getScreenType = () => {
       if (width <= BREAKPOINTS.small) return 'small';
       if (width <= BREAKPOINTS.medium) return 'medium';
@@ -103,6 +105,8 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
 
     return { normalize, normalizeFontSize, spacing };
   }, [width]);
+
+  const { normalize, normalizeFontSize, spacing } = responsiveValues;
 
   // 이메일 검증
   const validateForm = useCallback(() => {
@@ -138,7 +142,7 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
       });
       clearTimeout(timeoutId);
       return response;
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
         throw new Error('요청 시간이 초과되었습니다. 다시 시도해주세요.');
@@ -151,6 +155,15 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
   const handlePasswordRecovery = useCallback(async () => {
     if (isLoading) return; // 중복 클릭 방지
     if (!validateForm()) return;
+
+    // 스팸 방지: 재전송 대기 시간 체크
+    const now = Date.now();
+    if (now - lastSentTime < RESEND_COOLDOWN) {
+      const remainingSeconds = Math.ceil((RESEND_COOLDOWN - (now - lastSentTime)) / 1000);
+      showModernToast('info', `${remainingSeconds}초 후 다시 시도해주세요.`);
+      return;
+    }
+
 
     setIsLoading(true);
     try {
@@ -167,21 +180,16 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
       if (response.ok) {
         setShowSuccessModal(true);
         setEmail(''); // 성공 후 입력 필드 초기화
+        setLastSentTime(Date.now()); // 마지막 전송 시간 업데이트
       } else {
-        showAlert.error(
-          '오류',
-          data.message || '비밀번호 재설정 요청 중 오류가 발생했습니다.'
-        );
+        showModernToast('error', data.message || '비밀번호 재설정 요청 중 오류가 발생했습니다.');
       }
-    } catch (error: any) {
-      showAlert.error(
-        '오류',
-        error.message || '서버와의 연결에 실패했습니다. 다시 시도해주세요.'
-      );
+    } catch (error: unknown) {
+      showModernToast('error', error.message || '서버와의 연결에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsLoading(false);
     }
-  }, [email, isLoading, validateForm]);
+  }, [email, isLoading, validateForm, lastSentTime]);
 
   // 모달 닫기
   const handleModalClose = useCallback(() => {
@@ -194,6 +202,45 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
     navigation.goBack();
   }, [navigation]);
 
+  // 미리 계산된 spacing 값들
+  const spacingValues = useMemo(() => ({
+    s2: spacing(2),
+    s6: spacing(6),
+    s8: spacing(8),
+    s12: spacing(12),
+    s14: spacing(14),
+    s16: spacing(16),
+    s18: spacing(18),
+    s20: spacing(20),
+    s24: spacing(24),
+    s27: spacing(27),
+    s28: spacing(28),
+    s35: spacing(35),
+    s40: spacing(40),
+    s48: spacing(48),
+    s50: spacing(50),
+    s54: spacing(54),
+    s60: spacing(60),
+    s70: spacing(70)
+  }), [spacing]);
+
+  // 미리 계산된 폰트 사이즈들
+  const fontSizes = useMemo(() => ({
+    f14: normalizeFontSize(14),
+    f15: normalizeFontSize(15),
+    f16: normalizeFontSize(16),
+    f18: normalizeFontSize(18),
+    f22: normalizeFontSize(22),
+    f26: normalizeFontSize(26)
+  }), [normalizeFontSize]);
+
+  // 동적 스타일 (errors, email 상태에 따라 변경)
+  const textInputOutlineStyle = useMemo(() => ({
+    borderRadius: spacingValues.s14,
+    borderWidth: 2,
+    borderColor: errors.email ? COLORS.error : email ? COLORS.gradient.primary[0] : 'transparent'
+  }), [errors.email, email, spacingValues.s14]);
+
   // 스타일 메모이제이션
   const styles = useMemo(() => ({
     container: {
@@ -204,88 +251,243 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
       flexGrow: 1,
       justifyContent: 'center' as const,
       alignItems: 'center' as const,
-      paddingHorizontal: spacing(24),
-      paddingVertical: spacing(60),
+      paddingHorizontal: spacingValues.s24,
+      paddingVertical: spacingValues.s60,
       minHeight: height
     },
     backButton: {
       position: 'absolute' as const,
-      top: spacing(50),
-      left: spacing(20),
+      top: spacingValues.s50,
+      left: spacingValues.s20,
       zIndex: 10,
       backgroundColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.25)',
-      borderRadius: spacing(16),
-      width: spacing(48),
-      height: spacing(48),
+      borderRadius: spacingValues.s16,
+      width: spacingValues.s48,
+      height: spacingValues.s48,
       justifyContent: 'center' as const,
       alignItems: 'center' as const,
       shadowColor: COLORS.black,
-      shadowOffset: { width: 0, height: spacing(2) },
+      shadowOffset: { width: 0, height: spacingValues.s2 },
       shadowOpacity: isDark ? 0.3 : 0.1,
-      shadowRadius: spacing(6),
+      shadowRadius: spacingValues.s6,
       elevation: 4
+    },
+    backButtonText: {
+      fontSize: fontSizes.f22,
+      fontFamily: 'Pretendard-SemiBold',
+      color: isDark ? theme.colors.text.primary : COLORS.white
     },
     card: {
       backgroundColor: isDark ? theme.colors.card : 'rgba(255, 255, 255, 0.95)',
-      borderRadius: spacing(28),
-      padding: spacing(28),
+      borderRadius: spacingValues.s28,
+      padding: spacingValues.s28,
       width: '100%' as const,
-      maxWidth: Math.min(width - spacing(40), 400),
+      maxWidth: Math.min(width - spacingValues.s40, 400),
       shadowColor: COLORS.black,
-      shadowOffset: { width: 0, height: spacing(16) },
+      shadowOffset: { width: 0, height: spacingValues.s16 },
       shadowOpacity: isDark ? 0.5 : 0.2,
-      shadowRadius: spacing(24),
+      shadowRadius: spacingValues.s24,
       elevation: 18
+    },
+    headerContainer: {
+      gap: spacingValues.s24
+    },
+    headerContent: {
+      alignItems: 'center' as const,
+      gap: spacingValues.s16
+    },
+    iconContainer: {
+      width: spacingValues.s70,
+      height: spacingValues.s70,
+      borderRadius: spacingValues.s35,
+      backgroundColor: isDark ? theme.colors.background : COLORS.white,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+      shadowColor: COLORS.gradient.primary[0],
+      shadowOffset: { width: 0, height: spacingValues.s6 },
+      shadowOpacity: isDark ? 0.4 : 0.25,
+      shadowRadius: spacingValues.s12,
+      elevation: 10
+    },
+    iconGradient: {
+      width: spacingValues.s54,
+      height: spacingValues.s54,
+      borderRadius: spacingValues.s27,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const
+    },
+    iconText: {
+      fontSize: fontSizes.f26,
+      fontFamily: 'Pretendard-Black',
+      color: COLORS.white
+    },
+    titleContainer: {
+      alignItems: 'center' as const
+    },
+    title: {
+      fontSize: fontSizes.f26,
+      fontFamily: 'Pretendard-ExtraBold',
+      color: theme.colors.text.primary,
+      letterSpacing: -0.5,
+      marginBottom: spacingValues.s12,
+      textShadowColor: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.08)',
+      textShadowOffset: { width: 0, height: 1 },
+      textShadowRadius: 2
+    },
+    subtitle: {
+      fontSize: fontSizes.f15,
+      color: theme.colors.text.secondary,
+      fontFamily: 'Pretendard-SemiBold',
+      textAlign: 'center' as const,
+      lineHeight: fontSizes.f22,
+      paddingHorizontal: spacingValues.s8
+    },
+    inputContainer: {
+      gap: spacingValues.s20
     },
     textInput: {
       backgroundColor: theme.colors.background,
-      borderRadius: spacing(14),
-      fontSize: normalizeFontSize(16)
+      borderRadius: spacingValues.s14,
+      fontSize: fontSizes.f16
     },
     textInputContent: {
-      paddingHorizontal: spacing(18),
-      paddingVertical: spacing(14),
-      fontSize: normalizeFontSize(16),
+      paddingHorizontal: spacingValues.s18,
+      paddingVertical: spacingValues.s14,
+      fontSize: fontSizes.f16,
       color: isDark ? COLORS.text.dark : COLORS.text.light
     },
     errorText: {
       color: COLORS.error,
-      fontSize: normalizeFontSize(14),
-      marginTop: spacing(8),
-      marginLeft: spacing(6),
-      fontWeight: '700' as const
+      fontSize: fontSizes.f14,
+      marginTop: spacingValues.s8,
+      marginLeft: spacingValues.s6,
+      fontFamily: 'Pretendard-Bold' as const
+    },
+    buttonContainer: {
+      gap: spacingValues.s16,
+      marginTop: spacingValues.s8
     },
     submitButton: {
-      borderRadius: spacing(16),
-      paddingVertical: spacing(16),
-      minHeight: spacing(54),
+      borderRadius: spacingValues.s16,
+      paddingVertical: spacingValues.s16,
+      minHeight: spacingValues.s54,
       justifyContent: 'center' as const,
       shadowColor: COLORS.gradient.primary[0],
-      shadowOffset: { width: 0, height: spacing(6) },
+      shadowOffset: { width: 0, height: spacingValues.s6 },
       shadowOpacity: 0.25,
-      shadowRadius: spacing(12),
+      shadowRadius: spacingValues.s12,
       elevation: 10
+    },
+    submitButtonContent: {
+      flexDirection: 'row' as const,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const
+    },
+    submitButtonLoader: {
+      marginRight: spacingValues.s8
+    },
+    submitButtonText: {
+      color: COLORS.white,
+      fontSize: fontSizes.f16,
+      fontFamily: 'Pretendard-Bold',
+      textAlign: 'center' as const,
+      letterSpacing: 0.3
+    },
+    loginLinkContainer: {
+      flexDirection: 'row' as const,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const,
+      marginTop: spacingValues.s8
+    },
+    loginLinkText: {
+      color: theme.colors.text.secondary,
+      fontSize: fontSizes.f14,
+      fontFamily: 'Pretendard-Medium'
+    },
+    loginLinkButton: {
+      color: COLORS.gradient.primary[0],
+      fontSize: fontSizes.f14,
+      fontFamily: 'Pretendard-Bold'
     },
     modalOverlay: {
       flex: 1,
       backgroundColor: isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.6)',
       justifyContent: 'center' as const,
       alignItems: 'center' as const,
-      padding: spacing(28)
+      padding: spacingValues.s28
     },
     modalCard: {
       backgroundColor: isDark ? theme.colors.card : COLORS.white,
-      borderRadius: spacing(24),
-      padding: spacing(28),
+      borderRadius: spacingValues.s24,
+      padding: spacingValues.s28,
       width: '100%' as const,
-      maxWidth: Math.min(width - spacing(48), 340),
+      maxWidth: Math.min(width - spacingValues.s48, 340),
       shadowColor: COLORS.black,
-      shadowOffset: { width: 0, height: spacing(16) },
+      shadowOffset: { width: 0, height: spacingValues.s16 },
       shadowOpacity: isDark ? 0.6 : 0.25,
-      shadowRadius: spacing(24),
+      shadowRadius: spacingValues.s24,
       elevation: 20
+    },
+    modalContentContainer: {
+      gap: spacingValues.s20,
+      alignItems: 'center' as const
+    },
+    modalIconContainer: {
+      width: spacingValues.s70,
+      height: spacingValues.s70,
+      borderRadius: spacingValues.s35,
+      backgroundColor: isDark ? theme.colors.background : '#f0f9ff',
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const
+    },
+    modalIconGradient: {
+      width: spacingValues.s54,
+      height: spacingValues.s54,
+      borderRadius: spacingValues.s27,
+      justifyContent: 'center' as const,
+      alignItems: 'center' as const
+    },
+    modalIconEmoji: {
+      fontSize: fontSizes.f26
+    },
+    modalTitle: {
+      fontSize: fontSizes.f22,
+      fontFamily: 'Pretendard-ExtraBold',
+      color: theme.colors.text.primary,
+      textAlign: 'center' as const,
+      letterSpacing: -0.5
+    },
+    modalDescription: {
+      fontSize: fontSizes.f15,
+      fontFamily: 'Pretendard-Medium',
+      color: theme.colors.text.secondary,
+      textAlign: 'center' as const,
+      lineHeight: fontSizes.f22,
+      paddingHorizontal: spacingValues.s8
+    },
+    modalButtonContainer: {
+      width: '100%' as const
+    },
+    modalButton: {
+      width: '100%' as const,
+      borderRadius: spacingValues.s14,
+      paddingVertical: spacingValues.s16,
+      minHeight: spacingValues.s50,
+      justifyContent: 'center' as const,
+      shadowColor: COLORS.gradient.primary[0],
+      shadowOffset: { width: 0, height: spacingValues.s6 },
+      shadowOpacity: isDark ? 0.4 : 0.25,
+      shadowRadius: spacingValues.s12,
+      elevation: 8
+    },
+    modalButtonText: {
+      color: COLORS.white,
+      fontSize: fontSizes.f16,
+      fontFamily: 'Pretendard-Bold',
+      textAlign: 'center' as const,
+      letterSpacing: 0.3
     }
-  }), [theme, isDark, width, height, spacing, normalizeFontSize]);
+  }), [theme, isDark, width, height, spacingValues, fontSizes]);
 
   return (
     <>
@@ -319,72 +521,30 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
                   accessibilityLabel="뒤로가기"
                   accessibilityHint="이전 화면으로 돌아갑니다"
                 >
-                  <Text style={{
-                    fontSize: normalizeFontSize(22),
-                    fontWeight: '600',
-                    color: isDark ? theme.colors.text.primary : COLORS.white
-                  }}>
+                  <Text style={styles.backButtonText}>
                     ←
                   </Text>
                 </Pressable>
 
                 <View style={styles.card}>
-                  <VStack style={{ gap: spacing(24) }}>
+                  <VStack style={styles.headerContainer}>
                     {/* 헤더 섹션 */}
-                    <VStack style={{ alignItems: 'center', gap: spacing(16) }}>
-                      <View style={{
-                        width: spacing(70),
-                        height: spacing(70),
-                        borderRadius: spacing(35),
-                        backgroundColor: isDark ? theme.colors.background : COLORS.white,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        shadowColor: COLORS.gradient.primary[0],
-                        shadowOffset: { width: 0, height: spacing(6) },
-                        shadowOpacity: isDark ? 0.4 : 0.25,
-                        shadowRadius: spacing(12),
-                        elevation: 10
-                      }}>
+                    <VStack style={styles.headerContent}>
+                      <View style={styles.iconContainer}>
                         <LinearGradient
                           colors={COLORS.gradient.primary}
-                          style={{
-                            width: spacing(54),
-                            height: spacing(54),
-                            borderRadius: spacing(27),
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                          }}
+                          style={styles.iconGradient}
                         >
-                          <Text style={{
-                            fontSize: normalizeFontSize(26),
-                            fontWeight: '900',
-                            color: COLORS.white
-                          }}>
+                          <Text style={styles.iconText}>
                             🔐
                           </Text>
                         </LinearGradient>
                       </View>
-                      <View style={{ alignItems: 'center' }}>
-                        <Text style={{
-                          fontSize: normalizeFontSize(26),
-                          fontWeight: '800',
-                          color: theme.colors.text.primary,
-                          letterSpacing: -0.5,
-                          marginBottom: spacing(12),
-                          textShadowColor: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.08)',
-                          textShadowOffset: { width: 0, height: 1 },
-                          textShadowRadius: 2
-                        }}>
+                      <View style={styles.titleContainer}>
+                        <Text style={styles.title}>
                           비밀번호 찾기
                         </Text>
-                        <Text style={{
-                          fontSize: normalizeFontSize(15),
-                          color: theme.colors.text.secondary,
-                          fontWeight: '600',
-                          textAlign: 'center',
-                          lineHeight: normalizeFontSize(22),
-                          paddingHorizontal: spacing(8)
-                        }}>
+                        <Text style={styles.subtitle}>
                           가입하신 이메일 주소를 입력하시면{'\n'}
                           비밀번호 재설정 링크를 보내드립니다
                         </Text>
@@ -392,7 +552,7 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
                     </VStack>
 
                     {/* 이메일 입력 섹션 */}
-                    <VStack style={{ gap: spacing(20) }}>
+                    <VStack style={styles.inputContainer}>
                       <View style={{ position: 'relative' }}>
                         <TextInput
                           ref={emailRef}
@@ -404,11 +564,7 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
                           textColor={isDark ? COLORS.text.dark : COLORS.text.light}
                           style={styles.textInput}
                           contentStyle={styles.textInputContent}
-                          outlineStyle={{
-                            borderRadius: spacing(14),
-                            borderWidth: 2,
-                            borderColor: errors.email ? COLORS.error : email ? COLORS.gradient.primary[0] : 'transparent'
-                          }}
+                          outlineStyle={textInputOutlineStyle}
                           keyboardType="email-address"
                           autoCapitalize="none"
                           autoComplete="email"
@@ -442,7 +598,7 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
                     </VStack>
 
                     {/* 제출 버튼 섹션 */}
-                    <VStack style={{ gap: spacing(16), marginTop: spacing(8) }}>
+                    <VStack style={styles.buttonContainer}>
                       <Pressable
                         onPress={handlePasswordRecovery}
                         disabled={isLoading}
@@ -460,25 +616,15 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
                             { opacity: isLoading ? 0.7 : 1 }
                           ]}
                         >
-                          <View style={{
-                            flexDirection: 'row',
-                            justifyContent: 'center',
-                            alignItems: 'center'
-                          }}>
+                          <View style={styles.submitButtonContent}>
                             {isLoading && (
                               <ActivityIndicator
                                 size="small"
                                 color={COLORS.white}
-                                style={{ marginRight: spacing(8) }}
+                                style={styles.submitButtonLoader}
                               />
                             )}
-                            <Text style={{
-                              color: COLORS.white,
-                              fontSize: normalizeFontSize(16),
-                              fontWeight: '700',
-                              textAlign: 'center',
-                              letterSpacing: 0.3
-                            }}>
+                            <Text style={styles.submitButtonText}>
                               {isLoading ? '전송 중...' : '재설정 링크 전송'}
                             </Text>
                           </View>
@@ -486,17 +632,8 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
                       </Pressable>
 
                       {/* 로그인으로 돌아가기 */}
-                      <View style={{
-                        flexDirection: 'row',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginTop: spacing(4)
-                      }}>
-                        <Text style={{
-                          color: theme.colors.text.secondary,
-                          fontSize: normalizeFontSize(14),
-                          fontWeight: '500'
-                        }}>
+                      <View style={styles.loginLinkContainer}>
+                        <Text style={styles.loginLinkText}>
                           비밀번호가 기억나셨나요?{' '}
                         </Text>
                         <Pressable
@@ -504,11 +641,7 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
                           accessibilityRole="button"
                           accessibilityLabel="로그인 화면으로 이동"
                         >
-                          <Text style={{
-                            color: COLORS.gradient.primary[0],
-                            fontSize: normalizeFontSize(14),
-                            fontWeight: '700'
-                          }}>
+                          <Text style={styles.loginLinkButton}>
                             로그인
                           </Text>
                         </Pressable>
@@ -538,53 +671,27 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
         >
           <Pressable onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalCard}>
-              <VStack style={{ gap: spacing(20), alignItems: 'center' }}>
+              <VStack style={styles.modalContentContainer}>
                 {/* 성공 아이콘 */}
-                <View style={{
-                  width: spacing(70),
-                  height: spacing(70),
-                  borderRadius: spacing(35),
-                  backgroundColor: isDark ? theme.colors.background : '#f0f9ff',
-                  justifyContent: 'center',
-                  alignItems: 'center'
-                }}>
+                <View style={styles.modalIconContainer}>
                   <LinearGradient
                     colors={COLORS.gradient.primary}
-                    style={{
-                      width: spacing(56),
-                      height: spacing(56),
-                      borderRadius: spacing(28),
-                      justifyContent: 'center',
-                      alignItems: 'center'
-                    }}
+                    style={styles.modalIconGradient}
                   >
-                    <Text style={{ fontSize: normalizeFontSize(28) }}>✉️</Text>
+                    <Text style={styles.modalIconEmoji}>✉️</Text>
                   </LinearGradient>
                 </View>
 
                 {/* 제목 */}
                 <Text
-                  style={{
-                    fontSize: normalizeFontSize(24),
-                    fontWeight: '800',
-                    color: theme.colors.text.primary,
-                    textAlign: 'center',
-                    letterSpacing: -0.5
-                  }}
+                  style={styles.modalTitle}
                   accessibilityRole="header"
                 >
                   이메일 전송 완료
                 </Text>
 
                 {/* 설명 */}
-                <Text style={{
-                  fontSize: normalizeFontSize(15),
-                  fontWeight: '500',
-                  color: theme.colors.text.secondary,
-                  textAlign: 'center',
-                  lineHeight: normalizeFontSize(23),
-                  paddingHorizontal: spacing(8)
-                }}>
+                <Text style={styles.modalDescription}>
                   비밀번호 재설정 링크를{'\n'}
                   이메일로 전송했습니다.{'\n'}
                   이메일을 확인해주세요.
@@ -593,7 +700,7 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
                 {/* 확인 버튼 */}
                 <Pressable
                   onPress={handleModalClose}
-                  style={{ width: '100%' }}
+                  style={styles.modalButtonContainer}
                   accessibilityRole="button"
                   accessibilityLabel="확인"
                   accessibilityHint="로그인 화면으로 돌아갑니다"
@@ -602,26 +709,9 @@ const PasswordRecoveryScreen: React.FC<PasswordRecoveryScreenProps> = ({ navigat
                     colors={COLORS.gradient.primary}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={{
-                      width: '100%',
-                      borderRadius: spacing(14),
-                      paddingVertical: spacing(16),
-                      minHeight: spacing(52),
-                      justifyContent: 'center',
-                      shadowColor: COLORS.gradient.primary[0],
-                      shadowOffset: { width: 0, height: spacing(5) },
-                      shadowOpacity: isDark ? 0.4 : 0.25,
-                      shadowRadius: spacing(10),
-                      elevation: 8
-                    }}
+                    style={styles.modalButton}
                   >
-                    <Text style={{
-                      color: COLORS.white,
-                      fontSize: normalizeFontSize(16),
-                      fontWeight: '700',
-                      textAlign: 'center',
-                      letterSpacing: 0.3
-                    }}>
+                    <Text style={styles.modalButtonText}>
                       확인
                     </Text>
                   </LinearGradient>

@@ -45,6 +45,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, getGradientColors } from 
 import { showAlert } from '../contexts/AlertContext';
 import { getDday as getDdayUtil, formatDateShort } from '../utils/dateUtils';
 import { sanitizeErrorMessage } from '../utils/sanitize';
+import { sanitizeChallengeTitle, sanitizeChallengeDescription, sanitizeSearchQuery } from '../utils/xssFilter';
 import { HotSection } from '../components/challenge/sections/HotSection';
 import { AllSection } from '../components/challenge/sections/AllSection';
 import { MySection } from '../components/challenge/sections/MySection';
@@ -60,8 +61,26 @@ const getScreenWidth = () => {
   } catch (e) {}
   return 360;
 };
-const CARD_SPACING = 12; // 카드 간 간격
-const CONTAINER_PADDING = 12; // 좌우 여백
+// 화면 크기별 동적 간격
+const getDynamicSpacing = () => {
+  const width = getScreenWidth();
+  if (width >= 600) return 16; // XXL (태블릿)
+  if (width >= 480) return 14; // XL
+  if (width >= 390) return 12; // MD/LG
+  return 10; // SM/XS
+};
+
+// 화면 크기별 동적 로드 개수
+const getDynamicPageSize = () => {
+  const width = getScreenWidth();
+  if (width >= 600) return 30; // XXL (태블릿)
+  if (width >= 480) return 24; // XL
+  return 20; // 기본
+};
+
+const CARD_SPACING = getDynamicSpacing(); // 카드 간 간격
+const CONTAINER_PADDING = getDynamicSpacing(); // 좌우 여백
+const PAGE_SIZE = getDynamicPageSize(); // 페이지당 로드 개수
 
 
 interface Challenge {
@@ -129,10 +148,11 @@ const ChallengeScreenFixed = ({ route }: any) => {
     if (user?.profile_image_url) {
       return (
         <FastImage
+          key={`challenge-profile-${normalizeImageUrl(user.profile_image_url)}`}
           source={{
             uri: normalizeImageUrl(user.profile_image_url),
             priority: FastImage.priority.high,
-            cache: FastImage.cacheControl.immutable,
+            cache: FastImage.cacheControl.web,
           }}
           style={{
             width: 46,
@@ -208,6 +228,9 @@ const ChallengeScreenFixed = ({ route }: any) => {
     my: false
   });
 
+  // refresh 파라미터 처리 추적 (중복 실행 방지)
+  const lastRefreshTimestamp = useRef<number>(0);
+
   // 검색 필터 변경 감지 (필터 변경 시 캐시 리셋)
   useEffect(() => {
     if (__DEV__) console.log('🔄 searchFilter 변경됨:', searchFilter);
@@ -273,7 +296,7 @@ const ChallengeScreenFixed = ({ route }: any) => {
       setReportedChallengeIds(prev => new Set(prev).add(challengeId));
 
       showAlert.show('신고 완료', '신고가 접수되었습니다.');
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (__DEV__) console.error('신고 오류:', error);
 
       // 중복 신고 에러 처리
@@ -296,6 +319,22 @@ const ChallengeScreenFixed = ({ route }: any) => {
   const scrollY = useRef(new Animated.Value(0)).current;
   // HOT 불꽃 애니메이션
   const fireAnimation = useRef(new Animated.Value(1)).current;
+
+  // 헤더 높이 (헤더 + 탭)
+  const HEADER_HEIGHT = 90;
+  const TAB_HEIGHT = 50;
+  const TOTAL_HEADER_HEIGHT = HEADER_HEIGHT + TAB_HEIGHT;
+
+  // 스크롤 이전 위치 추적
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const headerAnimValue = useRef(new Animated.Value(0)).current;
+
+  // 스크롤에 따른 헤더 애니메이션
+  const headerTranslateY = headerAnimValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -TOTAL_HEADER_HEIGHT],
+  });
   // HOT 불꽃 애니메이션 효과
   // HOT 탭 무한 스크롤
   const [hotDisplayCount, setHotDisplayCount] = useState(10);
@@ -334,6 +373,12 @@ const ChallengeScreenFixed = ({ route }: any) => {
   // 데이터 로드
   const loadChallenges = useCallback(async (page = 1, isRefresh = false, customFilter?: SearchFilter) => {
     try {
+      // 중복 호출 방지: 이미 로딩 중이면 건너뛰기 (강제 새로고침 제외)
+      if (!isRefresh && (loading || loadingMore)) {
+        if (__DEV__) console.log('⏭️ 이미 로딩 중 - 중복 호출 건너뜀');
+        return;
+      }
+
       // 검색/필터 변경 시에만 캐시 클리어 (탭 전환 시에는 클리어하지 않음)
       if (page === 1 && !isRefresh && customFilter) {
         challengeService.clearCacheByPattern('challenges_');
@@ -359,7 +404,7 @@ const ChallengeScreenFixed = ({ route }: any) => {
         tags?: string[];
       } = {
         page,
-        limit: 10,
+        limit: PAGE_SIZE,
         query: filterToUse.query,
         category: filterToUse.category,
         status: activeTab === 'all'
@@ -408,7 +453,7 @@ const ChallengeScreenFixed = ({ route }: any) => {
         setHasMoreData(newChallenges.length === 10);
         setCurrentPage(page);
         if (__DEV__) {
-          console.log('📊 챌린지 데이터 로드 완료:', {
+          if (__DEV__) console.log('📊 챌린지 데이터 로드 완료:', {
             challenges: newChallenges.length,
             page,
             hasMore: newChallenges.length === 10
@@ -429,6 +474,12 @@ const ChallengeScreenFixed = ({ route }: any) => {
   const loadMyChallenges = useCallback(async (isRefresh = false) => {
     try {
       if (__DEV__) console.log('🔵 loadMyChallenges 시작');
+
+      // 중복 호출 방지: 이미 로딩 중이면 건너뛰기 (강제 새로고침 제외)
+      if (!isRefresh && loading) {
+        if (__DEV__) console.log('⏭️ 이미 로딩 중 - 중복 호출 건너뜀');
+        return;
+      }
 
       // 비로그인 사용자는 early return
       if (!isAuthenticated || !user) {
@@ -457,7 +508,7 @@ const ChallengeScreenFixed = ({ route }: any) => {
       ]);
 
       if (__DEV__) {
-        console.log('🔵 API 응답 수신:', {
+        if (__DEV__) console.log('🔵 API 응답 수신:', {
           createdStatus: myCreatedResponse?.status,
           participationsStatus: myParticipationsResponse?.status
         });
@@ -468,7 +519,7 @@ const ChallengeScreenFixed = ({ route }: any) => {
       const myParticipations = Array.isArray(myParticipationsResponse?.data) ? myParticipationsResponse.data : (myParticipationsResponse?.data?.data || []);
 
       if (__DEV__) {
-        console.log('🔵 데이터 파싱 완료:', {
+        if (__DEV__) console.log('🔵 데이터 파싱 완료:', {
           myCreatedLength: myCreated.length,
           myParticipationsLength: myParticipations.length
         });
@@ -523,7 +574,7 @@ const ChallengeScreenFixed = ({ route }: any) => {
       if (__DEV__) console.log('✅ setChallenges 완료 - my 탭:', combinedChallenges.length, '개');
       if (__DEV__) console.log('🔵 setChallenges 호출 완료');
     } catch (error) {
-      console.error('❌ 나의 챌린지 로드 실패:', error);
+      if (__DEV__) console.error('❌ 나의 챌린지 로드 실패:', error);
       showAlert.show('오류', '나의 챌린지를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
@@ -667,18 +718,58 @@ const ChallengeScreenFixed = ({ route }: any) => {
   }, [activeTab, loadChallenges, loadMyChallenges, isAuthenticated, user]);
   // 스크롤 이벤트 핸들러
   const handleScroll = useCallback((event: any) => {
-    const scrollY = event.nativeEvent.contentOffset.y;
-    const shouldShow = scrollY > 200; // 200px 이상 스크롤하면 버튼 표시
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+
+    // 맨 위로 버튼 표시/숨김
+    const shouldShow = currentScrollY > 200;
     if (shouldShow !== showScrollToTop) {
       setShowScrollToTop(shouldShow);
-      // 부드러운 애니메이션 효과
       Animated.timing(scrollToTopOpacity, {
         toValue: shouldShow ? 1 : 0,
         duration: 300,
         useNativeDriver: true,
       }).start();
     }
-  }, [showScrollToTop, scrollToTopOpacity]);
+
+    // 헤더 표시/숨김 로직 (인스타그램 스타일)
+    const scrollDiff = currentScrollY - lastScrollY;
+    const SCROLL_THRESHOLD = 5; // 민감도 조절
+
+    // 최상단 근처에서는 항상 헤더 표시
+    if (currentScrollY < 50) {
+      if (!headerVisible) {
+        setHeaderVisible(true);
+        Animated.spring(headerAnimValue, {
+          toValue: 0,
+          useNativeDriver: true,
+          friction: 8,
+          tension: 40,
+        }).start();
+      }
+    }
+    // 아래로 스크롤 (scrollDiff > 0) - 헤더 숨김
+    else if (scrollDiff > SCROLL_THRESHOLD && headerVisible && currentScrollY > TOTAL_HEADER_HEIGHT) {
+      setHeaderVisible(false);
+      Animated.spring(headerAnimValue, {
+        toValue: 1,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 40,
+      }).start();
+    }
+    // 위로 스크롤 (scrollDiff < 0) - 헤더 표시
+    else if (scrollDiff < -SCROLL_THRESHOLD && !headerVisible) {
+      setHeaderVisible(true);
+      Animated.spring(headerAnimValue, {
+        toValue: 0,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 40,
+      }).start();
+    }
+
+    setLastScrollY(currentScrollY);
+  }, [showScrollToTop, scrollToTopOpacity, lastScrollY, headerVisible, headerAnimValue, TOTAL_HEADER_HEIGHT]);
   // 스와이프 액션 생성
   // 더보기 옵션 처리 (BottomSheet 방식)
   const handleMoreOptions = useCallback((challenge: Challenge) => {
@@ -843,7 +934,7 @@ const ChallengeScreenFixed = ({ route }: any) => {
       showAlert.show('성공', '챌린지 정보가 수정되었습니다.');
       if (__DEV__) console.log('✅ 챌린지 업데이트 완료');
     } catch (error) {
-      console.error('❌ 챌린지 수정 실패:', error);
+      if (__DEV__) console.error('❌ 챌린지 수정 실패:', error);
       showAlert.show('오류', '챌린지 수정에 실패했습니다.');
     } finally {
       setIsUpdating(false);
@@ -860,6 +951,20 @@ const ChallengeScreenFixed = ({ route }: any) => {
     setEditEndDate('');
   }, []);
   // 챌린지 필터링 함수 - 백엔드의 status 필드를 신뢰
+  // 메모리 최적화: HOT 챌린지 필터링
+  const filteredHotChallenges = useMemo(() => {
+    return bestChallenges.slice(0, hotDisplayCount);
+  }, [bestChallenges, hotDisplayCount]);
+
+  // 메모리 최적화: All 섹션 필터링
+  const filteredAllChallenges = useMemo(() => {
+    return challenges.filter(c =>
+      allStatusFilter === 'active'
+        ? c.status === 'active'
+        : c.status === 'completed'
+    );
+  }, [challenges, allStatusFilter]);
+
   const filterChallengesByStatus = useCallback((challengeList: Challenge[], status: 'active' | 'completed') => {
     return challengeList.filter(c => {
       if (status === 'completed') {
@@ -920,9 +1025,23 @@ const ChallengeScreenFixed = ({ route }: any) => {
     setIsSearchMode(false);
     setCurrentSearchQuery('');
   }, []);
-  // 검색어 변경 처리
+  // 검색어 변경 처리 (debounced)
+  const debouncedSearch = useRef<NodeJS.Timeout | null>(null);
+
   const handleSearchQueryChange = useCallback((query: string) => {
     setCurrentSearchQuery(query);
+
+    // 기존 타이머 클리어
+    if (debouncedSearch.current) {
+      clearTimeout(debouncedSearch.current);
+    }
+
+    // 500ms 후 검색 실행
+    if (query.trim().length > 0) {
+      debouncedSearch.current = setTimeout(() => {
+        executeSearch(query);
+      }, 500);
+    }
   }, []);
   // 검색 기록에 추가
   const addToSearchHistory = useCallback((query: string) => {
@@ -935,7 +1054,7 @@ const ChallengeScreenFixed = ({ route }: any) => {
   }, []);
   // 검색 실행 및 기록 추가
 const executeSearch = useCallback((query: string) => {
-  const trimmedQuery = query.trim();
+  const trimmedQuery = sanitizeSearchQuery(query.trim());
   if (trimmedQuery.length > 0) {
     addToSearchHistory(trimmedQuery);
     // 태그와 일반 검색어 분리
@@ -970,13 +1089,8 @@ const executeSearch = useCallback((query: string) => {
       return;
     }
 
-    navigation.navigate('CreateChallenge' as never, {
-      onChallengeCreated: () => {
-        // 챌린지 생성 후 콜백
-        triggerUpdate();
-      }
-    } as never);
-  }, [navigation, triggerUpdate, isAuthenticated]);
+    navigation.navigate('CreateChallenge' as never);
+  }, [navigation, isAuthenticated]);
   const handleViewMyChallenges = useCallback(() => {
     navigation.navigate('MyChallenges' as never);
   }, [navigation]);
@@ -1028,8 +1142,8 @@ const executeSearch = useCallback((query: string) => {
                     }
                   ]
                 );
-              } catch (error: any) {
-                console.error('❌ 챌린지 삭제 실패:', error);
+              } catch (error: unknown) {
+                if (__DEV__) console.error('❌ 챌린지 삭제 실패:', error);
                 showAlert.show('오류', '챌린지 삭제에 실패했습니다.');
               } finally {
                 setDeletingChallengeId(null);
@@ -1040,7 +1154,7 @@ const executeSearch = useCallback((query: string) => {
         ]
       );
     } catch (error) {
-      console.error('챌린지 삭제 오류:', error);
+      if (__DEV__) console.error('챌린지 삭제 오류:', error);
       setDeletingChallengeId(null);
     }
   }, [loadChallenges, deletingChallengeId]);
@@ -1062,7 +1176,7 @@ const executeSearch = useCallback((query: string) => {
       const currentChallenge = challenges.find(c => c.challenge_id === challengeId) ||
                               bestChallenges.find(c => c.challenge_id === challengeId);
       if (__DEV__) {
-        console.log('🔍 현재 챌린지 참여 상태 확인:', {
+        if (__DEV__) console.log('🔍 현재 챌린지 참여 상태 확인:', {
           challengeId,
           isParticipating: currentChallenge?.is_participating
         });
@@ -1102,8 +1216,8 @@ const executeSearch = useCallback((query: string) => {
                     ));
                     showAlert.show('성공', '챌린지에서 나갔습니다.');
                   }
-                } catch (leaveError: any) {
-                  console.error('❌ 챌린지 나가기 실패:', leaveError);
+                } catch (leaveError: unknown) {
+                  if (__DEV__) console.error('❌ 챌린지 나가기 실패:', leaveError);
                   showAlert.show('오류', leaveError.response?.data?.message || '챌린지 나가기에 실패했습니다.');
                 }
               }
@@ -1114,7 +1228,7 @@ const executeSearch = useCallback((query: string) => {
         // 참여하지 않은 경우 - 참여하기
         const response = await challengeService.participateInChallenge(challengeId);
         if (__DEV__) {
-          console.log('✅ 챌린지 참여 응답:', {
+          if (__DEV__) console.log('✅ 챌린지 참여 응답:', {
             status: response?.status,
             challengeId
           });
@@ -1136,8 +1250,8 @@ const executeSearch = useCallback((query: string) => {
           triggerUpdate();
         }
       }
-    } catch (error: any) {
-      console.error('❌ 챌린지 참여/나가기 실패:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('❌ 챌린지 참여/나가기 실패:', error);
       if (error.response?.status === 409 || error.response?.data?.message?.includes('이미 참여')) {
         // 이미 참여 중인 경우
         showAlert.show(
@@ -1212,20 +1326,80 @@ const executeSearch = useCallback((query: string) => {
       return () => backHandler.remove();
     }, [isSearchMode, exitSearchMode])
   );
-  // 페이지 포커스 시 데이터 로드
+  // 페이지 포커스 시 데이터 로드 - 캐시 활용으로 이미지 로딩 최적화
   useFocusEffect(
     useCallback(() => {
       const shouldRefresh = route?.params?.refresh;
-      if (shouldRefresh) {
+      const now = Date.now();
+
+      if (shouldRefresh && now - lastRefreshTimestamp.current > 100) {
         if (__DEV__) console.log('🔄 새로고침 파라미터 감지됨 - 강제 새로고침');
-        loadChallenges(1, true); // 강제 새로고침
-        // 파라미터 초기화
-        // navigation.setParams({ refresh: undefined }); // setParams는 React Navigation v6에서 지원되지 않음
+        // 타임스탬프 업데이트 (100ms 내 중복 실행 방지)
+        lastRefreshTimestamp.current = now;
+        // 챌린지 서비스 캐시 완전 클리어
+        challengeService.clearCache();
+        if (__DEV__) console.log('🗑️ 챌린지 캐시 전체 클리어 완료');
+        // 강제 새로고침 실행
+        if (activeTab === 'my') {
+          loadMyChallenges(true);
+        } else {
+          loadChallenges(1, true);
+        }
+        // 파라미터 클리어는 나중에 실행 (중복 useFocusEffect 방지)
+        setTimeout(() => {
+          navigation.setParams({ refresh: undefined });
+        }, 200);
+        return; // 나머지 로직 스킵
       } else {
-        loadChallenges(1); // 일반 로드
+        // 탭별 캐시 확인 - 이미 로드된 탭은 다시 로드하지 않음
+        const isTabLoaded = tabLoadedRef.current[activeTab];
+
+        if (!isTabLoaded) {
+          if (__DEV__) console.log(`🔵 ${activeTab} 탭 첫 로드 - 데이터 가져오기`);
+
+          if (activeTab === 'my') {
+            loadMyChallenges(false);
+          } else {
+            loadChallenges(1, false);
+          }
+
+          // 로드 완료 플래그 설정
+          tabLoadedRef.current[activeTab] = true;
+        } else {
+          if (__DEV__) console.log(`✅ ${activeTab} 탭 캐시 사용 - 재로드 건너뜀`);
+
+          // 이미 로드된 데이터가 있으면 이미지만 프리로드
+          const imagesToPreload: string[] = [];
+
+          if (activeTab === 'all' || activeTab === 'hot') {
+            const dataSource = activeTab === 'hot' ? bestChallenges : challenges;
+            dataSource.slice(0, 10).forEach((challenge: Challenge) => {
+              if (challenge.image_urls && challenge.image_urls.length > 0) {
+                imagesToPreload.push(challenge.image_urls[0]);
+              }
+            });
+          } else if (activeTab === 'my') {
+            challenges.slice(0, 10).forEach((challenge: Challenge) => {
+              if (challenge.image_urls && challenge.image_urls.length > 0) {
+                imagesToPreload.push(challenge.image_urls[0]);
+              }
+            });
+          }
+
+          // 이미지 프리로드 (백그라운드에서 비동기 실행)
+          if (imagesToPreload.length > 0) {
+            FastImage.preload(
+              imagesToPreload.map(uri => ({
+                uri,
+                priority: FastImage.priority.high,
+              }))
+            );
+            if (__DEV__) console.log(`🖼️ ${imagesToPreload.length}개 이미지 프리로드 시작`);
+          }
+        }
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [route?.params?.refresh]) // navigation 제거
+    }, [route?.params?.refresh, activeTab, navigation])
   );
   if (loading) {
     return (
@@ -1413,69 +1587,77 @@ const executeSearch = useCallback((query: string) => {
         backgroundColor={theme.bg.primary}
         translucent={false}
       />
-      {/* 위로와 공감 페이지와 동일한 단일 색상 헤더 */}
-      <View
-        style={[
-          styles.headerGradient,
-          {
-            backgroundColor: theme.bg.primary,
-            borderBottomWidth: isDark ? 0 : 0.5,
-            borderBottomColor: isDark ? 'transparent' : theme.bg.border,
-          }
-        ]}
+      {/* 스크롤에 따라 숨겨지는 헤더 */}
+      <Animated.View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+          transform: [{ translateY: headerTranslateY }],
+        }}
       >
-        <View style={styles.headerContent}>
-          <View style={styles.headerTop}>
-            <View style={styles.headerLeft}>
-              <View style={styles.headerTitleRow}>
-                <MaterialCommunityIcons
-                  name="trophy-variant-outline"
-                  size={22}
-                  color={theme.text.primary}
-                  style={styles.headerIcon}
-                />
-                <Text style={[styles.headerTitle, { color: theme.text.primary }]}>
-                  감정 챌린지
+        {/* 위로와 공감 페이지와 동일한 단일 색상 헤더 */}
+        <View
+          style={[
+            styles.headerGradient,
+            {
+              backgroundColor: theme.bg.primary,
+              borderBottomWidth: isDark ? 0 : 0.5,
+              borderBottomColor: isDark ? 'transparent' : theme.bg.border,
+            }
+          ]}
+        >
+          <View style={styles.headerContent}>
+            <View style={styles.headerTop}>
+              <View style={styles.headerLeft}>
+                <View style={styles.headerTitleRow}>
+                  <MaterialCommunityIcons
+                    name="trophy-variant-outline"
+                    size={22}
+                    color={theme.text.primary}
+                    style={styles.headerIcon}
+                  />
+                  <Text style={[styles.headerTitle, { color: theme.text.primary }]}>
+                    감정 챌린지
+                  </Text>
+                </View>
+                <Text style={[styles.headerSubtitle, { color: theme.text.secondary }]}>
+                  감정과 행복을 나누는 챌린지
                 </Text>
               </View>
-              <Text style={[styles.headerSubtitle, { color: theme.text.secondary }]}>
-                감정과 행복을 나누는 챌린지
-              </Text>
-            </View>
-            <View style={styles.headerRight}>
-              <TouchableOpacity
-                style={styles.headerIconButton}
-                onPress={() => navigation.navigate('ProfileMain' as never)}
-              >
-                {HeaderProfileImage}
-              </TouchableOpacity>
+              <View style={styles.headerRight}>
+                <TouchableOpacity
+                  style={styles.headerIconButton}
+                  onPress={() => navigation.navigate('ProfileMain' as never)}
+                  accessibilityLabel="프로필 보기"
+                  accessibilityHint="내 프로필 화면으로 이동합니다"
+                  accessibilityRole="button"
+                >
+                  {HeaderProfileImage}
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
-      </View>
-      {/* 탭 네비게이션 */}
-      {(() => {
-        const shouldShowMyTab = !!isAuthenticated && !!user;
-        if (__DEV__) console.log('🔍 ChallengeTabs showMyTab:', { isAuthenticated, hasUser: !!user, shouldShowMyTab });
-        return (
-          <ChallengeTabs
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-            showMyTab={shouldShowMyTab}
-          />
-        );
-      })()}
-      {/* 검색 상태 표시 */}
-      {searchFilter.query && (
-        <SearchStatus
-          query={searchFilter.query}
-          resultCount={challenges.length}
-          onClear={clearSearch}
-        />
-      )}
+        {/* 탭 네비게이션 */}
+        {(() => {
+          const shouldShowMyTab = !!isAuthenticated && !!user;
+          if (__DEV__) console.log('🔍 ChallengeTabs showMyTab:', { isAuthenticated, hasUser: !!user, shouldShowMyTab });
+          return (
+            <ChallengeTabs
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              showMyTab={shouldShowMyTab}
+            />
+          );
+        })()}
+      </Animated.View>
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
+        contentContainerStyle={{ paddingTop: TOTAL_HEADER_HEIGHT }}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           {
@@ -1494,6 +1676,14 @@ const executeSearch = useCallback((query: string) => {
         }
         showsVerticalScrollIndicator={false}
       >
+        {/* 검색 상태 표시 */}
+        {searchFilter.query && (
+          <SearchStatus
+            query={searchFilter.query}
+            resultCount={challenges.length}
+            onClear={clearSearch}
+          />
+        )}
         {/* 검색 및 필터 섹션 - my 탭에서는 숨김 */}
         <View style={{ display: activeTab !== 'my' ? 'flex' : 'none' }}>
           <ChallengeFilters
@@ -2015,12 +2205,12 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     lineHeight: 20,
   },
   headerGradient: {
-    paddingTop: Platform.OS === 'ios' ? 0 : 12,
-    paddingBottom: 16,
+    paddingTop: Platform.OS === 'ios' ? 0 : 16,
+    paddingBottom: 20,
   },
   headerContent: {
     width: '95%',
@@ -2044,13 +2234,13 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: normalize(20, 18, 24),
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
   },
   headerSubtitle: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: normalize(13, 12, 15),
+    fontFamily: 'Pretendard-SemiBold',
     opacity: 0.9,
     letterSpacing: -0.2,
   },
@@ -2059,12 +2249,14 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   headerIconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: normalize(44, 44, 48),
+    height: normalize(44, 44, 48),
+    borderRadius: normalize(22, 22, 24),
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    minWidth: 44,
+    minHeight: 44,
   },
   scrollView: {
     flex: 1,
@@ -2092,25 +2284,27 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: FONT_SIZES.body,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.2,
     lineHeight: 21,
     marginTop: 0 ,
   },
   sectionCount: {
     fontSize: FONT_SIZES.caption,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.1,
   },
   viewAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 44,
+    minWidth: 44,
     paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   viewAllText: {
     fontSize: FONT_SIZES.caption,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginRight: 5,
     lineHeight: 18,
     letterSpacing: -0.2,
@@ -2182,7 +2376,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 20,
     letterSpacing: -0.1,
   },
@@ -2219,13 +2413,13 @@ const styles = StyleSheet.create({
   ddayBadgeText: {
     color: 'white',
     fontSize: FONT_SIZES.small,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.1,
     lineHeight: 16,
   },
   myChallengeMiniTitle: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     lineHeight: 19,
     marginBottom: 8,
     letterSpacing: -0.2,
@@ -2247,7 +2441,7 @@ const styles = StyleSheet.create({
   },
   miniProgressText: {
     fontSize: FONT_SIZES.small,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     textAlign: 'right',
     lineHeight: 16,
     letterSpacing: -0.1,
@@ -2259,7 +2453,7 @@ const styles = StyleSheet.create({
   },
   myChallengeMiniParticipants: {
     fontSize: FONT_SIZES.small,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.1,
     marginLeft: 3,
     lineHeight: 16,
@@ -2278,7 +2472,7 @@ const styles = StyleSheet.create({
   },
   myChallengeText: {
     fontSize: FONT_SIZES.caption,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginLeft: 3,
     lineHeight: 18,
     letterSpacing: -0.2,
@@ -2306,7 +2500,7 @@ const styles = StyleSheet.create({
   loadingMoreText: {
     marginTop: 6,
     fontSize: FONT_SIZES.caption,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     lineHeight: 18,
     letterSpacing: -0.1,
   },
@@ -2328,7 +2522,7 @@ const styles = StyleSheet.create({
   },
   loadMoreText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginLeft: 8,
     letterSpacing: -0.1,
     lineHeight: 19,
@@ -2361,7 +2555,7 @@ const styles = StyleSheet.create({
   searchTextInput: {
 flex: 1,
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginLeft: 8,
     paddingVertical: 4,
     lineHeight: 20,
@@ -2381,7 +2575,7 @@ flex: 1,
   },
   searchSectionTitle: {
 fontSize: FONT_SIZES.body,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 14,
     lineHeight: 21,
     letterSpacing: -0.2,
@@ -2398,7 +2592,7 @@ fontSize: FONT_SIZES.body,
 flex: 1,
     marginLeft: 12,
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 20,
     letterSpacing: -0.1,
   },
@@ -2416,14 +2610,14 @@ flex: 1,
   popularSearchRank: {
 width: 26,
     fontSize: FONT_SIZES.caption,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
     lineHeight: 18,
   },
   popularSearchText: {
 marginLeft: 12,
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 20,
     letterSpacing: -0.1,
   },
@@ -2436,7 +2630,7 @@ marginLeft: 12,
   },
   searchResultTitle: {
 fontSize: FONT_SIZES.body,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 6,
     lineHeight: 21,
     letterSpacing: -0.2,
@@ -2444,7 +2638,7 @@ fontSize: FONT_SIZES.body,
   searchResultDescription: {
 fontSize: FONT_SIZES.caption,
     lineHeight: 18,
-    fontWeight: '400',
+    fontFamily: 'Pretendard-Regular',
     marginBottom: 10,
     letterSpacing: -0.1,
   },
@@ -2455,7 +2649,7 @@ fontSize: FONT_SIZES.caption,
   },
   searchResultParticipants: {
 fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 20,
   },
   statusBadge: {
@@ -2466,7 +2660,7 @@ fontSize: FONT_SIZES.bodySmall,
   statusBadgeText: {
 color: 'white',
     fontSize: FONT_SIZES.caption,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     lineHeight: 18,
     letterSpacing: 0,
   },
@@ -2476,7 +2670,7 @@ color: 'white',
   },
   noResultsText: {
 fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginTop: 16,
     marginBottom: 4,
     lineHeight: 20,
@@ -2562,7 +2756,7 @@ fontSize: FONT_SIZES.caption,
   },
    modalTitle: {
 fontSize: FONT_SIZES.h3,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.2,
     // 2025 트렌드: 글로우 효과
     textShadowColor: '#6366F120',
@@ -2590,7 +2784,7 @@ fontSize: FONT_SIZES.h3,
   },
   saveHeaderButtonText: {
 fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   modalScrollView: {
     flex: 1,
@@ -2607,13 +2801,13 @@ fontSize: FONT_SIZES.bodySmall,
   },
   editFieldLabel: {
 fontSize: FONT_SIZES.h4,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: 0,
   },
   uniformTextAreaStyle: {
 minHeight: 140,           // 120 → 140
     fontSize: FONT_SIZES.h4,             // 새로 추가
-    fontWeight: '500',        // 새로 추가
+    fontFamily: 'Pretendard-Medium',        // 새로 추가
     lineHeight: 24,           // 새로 추가
     letterSpacing: 0,      // 새로 추가
   },
@@ -2621,7 +2815,7 @@ minHeight: 140,           // 120 → 140
 fontSize: FONT_SIZES.caption,
     textAlign: 'right',
     marginTop: 8,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 18,
     letterSpacing: 0,
   },
@@ -2640,7 +2834,7 @@ fontSize: FONT_SIZES.caption,
   },
   modalSubtitle: {
 fontSize: FONT_SIZES.bodyLarge,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginTop: 6,
     letterSpacing: 0,
   },
@@ -2658,7 +2852,7 @@ fontSize: FONT_SIZES.bodyLarge,
   },
   modernSaveButtonText: {
     fontSize: FONT_SIZES.h4,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: 0,
   },
   modernFieldContainer: {
@@ -2676,7 +2870,7 @@ fontSize: FONT_SIZES.bodyLarge,
   },
   modernFieldLabel: {
 fontSize: FONT_SIZES.h3,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginRight: 10,
     letterSpacing: 0,
   },
@@ -2689,7 +2883,7 @@ fontSize: FONT_SIZES.h3,
   },
   requiredBadgeText: {
     fontSize: FONT_SIZES.caption,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: 0.2,
   },
   optionalBadge: {
@@ -2701,12 +2895,12 @@ fontSize: FONT_SIZES.h3,
   optionalBadgeText: {
 color: '#666666',
     fontSize: FONT_SIZES.caption,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: 0.2,
   },
   modernCharCount: {
 fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: 0,
     lineHeight: 20,
   },
@@ -2721,7 +2915,7 @@ fontSize: FONT_SIZES.bodySmall,
   modernInput: {
 flex: 1,
     fontSize: FONT_SIZES.bodyLarge,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 20,
   },
   modernTextAreaWrapper: {
@@ -2732,7 +2926,7 @@ flex: 1,
   },
   modernTextArea: {
 fontSize: FONT_SIZES.bodyLarge,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     lineHeight: 22,
     minHeight: 88,
   },
@@ -2745,7 +2939,7 @@ fontSize: FONT_SIZES.bodyLarge,
   },
   modernDateLabel: {
 fontSize: FONT_SIZES.bodyLarge,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 10,
     textAlign: 'center',
     letterSpacing: 0,
@@ -2761,7 +2955,7 @@ fontSize: FONT_SIZES.bodyLarge,
   modernDateInput: {
 flex: 1,
     fontSize: FONT_SIZES.body,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     textAlign: 'center',
   },
   modernDateSeparator: {
@@ -2786,7 +2980,7 @@ flex: 1,
   },
   modernHelperText: {
 fontSize: FONT_SIZES.body,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     fontStyle: 'italic',
     letterSpacing: 0,
   },
@@ -2808,7 +3002,7 @@ fontSize: FONT_SIZES.body,
   },
   miniSocialInteractionText: {
     fontSize: FONT_SIZES.caption,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginLeft: 2,
     letterSpacing: 0,
     lineHeight: 18,
@@ -2829,7 +3023,7 @@ fontSize: FONT_SIZES.body,
   },
   hotSocialInteractionText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginLeft: 2,
     letterSpacing: 0,
     lineHeight: 18,
@@ -2860,7 +3054,7 @@ fontSize: FONT_SIZES.body,
   },
   loadMoreText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     
     marginRight: 4,
     letterSpacing: 0,
@@ -2906,14 +3100,14 @@ fontSize: FONT_SIZES.body,
   },
   hotTagText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     
     letterSpacing: 0,
     lineHeight: 16,
   },
   hotMoreTags: {
     fontSize: FONT_SIZES.tiny,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
     marginLeft: 2,
     lineHeight: 16,
   },
@@ -2929,7 +3123,7 @@ fontSize: FONT_SIZES.body,
   },
   hotSocialText: {
     fontSize: FONT_SIZES.caption,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   hotSocialRow: {
     flexDirection: 'row',
@@ -2967,7 +3161,7 @@ fontSize: FONT_SIZES.body,
   },
   statusTabText: {
     fontSize: FONT_SIZES.body,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     color: '#6B7280',
     letterSpacing: 0,
   },

@@ -36,7 +36,7 @@ const GuestPromptBottomSheet: React.FC<GuestPromptBottomSheetProps> = ({
   // 디버깅용
   React.useEffect(() => {
     if (visible) {
-      console.log('🎨 GuestPromptBottomSheet isDarkMode:', isDarkMode);
+      if (__DEV__) console.log('🎨 GuestPromptBottomSheet isDarkMode:', isDarkMode);
     }
   }, [visible, isDarkMode]);
 
@@ -199,14 +199,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 8,
     textAlign: 'center',
     letterSpacing: -0.4,
   },
   message: {
     fontSize: 15,
-    fontWeight: '400',
+    fontFamily: 'Pretendard-Regular',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 22,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     letterSpacing: -0.3,
   },
   secondaryButton: {
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     letterSpacing: -0.3,
   },
   laterButton: {
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   },
   laterButtonText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
 });
 

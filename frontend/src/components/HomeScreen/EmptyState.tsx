@@ -23,7 +23,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isDark }) => {
         />
         <Text
           className="text-center"
-          style={{ color: colors.textSecondary, fontSize: 16, fontWeight: '600' }}
+          style={{ color: colors.textSecondary, fontSize: 16, fontFamily: 'Pretendard-SemiBold' }}
         >
           아직 게시물이 없습니다
         </Text>

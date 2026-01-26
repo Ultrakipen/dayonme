@@ -65,7 +65,7 @@ const createStyles = (isDark: boolean, colors: any, themeColors: any) => StyleSh
   },
   infoModalTitle: {
     fontSize: scaleFontSize(20),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: colors.text.primary,
     marginBottom: scaleSpacing(12),
     textAlign: 'center'
@@ -85,7 +85,7 @@ const createStyles = (isDark: boolean, colors: any, themeColors: any) => StyleSh
   },
   infoModalButtonText: {
     fontSize: scaleFontSize(16),
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     color: '#FFFFFF'
   }
 });

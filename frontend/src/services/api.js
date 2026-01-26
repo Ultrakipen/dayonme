@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// API의 기본 URL을 설정합니다. 실제 서버 주소로 변경해야 합니다.
-const BASE_URL = 'http://localhost:3001/api';
+// API의 기본 URL을 설정합니다.
+const BASE_URL = 'https://dayonme.com/api';
 
 // axios 인스턴스를 생성합니다.
 const api = axios.create({

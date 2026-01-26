@@ -1,5 +1,5 @@
 // src/components/ClickableAvatar.tsx
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { TouchableOpacity, View, Text, StyleSheet, ViewStyle } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import { useNavigation } from '@react-navigation/native';
@@ -52,14 +52,33 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
   const [twemojiError, setTwemojiError] = useState(false);
   const [loginPromptVisible, setLoginPromptVisible] = useState(false);
 
+  // 마운트/언마운트 추적
+  useEffect(() => {
+    if (__DEV__) console.log('🎭 [ClickableAvatar] 마운트:', { userId, nickname, isAnonymous });
+    return () => {
+      if (__DEV__) console.log('🎭 [ClickableAvatar] 언마운트:', { userId, nickname });
+    };
+  }, []);
+
   // 본인 여부 확인
   const isOwnProfile = useMemo(() => user?.user_id === userId, [user?.user_id, userId]);
 
   // 클릭 가능 여부: 로그인했고, 익명이 아니고, 본인도 아닌 경우
-  const isClickable = useMemo(() =>
-    isAuthenticated && !isAnonymous && !isOwnProfile,
-    [isAuthenticated, isAnonymous, isOwnProfile]
-  );
+  const isClickable = useMemo(() => {
+    const clickable = isAuthenticated && !isAnonymous && !isOwnProfile;
+    if (__DEV__) {
+      if (__DEV__) console.log('🖼️ ClickableAvatar 렌더:', {
+        userId,
+        nickname,
+        isClickable: clickable,
+        isAuthenticated,
+        isAnonymous,
+        isOwnProfile,
+        avatarUrl: avatarUrl ? 'exists' : 'none',
+      });
+    }
+    return clickable;
+  }, [isAuthenticated, isAnonymous, isOwnProfile, userId, nickname, avatarUrl]);
 
   // 이미지 URL 정규화 (메모이제이션)
   const normalizedImageUrl = useMemo(() =>
@@ -75,12 +94,25 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
 
 
   const handlePress = () => {
+    if (__DEV__) {
+      if (__DEV__) console.log('👆 ClickableAvatar 클릭:', {
+        userId,
+        nickname,
+        isClickable,
+        isAuthenticated,
+        isAnonymous,
+        isOwnProfile,
+      });
+    }
+
     if (!isClickable) {
+      if (__DEV__) console.log('⚠️ 클릭 불가: isClickable=false');
       return;
     }
 
     // 비로그인 사용자 체크
     if (!isAuthenticated || !user) {
+      if (__DEV__) console.log('⚠️ 비로그인 사용자 - 로그인 안내 표시');
       if (onLoginRequired) {
         onLoginRequired();
       } else {
@@ -90,12 +122,13 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
     }
 
     try {
+      if (__DEV__) console.log('✅ UserProfile로 이동:', { userId, nickname });
       navigation.navigate('UserProfile', {
         userId,
         nickname,
       });
     } catch (error) {
-      console.error('❌ Navigation 오류:', error);
+      if (__DEV__) console.error('❌ Navigation 오류:', error);
     }
   };
 
@@ -139,7 +172,7 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
     // 일반 텍스트인 경우
     return {
       fontSize: size * 0.55,
-      fontWeight: '600' as const,
+      fontFamily: 'Pretendard-SemiBold' as const,
       color: avatarColor,
     };
   }, [size, avatarColor, isEmoji]);
@@ -155,7 +188,7 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
   const imageSource = useMemo(() => ({
     uri: normalizedImageUrl,
     priority: FastImage.priority.high,
-    cache: FastImage.cacheControl.immutable
+    cache: FastImage.cacheControl.immutable // 강력한 캐싱으로 깜빡임 방지
   }), [normalizedImageUrl]);
 
   // 이미지 로드 실패 핸들러 (메모이제이션)
@@ -170,15 +203,15 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
 
   // Twemoji 이미지 스타일 (메모이제이션) - 고해상도 지원
   const twemojiStyle = useMemo(() => ({
-    width: size * 0.68,
-    height: size * 0.68,
+    width: size * 0.80,
+    height: size * 0.80,
   }), [size]);
 
   // Twemoji FastImage source (캐싱 최적화)
   const twemojiSource = useMemo(() => avatarEmojiCode ? ({
     uri: getTwemojiUrl(avatarEmojiCode),
     priority: FastImage.priority.high,
-    cache: FastImage.cacheControl.immutable,
+    cache: FastImage.cacheControl.immutable, // 강력한 캐싱으로 깜빡임 방지
   }) : null, [avatarEmojiCode]);
 
   // Twemoji 로드 실패 핸들러
@@ -188,9 +221,11 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
 
   // 아바타 내용 렌더링 (이미지 또는 텍스트) - 메모이제이션
   const renderAvatarContent = useCallback(() => {
+    // 1. 실명 댓글 + 프로필 이미지가 있는 경우
     if (shouldShowImage) {
       return (
         <FastImage
+          key={`avatar-user-${userId}`} // userId 기반 key로 안정성 확보 (깜빡임 방지)
           source={imageSource}
           style={imageStyle}
           resizeMode={FastImage.resizeMode.cover}
@@ -199,10 +234,11 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
         />
       );
     }
-    // Twemoji 코드가 있고 이모지이면 고해상도 Twemoji 이미지 사용
-    if (avatarEmojiCode && isEmoji && twemojiSource && !twemojiError) {
+    // 2. 익명 댓글 - avatarEmojiCode가 있으면 Twemoji 이미지 사용 (isEmoji 체크 제거)
+    if (avatarEmojiCode && twemojiSource && !twemojiError) {
       return (
         <FastImage
+          key={`twemoji-${avatarEmojiCode}`} // 이모지 코드 기반 key (안정적)
           source={twemojiSource}
           style={twemojiStyle}
           resizeMode={FastImage.resizeMode.contain}
@@ -210,9 +246,13 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
         />
       );
     }
-    // 폴백: 일반 텍스트 이모지
+    // 3. 폴백: 이모지 텍스트 또는 닉네임 첫 글자
+    if (isEmoji) {
+      return <Text style={avatarTextStyle}>{avatarText}</Text>;
+    }
+    // 4. 일반 텍스트 (닉네임 첫 글자)
     return <Text style={avatarTextStyle}>{avatarText}</Text>;
-  }, [shouldShowImage, imageSource, imageStyle, handleImageError, handleImageLoad, avatarText, avatarTextStyle, avatarEmojiCode, isEmoji, twemojiStyle, twemojiSource, twemojiError, handleTwemojiError]);
+  }, [userId, shouldShowImage, imageSource, imageStyle, handleImageError, handleImageLoad, avatarText, avatarTextStyle, avatarEmojiCode, isEmoji, twemojiStyle, twemojiSource, twemojiError, handleTwemojiError]);
 
   // 클릭 불가능한 경우 일반 View로 렌더링
   if (!isClickable) {

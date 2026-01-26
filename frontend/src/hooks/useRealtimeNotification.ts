@@ -43,7 +43,7 @@ export const useRealtimeNotification = ({
     } catch (err) {
       setError(err instanceof Error ? err.message : '연결 중 오류가 발생했습니다.');
       setIsLoading(false);
-      console.error('Socket connection error:', err);
+      if (__DEV__) console.error('Socket connection error:', err);
     }
   }, []);
 

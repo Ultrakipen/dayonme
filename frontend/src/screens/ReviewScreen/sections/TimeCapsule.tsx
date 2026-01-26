@@ -31,7 +31,7 @@ export const TimeCapsule: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('타임캡슐을 불러오는데 실패했습니다');
-      console.error('타임캡슐 로드 실패:', err);
+      if (__DEV__) console.error('타임캡슐 로드 실패:', err);
     }
   }, []);
 
@@ -71,7 +71,7 @@ export const TimeCapsule: React.FC = React.memo(() => {
         <View style={[styles.header, { gap: 12 * scale, marginBottom: 12 * scale }]}>
           <TwemojiImage emoji="📮" size={40 * scale} />
           <View style={styles.headerText}>
-            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>타임캡슐</Text>
+            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>타임캡슐</Text>
             <Text style={[styles.date, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale, marginTop: 2 * scale }]}>
               아직 타임캡슐이 없습니다
             </Text>
@@ -97,7 +97,7 @@ export const TimeCapsule: React.FC = React.memo(() => {
       <View style={[styles.header, { gap: 12 * scale, marginBottom: 16 * scale }]}>
         <TwemojiImage emoji="📮" size={40 * scale} />
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
             타임캡슐
           </Text>
           <Text style={[styles.date, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale, marginTop: 2 * scale }]}>
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   date: {
   },
@@ -177,13 +177,13 @@ const styles = StyleSheet.create({
   comparison: {
   },
   comparisonTitle: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   comparisonStats: {
     flexDirection: 'row',
   },
   improvement: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   errorContainer: {
     alignItems: 'center',

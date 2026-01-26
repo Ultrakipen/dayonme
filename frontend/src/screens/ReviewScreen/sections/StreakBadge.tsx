@@ -1,64 +1,30 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, TouchableOpacity } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Card } from '../../../components/common/Card';
 import { useModernTheme } from '../../../hooks/useModernTheme';
-import reviewService from '../../../services/api/reviewService';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
 import { TwemojiImage } from '../../../components/common/TwemojiImage';
-
-interface StreakData {
-  currentStreak: number;
-  longestStreak: number;
-  lastPostDate: string | null;
-}
+import { useReviewData } from '../ReviewDataContext';
 
 export const StreakBadge: React.FC = React.memo(() => {
   const { colors, isDark } = useModernTheme();
   const scale = getScale(360, 0.9, 1.3);
-  const [streak, setStreak] = useState<StreakData | null>(null);
+  const { data } = useReviewData();
+  const streak = data.streak;
   const animValue = useRef(new Animated.Value(0)).current;
-  const [error, setError] = useState<string | null>(null);
 
-  const loadStreak = useCallback(async () => {
-    try {
-      setError(null);
-      const response = await reviewService.getUserStreak();
-      setStreak(response.data);
-
+  // 데이터가 로드되면 애니메이션 시작
+  useEffect(() => {
+    if (streak) {
       Animated.spring(animValue, {
         toValue: 1,
         tension: 50,
         friction: 7,
         useNativeDriver: true,
       }).start();
-    } catch (err) {
-      setError('스트릭 정보를 불러오는데 실패했습니다');
-      console.error('스트릭 로드 실패:', err);
     }
-  }, []);
-
-  useEffect(() => {
-    loadStreak();
-  }, [loadStreak]);
-
-  if (error) {
-    return (
-      <Card variant="warm" style={{ padding: 14 * scale, marginBottom: 12 * scale }} accessible={true} accessibilityLabel="연속 기록 배지">
-        <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
-          <TouchableOpacity
-            onPress={loadStreak}
-            style={[styles.retryButton, { marginTop: 12 * scale }]}
-            accessibilityRole="button"
-            accessibilityLabel="다시 시도"
-          >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
-          </TouchableOpacity>
-        </View>
-      </Card>
-    );
-  }
+  }, [streak, animValue]);
 
   if (!streak) return null;
 
@@ -134,13 +100,13 @@ const styles = StyleSheet.create({
   fireIcon: {
   },
   streakNumber: {
-    fontWeight: '800',
+    fontFamily: 'Pretendard-ExtraBold',
   },
   textContainer: {
     flex: 1,
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   subtitle: {
   },
@@ -148,12 +114,5 @@ const styles = StyleSheet.create({
   },
   encouragementText: {
     textAlign: 'center',
-  },
-  errorContainer: {
-    alignItems: 'center',
-    padding: 16,
-  },
-  retryButton: {
-    padding: 8,
   },
 });

@@ -32,7 +32,7 @@ export const EmotionColorPalette: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('감정 팔레트를 불러오는데 실패했습니다');
-      console.log('감정 팔레트 로드 실패');
+      if (__DEV__) console.log('감정 팔레트 로드 실패');
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,7 @@ export const EmotionColorPalette: React.FC = React.memo(() => {
         <View style={styles.header}>
           <Text style={[styles.icon, { fontSize: 28 * scale }]}>🎨</Text>
           <View style={styles.headerText}>
-            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>감정 색상 팔레트</Text>
+            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>감정 색상 팔레트</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
               {loading ? '로딩 중...' : '이번 주 기록이 없어요'}
             </Text>
@@ -81,7 +81,7 @@ export const EmotionColorPalette: React.FC = React.memo(() => {
       <View style={styles.header}>
         <Text style={[styles.icon, { fontSize: 28 * scale }]}>🎨</Text>
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}>감정 색상 팔레트</Text>
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>감정 색상 팔레트</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
             이번 주 나의 감정 그라데이션
           </Text>
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   subtitle: {
     marginTop: 2,
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     marginBottom: 8,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   colorStack: {
     gap: 4,

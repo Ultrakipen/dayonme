@@ -13,7 +13,7 @@ export const getRandomEmotion = (userId: number, postId: number, commentId: numb
   const seed3 = (userSeed + postSeed + commentSeed) * 13;
   const finalSeed = (seed1 + seed2 + seed3) % EMOTION_CHARACTERS.length;
 
-  console.log(`🎭 PostDetail 감정 할당:`, {
+  if (__DEV__) console.log(`🎭 PostDetail 감정 할당:`, {
     userId, postId, commentId, finalSeed,
     selectedEmotion: EMOTION_CHARACTERS[finalSeed]?.label
   });
@@ -29,25 +29,25 @@ export const getAnonymousEmotion = (
   postEmotion?: string
 ): EmotionCharacter => {
   if (postEmotion) {
-    console.log('🔍 PostDetail getAnonymousEmotion:', { userId, postId, commentId, postEmotion });
+    if (__DEV__) console.log('🔍 PostDetail getAnonymousEmotion:', { userId, postId, commentId, postEmotion });
 
     try {
       for (const [keyword, emotionLabel] of Object.entries(EMOTION_KEYWORDS)) {
         const isMatch = postEmotion && keyword && (postEmotion.includes(keyword) || keyword.includes(postEmotion));
 
         if (isMatch) {
-          console.log('🎯 PostDetail 키워드 매치:', { postEmotion, keyword, emotionLabel });
+          if (__DEV__) console.log('🎯 PostDetail 키워드 매치:', { postEmotion, keyword, emotionLabel });
 
           const matchedEmotion = EMOTION_CHARACTERS.find(e => e && e.label === emotionLabel);
           if (matchedEmotion) {
-            console.log(`🎭 PostDetail 감정 매칭 성공: ${postEmotion} -> ${emotionLabel}`);
+            if (__DEV__) console.log(`🎭 PostDetail 감정 매칭 성공: ${postEmotion} -> ${emotionLabel}`);
             return { ...matchedEmotion, label: matchedEmotion.label };
           }
         }
       }
-      console.log('❌ PostDetail 매칭되는 키워드 없음');
+      if (__DEV__) console.log('❌ PostDetail 매칭되는 키워드 없음');
     } catch (error) {
-      console.warn('🚨 PostDetail 감정 매칭 중 오류:', error);
+      if (__DEV__) console.warn('🚨 PostDetail 감정 매칭 중 오류:', error);
     }
   }
 
@@ -86,14 +86,14 @@ export const findCommentById = (comments: Comment[], commentId: number): Comment
 export const formatDate = (dateString: string | undefined | null): string => {
   try {
     if (!dateString) {
-      console.warn('📅 Date formatting: dateString is undefined or null');
+      if (__DEV__) console.warn('📅 Date formatting: dateString is undefined or null');
       return '방금 전';
     }
 
     const date = new Date(dateString);
 
     if (isNaN(date.getTime())) {
-      console.warn('📅 Invalid date string:', dateString);
+      if (__DEV__) console.warn('📅 Invalid date string:', dateString);
       return '방금 전';
     }
 
@@ -114,7 +114,7 @@ export const formatDate = (dateString: string | undefined | null): string => {
       day: 'numeric',
     });
   } catch (error) {
-    console.error('📅 Date formatting error:', error, 'for string:', dateString);
+    if (__DEV__) console.error('📅 Date formatting error:', error, 'for string:', dateString);
     return '방금 전';
   }
 };
@@ -140,7 +140,7 @@ export const formatCommentTime = (dateString: string | undefined | null): string
 
     return `${month}월 ${day}일 ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   } catch (error) {
-    console.error('📅 Comment time formatting error:', error, 'for string:', dateString);
+    if (__DEV__) console.error('📅 Comment time formatting error:', error, 'for string:', dateString);
     return '방금 전';
   }
 };

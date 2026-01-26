@@ -77,8 +77,8 @@ const bookmarkService = {
       }
 
       return response.data;
-    } catch (error: any) {
-      console.error('북마크 토글 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('북마크 토글 오류:', error);
       throw error;
     }
   },
@@ -102,8 +102,8 @@ const bookmarkService = {
       }
 
       return response.data;
-    } catch (error: any) {
-      console.error('북마크 목록 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('북마크 목록 조회 오류:', error);
       throw error;
     }
   },
@@ -124,8 +124,8 @@ const bookmarkService = {
       }
 
       return response.data;
-    } catch (error: any) {
-      console.error('북마크 상태 확인 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('북마크 상태 확인 오류:', error);
       throw error;
     }
   },
@@ -144,8 +144,8 @@ const bookmarkService = {
       }
 
       return response.data;
-    } catch (error: any) {
-      console.error('북마크 개수 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('북마크 개수 조회 오류:', error);
       throw error;
     }
   },

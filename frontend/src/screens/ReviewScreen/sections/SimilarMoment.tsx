@@ -19,7 +19,7 @@ export const SimilarMoment: React.FC = React.memo(() => {
       setData(response.data);
     } catch (err) {
       setError('데이터를 불러오는데 실패했습니다');
-      console.error('비슷한 순간 로드 실패:', err);
+      if (__DEV__) console.error('비슷한 순간 로드 실패:', err);
     }
   }, []);
 
@@ -70,7 +70,7 @@ export const SimilarMoment: React.FC = React.memo(() => {
 
 const styles = StyleSheet.create({
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   content: {
     alignItems: 'center',
@@ -79,10 +79,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emotionText: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   countText: {
-    fontWeight: '800',
+    fontFamily: 'Pretendard-ExtraBold',
   },
   line2: {
     textAlign: 'center',

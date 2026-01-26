@@ -47,7 +47,7 @@ export const useHomeData = (userId?: number): UseHomeDataReturn => {
         try {
           await AsyncStorage.removeItem('commentParentMap');
         } catch (error) {
-          console.error('AsyncStorage 초기화 오류:', error);
+          if (__DEV__) console.error('AsyncStorage 초기화 오류:', error);
         }
       }
 
@@ -161,7 +161,7 @@ export const useHomeData = (userId?: number): UseHomeDataReturn => {
               comments: comments
             };
           } catch (error) {
-            console.error(`게시물 ${apiPost.post_id} 변환 실패:`, error);
+            if (__DEV__) console.error(`게시물 ${apiPost.post_id} 변환 실패:`, error);
             return null;
           }
         })
@@ -171,7 +171,7 @@ export const useHomeData = (userId?: number): UseHomeDataReturn => {
       setPosts(validPosts);
 
     } catch (error) {
-      console.error('게시물 로드 오류:', error);
+      if (__DEV__) console.error('게시물 로드 오류:', error);
     } finally {
       setIsRefreshing(false);
       setLoadingPosts(false);
@@ -218,7 +218,7 @@ export const useHomeData = (userId?: number): UseHomeDataReturn => {
 
       setMyRecentPosts(displayPosts);
     } catch (error) {
-      console.error('내 최근 게시물 로드 오류:', error);
+      if (__DEV__) console.error('내 최근 게시물 로드 오류:', error);
     } finally {
       setIsLoadingMyPosts(false);
     }

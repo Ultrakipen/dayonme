@@ -2,7 +2,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import HomeScreen from '../screens/HomeScreen';
-import PostDetailScreen from '../screens/PostDetailScreen';
+import PostDetailRouter from '../screens/PostDetail/PostDetailRouter';
 import WriteMyDayScreen from '../screens/WriteMyDayScreen';
 
 export type HomeStackParamList = {
@@ -43,9 +43,9 @@ const SimpleHomeStack = () => {
       />
       <Stack.Screen
         name="PostDetail"
-        component={PostDetailScreen}
+        component={PostDetailRouter}
         options={{
-          headerShown: true,
+          headerShown: false,
           headerTitle: '게시물 상세',
           headerBackTitle: '돌아가기',
         }}

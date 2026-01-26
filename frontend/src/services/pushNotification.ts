@@ -11,7 +11,7 @@ let initializationPromise: Promise<void> | null = null;
 // OneSignal 초기화 (App.tsx에서 1회 호출)
 export function initOneSignal() {
   if (!ONESIGNAL_APP_ID) {
-    console.warn('⚠️ OneSignal App ID가 설정되지 않았습니다.');
+    if (__DEV__) console.warn('⚠️ OneSignal App ID가 설정되지 않았습니다.');
     return;
   }
 
@@ -29,10 +29,10 @@ export function initOneSignal() {
       OneSignal.Notifications.requestPermission(true);
 
       isOneSignalInitialized = true;
-      console.log('✅ OneSignal 초기화 완료');
+      if (__DEV__) console.log('✅ OneSignal 초기화 완료');
       resolve();
     } catch (error) {
-      console.error('❌ OneSignal 초기화 오류:', error);
+      if (__DEV__) console.error('❌ OneSignal 초기화 오류:', error);
       resolve(); // 오류가 발생해도 앱은 계속 실행
     }
   });
@@ -60,7 +60,7 @@ async function waitForInitialization(): Promise<void> {
   }
 
   if (!isOneSignalInitialized) {
-    console.warn('⚠️ OneSignal 초기화 대기 시간 초과');
+    if (__DEV__) console.warn('⚠️ OneSignal 초기화 대기 시간 초과');
   }
 }
 
@@ -71,27 +71,27 @@ export async function setOneSignalUserId(userId: number | string) {
     await waitForInitialization();
 
     if (!isOneSignalInitialized) {
-      console.warn('⚠️ OneSignal이 초기화되지 않아 사용자 연결 스킵');
+      if (__DEV__) console.warn('⚠️ OneSignal이 초기화되지 않아 사용자 연결 스킵');
       return;
     }
 
     OneSignal.login(userId.toString());
-    console.log('✅ OneSignal 사용자 연결:', userId);
+    if (__DEV__) console.log('✅ OneSignal 사용자 연결:', userId);
   } catch (error) {
-    console.error('❌ OneSignal 사용자 연결 오류:', error);
+    if (__DEV__) console.error('❌ OneSignal 사용자 연결 오류:', error);
   }
 }
 
 // 사용자 ID 해제 (로그아웃 시 호출)
 export function clearOneSignalUserId() {
   OneSignal.logout();
-  console.log('✅ OneSignal 사용자 연결 해제');
+  if (__DEV__) console.log('✅ OneSignal 사용자 연결 해제');
 }
 
 // 알림 클릭 리스너 설정
 export function setupNotificationClickListener(navigation: any) {
   OneSignal.Notifications.addEventListener('click', (event) => {
-    console.log('👆 알림 클릭:', event);
+    if (__DEV__) console.log('👆 알림 클릭:', event);
     const data = event.notification.additionalData as any;
 
     // 화면 이동 처리
@@ -110,7 +110,7 @@ export function setupNotificationClickListener(navigation: any) {
 // 포그라운드 알림 표시 설정
 export function setupForegroundNotification() {
   OneSignal.Notifications.addEventListener('foregroundWillDisplay', (event) => {
-    console.log('📩 포그라운드 알림:', event.notification);
+    if (__DEV__) console.log('📩 포그라운드 알림:', event.notification);
     event.getNotification().display(); // 알림 표시
   });
 }
@@ -118,7 +118,7 @@ export function setupForegroundNotification() {
 // 사용자 태그 설정 (세그먼트용)
 export function setUserTags(tags: Record<string, string>) {
   OneSignal.User.addTags(tags);
-  console.log('✅ 사용자 태그 설정:', tags);
+  if (__DEV__) console.log('✅ 사용자 태그 설정:', tags);
 }
 
 // 푸시 알림 활성화/비활성화

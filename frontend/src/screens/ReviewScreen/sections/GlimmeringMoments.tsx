@@ -41,7 +41,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
       setTotal(response.data.total);
     } catch (err) {
       setError('빛나는 순간을 불러오는데 실패했습니다');
-      console.error('빛나는 순간 로드 실패:', err);
+      if (__DEV__) console.error('빛나는 순간 로드 실패:', err);
     }
   }, []);
 
@@ -60,7 +60,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
       setShowAddModal(false);
       loadMoments();
     } catch (err) {
-      console.error('빛나는 순간 추가 실패:', err);
+      if (__DEV__) console.error('빛나는 순간 추가 실패:', err);
     }
   };
 
@@ -89,7 +89,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
       });
       setAlertVisible(true);
     } catch (err) {
-      console.error('빛나는 순간 수정 실패:', err);
+      if (__DEV__) console.error('빛나는 순간 수정 실패:', err);
       setAlertData({
         title: '수정 실패',
         message: '빛나는 순간 수정에 실패했습니다',
@@ -118,7 +118,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
       });
       setAlertVisible(true);
     } catch (err) {
-      console.error('빛나는 순간 삭제 실패:', err);
+      if (__DEV__) console.error('빛나는 순간 삭제 실패:', err);
       setAlertData({
         title: '삭제 실패',
         message: '빛나는 순간 삭제에 실패했습니다',
@@ -142,7 +142,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
         type: 'success'
       });
       setAlertVisible(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err.response?.status === 404) {
         setAlertData({
           title: '알림',
@@ -151,7 +151,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
         });
         setAlertVisible(true);
       } else {
-        console.error('랜덤 조회 실패:', err);
+        if (__DEV__) console.error('랜덤 조회 실패:', err);
       }
     }
   };
@@ -177,7 +177,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
   return (
     <>
       <Card accessible={true} accessibilityLabel={`빛나는 순간 ${total}개`} accessibilityHint="작은 행복의 순간들을 모아둔 공간입니다">
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale, marginBottom: 16 * scale }]}>{total}개의 빛나는 순간</Text>
+        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, marginBottom: 16 * scale }]}>{total}개의 빛나는 순간</Text>
 
         {moments.length > 0 ? (
           <>
@@ -435,7 +435,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
 
 const styles = StyleSheet.create({
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   momentList: {
   },
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
   actionButton: {
   },
   actionButtonText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -466,14 +466,14 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   emptyButton: {
     alignItems: 'center',
   },
   emptyText: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   modalOverlay: {
     flex: 1,
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
   modalContent: {
   },
   modalTitle: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     textAlign: 'center',
   },
   emojiRow: {
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalButtonText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   errorContainer: {
     alignItems: 'center',

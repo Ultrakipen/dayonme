@@ -41,7 +41,7 @@ const PostScreen: React.FC<PostScreenProps> = ({ route, navigation }) => {
       setPost(response.data);
     } catch (error) {
       setError('게시물을 불러오는 중 오류가 발생했습니다');
-      console.error('Error fetching post:', error);
+      if (__DEV__) console.error('Error fetching post:', error);
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ const PostScreen: React.FC<PostScreenProps> = ({ route, navigation }) => {
       const response = await postService.getComments(postId);
       setComments(response.data.comments || []);
     } catch (error) {
-      console.error('Error fetching comments:', error);
+      if (__DEV__) console.error('Error fetching comments:', error);
     }
   };
 
@@ -69,7 +69,7 @@ const PostScreen: React.FC<PostScreenProps> = ({ route, navigation }) => {
       fetchComments(); // 댓글 목록 새로고침
     } catch (error) {
       setError('댓글을 작성하는 중 오류가 발생했습니다');
-      console.error('Error adding comment:', error);
+      if (__DEV__) console.error('Error adding comment:', error);
     } finally {
       setSubmitting(false);
     }

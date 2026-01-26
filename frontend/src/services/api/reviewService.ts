@@ -140,6 +140,12 @@ const reviewService = {
   getEmotionColorPalette: async () => {
     const response = await apiClient.get('/review/emotion-color-palette');
     return response.data;
+  },
+
+  // 익명 공명 - 비슷한 감정 패턴 사용자 분석
+  getEmotionResonance: async () => {
+    const response = await apiClient.get('/review/emotion-resonance-posts');
+    return response.data;
   }
 };
 

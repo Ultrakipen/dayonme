@@ -39,7 +39,7 @@ export const usePostActions = (): UsePostActionsReturn => {
           await apiCall();
           success = true;
           break;
-        } catch (error: any) {
+        } catch (error: unknown) {
           lastError = error;
           if (error.response?.status !== 404) {
             break;
@@ -72,7 +72,7 @@ export const usePostActions = (): UsePostActionsReturn => {
           }
           : post
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       const errorMessage = error.response?.status === 404
         ? '게시물을 찾을 수 없습니다.'
         : '좋아요 처리 중 오류가 발생했습니다.';
@@ -97,7 +97,7 @@ export const usePostActions = (): UsePostActionsReturn => {
           await apiCall();
           success = true;
           break;
-        } catch (error: any) {
+        } catch (error: unknown) {
           if (error.response?.status !== 404) {
             break;
           }
@@ -111,7 +111,7 @@ export const usePostActions = (): UsePostActionsReturn => {
         Alert.alert('오류', '게시물을 삭제할 수 없습니다.');
       }
     } catch (error) {
-      console.error('게시물 삭제 오류:', error);
+      if (__DEV__) console.error('게시물 삭제 오류:', error);
       Alert.alert('오류', '게시물 삭제 중 오류가 발생했습니다.');
     }
   }, []);

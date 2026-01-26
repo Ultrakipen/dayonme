@@ -91,8 +91,8 @@ export const useImageUpload = (): UseImageUploadReturn => {
         } else {
           Alert.alert('오류', '이미지 업로드에 실패했습니다.');
         }
-      } catch (error: any) {
-        console.error('이미지 업로드 오류:', error);
+      } catch (error: unknown) {
+        if (__DEV__) console.error('이미지 업로드 오류:', error);
         Alert.alert('오류', '이미지 업로드 중 오류가 발생했습니다.');
       } finally {
         setIsUploadingImage(false);

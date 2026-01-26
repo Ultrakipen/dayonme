@@ -37,20 +37,26 @@ const DailyQuoteCard: React.FC<DailyQuoteCardProps> = ({ style, onPress }) => {
   const [scaleAnim] = useState(new Animated.Value(0.95));
   const [currentQuote, setCurrentQuote] = useState('');
 
-  // 철학적이고 깊이 있는 명언 배열 (사용자 명언이 없을 때 사용)
+  // 감성적이고 위로가 되는 글귀 배열 (사용자 명언이 없을 때 사용)
   const defaultQuotes = [
-    "변화는 불편함에서 시작되지만, 성장은 그 불편함을 받아들일 때 일어난다.",
-    "실패는 끝이 아니라 다음 도전을 위한 새로운 시작점이다.",
-    "진정한 용기란 두려움이 없는 것이 아니라, 두려움에도 불구하고 계속 나아가는 것이다.",
-    "우리가 통제할 수 있는 것은 결과가 아니라 우리의 노력과 태도뿐이다.",
-    "어제의 상처가 오늘의 지혜가 되고, 오늘의 선택이 내일의 운명을 만든다.",
-    "완벽함을 추구하지 말고 진정성을 추구하라. 진짜 자신이 되는 것이 가장 아름답다.",
-    "인생에서 가장 중요한 것은 얼마나 빨리 가느냐가 아니라 올바른 방향으로 가고 있느냐다.",
-    "자신을 다른 사람과 비교하지 말라. 당신의 유일한 경쟁자는 어제의 자신이다.",
-    "감정은 날씨와 같다. 폭풍우도 지나가고, 맑은 날도 온다.",
-    "가장 어둡운 밤이 지나면 새벽이 온다. 희망을 놓지 말라.",
-    "행복은 목적지가 아니라 여행 중에 만나는 순간들이다.",
-    "성공의 비결은 재능이 아니라 포기하지 않는 마음이다."
+    "괜찮아요, 오늘 하루도 정말 잘 버텨냈어요",
+    "당신의 속도로 천천히 가도 괜찮아요",
+    "힘들 땐 잠시 멈춰도 돼요. 쉬어가는 것도 용기예요",
+    "당신은 생각보다 훨씬 강한 사람이에요",
+    "오늘 하루, 당신이 있어서 세상이 조금 더 따뜻했어요",
+    "완벽하지 않아도 괜찮아요. 지금 그대로도 충분해요",
+    "누군가에겐 당신의 존재만으로도 큰 위로가 돼요",
+    "오늘은 어제보다 조금 더 나아졌어요. 그걸로 충분해요",
+    "힘들 땐 울어도 돼요. 눈물도 치유의 시작이니까요",
+    "당신의 감정은 틀린 게 아니에요. 모두 소중해요",
+    "지금 이 순간, 당신은 최선을 다하고 있어요",
+    "혼자가 아니에요. 함께 이겨낼 수 있어요",
+    "작은 변화도 큰 용기예요. 스스로를 칭찬해주세요",
+    "오늘 하루 수고했어요. 내일은 더 나은 날이 올 거예요",
+    "당신의 이야기는 누군가에게 희망이 돼요",
+    "천천히 가도 괜찮아요. 멈추지만 않으면 돼요",
+    "지친 마음을 안아주세요. 당신은 충분히 애쓰고 있어요",
+    "슬플 땐 슬퍼해도 돼요. 그것도 당신의 일부니까요"
   ];
 
   // 오늘의 명언 선택
@@ -116,7 +122,7 @@ const DailyQuoteCard: React.FC<DailyQuoteCardProps> = ({ style, onPress }) => {
           )}
         </View>
 
-        <Text style={[styles.centeredQuoteText, { color: colors.text }]} numberOfLines={2} ellipsizeMode="tail">
+        <Text style={[styles.centeredQuoteText, { color: colors.text }]}>
           "{currentQuote || getTodayQuote()}"
         </Text>
 
@@ -147,11 +153,10 @@ const styles = StyleSheet.create({
   // 세련된 새 스타일들
   elegantContainer: {
     paddingHorizontal: 36,
-    paddingVertical: 8,
+    paddingVertical: 12,
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 52,
     backgroundColor: '#FFFFFF',
   },
   editButtonRow: {
@@ -173,7 +178,7 @@ const styles = StyleSheet.create({
   },
   centeredQuoteText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     lineHeight: 18,
     color: '#000000',
     letterSpacing: 0.2,
@@ -181,14 +186,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 0,
     paddingVertical: 0,
-    flex: 1,
+    alignSelf: 'center',
+    maxWidth: '100%',
   },
   hintText: {
     fontSize: 11,
     color: '#9ca3af',
     textAlign: 'center',
     marginTop: 4,
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
 });
 

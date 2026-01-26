@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 
 const BASE_WIDTH = 360;
 const CATEGORIES = ['일반 문의', '버그 신고', '기능 제안', '계정 문제', '기타'];
@@ -43,11 +44,18 @@ const ContactScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
 
     setLoading(true);
     try {
-      // TODO: 실제 API 연동 시 수정
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      Alert.alert('접수 완료', '문의가 접수되었습니다. 빠른 시일 내에 답변 드리겠습니다.', [
-        { text: '확인', onPress: () => navigation.goBack() }
-      ]);
+      const response = await api.post('/contact', {
+        name: user?.nickname || '익명',
+        email: user?.email || 'anonymous@dayonme.com',
+        subject: title,
+        message: content
+      });
+
+      if (response.data.status === 'success') {
+        Alert.alert('접수 완료', '문의가 접수되었습니다. 빠른 시일 내에 답변 드리겠습니다.', [
+          { text: '확인', onPress: () => navigation.goBack() }
+        ]);
+      }
     } catch (error) {
       Alert.alert('오류', '문의 접수에 실패했습니다. 잠시 후 다시 시도해주세요.');
     } finally {
@@ -120,7 +128,7 @@ const ContactScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           <View style={[styles.infoBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Icon name="information-circle-outline" size={18 * scale} color={colors.accent} />
             <Text style={[styles.infoText, { color: colors.textSecondary, fontSize: 13 * scale }]}>
-              문의하신 내용은 영업일 기준 1-2일 내에 {user?.email || 'test@example.com'}로 답변 드립니다.
+              문의하신 내용은 영업일 기준 1-2일 내에 {user?.email || 'day_admin@dayonme.com'}로 답변 드립니다.
             </Text>
           </View>
 
@@ -154,20 +162,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backButton: { padding: 8 },
-  headerTitle: { fontWeight: '700' },
+  headerTitle: { fontFamily: 'Pretendard-Bold' },
   placeholder: { width: 40 },
   content: { padding: 20 },
-  label: { fontWeight: '600', marginBottom: 8, marginTop: 16 },
+  label: { fontFamily: 'Pretendard-SemiBold', marginBottom: 8, marginTop: 16 },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   categoryBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1 },
-  categoryText: { fontWeight: '500' },
+  categoryText: { fontFamily: 'Pretendard-Medium' },
   input: { borderRadius: 12, padding: 14, marginBottom: 4 },
   textArea: { borderRadius: 12, padding: 14, minHeight: 160 },
   charCount: { textAlign: 'right', marginTop: 4 },
   infoBox: { flexDirection: 'row', alignItems: 'flex-start', padding: 14, borderRadius: 12, marginTop: 20, borderWidth: 1 },
   infoText: { flex: 1, marginLeft: 10, lineHeight: 20 },
   submitBtn: { borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 24, marginBottom: 40 },
-  submitText: { color: '#FFF', fontWeight: '700' },
+  submitText: { color: '#FFF', fontFamily: 'Pretendard-Bold' },
 });
 
 export default ContactScreen;

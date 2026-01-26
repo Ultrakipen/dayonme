@@ -31,7 +31,7 @@ const HighlightedText: React.FC<HighlightedTextProps> = ({ text, highlight, styl
               {
                 backgroundColor: '#4F46E5',
                 color: '#FFFFFF',
-                fontWeight: '700',
+                fontFamily: 'Pretendard-Bold',
                 paddingHorizontal: 4,
                 paddingVertical: 1,
                 borderRadius: 4,

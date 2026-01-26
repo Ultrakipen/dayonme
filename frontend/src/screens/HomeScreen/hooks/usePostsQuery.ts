@@ -39,6 +39,16 @@ export const usePostsQuery = ({ isAuthenticated, processComments }: FetchPostsPa
           bookmarksStatus: bookmarksResponse?.status
         });
 
+        // 디버그: 첫 번째 게시물의 원본 데이터 확인
+        if (postsResponse.data?.posts?.[0]) {
+          const firstPost = postsResponse.data.posts[0];
+          devLog(`📋 /api/posts 첫 게시물: post_id=${firstPost.post_id}, comment_count=${firstPost.comment_count}, like_count=${firstPost.like_count}`);
+        }
+        if (myDayResponse?.data?.posts?.[0]) {
+          const firstPost = myDayResponse.data.posts[0];
+          devLog(`📋 /api/my-day/posts 첫 게시물: post_id=${firstPost.post_id}, comment_count=${firstPost.comment_count}, like_count=${firstPost.like_count}`);
+        }
+
         // 북마크 처리
         let bookmarkedPostIds = new Set<number>();
         if (isAuthenticated && bookmarksResponse?.status === 'success') {
@@ -100,38 +110,56 @@ export const usePostsQuery = ({ isAuthenticated, processComments }: FetchPostsPa
         const convertedMyDay = uniqueMyDay.map((p: any) => ({
           ...p,
           authorName: p.is_anonymous ? '익명' : (p.user?.nickname || '사용자'),
+          // camelCase를 snake_case로 변환 (백엔드 호환성)
+          created_at: p.created_at || p.createdAt,
+          updated_at: p.updated_at || p.updatedAt,
+          like_count: p.like_count ?? 0,
+          comment_count: p.comment_count ?? 0,
           image_url: p.image_url ? sanitizeUrl(p.image_url) : undefined,
           emotions: p.emotions || [],
         }));
 
         // 합치고 정렬
         const allPosts = [
-          ...apiPosts.map((p: any) => ({ ...p, authorName: p.is_anonymous ? '익명' : (p.user?.nickname || '사용자') })),
+          ...apiPosts.map((p: any) => ({
+            ...p,
+            authorName: p.is_anonymous ? '익명' : (p.user?.nickname || '사용자'),
+            // camelCase를 snake_case로 변환 (백엔드 호환성)
+            created_at: p.created_at || p.createdAt,
+            updated_at: p.updated_at || p.updatedAt,
+            like_count: p.like_count ?? 0,
+            comment_count: p.comment_count ?? 0,
+          })),
           ...convertedMyDay
         ].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
 
-        // 댓글 처리
+        // 댓글 처리 - 백엔드에서 이미 댓글을 포함하여 반환하므로 개별 조회 불필요
         const displayPosts = await Promise.all(
           allPosts.map(async (post): Promise<any> => {
             try {
-              let comments: any[] = [];
-              try {
-                const commentsResponse = await myDayService.getComments(post.post_id);
-                if (commentsResponse?.status === 'success' && commentsResponse?.data?.comments) {
-                  comments = commentsResponse.data.comments;
-                } else if (Array.isArray(commentsResponse.data)) {
-                  comments = commentsResponse.data;
-                }
-              } catch {}
-
+              // 백엔드에서 반환된 댓글 사용
+              const comments = post.comments || [];
               const processedComments = await processComments(post.post_id, comments);
 
-              return {
+              const result = {
                 ...post,
+                // camelCase를 snake_case로 변환 (백엔드 호환성)
+                created_at: post.created_at || post.createdAt,
+                updated_at: post.updated_at || post.updatedAt,
+                like_count: post.like_count ?? 0,
+                comment_count: post.comment_count ?? 0,
                 comments: processedComments,
                 emotions: post.emotions || [],
                 image_url: post.image_url ? sanitizeUrl(post.image_url) : undefined,
               };
+
+              // 디버그: 변환된 데이터 확인
+              devLog(`🔍 [게시물 ${result.post_id}] 원본 createdAt: ${post.createdAt}, created_at: ${post.created_at}`);
+              devLog(`   → 변환 created_at: ${result.created_at}`);
+              devLog(`   → 댓글: ${post.comment_count} → ${result.comment_count}`);
+              devLog(`   → 좋아요: ${post.like_count} → ${result.like_count}`);
+
+              return result;
             } catch {
               return null;
             }
@@ -149,16 +177,16 @@ export const usePostsQuery = ({ isAuthenticated, processComments }: FetchPostsPa
           posts: validPosts,
           bookmarkedPostIds,
         };
-      } catch (error: any) {
+      } catch (error: unknown) {
         devLog('게시물 로드 오류:', error);
         throw error;
       }
     },
-    staleTime: 0, // 항상 stale - invalidateQueries 시 즉시 refetch
-    gcTime: 10 * 60 * 1000, // 10분
+    staleTime: 30 * 1000, // 30초 - 백엔드 Redis 캐싱과 동기화 (60초의 절반)
+    gcTime: 5 * 60 * 1000, // 5분 - 메모리 효율성 개선
     refetchOnWindowFocus: false,
-    refetchOnMount: true,
-    retry: 2, // 실패 시 2번 재시도
-    retryDelay: 1000, // 재시도 간 1초 대기
+    refetchOnMount: false, // 캐시가 fresh하면 재요청 안 함
+    retry: 1, // 실패 시 1번만 재시도 (빠른 실패)
+    retryDelay: 500, // 재시도 간 0.5초 대기
   });
 };

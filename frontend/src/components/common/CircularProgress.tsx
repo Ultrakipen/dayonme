@@ -56,7 +56,7 @@ const CircularProgress = ({
         justifyContent: 'center',
         alignItems: 'center'
       }}>
-        <RNText style={{ fontSize: 15, fontWeight: '700', color: color }}>
+        <RNText style={{ fontSize: 15, fontFamily: 'Pretendard-Bold', color: color }}>
           {Math.round(percentage)}%
         </RNText>
       </View>

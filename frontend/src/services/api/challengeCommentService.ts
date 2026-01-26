@@ -40,8 +40,8 @@ class ChallengeCommentService {
         data: response.data.data?.comments || response.data?.comments || [],
         message: response.data.message
       };
-    } catch (error: any) {
-      console.error('챌린지 댓글 조회 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('챌린지 댓글 조회 오류:', error);
       return {
         status: error.response?.status || 500,
         data: [],
@@ -59,8 +59,8 @@ class ChallengeCommentService {
         data: response.data.data || response.data,
         message: response.data.message
       };
-    } catch (error: any) {
-      console.error('챌린지 댓글 작성 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('챌린지 댓글 작성 오류:', error);
       throw {
         status: error.response?.status || 500,
         message: error.response?.data?.message || '댓글 작성 중 오류가 발생했습니다.'
@@ -84,8 +84,8 @@ class ChallengeCommentService {
         data: response.data.data || response.data,
         message: response.data.message
       };
-    } catch (error: any) {
-      console.error('챌린지 댓글 수정 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('챌린지 댓글 수정 오류:', error);
       throw {
         status: error.response?.status || 500,
         message: error.response?.data?.message || '댓글 수정 중 오류가 발생했습니다.'
@@ -101,8 +101,8 @@ class ChallengeCommentService {
         status: response.status,
         message: response.data.message
       };
-    } catch (error: any) {
-      console.error('챌린지 댓글 삭제 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('챌린지 댓글 삭제 오류:', error);
       throw {
         status: error.response?.status || 500,
         message: error.response?.data?.message || '댓글 삭제 중 오류가 발생했습니다.'
@@ -122,8 +122,8 @@ class ChallengeCommentService {
         is_liked: response.data.is_liked,
         like_count: response.data.like_count
       };
-    } catch (error: any) {
-      console.error('챌린지 댓글 좋아요 토글 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('챌린지 댓글 좋아요 토글 오류:', error);
       throw {
         status: error.response?.status || 500,
         message: error.response?.data?.message || '좋아요 처리 중 오류가 발생했습니다.'
@@ -145,8 +145,8 @@ class ChallengeCommentService {
         status: response.status,
         message: response.data.message
       };
-    } catch (error: any) {
-      console.error('챌린지 댓글 신고 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('챌린지 댓글 신고 오류:', error);
       throw {
         status: error.response?.status || 500,
         message: error.response?.data?.message || '신고 처리 중 오류가 발생했습니다.'

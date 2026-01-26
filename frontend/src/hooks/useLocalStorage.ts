@@ -29,7 +29,7 @@ export function useLocalStorage<T>(
           }
         }
       } catch (error) {
-        console.error(`Error loading ${key} from AsyncStorage:`, error);
+        if (__DEV__) console.error(`Error loading ${key} from AsyncStorage:`, error);
         setStoredValue(initialValue);
       }
     };
@@ -56,7 +56,7 @@ export function useLocalStorage<T>(
         await AsyncStorage.setItem(key, saveValue);
       }
     } catch (error) {
-      console.error(`Error setting ${key} in AsyncStorage:`, error);
+      if (__DEV__) console.error(`Error setting ${key} in AsyncStorage:`, error);
     }
   }, [key, storedValue]);
   
@@ -66,7 +66,7 @@ export function useLocalStorage<T>(
       await AsyncStorage.removeItem(key);
       setStoredValue(initialValue);
     } catch (error) {
-      console.error(`Error removing ${key} from AsyncStorage:`, error);
+      if (__DEV__) console.error(`Error removing ${key} from AsyncStorage:`, error);
     }
   }, [key, initialValue]);
   

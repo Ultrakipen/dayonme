@@ -89,8 +89,8 @@ android {
         // 버전 관리 (업데이트 시 versionCode는 반드시 증가해야 함)
         // versionCode: 정수값, 매 업데이트마다 증가 (1 → 2 → 3...)
         // versionName: 사용자에게 표시되는 버전 (시맨틱 버저닝: major.minor.patch)
-        versionCode 9
-        versionName "1.1.6"
+        versionCode 11
+        versionName "1.1.8"
 
         // CPU 아키텍처 필터링 (릴리즈에서만 ARM 제한)
         // 디버그에서는 에뮬레이터(x86) 지원을 위해 모든 아키텍처 포함
@@ -110,6 +110,21 @@ android {
             NAVER_CLIENT_SECRET: project.env.get("NAVER_CLIENT_SECRET") ?: "",
             NAVER_CLIENT_NAME: project.env.get("NAVER_CLIENT_NAME") ?: "dayonme"
         ]
+
+        // CMake gold 링커 오류 완전 우회 (컴파일러 체크 건너뜀)
+        externalNativeBuild {
+            cmake {
+                arguments "-DANDROID_STL=c++_shared",
+                          "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF",
+                          "-DCMAKE_POLICY_DEFAULT_CMP0069=OLD",
+                          "-DCMAKE_C_COMPILER_WORKS=1",
+                          "-DCMAKE_CXX_COMPILER_WORKS=1",
+                          "-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld",
+                          "-DCMAKE_SHARED_LINKER_FLAGS=-fuse-ld=lld",
+                          "-DCMAKE_MODULE_LINKER_FLAGS=-fuse-ld=lld"
+                cppFlags ""
+            }
+        }
     }
     signingConfigs {
         debug {

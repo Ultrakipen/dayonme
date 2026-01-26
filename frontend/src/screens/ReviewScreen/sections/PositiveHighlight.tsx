@@ -77,7 +77,7 @@ export const PositiveHighlight: React.FC = React.memo(() => {
         ])
       ).start();
     } catch (err) {
-      console.error('긍정 데이터 로드 실패:', err);
+      if (__DEV__) console.error('긍정 데이터 로드 실패:', err);
       setError('데이터를 불러올 수 없습니다');
     } finally {
       setLoading(false);
@@ -108,7 +108,7 @@ export const PositiveHighlight: React.FC = React.memo(() => {
           ✨
         </Animated.Text>
         <Text
-          style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}
+          style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}
           accessibilityRole="header"
         >
           당신의 럭키 모먼트
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   ratioContainer: {
     borderRadius: 16,
@@ -204,11 +204,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   ratioValue: {
-    fontWeight: '800',
+    fontFamily: 'Pretendard-ExtraBold',
     marginBottom: 4,
   },
   encouragement: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   emotionScroll: {
     marginBottom: 12,
@@ -226,11 +226,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   emotionName: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
     marginBottom: 4,
   },
   emotionCount: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   streakBadge: {
     borderRadius: 12,
@@ -238,6 +238,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   streakText: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
 });

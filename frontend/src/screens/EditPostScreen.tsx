@@ -133,7 +133,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
 
   // 현재 표시할 이미지 URL 결정
   const getDisplayImageUrl = useCallback(() => {
-    console.log('🖼️ getDisplayImageUrl 호출됨 (screens):', {
+    if (__DEV__) console.log('🖼️ getDisplayImageUrl 호출됨 (screens):', {
       selectedImage,
       uploadedImageUrl,
       currentImageUrl,
@@ -141,18 +141,18 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
     });
 
     if (selectedImage) {
-      console.log('🖼️ selectedImage 우선 선택 (screens):', selectedImage);
+      if (__DEV__) console.log('🖼️ selectedImage 우선 선택 (screens):', selectedImage);
       return selectedImage; // 새로 선택한 이미지 (로컬)
     }
 
     if (uploadedImageUrl) {
-      console.log('🖼️ uploadedImageUrl 선택 (screens):', uploadedImageUrl);
+      if (__DEV__) console.log('🖼️ uploadedImageUrl 선택 (screens):', uploadedImageUrl);
 
       // 업로드된 이미지 URL이 상대경로인 경우 절대경로로 변환
       let processedUrl = uploadedImageUrl;
       if (!uploadedImageUrl.startsWith('http')) {
         processedUrl = `https://dayonme.com${uploadedImageUrl}`;
-        console.log('🖼️ 상대경로를 절대경로로 변환 (screens):', processedUrl);
+        if (__DEV__) console.log('🖼️ 상대경로를 절대경로로 변환 (screens):', processedUrl);
       }
 
       // cache buster 추가
@@ -160,7 +160,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       const finalUrl = processedUrl.includes('?')
         ? `${processedUrl}&t=${Date.now()}`
         : `${processedUrl}${cacheBuster}`;
-      console.log('🖼️ cache buster 추가된 최종 URL (screens):', finalUrl);
+      if (__DEV__) console.log('🖼️ cache buster 추가된 최종 URL (screens):', finalUrl);
       return finalUrl;
     }
 
@@ -169,11 +169,11 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       const baseUrl = currentImageUrl.startsWith('http')
         ? currentImageUrl
         : `https://dayonme.com${currentImageUrl}`;
-      console.log('🖼️ currentImageUrl 처리됨 (screens):', baseUrl);
+      if (__DEV__) console.log('🖼️ currentImageUrl 처리됨 (screens):', baseUrl);
       return baseUrl;
     }
 
-    console.log('🖼️ 표시할 이미지 없음 (screens)');
+    if (__DEV__) console.log('🖼️ 표시할 이미지 없음 (screens)');
     return null;
   }, [selectedImage, uploadedImageUrl, currentImageUrl]);
 
@@ -196,7 +196,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       },
       headerTintColor: theme.text.primary,
       headerTitleStyle: {
-        fontWeight: 'bold',
+        fontFamily: 'Pretendard-Bold',
         color: theme.text.primary,
       },
       headerLeft: () => (
@@ -242,7 +242,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                   fontSize: scale(14),
                   minWidth: 30,
                   textAlign: 'center',
-                  fontWeight: 'bold',
+                  fontFamily: 'Pretendard-Bold',
                   color: (content.trim().length < 10 || selectedEmotions.length === 0 || isSubmitting) ? theme.text.tertiary : colors.text,
                   fontFamily: 'Pretendard-Bold',
                   includeFontPadding: false,
@@ -260,18 +260,18 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
   
   // 상태 디버깅을 위한 로그
   useEffect(() => {
-    console.log('🔍 EditPostScreen 상태 체크:');
-    console.log('- content length:', content.trim().length);
-    console.log('- selectedEmotions:', selectedEmotions);
-    console.log('- selectedEmotions.length:', selectedEmotions.length);
-    console.log('- isSubmitting:', isSubmitting);
-    console.log('- 버튼 활성화 조건:', content.trim().length >= 10 && selectedEmotions.length > 0 && !isSubmitting);
+    if (__DEV__) console.log('🔍 EditPostScreen 상태 체크:');
+    if (__DEV__) console.log('- content length:', content.trim().length);
+    if (__DEV__) console.log('- selectedEmotions:', selectedEmotions);
+    if (__DEV__) console.log('- selectedEmotions.length:', selectedEmotions.length);
+    if (__DEV__) console.log('- isSubmitting:', isSubmitting);
+    if (__DEV__) console.log('- 버튼 활성화 조건:', content.trim().length >= 10 && selectedEmotions.length > 0 && !isSubmitting);
   }, [content, selectedEmotions, isSubmitting]);
 
   // 이미지 상태 실시간 모니터링 (screens)
   useEffect(() => {
     const displayUrl = getDisplayImageUrl();
-    console.log('🖼️ [상태 모니터] (screens) 이미지 상태 변경됨:', {
+    if (__DEV__) console.log('🖼️ [상태 모니터] (screens) 이미지 상태 변경됨:', {
       timestamp: new Date().toLocaleTimeString(),
       currentImageUrl,
       selectedImage,
@@ -324,7 +324,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                       fontSize: scale(14),
                       minWidth: 30,
                       textAlign: 'center',
-                      fontWeight: 'bold',
+                      fontFamily: 'Pretendard-Bold',
                       color: (content.trim().length < 10 || selectedEmotions.length === 0 || isSubmitting) ? theme.text.tertiary : colors.text,
                       fontFamily: 'Pretendard-Bold',
                       includeFontPadding: false,
@@ -374,13 +374,13 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
             if (typeof post.image_url === 'string' && post.image_url.startsWith('[')) {
               const imageArray = JSON.parse(post.image_url);
               imageUrl = imageArray.length > 0 ? imageArray[0] : post.image_url;
-              console.log('📸 JSON 배열에서 첫 번째 이미지 추출:', imageUrl);
+              if (__DEV__) console.log('📸 JSON 배열에서 첫 번째 이미지 추출:', imageUrl);
             }
           } catch (e) {
-            console.warn('📸 JSON 파싱 실패, 원본 사용');
+            if (__DEV__) console.warn('📸 JSON 파싱 실패, 원본 사용');
           }
           setCurrentImageUrl(imageUrl);
-          console.log('📸 기존 이미지 로드됨:', imageUrl);
+          if (__DEV__) console.log('📸 기존 이미지 로드됨:', imageUrl);
         }
         
         // 감정 ID 배열 설정
@@ -391,8 +391,8 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       } else {
         throw new Error('게시물을 찾을 수 없습니다.');
       }
-    } catch (error: any) {
-      console.error('게시물 로드 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('게시물 로드 오류:', error);
       Alert.alert(
         '오류',
         error.message || '게시물을 불러오는 중 오류가 발생했습니다.',
@@ -409,12 +409,12 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       // 이미 선택된 감정을 다시 클릭하면 해제
       if (prev.includes(emotionId)) {
         const newEmotions = prev.filter(id => id !== emotionId);
-        console.log('🔴 감정 해제됨:', emotionId, '현재 선택된 감정들:', newEmotions);
+        if (__DEV__) console.log('🔴 감정 해제됨:', emotionId, '현재 선택된 감정들:', newEmotions);
         return newEmotions;
       }
       // 새로운 감정을 선택하면 기존 선택을 모두 해제하고 새로운 것만 선택
       const newEmotions = [emotionId];
-      console.log('🟢 감정 선택됨:', emotionId, '현재 선택된 감정들:', newEmotions);
+      if (__DEV__) console.log('🟢 감정 선택됨:', emotionId, '현재 선택된 감정들:', newEmotions);
       return newEmotions;
     });
   };
@@ -451,7 +451,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
 
   // 갤러리에서 선택
   const selectFromGallery = useCallback(() => {
-    console.log('📸 갤러리 선택 함수 호출됨 (screens)');
+    if (__DEV__) console.log('📸 갤러리 선택 함수 호출됨 (screens)');
     const options = {
       mediaType: 'photo' as const,
       quality: 0.7 as PhotoQuality,
@@ -469,7 +469,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
 
   // 카메라로 촬영
   const selectFromCamera = useCallback(() => {
-    console.log('📷 카메라 촬영 함수 호출됨 (screens)');
+    if (__DEV__) console.log('📷 카메라 촬영 함수 호출됨 (screens)');
     const options = {
       mediaType: 'photo' as const,
       quality: 0.7 as PhotoQuality,
@@ -483,18 +483,18 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       }
     };
 
-    console.log('📷 카메라 옵션:', options);
+    if (__DEV__) console.log('📷 카메라 옵션:', options);
     launchCamera(options, handleImageResponse);
   }, []);
 
   // 이미지 선택 처리
   const handleImagePicker = useCallback(() => {
-    console.log('🚨 이미지 선택 다이얼로그 호출됨 (screens)');
-    console.log('🚨 selectFromGallery:', typeof selectFromGallery);
-    console.log('🚨 selectFromCamera:', typeof selectFromCamera);
+    if (__DEV__) console.log('🚨 이미지 선택 다이얼로그 호출됨 (screens)');
+    if (__DEV__) console.log('🚨 selectFromGallery:', typeof selectFromGallery);
+    if (__DEV__) console.log('🚨 selectFromCamera:', typeof selectFromCamera);
     
     const hasImage = currentImageUrl || selectedImage || uploadedImageUrl;
-    console.log('🚨 기존 이미지 존재 여부:', hasImage);
+    if (__DEV__) console.log('🚨 기존 이미지 존재 여부:', hasImage);
     
     // 가장 간단한 Alert로 테스트
     Alert.alert(
@@ -504,24 +504,24 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
         {
           text: '갤러리',
           onPress: () => {
-            console.log('🚨 갤러리 버튼 클릭됨');
+            if (__DEV__) console.log('🚨 갤러리 버튼 클릭됨');
             try {
               selectFromGallery();
-              console.log('🚨 갤러리 함수 실행 완료');
+              if (__DEV__) console.log('🚨 갤러리 함수 실행 완료');
             } catch (error) {
-              console.error('🚨 갤러리 함수 실행 오류:', error);
+              if (__DEV__) console.error('🚨 갤러리 함수 실행 오류:', error);
             }
           }
         },
         {
           text: '카메라',
           onPress: () => {
-            console.log('🚨 카메라 버튼 클릭됨');
+            if (__DEV__) console.log('🚨 카메라 버튼 클릭됨');
             try {
               selectFromCamera();
-              console.log('🚨 카메라 함수 실행 완료');
+              if (__DEV__) console.log('🚨 카메라 함수 실행 완료');
             } catch (error) {
-              console.error('🚨 카메라 함수 실행 오류:', error);
+              if (__DEV__) console.error('🚨 카메라 함수 실행 오류:', error);
             }
           }
         },
@@ -529,7 +529,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
           text: '취소',
           style: 'cancel',
           onPress: () => {
-            console.log('🚨 취소 버튼 클릭됨');
+            if (__DEV__) console.log('🚨 취소 버튼 클릭됨');
           }
         }
       ],
@@ -537,20 +537,20 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
     );
     
     // Alert가 제대로 표시되는지 확인
-    console.log('🚨 Alert.alert 호출 완료');
+    if (__DEV__) console.log('🚨 Alert.alert 호출 완료');
     
   }, [currentImageUrl, selectedImage, uploadedImageUrl, selectFromGallery, selectFromCamera, removeImage]);
 
   // 이미지 선택 응답 처리
   const handleImageResponse = useCallback(async (response: ImagePickerResponse) => {
-    console.log('📸 handleImageResponse 호출됨 (screens):', {
+    if (__DEV__) console.log('📸 handleImageResponse 호출됨 (screens):', {
       didCancel: response.didCancel,
       errorMessage: response.errorMessage,
       assetsLength: response.assets?.length || 0
     });
     
     if (response.didCancel || response.errorMessage) {
-      console.log('📸 이미지 선택 취소됨 또는 에러 (screens):', response.errorMessage);
+      if (__DEV__) console.log('📸 이미지 선택 취소됨 또는 에러 (screens):', response.errorMessage);
       return;
     }
 
@@ -558,7 +558,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       const asset = response.assets[0];
       const imageUri = asset.uri;
       
-      console.log('📸 선택된 이미지 정보 (screens):', {
+      if (__DEV__) console.log('📸 선택된 이미지 정보 (screens):', {
         uri: imageUri,
         type: asset.type,
         size: asset.fileSize,
@@ -567,13 +567,13 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       });
       
       if (!imageUri) {
-        console.error('❌ 이미지 URI가 없음 (screens)');
+        if (__DEV__) console.error('❌ 이미지 URI가 없음 (screens)');
         Alert.alert('오류', '이미지 URI를 가져올 수 없습니다.');
         return;
       }
       
       // 기존 이미지 상태 기록
-      console.log('📸 이미지 교체 전 상태 (screens):', {
+      if (__DEV__) console.log('📸 이미지 교체 전 상태 (screens):', {
         currentImageUrl,
         selectedImage,
         uploadedImageUrl,
@@ -581,28 +581,28 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       });
       
       // 기존 이미지 상태 초기화 후 새 이미지 설정
-      console.log('📸 새 이미지 선택됨, 기존 상태 초기화 (screens)');
+      if (__DEV__) console.log('📸 새 이미지 선택됨, 기존 상태 초기화 (screens)');
       setCurrentImageUrl(null);  // 기존 이미지 제거
       setUploadedImageUrl(null); // 이전 업로드 URL 제거
       setSelectedImage(imageUri); // 새 이미지 설정
       
-      console.log('📸 상태 초기화 완료, 새 이미지 설정됨 (screens):', imageUri);
+      if (__DEV__) console.log('📸 상태 초기화 완료, 새 이미지 설정됨 (screens):', imageUri);
       
       // 이미지 업로드
       setIsUploadingImage(true);
-      console.log('📸 이미지 업로드 시작 (screens)...');
+      if (__DEV__) console.log('📸 이미지 업로드 시작 (screens)...');
       
       try {
         const uploadResponse = await uploadService.uploadImage(imageUri);
-        console.log('📸 업로드 응답 (screens):', uploadResponse.data);
+        if (__DEV__) console.log('📸 업로드 응답 (screens):', uploadResponse.data);
         
         if (uploadResponse.data?.data?.images?.[0]?.url) {
           const imageUrl = uploadResponse.data.data.images[0].url;
-          console.log('✅ 새 이미지 업로드 성공 (screens):', imageUrl);
+          if (__DEV__) console.log('✅ 새 이미지 업로드 성공 (screens):', imageUrl);
           
           setUploadedImageUrl(imageUrl);
           
-          console.log('📸 업로드 완료 후 상태 (screens):', {
+          if (__DEV__) console.log('📸 업로드 완료 후 상태 (screens):', {
             selectedImage: imageUri,
             uploadedImageUrl: imageUrl,
             currentImageUrl: null
@@ -610,29 +610,29 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
           
           // 업로드 완료 후 상태 정리 - 지연 시간 늘림 (screens)
           setTimeout(() => {
-            console.log('📸 로컬 이미지 제거, uploadedImageUrl 유지 (screens):', imageUrl);
+            if (__DEV__) console.log('📸 로컬 이미지 제거, uploadedImageUrl 유지 (screens):', imageUrl);
             setSelectedImage(null);
             // 강제로 리렌더링 트리거
-            console.log('🔄 강제 리렌더링을 위한 상태 확인 (screens):', {
+            if (__DEV__) console.log('🔄 강제 리렌더링을 위한 상태 확인 (screens):', {
               uploadedImageUrl: imageUrl,
               selectedImage: null,
               displayUrl: imageUrl
             });
           }, 200); // 지연 시간을 200ms로 증가
         } else {
-          console.error('❌ 업로드 응답에서 이미지 URL 없음 (screens):', uploadResponse.data);
+          if (__DEV__) console.error('❌ 업로드 응답에서 이미지 URL 없음 (screens):', uploadResponse.data);
           throw new Error('업로드된 이미지 URL을 받지 못했습니다.');
         }
-      } catch (error: any) {
-        console.error('❌ 이미지 업로드 실패 (screens):', error);
+      } catch (error: unknown) {
+        if (__DEV__) console.error('❌ 이미지 업로드 실패 (screens):', error);
         Alert.alert('오류', '이미지 업로드 중 오류가 발생했습니다.');
         setSelectedImage(null);
       } finally {
         setIsUploadingImage(false);
-        console.log('📸 업로딩 상태 해제 (screens)');
+        if (__DEV__) console.log('📸 업로딩 상태 해제 (screens)');
       }
     } else {
-      console.error('❌ 올바른 이미지 자산이 없음 (screens):', response);
+      if (__DEV__) console.error('❌ 올바른 이미지 자산이 없음 (screens):', response);
     }
   }, [currentImageUrl, selectedImage, uploadedImageUrl]);
 
@@ -669,7 +669,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       // 최종 이미지 URL 결정 및 디버깅 (screens)
       let finalImageUrl = null;
       
-      console.log('💾 게시물 업데이트 시 이미지 상태 확인 (screens):', {
+      if (__DEV__) console.log('💾 게시물 업데이트 시 이미지 상태 확인 (screens):', {
         uploadedImageUrl,
         currentImageUrl,
         selectedImage,
@@ -679,15 +679,15 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       if (uploadedImageUrl) {
         // 새로 업로드된 이미지가 있는 경우
         finalImageUrl = uploadedImageUrl;
-        console.log('💾 새로 업로드된 이미지 URL 사용 (screens):', finalImageUrl);
+        if (__DEV__) console.log('💾 새로 업로드된 이미지 URL 사용 (screens):', finalImageUrl);
       } else if (currentImageUrl && !selectedImage) {
         // 기존 이미지를 유지하는 경우
         finalImageUrl = currentImageUrl;
-        console.log('💾 기존 이미지 URL 유지 (screens):', finalImageUrl);
+        if (__DEV__) console.log('💾 기존 이미지 URL 유지 (screens):', finalImageUrl);
       } else {
         // 이미지가 제거된 경우
         finalImageUrl = null;
-        console.log('💾 이미지 제거됨 (screens)');
+        if (__DEV__) console.log('💾 이미지 제거됨 (screens)');
       }
 
       const updateData = {
@@ -697,34 +697,34 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
         image_url: finalImageUrl
       };
 
-      console.log('💾 서버로 전송할 데이터 (screens):', updateData);
-      console.log('💾 서버로 전송할 이미지 URL (screens):', finalImageUrl);
+      if (__DEV__) console.log('💾 서버로 전송할 데이터 (screens):', updateData);
+      if (__DEV__) console.log('💾 서버로 전송할 이미지 URL (screens):', finalImageUrl);
 
       const response = await postService.updatePost(postId, updateData);
       
-      console.log('✅ 게시물 수정 완료 응답 (screens):', response);
-      console.log('✅ 응답 데이터 (screens):', response.data);
+      if (__DEV__) console.log('✅ 게시물 수정 완료 응답 (screens):', response);
+      if (__DEV__) console.log('✅ 응답 데이터 (screens):', response.data);
       
       if (response.data?.post?.image_url) {
-        console.log('✅ 서버에서 반환된 이미지 URL (screens):', response.data.post.image_url);
+        if (__DEV__) console.log('✅ 서버에서 반환된 이미지 URL (screens):', response.data.post.image_url);
         // 서버 응답에서 받은 이미지 URL로 currentImageUrl 업데이트
         setCurrentImageUrl(response.data.post.image_url);
-        console.log('✅ currentImageUrl 업데이트됨 (screens):', response.data.post.image_url);
+        if (__DEV__) console.log('✅ currentImageUrl 업데이트됨 (screens):', response.data.post.image_url);
       }
       
       if (response.status === 'success') {
         // 수정 성공 후 상태 정리 (screens)
         setUploadedImageUrl(null);  // 업로드 URL 정리
         setSelectedImage(null);     // 선택된 이미지 정리
-        console.log('💾 수정 성공 후 상태 정리 완료 (screens)');
+        if (__DEV__) console.log('💾 수정 성공 후 상태 정리 완료 (screens)');
         
         setModalMessage('게시물이 성공적으로 수정되었습니다.');
         setSuccessModalVisible(true);
       } else {
         throw new Error(response.message || '게시물 수정에 실패했습니다.');
       }
-    } catch (error: any) {
-      console.error('게시물 수정 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('게시물 수정 오류:', error);
       setModalMessage(error.response?.data?.message || error.message || '게시물 수정 중 오류가 발생했습니다.');
       setErrorModalVisible(true);
     } finally {
@@ -749,8 +749,8 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       } else {
         throw new Error(response.message || '게시물 삭제에 실패했습니다.');
       }
-    } catch (error: any) {
-      console.error('게시물 삭제 오류:', error);
+    } catch (error: unknown) {
+      if (__DEV__) console.error('게시물 삭제 오류:', error);
       Alert.alert(
         '삭제 실패',
         error.response?.data?.message || error.message || '게시물 삭제 중 오류가 발생했습니다.'
@@ -797,7 +797,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
         }}>
           <Text style={{
             fontSize: FONT_SIZES.h2,
-            fontWeight: 'bold',
+            fontFamily: 'Pretendard-Bold',
             marginBottom: 16,
             color: theme.text.primary
           }}>📝 게시물 내용</Text>
@@ -851,7 +851,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
         }}>
           <Text style={{
             fontSize: FONT_SIZES.h2,
-            fontWeight: 'bold',
+            fontFamily: 'Pretendard-Bold',
             marginBottom: 16,
             color: theme.text.primary
           }}>📸 이미지</Text>
@@ -871,8 +871,8 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 resizeMode="cover"
                 key={getDisplayImageUrl()} // 이미지 URL이 바뀔 때마다 컴포넌트 재생성
                 onError={(error: any) => {
-                  console.error('❌ 편집 화면 이미지 로드 실패 (screens):', getDisplayImageUrl(), error.nativeEvent.error);
-                  console.error('❌ 이미지 로드 실패 상세 정보 (screens):', {
+                  if (__DEV__) console.error('❌ 편집 화면 이미지 로드 실패 (screens):', getDisplayImageUrl(), error.nativeEvent.error);
+                  if (__DEV__) console.error('❌ 이미지 로드 실패 상세 정보 (screens):', {
                     selectedImage,
                     uploadedImageUrl,
                     currentImageUrl,
@@ -881,13 +881,13 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                   });
                 }}
                 onLoad={() => {
-                  console.log('✅ 편집 화면 이미지 로드 성공 (screens):', getDisplayImageUrl());
+                  if (__DEV__) console.log('✅ 편집 화면 이미지 로드 성공 (screens):', getDisplayImageUrl());
                 }}
                 onLoadStart={() => {
-                  console.log('🔄 이미지 로딩 시작 (screens):', getDisplayImageUrl());
+                  if (__DEV__) console.log('🔄 이미지 로딩 시작 (screens):', getDisplayImageUrl());
                 }}
                 onLoadEnd={() => {
-                  console.log('🏁 이미지 로딩 완료 (screens):', getDisplayImageUrl());
+                  if (__DEV__) console.log('🏁 이미지 로딩 완료 (screens):', getDisplayImageUrl());
                 }}
               />
               
@@ -905,7 +905,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                   alignItems: 'center'
                 }}>
                   <ActivityIndicator size="large" color="#ffffff" />
-                  <Text style={{ color: 'white', marginTop: 8, fontWeight: 'bold' }}>
+                  <Text style={{ color: 'white', marginTop: 8, fontFamily: 'Pretendard-Bold' }}>
                     업로드 중...
                   </Text>
                 </Center>
@@ -921,7 +921,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 paddingHorizontal: scale(8),
                 paddingVertical: scale(4)
               }}>
-                <Text style={{ color: 'white', fontSize: scale(13), fontWeight: 'bold' }}>
+                <Text style={{ color: 'white', fontSize: scale(13), fontFamily: 'Pretendard-Bold' }}>
                   {(selectedImage || (uploadedImageUrl && uploadedImageUrl !== currentImageUrl)) ? '새 이미지' : '기존 이미지'}
                 </Text>
               </Box>
@@ -1004,7 +1004,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
           <Text
             style={{
               fontSize: scale(20),
-              fontWeight: 'bold',
+              fontFamily: 'Pretendard-Bold',
               marginBottom: scale(16),
               color: theme.text.primary,
               fontFamily: 'System',
@@ -1073,7 +1073,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                       style={{
                         marginLeft: scale(8),
                         fontSize: scale(15),
-                        fontWeight: 'bold',
+                        fontFamily: 'Pretendard-Bold',
                         textAlign: 'center',
                         color: selectedEmotions.includes(emotion.id) ? colors.text : emotion.color,
                         fontFamily: 'Pretendard-Bold',
@@ -1111,7 +1111,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               <Text
                 style={{
                   fontSize: scale(18),
-                  fontWeight: 'bold',
+                  fontFamily: 'Pretendard-Bold',
                   marginBottom: scale(8),
                   color: theme.text.primary,
                   fontFamily: 'Pretendard-Bold',
@@ -1177,7 +1177,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
           <Text
             style={{
               fontSize: scale(18),
-              fontWeight: 'bold',
+              fontFamily: 'Pretendard-Bold',
               marginBottom: scale(16),
               color: theme.text.primary,
               fontFamily: 'System',
@@ -1308,7 +1308,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
           >
             <Text style={{
               fontSize: FONT_SIZES.h3,
-              fontWeight: 'bold',
+              fontFamily: 'Pretendard-Bold',
               color: theme.text.primary,
               marginBottom: 16
             }}>🗑️ 게시물 삭제</Text>
@@ -1338,7 +1338,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               >
                 <Text style={{
                   color: theme.text.secondary,
-                  fontWeight: '500'
+                  fontFamily: 'Pretendard-Medium'
                 }}>취소</Text>
               </Pressable>
               <Pressable
@@ -1355,7 +1355,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                   {isDeleting && <ActivityIndicator size="small" color="white" style={{ marginRight: 4 }} />}
                   <Text style={{
                     color: '#ffffff',
-                    fontWeight: '500'
+                    fontFamily: 'Pretendard-Medium'
                   }}>{isDeleting ? '삭제 중...' : '삭제'}</Text>
                 </HStack>
               </Pressable>
@@ -1406,7 +1406,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
           >
             <Text style={{
               fontSize: FONT_SIZES.h3,
-              fontWeight: 'bold',
+              fontFamily: 'Pretendard-Bold',
               textAlign: 'center',
               color: theme.text.success || '#10b981',
               marginBottom: 16
@@ -1431,7 +1431,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               <Text style={{
                 textAlign: 'center',
                 color: colors.text,
-                fontWeight: '500'
+                fontFamily: 'Pretendard-Medium'
               }}>확인</Text>
             </Pressable>
           </Box>
@@ -1458,7 +1458,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
           >
             <Text style={{
               fontSize: FONT_SIZES.h3,
-              fontWeight: 'bold',
+              fontFamily: 'Pretendard-Bold',
               textAlign: 'center',
               color: theme.text.error || '#ef4444',
               marginBottom: 16
@@ -1480,7 +1480,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               <Text style={{
                 textAlign: 'center',
                 color: colors.text,
-                fontWeight: '500'
+                fontFamily: 'Pretendard-Medium'
               }}>확인</Text>
             </Pressable>
           </Pressable>
@@ -1526,7 +1526,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
           >
             <Text style={{
               fontSize: FONT_SIZES.h3,
-              fontWeight: 'bold',
+              fontFamily: 'Pretendard-Bold',
               textAlign: 'center',
               color: '#f59e0b',
               marginBottom: 16
@@ -1552,7 +1552,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 <Text style={{
                   textAlign: 'center',
                   color: colors.text,
-                  fontWeight: '500'
+                  fontFamily: 'Pretendard-Medium'
                 }}>예, 나가기</Text>
               </Pressable>
               <Pressable
@@ -1567,7 +1567,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 <Text style={{
                   textAlign: 'center',
                   color: theme.text.secondary,
-                  fontWeight: '500'
+                  fontFamily: 'Pretendard-Medium'
                 }}>아니오, 계속 편집</Text>
               </Pressable>
             </VStack>

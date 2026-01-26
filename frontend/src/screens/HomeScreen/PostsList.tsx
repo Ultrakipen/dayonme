@@ -137,7 +137,7 @@ const PostsList: React.FC<PostsListProps> = ({
               }}
             >
               <Text style={{ fontSize: normalize(13, 11, 15) }}>⭐</Text>
-              <Text style={{ fontSize: normalize(13, 11, 15), fontWeight: '700', color: '#ffffff' }}>오늘의 베스트</Text>
+              <Text style={{ fontSize: normalize(13, 11, 15), fontFamily: 'Pretendard-Bold', color: '#ffffff' }}>오늘의 베스트</Text>
             </Box>
 
             {/* 베스트 게시물 */}

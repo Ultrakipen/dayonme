@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated, Modal, Pressable } from 'react-native';
 import { useModernTheme } from '../../../hooks/useModernTheme';
 import { Card } from '../../../components/common/Card';
 import { FONT_SIZES } from '../../../constants';
@@ -26,7 +26,11 @@ export const MicroJournal: React.FC = React.memo(() => {
   const [timer, setTimer] = useState(TIMER_DURATION);
   const [isTyping, setIsTyping] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [selectedEntryContent, setSelectedEntryContent] = useState('');
   const successAnim = useRef(new Animated.Value(0)).current;
+  const deleteAnim = useRef(new Animated.Value(0)).current;
 
   // 로컬 저장소에서 기록 로드 (트래픽 감소)
   useEffect(() => {
@@ -41,7 +45,7 @@ export const MicroJournal: React.FC = React.memo(() => {
         setEntries(parsed.slice(0, 7)); // 최근 7개만
       }
     } catch (err) {
-      console.error('저널 로드 실패:', err);
+      if (__DEV__) console.error('저널 로드 실패:', err);
     }
   };
 
@@ -49,7 +53,7 @@ export const MicroJournal: React.FC = React.memo(() => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newEntries));
     } catch (err) {
-      console.error('저널 저장 실패:', err);
+      if (__DEV__) console.error('저널 저장 실패:', err);
     }
   };
 
@@ -105,6 +109,39 @@ export const MicroJournal: React.FC = React.memo(() => {
     });
   }, [inputValue, entries, successAnim]);
 
+  const handleDeleteEntry = useCallback((entryId: string, content: string) => {
+    setSelectedEntryId(entryId);
+    setSelectedEntryContent(content);
+    setDeleteModalVisible(true);
+    Animated.spring(deleteAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 100,
+      friction: 8,
+    }).start();
+  }, [deleteAnim]);
+
+  const confirmDelete = useCallback(() => {
+    if (selectedEntryId) {
+      const updatedEntries = entries.filter(e => e.id !== selectedEntryId);
+      setEntries(updatedEntries);
+      saveEntries(updatedEntries);
+    }
+    closeDeleteModal();
+  }, [selectedEntryId, entries]);
+
+  const closeDeleteModal = useCallback(() => {
+    Animated.timing(deleteAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setDeleteModalVisible(false);
+      setSelectedEntryId(null);
+      setSelectedEntryContent('');
+    });
+  }, [deleteAnim]);
+
   const successOpacity = successAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, 1]
@@ -117,9 +154,9 @@ export const MicroJournal: React.FC = React.memo(() => {
     <Card accessible={true} accessibilityLabel="마이크로 저널">
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TwemojiImage emoji="✍️" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <TwemojiImage emoji="✍️" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
           <Text
-            style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 * scale }]}
+            style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}
             accessibilityRole="header"
           >
             30초 마이크로 저널
@@ -249,7 +286,7 @@ export const MicroJournal: React.FC = React.memo(() => {
             accessible={false}
           >
             {entries.map((entry, index) => (
-              <View
+              <TouchableOpacity
                 key={entry.id}
                 style={[
                   styles.entryCard,
@@ -258,8 +295,12 @@ export const MicroJournal: React.FC = React.memo(() => {
                     borderColor: colors.border
                   }
                 ]}
+                onLongPress={() => handleDeleteEntry(entry.id, entry.content)}
+                delayLongPress={500}
+                activeOpacity={0.8}
                 accessible={true}
                 accessibilityLabel={`${entry.date} 기록: ${entry.content}`}
+                accessibilityHint="길게 누르면 삭제할 수 있어요"
               >
                 <Text style={[styles.entryDate, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
                   {entry.date}
@@ -270,11 +311,86 @@ export const MicroJournal: React.FC = React.memo(() => {
                 >
                   {entry.content}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
       )}
+
+      {/* 삭제 확인 모달 */}
+      <Modal
+        visible={deleteModalVisible}
+        transparent
+        animationType="none"
+        onRequestClose={closeDeleteModal}
+      >
+        <Pressable style={styles.modalOverlay} onPress={closeDeleteModal}>
+          <Animated.View
+            style={[
+              styles.modalContainer,
+              {
+                backgroundColor: isDark ? '#1c1c1e' : '#fff',
+                transform: [{
+                  scale: deleteAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.9, 1],
+                  })
+                }],
+                opacity: deleteAnim,
+              }
+            ]}
+          >
+            <Pressable onPress={(e) => e.stopPropagation()}>
+              {/* 아이콘 */}
+              <View style={[styles.modalIconContainer, { backgroundColor: isDark ? '#3a2020' : '#ffebee' }]}>
+                <TwemojiImage emoji="🗑️" size={32 * scale} />
+              </View>
+
+              {/* 제목 */}
+              <Text style={[styles.modalTitle, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
+                기록 삭제
+              </Text>
+
+              {/* 내용 미리보기 */}
+              <View style={[styles.modalPreview, { backgroundColor: isDark ? colors.border : '#f5f5f5' }]}>
+                <Text
+                  style={[styles.modalPreviewText, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale }]}
+                  numberOfLines={2}
+                >
+                  "{selectedEntryContent}"
+                </Text>
+              </View>
+
+              {/* 설명 */}
+              <Text style={[styles.modalDescription, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale }]}>
+                이 기록을 삭제하면 복구할 수 없어요
+              </Text>
+
+              {/* 버튼 */}
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton, { backgroundColor: isDark ? colors.border : '#f0f0f0' }]}
+                  onPress={closeDeleteModal}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.cancelButtonText, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>
+                    취소
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.deleteButton]}
+                  onPress={confirmDelete}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.deleteButtonText, { fontSize: FONT_SIZES.body * scale }]}>
+                    삭제
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Pressable>
+          </Animated.View>
+        </Pressable>
+      </Modal>
     </Card>
   );
 });
@@ -284,11 +400,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 4,
   },
   subtitle: {
-    fontWeight: '500',
+    fontFamily: 'Pretendard-Medium',
   },
   inputContainer: {
     marginBottom: 12,
@@ -308,10 +424,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   timerText: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   charCount: {
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   submitButton: {
     borderRadius: 12,
@@ -319,7 +435,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitButtonText: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   successMessage: {
     borderRadius: 8,
@@ -328,13 +444,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   successText: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
   },
   entriesContainer: {
     marginTop: 8,
   },
   entriesTitle: {
-    fontWeight: '700',
+    fontFamily: 'Pretendard-Bold',
     marginBottom: 12,
   },
   entriesScroll: {
@@ -349,9 +465,78 @@ const styles = StyleSheet.create({
   },
   entryDate: {
     marginBottom: 8,
-    fontWeight: '600',
+    fontFamily: 'Pretendard-SemiBold',
   },
   entryContent: {
     lineHeight: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 320,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontFamily: 'Pretendard-Bold',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalPreview: {
+    width: '100%',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+  },
+  modalPreviewText: {
+    fontStyle: 'italic',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  modalDescription: {
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  cancelButton: {},
+  deleteButton: {
+    backgroundColor: '#ef5350',
+  },
+  cancelButtonText: {
+    fontFamily: 'Pretendard-SemiBold',
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontFamily: 'Pretendard-Bold',
   },
 });
