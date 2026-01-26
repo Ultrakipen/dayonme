@@ -4,7 +4,7 @@ buildscript {
         minSdkVersion = 24
         compileSdkVersion = 35
         targetSdkVersion = 35
-        ndkVersion = "27.1.12297006"
+        ndkVersion = "25.2.9519653"  // gold 링커 포함 (CMake 호환)
         kotlinVersion = "2.1.20"
     }
     repositories {
@@ -13,7 +13,7 @@ buildscript {
         gradlePluginPortal() // OneSignal
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:8.6.0")  // Android Studio 호환 버전
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
         classpath("gradle.plugin.com.onesignal:onesignal-gradle-plugin:[0.14.0, 0.99.99]") // OneSignal

@@ -1,0 +1,97 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Cache Gradle
+        uses: actions/cache@v3
+        with:
+          path: |
+            frontend/android/.gradle
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Create .env file
+        run: |
+          cd frontend
+          cat > .env << 'EOF'
+          API_URL=${{ secrets.API_URL || 'https://api.dayonme.co.kr' }}
+          KAKAO_NATIVE_APP_KEY=${{ secrets.KAKAO_NATIVE_APP_KEY || '' }}
+          NAVER_CLIENT_ID=${{ secrets.NAVER_CLIENT_ID || '' }}
+          NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET || '' }}
+          NAVER_CLIENT_NAME=dayonme
+          ONESIGNAL_APP_ID=${{ secrets.ONESIGNAL_APP_ID || '' }}
+          EOF
+
+      - name: Decode Keystore
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > frontend/android/app/release.keystore
+
+      - name: Create keystore.properties
+        if: ${{ secrets.KEYSTORE_PASSWORD != '' }}
+        run: |
+          cd frontend/android
+          cat > keystore.properties << 'EOF'
+          KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS=${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
+          EOF
+
+      - name: Build Release APK
+        run: |
+          cd frontend/android
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --warning-mode=all
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release
+          path: frontend/android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+      - name: Get APK info
+        run: |
+          cd frontend/android/app/build/outputs/apk/release
+          ls -lh app-release.apk
+          echo "APK Size: $(du -h app-release.apk | cut -f1)"
