@@ -92,20 +92,20 @@ jobs:
           chmod +x gradlew
           ./gradlew clean --no-daemon
 
-      - name: Build Release APK
+      - name: Build Debug APK
         run: |
           cd frontend/android
-          ./gradlew assembleRelease --no-daemon --warning-mode=all --stacktrace
+          ./gradlew assembleDebug --no-daemon --warning-mode=all --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: frontend/android/app/build/outputs/apk/release/app-release.apk
+          name: app-debug
+          path: frontend/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
 
       - name: Get APK info
         run: |
-          cd frontend/android/app/build/outputs/apk/release
-          ls -lh app-release.apk
-          echo "APK Size: $(du -h app-release.apk | cut -f1)"
+          cd frontend/android/app/build/outputs/apk/debug
+          ls -lh app-debug.apk
+          echo "APK Size: $(du -h app-debug.apk | cut -f1)"
