@@ -81,6 +81,11 @@ jobs:
           EOF
           fi
 
+      - name: Create codegen directories
+        run: |
+          mkdir -p frontend/node_modules/react-native-vector-icons/android/build/generated/source/codegen/jni
+          mkdir -p frontend/android/app/build/generated/autolinking/src/main/jni
+
       - name: Clean Gradle
         run: |
           cd frontend/android
