@@ -71,9 +71,11 @@ const MainTabs = () => {
         tabBarStyle: {
           backgroundColor: isDark ? '#1f2937' : '#FFFFFF', // 순백으로 변경 (대비 향상)
           borderTopWidth: 0,
-          paddingBottom: Math.max(sizes.PADDING_BOTTOM, insets.bottom),
+          // 갤럭시 플립 등 긴 화면 대응: 최소 패딩 20 보장
+          paddingBottom: Math.max(sizes.PADDING_BOTTOM, insets.bottom, 20),
           paddingTop: sizes.PADDING_TOP,
-          height: sizes.TAB_BAR_HEIGHT + insets.bottom,
+          // 갤럭시 플립 대응: 최소 높이 80 보장
+          height: Math.max(sizes.TAB_BAR_HEIGHT + insets.bottom, 80),
           // 부드럽고 자연스러운 그림자
           elevation: 16,
           shadowColor: isDark ? '#000' : '#667eea',
