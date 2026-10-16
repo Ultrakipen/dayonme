@@ -73,7 +73,7 @@ export const EmotionJourney: React.FC<Props> = React.memo(({ period = 'week' }) 
       }
     } catch (err) {
       setError('감정 여정을 불러오는데 실패했습니다');
-      if (__DEV__) console.error('감정 여정 로드 실패:', err);
+      console.error('감정 여정 로드 실패:', err);
     }
   }, [period]);
 
@@ -102,14 +102,14 @@ export const EmotionJourney: React.FC<Props> = React.memo(({ period = 'week' }) 
         accessibilityHint={periodInfo.accessibilityHint}
       >
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadJourney}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -122,7 +122,7 @@ export const EmotionJourney: React.FC<Props> = React.memo(({ period = 'week' }) 
       accessibilityLabel={periodInfo.accessibilityLabel}
       accessibilityHint={periodInfo.accessibilityHint}
     >
-      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, marginBottom: 16 * scale }]}>
+      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3, marginBottom: 16 * scale }]}>
         {periodInfo.title}
       </Text>
 
@@ -150,16 +150,16 @@ export const EmotionJourney: React.FC<Props> = React.memo(({ period = 'week' }) 
                 ]}>
                   <Text style={{ fontSize: 28 * scale }}>{step.icon}</Text>
                 </View>
-                <Text style={[styles.day, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny * scale }]}>
+                <Text style={[styles.day, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny }]}>
                   {step.day}
                 </Text>
-                <Text style={[styles.emotion, { color: colors.text, fontSize: FONT_SIZES.small * scale }]}>
+                <Text style={[styles.emotion, { color: colors.text, fontSize: FONT_SIZES.small }]}>
                   {step.emotion}
                 </Text>
               </View>
               {index < journey.length - 1 && (
                 <View style={[styles.arrow, { marginHorizontal: 4 * scale }]}>
-                  <Text style={[styles.arrowText, { color: isDark ? colors.border + '60' : colors.border, fontSize: FONT_SIZES.bodyLarge * scale }]}>·</Text>
+                  <Text style={[styles.arrowText, { color: isDark ? colors.border + '60' : colors.border, fontSize: FONT_SIZES.bodyLarge }]}>·</Text>
                 </View>
               )}
             </View>
@@ -172,7 +172,7 @@ export const EmotionJourney: React.FC<Props> = React.memo(({ period = 'week' }) 
         padding: 14 * scale,
         borderRadius: 14 * scale
       }]}>
-        <Text style={[styles.summaryText, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale, lineHeight: 20 * scale }]}>
+        <Text style={[styles.summaryText, { color: colors.text, fontSize: FONT_SIZES.bodySmall, lineHeight: 20 * scale }]}>
           {summary}
         </Text>
       </View>
@@ -182,7 +182,7 @@ export const EmotionJourney: React.FC<Props> = React.memo(({ period = 'week' }) 
 
 const styles = StyleSheet.create({
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   journeyContainer: {
     flexDirection: 'row',
@@ -199,10 +199,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   day: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   emotion: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   arrow: {
   },
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   summary: {
   },
   summaryText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     textAlign: 'center',
   },
   errorContainer: {

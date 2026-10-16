@@ -32,7 +32,7 @@ export const EmotionEcho: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('감정 공명을 불러오는데 실패했습니다');
-      if (__DEV__) console.log('감정 공명 로드 실패');
+      console.log('감정 공명 로드 실패');
     } finally {
       setLoading(false);
     }
@@ -46,14 +46,14 @@ export const EmotionEcho: React.FC = React.memo(() => {
     return (
       <Card accessible={true} accessibilityLabel="감정 공명">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadData}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -64,8 +64,8 @@ export const EmotionEcho: React.FC = React.memo(() => {
     return (
       <Card accessible={true} accessibilityLabel="감정 공명 로딩 중">
         <View style={styles.header}>
-          <Text style={{ fontSize: FONT_SIZES.h2 * scale }}>🔮</Text>
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>감정 공명</Text>
+          <Text style={{ fontSize: FONT_SIZES.h2 }}>🔮</Text>
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.body }]}>감정 공명</Text>
           {!loading && !data && (
             <TouchableOpacity
               style={[styles.ctaButton, { backgroundColor: colors.primary }]}
@@ -73,11 +73,11 @@ export const EmotionEcho: React.FC = React.memo(() => {
               accessibilityRole="button"
               accessibilityLabel="기록하기"
             >
-              <Text style={[styles.ctaText, { fontSize: FONT_SIZES.tiny * scale }]}>기록하기</Text>
+              <Text style={[styles.ctaText, { fontSize: FONT_SIZES.tiny }]}>기록하기</Text>
             </TouchableOpacity>
           )}
         </View>
-        <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.small * scale }]}>
+        <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.small }]}>
           {loading ? '로딩 중...' : '아직 기록된 감정이 없어요'}
         </Text>
       </Card>
@@ -87,27 +87,27 @@ export const EmotionEcho: React.FC = React.memo(() => {
   return (
     <Card accessible={true} accessibilityLabel={`감정 공명: ${data.emotion}, 같은 감정을 느끼는 사람 ${data.echoCount}명`}>
       <View style={styles.header}>
-        <Text style={{ fontSize: FONT_SIZES.h2 * scale }}>🔮</Text>
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>감정 공명</Text>
+        <Text style={{ fontSize: FONT_SIZES.h2 }}>🔮</Text>
+        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.body }]}>감정 공명</Text>
         <View
           style={[styles.echoBox, { backgroundColor: isDark ? '#2A2A3A' : '#F0F8FF' }]}
           accessible={true}
           accessibilityLabel={`현재 감정: ${data.emotion}`}
         >
-          <Text style={{ fontSize: FONT_SIZES.h4 * scale }}>{data.icon}</Text>
-          <Text style={[styles.emotionName, { color: data.color, fontSize: FONT_SIZES.small * scale }]}>
+          <Text style={{ fontSize: FONT_SIZES.h3 }}>{data.icon}</Text>
+          <Text style={[styles.emotionName, { color: data.color, fontSize: FONT_SIZES.small }]}>
             {data.emotion}
           </Text>
         </View>
       </View>
       <View style={styles.echoRow} accessible={true} accessibilityLabel={`같은 감정을 느끼는 사람 ${data.echoCount}명, 최근 24시간`}>
-        <Text style={[styles.echoText, { color: colors.text, fontSize: FONT_SIZES.caption * scale }]}>
+        <Text style={[styles.echoText, { color: colors.text, fontSize: FONT_SIZES.caption }]}>
           같은 감정을 느끼는 사람
         </Text>
-        <Text style={[styles.echoCount, { color: colors.primary, fontSize: FONT_SIZES.bodyLarge * scale }]}>
+        <Text style={[styles.echoCount, { color: colors.primary, fontSize: FONT_SIZES.bodyLarge }]}>
           {data.echoCount}명
         </Text>
-        <Text style={[styles.echoSubtext, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny * scale }]}>
+        <Text style={[styles.echoSubtext, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny }]}>
           (24h)
         </Text>
       </View>
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     flex: 1,
   },
   subtitle: {},
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   ctaText: {
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   echoBox: {
     flexDirection: 'row',
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   emotionName: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   echoRow: {
     flexDirection: 'row',
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   },
   echoText: {},
   echoCount: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   echoSubtext: {},
   errorContainer: {

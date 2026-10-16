@@ -36,7 +36,7 @@ export const EmotionTimeline: React.FC<Props> = React.memo(({ period = 'week', p
       setItems(response.data.items || []);
     } catch (err) {
       setError('감정 타임라인을 불러오는데 실패했습니다');
-      if (__DEV__) console.error('개인 감정 타임라인 로드 실패:', err);
+      console.error('개인 감정 타임라인 로드 실패:', err);
       setItems([]);
     } finally {
       setLoading(false);
@@ -172,14 +172,14 @@ export const EmotionTimeline: React.FC<Props> = React.memo(({ period = 'week', p
     return (
       <Card accessible={true} accessibilityLabel="감정 타임라인">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadTimeline}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -192,7 +192,7 @@ export const EmotionTimeline: React.FC<Props> = React.memo(({ period = 'week', p
 
   return (
     <Card accessible={true} accessibilityLabel={`나의 ${periodText} 감정 흐름`}>
-      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, marginBottom: 16 * scale }]}>
+      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4, marginBottom: 16 * scale }]}>
         나의 {periodText} 감정 흐름
       </Text>
 
@@ -226,7 +226,7 @@ export const EmotionTimeline: React.FC<Props> = React.memo(({ period = 'week', p
             ]}>
               <View style={[styles.timelineHeader, { marginBottom: 14 * scale }]}>
                 <View style={styles.dayContainer}>
-                  <Text style={[styles.time, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>{item.time}</Text>
+                  <Text style={[styles.time, { color: colors.text, fontSize: FONT_SIZES.body }]}>{item.time}</Text>
                 </View>
                 <View style={[styles.temperatureChip, {
                   backgroundColor: getTemperatureColor(item.temperature) + '30',
@@ -234,7 +234,7 @@ export const EmotionTimeline: React.FC<Props> = React.memo(({ period = 'week', p
                   paddingVertical: 8 * scale,
                   borderRadius: 14 * scale
                 }]}>
-                  <Text style={[styles.temperature, { color: getTemperatureColor(item.temperature), fontSize: FONT_SIZES.body * scale }]}>
+                  <Text style={[styles.temperature, { color: getTemperatureColor(item.temperature), fontSize: FONT_SIZES.body }]}>
                     {item.temperature}°
                   </Text>
                 </View>
@@ -249,7 +249,7 @@ export const EmotionTimeline: React.FC<Props> = React.memo(({ period = 'week', p
                 }]}>
                   <Text style={{ fontSize: 32 * scale }}>{item.icon}</Text>
                 </View>
-                <Text style={[styles.emotion, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>{item.emotion}</Text>
+                <Text style={[styles.emotion, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>{item.emotion}</Text>
               </View>
 
               <View style={[styles.temperatureBar, {
@@ -287,11 +287,11 @@ export const EmotionTimeline: React.FC<Props> = React.memo(({ period = 'week', p
             height: 36 * scale,
             borderRadius: 18 * scale
           }]}>
-            <Text style={{ fontSize: FONT_SIZES.h2 * scale }}>💡</Text>
+            <Text style={{ fontSize: FONT_SIZES.h2 }}>💡</Text>
           </View>
           <Text style={[styles.insightText, {
             color: colors.text,
-            fontSize: FONT_SIZES.body * scale,
+            fontSize: FONT_SIZES.body,
             lineHeight: 22 * scale
           }]}>
             {displayItems.length > 0 ?
@@ -306,7 +306,7 @@ export const EmotionTimeline: React.FC<Props> = React.memo(({ period = 'week', p
 
 const styles = StyleSheet.create({
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   timeline: {
   },
@@ -323,12 +323,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   time: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   temperatureChip: {
   },
   temperature: {
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
   },
   emotionContainer: {
     flexDirection: 'row',
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emotion: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   temperatureBar: {
     overflow: 'hidden',
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   },
   insightText: {
     flex: 1,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   errorContainer: {
     alignItems: 'center',

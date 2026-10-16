@@ -140,12 +140,12 @@ export const WeeklyHighlights: React.FC<Props> = ({ highlights }) => {
 
 const styles = StyleSheet.create({
   title: {
-    fontSize: FONT_SIZES.h4 * scale,
-    fontFamily: 'Pretendard-Bold',
+    fontSize: FONT_SIZES.h3,
+    fontWeight: '700',
     marginBottom: 4 * scale,
   },
   subtitle: {
-    fontSize: FONT_SIZES.caption * scale,
+    fontSize: FONT_SIZES.caption,
     marginBottom: 16 * scale,
   },
   scrollContent: {
@@ -183,13 +183,13 @@ const styles = StyleSheet.create({
     marginBottom: 12 * scale,
   },
   badgeIcon: {
-    fontSize: FONT_SIZES.bodySmall * scale,
+    fontSize: FONT_SIZES.bodySmall,
     marginRight: 4 * scale,
   },
   badgeText: {
-    fontSize: FONT_SIZES.tiny * scale,
+    fontSize: FONT_SIZES.tiny,
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   emotionRow: {
     flexDirection: 'row',
@@ -197,16 +197,16 @@ const styles = StyleSheet.create({
     marginBottom: 8 * scale,
   },
   emotionIcon: {
-    fontSize: FONT_SIZES.h2 * scale,
+    fontSize: FONT_SIZES.h2,
     marginRight: 6 * scale,
   },
   emotionText: {
-    fontSize: FONT_SIZES.body * scale,
+    fontSize: FONT_SIZES.body,
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   content: {
-    fontSize: FONT_SIZES.bodySmall * scale,
+    fontSize: FONT_SIZES.bodySmall,
     color: '#FFFFFF',
     lineHeight: 20 * scale,
     marginBottom: 12 * scale,
@@ -218,10 +218,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   date: {
-    fontSize: FONT_SIZES.tiny * scale,
+    fontSize: FONT_SIZES.tiny,
     color: '#FFFFFF',
     opacity: 0.8,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   likeRow: {
     flexDirection: 'row',
@@ -232,12 +232,12 @@ const styles = StyleSheet.create({
     borderRadius: 12 * scale,
   },
   likeIcon: {
-    fontSize: FONT_SIZES.small * scale,
+    fontSize: FONT_SIZES.small,
     marginRight: 4 * scale,
   },
   likeCount: {
-    fontSize: FONT_SIZES.small * scale,
+    fontSize: FONT_SIZES.small,
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
 });

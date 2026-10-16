@@ -1,32 +1,80 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Card } from '../../../components/common/Card';
 import { useModernTheme } from '../../../hooks/useModernTheme';
+import apiClient from '../../../services/api/client';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
 import { TwemojiImage } from '../../../components/common/TwemojiImage';
-import { useReviewData } from '../ReviewDataContext';
+
+interface Challenge {
+  id: number;
+  title: string;
+  completed: boolean;
+  progress: number;
+  goal: number;
+}
 
 export const DailyChallenge: React.FC = React.memo(() => {
   const { colors, isDark } = useModernTheme();
   const scale = getScale(360, 0.9, 1.3);
-  const { data } = useReviewData();
+  const [error, setError] = useState<string | null>(null);
+  const [challenges, setChallenges] = useState<Challenge[]>([
+    { id: 1, title: '오늘의 감정 기록하기', completed: false, progress: 0, goal: 1 },
+    { id: 2, title: '다른 사람에게 위로 보내기', completed: false, progress: 0, goal: 1 },
+    { id: 3, title: '긍정적인 감정 표현하기', completed: false, progress: 0, goal: 1 },
+  ]);
 
-  // Context에서 데이터 가져오기 (이미 로드됨)
-  const challenges = data.dailyChallenges;
+  const loadChallenges = useCallback(async () => {
+    try {
+      setError(null);
+
+      // apiClient가 자동으로 인증 토큰을 추가함
+      const response = await apiClient.get('/review/daily-challenges');
+
+      if (response.data.status === 'success') {
+        setChallenges(response.data.data.challenges);
+      }
+    } catch (err) {
+      setError('챌린지를 불러오는데 실패했습니다');
+      if (__DEV__) console.error('챌린지 로드 실패:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadChallenges();
+  }, [loadChallenges]);
 
   const completedCount = challenges.filter(c => c.completed).length;
   const totalCount = challenges.length;
   const progress = (completedCount / totalCount) * 100;
 
+  if (error) {
+    return (
+      <Card accessible={true} accessibilityLabel="오늘의 챌린지 섹션">
+        <View style={styles.errorContainer}>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
+          <TouchableOpacity
+            onPress={loadChallenges}
+            style={[styles.retryButton, { marginTop: 12 * scale }]}
+            accessibilityRole="button"
+            accessibilityLabel="다시 시도"
+          >
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
+          </TouchableOpacity>
+        </View>
+      </Card>
+    );
+  }
+
   return (
     <Card accessible={true} accessibilityLabel="오늘의 챌린지 섹션">
       <View style={[styles.header, { marginBottom: 12 * scale }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TwemojiImage emoji="🎯" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>오늘의 챌린지</Text>
+          <TwemojiImage emoji="🎯" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>오늘의 챌린지</Text>
         </View>
-        <Text style={[styles.progress, { color: colors.primary, fontSize: FONT_SIZES.bodyLarge * scale }]}>
+        <Text style={[styles.progress, { color: colors.primary, fontSize: FONT_SIZES.bodyLarge }]}>
           {completedCount}/{totalCount}
         </Text>
       </View>
@@ -48,11 +96,11 @@ export const DailyChallenge: React.FC = React.memo(() => {
         />
       </View>
 
-      <View style={[styles.challengeList, { gap: 8 * scale }]}>
+      <View style={[styles.challengeList, { gap: 12 * scale }]}>
         {challenges.map((challenge) => (
           <TouchableOpacity
             key={challenge.id}
-            style={[styles.challengeItem, { gap: 10 * scale, minHeight: 40 * scale }]}
+            style={[styles.challengeItem, { gap: 12 * scale, minHeight: 44 }]}
             activeOpacity={0.7}
             accessibilityRole="checkbox"
             accessibilityState={{ checked: challenge.completed }}
@@ -65,16 +113,16 @@ export const DailyChallenge: React.FC = React.memo(() => {
                 backgroundColor: challenge.completed ? colors.primary : 'transparent',
                 borderColor: challenge.completed ? colors.primary : colors.border,
                 borderWidth: challenge.completed ? 0 : 2,
-                width: 26 * scale,
-                height: 26 * scale,
-                borderRadius: 13 * scale
+                width: Math.max(24 * scale, 44),
+                height: Math.max(24 * scale, 44),
+                borderRadius: Math.max(12 * scale, 22)
               }
             ]}>
-              {challenge.completed && <Text style={[styles.checkmark, { fontSize: FONT_SIZES.body * scale, color: colors.background }]}>✓</Text>}
+              {challenge.completed && <Text style={[styles.checkmark, { fontSize: FONT_SIZES.bodyLarge, color: colors.background }]}>✓</Text>}
             </View>
             <Text style={[
               styles.challengeText,
-              { color: colors.text, fontSize: FONT_SIZES.body * scale },
+              { color: colors.text, fontSize: FONT_SIZES.body },
               challenge.completed && styles.completedText
             ]}>
               {challenge.title}
@@ -87,7 +135,7 @@ export const DailyChallenge: React.FC = React.memo(() => {
         <View style={[styles.reward, { backgroundColor: isDark ? colors.surface : colors.border + '30', marginTop: 16 * scale, padding: 12 * scale, borderRadius: 12 * scale }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
             <TwemojiImage emoji="🎉" size={FONT_SIZES.bodySmall * scale} style={{ marginRight: 6 * scale }} />
-            <Text style={[styles.rewardText, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}>
+            <Text style={[styles.rewardText, { color: colors.text, fontSize: FONT_SIZES.bodySmall }]}>
               모든 챌린지 완료! "오늘도 완주" 배지 획득!
             </Text>
           </View>
@@ -104,10 +152,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   progress: {
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
   },
   progressBar: {
     overflow: 'hidden',
@@ -126,7 +174,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkmark: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: 'bold',
   },
   challengeText: {
     flex: 1,
@@ -138,7 +186,14 @@ const styles = StyleSheet.create({
   reward: {
   },
   rewardText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     textAlign: 'center',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: 16,
+  },
+  retryButton: {
+    padding: 8,
   },
 });

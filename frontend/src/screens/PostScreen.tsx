@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { TextInput, FlatList, ActivityIndicator } from 'react-native';
 import { Button } from 'react-native-paper';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import postService from '../services/api/postService';
 import { Box, Text, VStack, HStack, Center } from '../components/ui';
@@ -41,7 +41,7 @@ const PostScreen: React.FC<PostScreenProps> = ({ route, navigation }) => {
       setPost(response.data);
     } catch (error) {
       setError('게시물을 불러오는 중 오류가 발생했습니다');
-      if (__DEV__) console.error('Error fetching post:', error);
+      console.error('Error fetching post:', error);
     } finally {
       setLoading(false);
     }
@@ -52,7 +52,7 @@ const PostScreen: React.FC<PostScreenProps> = ({ route, navigation }) => {
       const response = await postService.getComments(postId);
       setComments(response.data.comments || []);
     } catch (error) {
-      if (__DEV__) console.error('Error fetching comments:', error);
+      console.error('Error fetching comments:', error);
     }
   };
 
@@ -69,7 +69,7 @@ const PostScreen: React.FC<PostScreenProps> = ({ route, navigation }) => {
       fetchComments(); // 댓글 목록 새로고침
     } catch (error) {
       setError('댓글을 작성하는 중 오류가 발생했습니다');
-      if (__DEV__) console.error('Error adding comment:', error);
+      console.error('Error adding comment:', error);
     } finally {
       setSubmitting(false);
     }
@@ -93,8 +93,7 @@ const PostScreen: React.FC<PostScreenProps> = ({ route, navigation }) => {
 
   return (
     <SafeAreaView
-      className="flex-1 p-4"
-      style={{ backgroundColor: theme.colors.background }}
+      style={{ flex: 1, padding: 16, backgroundColor: theme.colors.background }}
     >
       <VStack className="space-y-4">
         <Box className="mb-4">

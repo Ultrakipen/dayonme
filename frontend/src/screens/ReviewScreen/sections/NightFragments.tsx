@@ -36,7 +36,7 @@ export const NightFragments: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('밤의 조각들을 불러오는데 실패했습니다');
-      if (__DEV__) console.log('밤의 조각들 로드 실패');
+      console.log('밤의 조각들 로드 실패');
     } finally {
       setLoading(false);
     }
@@ -50,14 +50,14 @@ export const NightFragments: React.FC = React.memo(() => {
     return (
       <Card accessible={true} accessibilityLabel="밤의 조각들">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadFragments}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -70,8 +70,8 @@ export const NightFragments: React.FC = React.memo(() => {
         <View style={styles.header}>
           <Text style={[styles.icon, { fontSize: 32 * scale }]}>🌙</Text>
           <View style={styles.headerText}>
-            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>밤의 조각들</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>밤의 조각들</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
               {loading ? '로딩 중...' : '아직 밤에 작성한 글이 없어요'}
             </Text>
           </View>
@@ -85,8 +85,8 @@ export const NightFragments: React.FC = React.memo(() => {
       <View style={styles.header}>
         <Text style={[styles.icon, { fontSize: 32 * scale }]}>🌙</Text>
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>밤의 조각들</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>밤의 조각들</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
             이 시간에도 깨어있던 당신
           </Text>
         </View>
@@ -109,23 +109,23 @@ export const NightFragments: React.FC = React.memo(() => {
           accessibilityHint="글 상세 보기로 이동합니다"
         >
           <View style={styles.fragmentHeader}>
-            <Text style={[styles.fragmentTime, { color: colors.primary, fontSize: FONT_SIZES.bodySmall * scale }]}>
+            <Text style={[styles.fragmentTime, { color: colors.primary, fontSize: FONT_SIZES.bodySmall }]}>
               {fragment.time}
             </Text>
-            <Text style={[styles.fragmentDate, { color: colors.textSecondary, fontSize: FONT_SIZES.small * scale }]}>
+            <Text style={[styles.fragmentDate, { color: colors.textSecondary, fontSize: FONT_SIZES.small }]}>
               {fragment.date}
             </Text>
           </View>
-          <Text style={[styles.fragmentContent, { color: colors.text, fontSize: FONT_SIZES.body * scale, lineHeight: 22 * scale }]} numberOfLines={3}>
+          <Text style={[styles.fragmentContent, { color: colors.text, fontSize: FONT_SIZES.body, lineHeight: 22 * scale }]} numberOfLines={3}>
             {fragment.content}
           </Text>
           <View style={styles.fragmentFooter}>
-            <Text style={{ fontSize: FONT_SIZES.bodyLarge * scale }}>{fragment.icon}</Text>
-            <Text style={[styles.fragmentEmotion, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+            <Text style={{ fontSize: FONT_SIZES.bodyLarge }}>{fragment.icon}</Text>
+            <Text style={[styles.fragmentEmotion, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
               {fragment.emotion}
             </Text>
             {fragment.likeCount > 0 && (
-              <Text style={[styles.likeCount, { color: colors.textSecondary, fontSize: FONT_SIZES.small * scale }]}>
+              <Text style={[styles.likeCount, { color: colors.textSecondary, fontSize: FONT_SIZES.small }]}>
                 {fragment.likeCount}
               </Text>
             )}
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   subtitle: {
     marginTop: 2,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   fragmentTime: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   fragmentDate: {},
   fragmentContent: {},

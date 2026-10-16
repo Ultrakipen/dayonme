@@ -18,7 +18,6 @@ interface BottomSheetAction {
   icon: string;
   color?: string;
   destructive?: boolean;
-  skipAutoClose?: boolean; // onPress 후 자동으로 onClose 호출 안함
   onPress: () => void;
 }
 
@@ -31,6 +30,7 @@ interface BottomSheetProps {
 }
 const COLORS = DS_COLORS;
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const BottomSheet: React.FC<BottomSheetProps> = ({
   visible,
   onClose,
@@ -38,18 +38,19 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
   subtitle,
   actions,
 }) => {
-  const { theme, isDark } = useModernTheme();
+  const { theme, isDarkMode } = useModernTheme();
+  const insets = useSafeAreaInsets();
 
   // 테마별 색상
-  const sheetBg = isDark ? '#2A2A2A' : '#FFFFFF';
-  const textColor = isDark ? '#FFFFFF' : '#1A1A1A';
-  const subtitleColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
-  const handleColor = isDark ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)';
-  const borderColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
-  const cancelBg = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
-  const cancelBorder = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
-  const cancelTextColor = isDark ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.5)';
-  const chevronColor = isDark ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.3)';
+  const sheetBg = isDarkMode ? '#2A2A2A' : '#FFFFFF';
+  const textColor = isDarkMode ? '#FFFFFF' : '#1A1A1A';
+  const subtitleColor = isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)';
+  const handleColor = isDarkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.2)';
+  const borderColor = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)';
+  const cancelBg = isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+  const cancelBorder = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)';
+  const cancelTextColor = isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.5)';
+  const chevronColor = isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.3)';
 
   return (
     <Modal
@@ -66,7 +67,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
           activeOpacity={1}
         />
 
-        <View style={[styles.bottomSheet, { backgroundColor: sheetBg }]}>
+        <View style={[styles.bottomSheet, { backgroundColor: sheetBg, paddingBottom: insets.bottom }]}>
           {/* Handle Bar */}
           <View style={styles.handleContainer}>
             <View style={[styles.handle, { backgroundColor: handleColor }]} />
@@ -105,9 +106,7 @@ const BottomSheet: React.FC<BottomSheetProps> = ({
               ]}
               onPress={() => {
                 action.onPress();
-                if (!action.skipAutoClose) {
-                  onClose();
-                }
+                onClose();
               }}
               activeOpacity={0.7}
             >
@@ -205,7 +204,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 4,
     letterSpacing: 0,
   },
@@ -239,7 +238,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 16,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     letterSpacing: 0,
     flex: 1,
   },
@@ -253,7 +252,7 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     fontSize: 16,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
 });
 

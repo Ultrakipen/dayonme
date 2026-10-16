@@ -176,7 +176,7 @@ export const EmotionResonancePosts: React.FC = React.memo(() => {
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TwemojiImage emoji="💭" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 }]}>
             이런 마음, 나만 느낀 건 아니에요
           </Text>
         </View>
@@ -188,15 +188,15 @@ export const EmotionResonancePosts: React.FC = React.memo(() => {
       }]}>
         <TwemojiImage emoji={data.currentEmotion.icon} size={FONT_SIZES.h1 * scale} />
         <View style={{ marginLeft: 12 * scale, flex: 1 }}>
-          <Text style={[styles.emotionLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={[styles.emotionLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
             최근 당신이 자주 느낀 감정
           </Text>
-          <Text style={[styles.emotionName, { color: colors.text, fontSize: FONT_SIZES.bodyLarge * scale }]}>
+          <Text style={[styles.emotionName, { color: colors.text, fontSize: FONT_SIZES.bodyLarge }]}>
             {data.currentEmotion.name}
           </Text>
         </View>
         <View style={styles.statsBadge}>
-          <Text style={[styles.statsText, { fontSize: FONT_SIZES.tiny * scale, color: colors.textSecondary }]}>
+          <Text style={[styles.statsText, { fontSize: FONT_SIZES.tiny, color: colors.textSecondary }]}>
             {data.stats.totalUsers}명이 공감
           </Text>
         </View>
@@ -234,7 +234,7 @@ export const EmotionResonancePosts: React.FC = React.memo(() => {
                       onError={() => handleImageError(post.post_id)}
                     />
                   ) : (
-                    <Text style={[styles.avatarText, { fontSize: FONT_SIZES.body * scale, color: colors.text }]}>
+                    <Text style={[styles.avatarText, { fontSize: FONT_SIZES.body, color: colors.text }]}>
                       {post.user.nickname[0]}
                     </Text>
                   );
@@ -242,12 +242,12 @@ export const EmotionResonancePosts: React.FC = React.memo(() => {
               </View>
               <View style={{ flex: 1, marginLeft: 8 * scale }}>
                 <Text
-                  style={[styles.nickname, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}
+                  style={[styles.nickname, { color: colors.text, fontSize: FONT_SIZES.bodySmall }]}
                   numberOfLines={1}
                 >
                   {post.user.nickname}
                 </Text>
-                <Text style={[styles.timeText, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny * scale }]}>
+                <Text style={[styles.timeText, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny }]}>
                   {formatTime(post.created_at)}
                 </Text>
               </View>
@@ -256,7 +256,7 @@ export const EmotionResonancePosts: React.FC = React.memo(() => {
 
             {/* 포스트 내용 */}
             <Text
-              style={[styles.postContent, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}
+              style={[styles.postContent, { color: colors.text, fontSize: FONT_SIZES.bodySmall }]}
               numberOfLines={4}
             >
               {post.content}
@@ -265,14 +265,14 @@ export const EmotionResonancePosts: React.FC = React.memo(() => {
             {/* 참여도 */}
             <View style={styles.engagement}>
               <View style={styles.engagementItem}>
-                <Text style={{ fontSize: FONT_SIZES.caption * scale }}>❤️</Text>
-                <Text style={[styles.engagementText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+                <Text style={{ fontSize: FONT_SIZES.caption }}>❤️</Text>
+                <Text style={[styles.engagementText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
                   {post.engagement.likes}
                 </Text>
               </View>
               <View style={styles.engagementItem}>
-                <Text style={{ fontSize: FONT_SIZES.caption * scale }}>💬</Text>
-                <Text style={[styles.engagementText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+                <Text style={{ fontSize: FONT_SIZES.caption }}>💬</Text>
+                <Text style={[styles.engagementText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
                   {post.engagement.comments}
                 </Text>
               </View>
@@ -288,7 +288,7 @@ export const EmotionResonancePosts: React.FC = React.memo(() => {
         accessible={true}
         accessibilityLabel="나의 하루에서 더 많은 포스트 보기"
       >
-        <Text style={[styles.moreLinkText, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale }]}>
+        <Text style={[styles.moreLinkText, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall }]}>
           나의 하루에서 더 많은 이야기 보기 →
         </Text>
       </TouchableOpacity>

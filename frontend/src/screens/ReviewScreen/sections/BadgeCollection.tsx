@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Animated, TouchableOpacity, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Animated, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useModernTheme } from '../../../hooks/useModernTheme';
 import reviewService from '../../../services/api/reviewService';
 import { FONT_SIZES } from '../../../constants';
@@ -43,7 +44,7 @@ export const BadgeCollection: React.FC<Props> = ({ onClose }) => {
         useNativeDriver: true,
       }).start();
     } catch (error) {
-      if (__DEV__) console.error('배지 로드 실패:', error);
+      console.error('배지 로드 실패:', error);
     }
   };
 
@@ -61,7 +62,7 @@ export const BadgeCollection: React.FC<Props> = ({ onClose }) => {
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* 헤더 with 닫기 버튼 */}
       <View style={[styles.modalHeader, { borderBottomWidth: 1, borderBottomColor: colors.border }]}>
-        <Text style={[styles.modalTitle, { color: colors.text, fontSize: FONT_SIZES.h2 * scale }]}>
+        <Text style={[styles.modalTitle, { color: colors.text, fontSize: FONT_SIZES.h2 }]}>
           🏆 나의 배지
         </Text>
         {onClose && (
@@ -72,7 +73,7 @@ export const BadgeCollection: React.FC<Props> = ({ onClose }) => {
             accessibilityLabel="닫기"
             accessibilityRole="button"
           >
-            <Text style={[styles.closeButtonText, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>✕</Text>
+            <Text style={[styles.closeButtonText, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>✕</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -80,12 +81,12 @@ export const BadgeCollection: React.FC<Props> = ({ onClose }) => {
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }]}>
+            <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.body }]}>
               총 {data.badges.length}개 배지 보유
             </Text>
             {data.newBadges > 0 && (
               <View style={[styles.newBadge, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.newBadgeText, { fontSize: FONT_SIZES.caption * scale }]}>
+                <Text style={[styles.newBadgeText, { fontSize: FONT_SIZES.caption }]}>
                   +{data.newBadges} NEW
                 </Text>
               </View>
@@ -106,10 +107,10 @@ export const BadgeCollection: React.FC<Props> = ({ onClose }) => {
                   ]}
                 >
                   <Text style={[styles.badgeIcon, { fontSize: 48 * scale }]}>{badge.achievement_icon}</Text>
-                  <Text style={[styles.badgeName, { color: colors.text, fontSize: FONT_SIZES.small * scale }]} numberOfLines={2}>
+                  <Text style={[styles.badgeName, { color: colors.text, fontSize: FONT_SIZES.small }]} numberOfLines={2}>
                     {badge.achievement_name}
                   </Text>
-                  <Text style={[styles.badgeDate, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny * scale }]}>
+                  <Text style={[styles.badgeDate, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny }]}>
                     {new Date(badge.earned_at).toLocaleDateString('ko-KR')}
                   </Text>
                 </Animated.View>
@@ -117,7 +118,7 @@ export const BadgeCollection: React.FC<Props> = ({ onClose }) => {
             </View>
           ) : (
             <View style={styles.emptyContainer}>
-              <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>
+              <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>
                 아직 획득한 배지가 없습니다
               </Text>
             </View>
@@ -145,13 +146,13 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   modalTitle: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   closeButton: {
     padding: 8,
   },
   closeButtonText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   subtitle: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   newBadge: {
     paddingHorizontal: 12,
@@ -175,7 +176,7 @@ const styles = StyleSheet.create({
   },
   newBadgeText: {
     color: '#fff',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   badgeGrid: {
     flexDirection: 'row',
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   badgeName: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: 4,
   },

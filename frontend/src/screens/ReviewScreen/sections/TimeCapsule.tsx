@@ -31,7 +31,7 @@ export const TimeCapsule: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('타임캡슐을 불러오는데 실패했습니다');
-      if (__DEV__) console.error('타임캡슐 로드 실패:', err);
+      console.error('타임캡슐 로드 실패:', err);
     }
   }, []);
 
@@ -51,14 +51,14 @@ export const TimeCapsule: React.FC = React.memo(() => {
     return (
       <Card accessible={true} accessibilityLabel="타임캡슐">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadCapsule}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -71,8 +71,8 @@ export const TimeCapsule: React.FC = React.memo(() => {
         <View style={[styles.header, { gap: 12 * scale, marginBottom: 12 * scale }]}>
           <TwemojiImage emoji="📮" size={40 * scale} />
           <View style={styles.headerText}>
-            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>타임캡슐</Text>
-            <Text style={[styles.date, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale, marginTop: 2 * scale }]}>
+            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>타임캡슐</Text>
+            <Text style={[styles.date, { color: colors.textSecondary, fontSize: FONT_SIZES.caption, marginTop: 2 * scale }]}>
               아직 타임캡슐이 없습니다
             </Text>
           </View>
@@ -82,7 +82,7 @@ export const TimeCapsule: React.FC = React.memo(() => {
           padding: 12 * scale,
           borderRadius: 10 * scale,
         }]}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, lineHeight: 18 * scale }}>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall, lineHeight: 18 * scale }}>
             💡 나의 하루에 글을 작성하면 1개월 후 이곳에서 과거의 나를 돌아볼 수 있어요
           </Text>
         </View>
@@ -97,10 +97,10 @@ export const TimeCapsule: React.FC = React.memo(() => {
       <View style={[styles.header, { gap: 12 * scale, marginBottom: 16 * scale }]}>
         <TwemojiImage emoji="📮" size={40 * scale} />
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>
             타임캡슐
           </Text>
-          <Text style={[styles.date, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale, marginTop: 2 * scale }]}>
+          <Text style={[styles.date, { color: colors.textSecondary, fontSize: FONT_SIZES.caption, marginTop: 2 * scale }]}>
             1개월 전 ({past.date})의 당신
           </Text>
         </View>
@@ -116,10 +116,10 @@ export const TimeCapsule: React.FC = React.memo(() => {
         accessible={true}
         accessibilityLabel={`과거 기록: ${past.content.substring(0, 80)}`}
       >
-        <Text style={[styles.message, { color: colors.text, fontSize: FONT_SIZES.bodyLarge * scale, lineHeight: 24 * scale }]}>
+        <Text style={[styles.message, { color: colors.text, fontSize: FONT_SIZES.bodyLarge, lineHeight: 24 * scale }]}>
           "{past.content.substring(0, 80)}{past.content.length > 80 ? '...' : ''}"
         </Text>
-        <Text style={[styles.emotion, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale }]}>
+        <Text style={[styles.emotion, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall }]}>
           {past.icon} {past.emotion}
         </Text>
       </View>
@@ -134,18 +134,18 @@ export const TimeCapsule: React.FC = React.memo(() => {
         accessible={true}
         accessibilityLabel={`현재 감정 온도 ${present.temperature}도, ${getTempLabel(present.temperature)}`}
       >
-        <Text style={[styles.comparisonTitle, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}>
+        <Text style={[styles.comparisonTitle, { color: colors.text, fontSize: FONT_SIZES.bodySmall }]}>
           현재 당신의 상태
         </Text>
         <View style={[styles.comparisonStats, { gap: 12 * scale }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TwemojiImage emoji="🌡️" size={FONT_SIZES.bodySmall * scale} style={{ marginRight: 4 * scale }} />
-            <Text style={{ fontSize: FONT_SIZES.bodySmall * scale, color: colors.text }}>{present.temperature}° ({getTempLabel(present.temperature)})</Text>
+            <Text style={{ fontSize: FONT_SIZES.bodySmall, color: colors.text }}>{present.temperature}° ({getTempLabel(present.temperature)})</Text>
           </View>
         </View>
         <Text style={[styles.improvement, {
           color: improvement > 0 ? colors.primary : colors.textSecondary,
-          fontSize: FONT_SIZES.bodySmall * scale
+          fontSize: FONT_SIZES.bodySmall
         }]}>
           {improvement > 0 ? '✨ 1개월 전보다 훨씬 나아졌어요!' : improvement < 0 ? '💙 괜찮아요. 조금씩 좋아질 거예요' : '😌 안정적인 상태를 유지하고 있어요'}
         </Text>
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   date: {
   },
@@ -177,13 +177,13 @@ const styles = StyleSheet.create({
   comparison: {
   },
   comparisonTitle: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   comparisonStats: {
     flexDirection: 'row',
   },
   improvement: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   errorContainer: {
     alignItems: 'center',

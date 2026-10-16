@@ -26,7 +26,7 @@ export const LiveComfortPreview: React.FC = React.memo(() => {
       setTotalUsers(total);
     } catch (err) {
       setError('세션을 불러오는데 실패했습니다');
-      if (__DEV__) console.error('세션 로드 실패:', err);
+      console.error('세션 로드 실패:', err);
       setActiveSessions([]);
     }
   }, []);
@@ -41,14 +41,14 @@ export const LiveComfortPreview: React.FC = React.memo(() => {
     return (
       <Card variant="highlight" style={{ padding: 16 * scale, marginBottom: 12 * scale }} accessible={true} accessibilityLabel="실시간 공감 세션">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadSessions}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -72,20 +72,20 @@ export const LiveComfortPreview: React.FC = React.memo(() => {
           }]} />
           <Text style={[styles.liveText, {
             color: activeSessions.length > 0 ? '#ff4444' : '#999',
-            fontSize: FONT_SIZES.caption * scale,
-            fontFamily: 'Pretendard-Bold'
+            fontSize: FONT_SIZES.caption,
+            fontWeight: '700'
           }]}>
             {activeSessions.length > 0 ? 'LIVE' : 'READY'}
           </Text>
         </View>
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, flex: 1, marginLeft: 8 * scale }]}>
+        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4, flex: 1, marginLeft: 8 * scale }]}>
           실시간 공감 세션
         </Text>
       </View>
 
       <Text style={[styles.description, {
         color: colors.textSecondary,
-        fontSize: FONT_SIZES.bodySmall * scale,
+        fontSize: FONT_SIZES.bodySmall,
         marginTop: 8 * scale
       }]}>
         {activeSessions.length > 0
@@ -110,20 +110,20 @@ export const LiveComfortPreview: React.FC = React.memo(() => {
               accessible={true}
               accessibilityLabel={`${session.emotion_tag} 세션, ${session.current_users}명 참여`}
             >
-              <Text style={{ fontSize: FONT_SIZES.bodySmall * scale }}>
+              <Text style={{ fontSize: FONT_SIZES.bodySmall }}>
                 {session.emotion_tag === '슬픔' ? '😢' :
                  session.emotion_tag === '우울' ? '😞' :
                  session.emotion_tag === '불안' ? '😰' : '💙'}
               </Text>
               <Text style={[styles.sessionTagText, {
                 color: colors.text,
-                fontSize: FONT_SIZES.small * scale
+                fontSize: FONT_SIZES.small
               }]}>
                 {session.emotion_tag}
               </Text>
               <Text style={[styles.sessionUsers, {
                 color: colors.textSecondary,
-                fontSize: FONT_SIZES.tiny * scale
+                fontSize: FONT_SIZES.tiny
               }]}>
                 {session.current_users}
               </Text>
@@ -146,9 +146,9 @@ export const LiveComfortPreview: React.FC = React.memo(() => {
         onPress={() => {
           if (activeSessions.length > 0) {
             // navigation.navigate('LiveComfort');
-            if (__DEV__) console.log('라이브 공감 세션 화면으로 이동');
+            console.log('라이브 공감 세션 화면으로 이동');
           } else {
-            if (__DEV__) console.log('진행 중인 세션이 없습니다');
+            console.log('진행 중인 세션이 없습니다');
           }
         }}
         disabled={activeSessions.length === 0}
@@ -158,13 +158,13 @@ export const LiveComfortPreview: React.FC = React.memo(() => {
       >
         <Text style={[styles.joinButtonText, {
           color: activeSessions.length > 0 ? '#fff' : colors.textSecondary,
-          fontSize: FONT_SIZES.bodySmall * scale,
-          fontFamily: 'Pretendard-SemiBold'
+          fontSize: FONT_SIZES.bodySmall,
+          fontWeight: '600'
         }]}>
           {activeSessions.length > 0 ? '세션 참여하기' : '준비 중...'}
         </Text>
         {activeSessions.length > 0 && (
-          <Text style={{ color: '#fff', fontSize: FONT_SIZES.bodyLarge * scale }}>→</Text>
+          <Text style={{ color: '#fff', fontSize: FONT_SIZES.bodyLarge }}>→</Text>
         )}
       </TouchableOpacity>
     </Card>
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   liveDot: {},
   liveText: {},
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   description: {},
   sessionsPreview: {
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   },
   sessionTag: {},
   sessionTagText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   sessionUsers: {},
   joinButton: {},

@@ -22,7 +22,7 @@ export const HallOfFame: React.FC = React.memo(() => {
       setRankings(rankArray.slice(0, 10));
     } catch (err) {
       setError('명예의 전당을 불러오는데 실패했습니다');
-      if (__DEV__) console.error('명예의 전당 로드 실패:', err);
+      console.error('명예의 전당 로드 실패:', err);
       setRankings([]);
     }
   }, [period]);
@@ -48,14 +48,14 @@ export const HallOfFame: React.FC = React.memo(() => {
     return (
       <Card variant="highlight" style={{ padding: 16 * scale, marginBottom: 12 * scale }} accessible={true} accessibilityLabel="위로 명예의 전당">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadRankings}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -70,10 +70,10 @@ export const HallOfFame: React.FC = React.memo(() => {
       accessibilityLabel="위로 명예의 전당"
     >
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
+        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 }]}>
           🏆 위로 명예의 전당
         </Text>
-        <Text style={[styles.description, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale, marginTop: 4 * scale }]}>
+        <Text style={[styles.description, { color: colors.textSecondary, fontSize: FONT_SIZES.caption, marginTop: 4 * scale }]}>
           가장 많은 위로를 받은 익명 사용자
         </Text>
       </View>
@@ -102,7 +102,7 @@ export const HallOfFame: React.FC = React.memo(() => {
               styles.periodText,
               {
                 color: period === p.key ? '#fff' : colors.textSecondary,
-                fontSize: FONT_SIZES.caption * scale
+                fontSize: FONT_SIZES.caption
               }
             ]}>
               {p.label}
@@ -113,7 +113,7 @@ export const HallOfFame: React.FC = React.memo(() => {
 
       <View style={{ marginTop: 14 * scale }}>
         {rankings.length === 0 ? (
-          <Text style={[styles.emptyText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={[styles.emptyText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
             아직 랭킹 데이터가 없습니다
           </Text>
         ) : (
@@ -131,23 +131,23 @@ export const HallOfFame: React.FC = React.memo(() => {
               accessible={true}
               accessibilityLabel={`${getRankBadge(item.rank_position)} 익명${item.user_id}, 공감력 ${item.impact_score}점, 응원 ${item.comfort_count}개`}
             >
-              <Text style={[styles.rankBadge, { fontSize: FONT_SIZES.bodySmall * scale, minWidth: 40 * scale }]}>
+              <Text style={[styles.rankBadge, { fontSize: FONT_SIZES.bodySmall, minWidth: 40 * scale }]}>
                 {getRankBadge(item.rank_position)}
               </Text>
               <Text style={[styles.rankName, {
                 color: colors.text,
-                fontSize: FONT_SIZES.bodySmall * scale,
+                fontSize: FONT_SIZES.bodySmall,
                 flex: 1
               }]}>
                 익명{item.user_id}
               </Text>
               <View style={styles.rankStats}>
-                <Text style={[styles.rankStat, { color: colors.textSecondary, fontSize: FONT_SIZES.small * scale }]}>
+                <Text style={[styles.rankStat, { color: colors.textSecondary, fontSize: FONT_SIZES.small }]}>
                   {item.impact_score}
                 </Text>
                 <Text style={[styles.rankStat, {
                   color: colors.textSecondary,
-                  fontSize: FONT_SIZES.small * scale,
+                  fontSize: FONT_SIZES.small,
                   marginLeft: 8 * scale
                 }]}>
                   {item.comfort_count}
@@ -169,14 +169,14 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   periodSelector: {
     flexDirection: 'row',
   },
   periodButton: {},
   periodText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   emptyText: {
     textAlign: 'center',
@@ -187,10 +187,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rankBadge: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   rankName: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   rankStats: {
     flexDirection: 'row',

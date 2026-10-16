@@ -5,10 +5,10 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   FlatList,
   RefreshControl,
+  Alert,
   ActivityIndicator,
   Platform,
   Animated,
@@ -17,8 +17,8 @@ import {
   ScrollView,
   Image,
   Pressable,
-  Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import challengeService from '../services/api/challengeService';
@@ -28,7 +28,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../constants/designSystem';
 import { getScale } from '../utils/responsive';
-import BottomSheetAlert from '../components/common/BottomSheetAlert';
 
 // 반응형 크기 계산 (FHD+ 1080x2340 기준 - DP 단위)
 const BASE_WIDTH = 360;
@@ -89,7 +88,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
 
   // 사용자 정보 로깅
   if (__DEV__) {
-    if (__DEV__) console.log("🔍 사용자 정보 확인:", {
+    console.log("🔍 사용자 정보 확인:", {
       user: user,
       userId: user?.user_id,
       userType: typeof user?.user_id,
@@ -114,16 +113,6 @@ const MyChallengesScreenFixed = ({ route }: any) => {
   // 옵션 모달 상태
   const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
-
-  // Alert 상태
-  const [errorAlert, setErrorAlert] = useState<{ visible: boolean; title: string; message: string }>({ visible: false, title: '', message: '' });
-  const [confirmAlert, setConfirmAlert] = useState<{ visible: boolean; title: string; message: string; onConfirm: () => void }>({
-    visible: false,
-    title: '',
-    message: '',
-    onConfirm: () => {}
-  });
-  const [successAlert, setSuccessAlert] = useState<{ visible: boolean; message: string }>({ visible: false, message: '' });
 
   // 캐싱 전략 - 트래픽 최적화 (30초 이내 재방문 시 캐시 사용)
   const lastFetchTime = useRef<number>(0);
@@ -196,8 +185,6 @@ const MyChallengesScreenFixed = ({ route }: any) => {
     try {
       setIsLoading(true);
 
-      if (__DEV__) console.log('🔄 챌린지 로드 시작 - 사용자 ID:', user?.user_id);
-
       // 두 탭의 데이터를 동시에 로드
       const [createdResponse, participatingResponse] = await Promise.all([
         challengeService.getMyChallenges({
@@ -210,15 +197,6 @@ const MyChallengesScreenFixed = ({ route }: any) => {
         })
       ]);
 
-      // 생성한 챌린지 응답 전체 로그
-      if (__DEV__) {
-        console.log('📊 생성한 챌린지 응답:', {
-          status: createdResponse?.status,
-          hasData: !!createdResponse?.data,
-          dataKeys: createdResponse?.data ? Object.keys(createdResponse.data) : []
-        });
-      }
-
       // 생성한 챌린지 데이터 처리
       if (createdResponse.status === 200 || createdResponse.status === 201) {
         let createdData = [];
@@ -228,25 +206,20 @@ const MyChallengesScreenFixed = ({ route }: any) => {
           createdData = createdResponse.data;
         }
 
-        if (__DEV__) {
-          console.log('📊 생성한 챌린지 데이터:', createdData.length, '개');
-          if (createdData.length > 0) {
+        if (__DEV__) console.log('📊 생성한 챌린지 데이터:', createdData.length, '개');
+        if (createdData.length > 0) {
+          if (__DEV__) {
             console.log('📊 첫 번째 챌린지:', {
               challenge_id: createdData[0].challenge_id,
               title: createdData[0].title,
               status: createdData[0].status,
-              creator_id: createdData[0].creator_id,
               participant_count: createdData[0].participant_count,
               end_date: createdData[0].end_date
             });
-          } else {
-            console.warn('⚠️ 생성한 챌린지 없음 - 백엔드 응답 전체:', JSON.stringify(createdResponse.data, null, 2));
           }
         }
 
         setCreatedChallenges(createdData);
-      } else {
-        if (__DEV__) console.warn('⚠️ 생성한 챌린지 응답 상태 이상:', createdResponse?.status);
       }
 
       // 참여 중인 챌린지 데이터 처리
@@ -264,7 +237,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
         if (__DEV__) console.log('📊 참여 중인 챌린지 데이터 개수:', participatingData.length);
         if (participatingData.length > 0) {
           if (__DEV__) {
-            if (__DEV__) console.log('📊 첫 번째 챌린지 샘플:', {
+            console.log('📊 첫 번째 챌린지 샘플:', {
               challenge_id: participatingData[0].challenge_id,
               title: participatingData[0].title,
               created_at: participatingData[0].created_at,
@@ -282,8 +255,8 @@ const MyChallengesScreenFixed = ({ route }: any) => {
       lastFetchTime.current = Date.now();
       if (__DEV__) console.log('✅ 데이터 로드 완료, 캐시 갱신됨');
     } catch (error) {
-      if (__DEV__) console.error('챌린지 로드 오류:', error);
-      setErrorAlert({ visible: true, title: '오류', message: '챌린지를 불러오는 중 문제가 발생했습니다.' });
+      console.error('챌린지 로드 오류:', error);
+      Alert.alert('오류', '챌린지를 불러오는 중 문제가 발생했습니다.');
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -319,7 +292,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
 
       // 유효하지 않은 날짜 체크
       if (isNaN(date.getTime())) {
-        if (__DEV__) console.warn('Invalid date string:', dateString);
+        console.warn('Invalid date string:', dateString);
         return '날짜 확인 중';
       }
 
@@ -339,7 +312,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
       if (days < 365) return `${Math.floor(days / 30)}개월 전`;
       return `${Math.floor(days / 365)}년 전`;
     } catch (error) {
-      if (__DEV__) console.error('날짜 포맷팅 오류:', error, 'Input:', dateString);
+      console.error('날짜 포맷팅 오류:', error, 'Input:', dateString);
       return '날짜 오류';
     }
   };
@@ -367,7 +340,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
 
       // 유효하지 않은 날짜 체크
       if (isNaN(end.getTime())) {
-        if (__DEV__) console.warn('Invalid end date string:', endDate);
+        console.warn('Invalid end date string:', endDate);
         return '날짜 확인 중';
       }
 
@@ -387,7 +360,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
       if (days < -1) return '종료됨';
       return '종료됨';
     } catch (error) {
-      if (__DEV__) console.error('D-day 계산 오류:', error, 'Input:', endDate);
+      console.error('D-day 계산 오류:', error, 'Input:', endDate);
       return '계산 오류';
     }
   };
@@ -411,36 +384,38 @@ const MyChallengesScreenFixed = ({ route }: any) => {
     try {
       if (isCurrentlyParticipating) {
         // 나가기 확인 다이얼로그
-        setConfirmAlert({
-          visible: true,
-          title: '챌린지 나가기',
-          message: '정말로 이 챌린지에서 나가시겠습니까?\n참여 기록이 사라질 수 있습니다.',
-          onConfirm: async () => {
-            try {
-              const response = await challengeService.leaveChallenge(challengeId);
+        Alert.alert(
+          '챌린지 나가기',
+          '정말로 이 챌린지에서 나가시겠습니까?\n참여 기록이 사라질 수 있습니다.',
+          [
+            { text: '취소', style: 'cancel' },
+            {
+              text: '나가기',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  const response = await challengeService.leaveChallenge(challengeId);
 
-              if (response?.status === 200 || response?.status === 204) {
-                // 로컬 상태 업데이트
-                setParticipatingChallenges(prev =>
-                  prev.filter(challenge => challenge.challenge_id !== challengeId)
-                );
+                  if (response?.status === 200 || response?.status === 204) {
+                    // 로컬 상태 업데이트
+                    setParticipatingChallenges(prev =>
+                      prev.filter(challenge => challenge.challenge_id !== challengeId)
+                    );
 
-                setSuccessAlert({ visible: true, message: '챌린지에서 나갔습니다.' });
+                    Alert.alert('성공', '챌린지에서 나갔습니다.');
+                  }
+                } catch (leaveError: any) {
+                  console.error('❌ 챌린지 나가기 실패:', leaveError);
+                  Alert.alert('오류', leaveError.response?.data?.message || '챌린지 나가기에 실패했습니다.');
+                }
               }
-            } catch (leaveError: unknown) {
-              if (__DEV__) console.error('❌ 챌린지 나가기 실패:', leaveError);
-              setErrorAlert({
-                visible: true,
-                title: '오류',
-                message: (leaveError as any).response?.data?.message || '챌린지 나가기에 실패했습니다.'
-              });
             }
-          }
-        });
+          ]
+        );
       }
-    } catch (error: unknown) {
-      if (__DEV__) console.error('❌ 챌린지 액션 실패:', error);
-      setErrorAlert({ visible: true, title: '오류', message: '요청 처리에 실패했습니다.' });
+    } catch (error: any) {
+      console.error('❌ 챌린지 액션 실패:', error);
+      Alert.alert('오류', '요청 처리에 실패했습니다.');
     }
   }, []);
 
@@ -509,8 +484,8 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                     }
                   ]
                 );
-              } catch (error: unknown) {
-                if (__DEV__) console.error('❌ 챌린지 삭제 실패:', error);
+              } catch (error: any) {
+                console.error('❌ 챌린지 삭제 실패:', error);
                 Alert.alert('오류', '챌린지 삭제에 실패했습니다.');
               }
             }
@@ -518,7 +493,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
         ]
       );
     } catch (error) {
-      if (__DEV__) console.error('❌ 챌린지 삭제 오류:', error);
+      console.error('❌ 챌린지 삭제 오류:', error);
     }
   }, [loadChallenges]);
 
@@ -612,7 +587,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
         [{ text: '확인' }]
       );
     } catch (error) {
-      if (__DEV__) console.error('신고 처리 오류:', error);
+      console.error('신고 처리 오류:', error);
       Alert.alert('오류', '신고 처리 중 문제가 발생했습니다.');
     }
   }, [selectedChallenge]);
@@ -621,7 +596,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
   const handleMoreOptions = useCallback((challenge: Challenge) => {
     if (__DEV__) console.log('옵션 모달 열기:', challenge.challenge_id, challenge.title);
     if (__DEV__) {
-      if (__DEV__) console.log('🔍 생성자 확인 (하이브리드 방식):', {
+      console.log('🔍 생성자 확인 (하이브리드 방식):', {
         currentUserId: user?.user_id,
         creatorUserId: challenge.creator?.user_id,
         creatorId: challenge.creator_id
@@ -933,30 +908,14 @@ const MyChallengesScreenFixed = ({ route }: any) => {
     );
   };
 
-  // 스크롤 시 헤더 숨김 애니메이션
-  const headerTranslateY = scrollY.interpolate({
-    inputRange: [0, 80],
-    outputRange: [0, -100],
-    extrapolate: 'clamp',
-  });
-
-  const headerOpacity = scrollY.interpolate({
-    inputRange: [0, 60, 80],
-    outputRange: [1, 0.5, 0],
-    extrapolate: 'clamp',
-  });
-
   // 헤더 컴포넌트
   const renderHeader = () => (
     <Animated.View
       style={[
         styles.header,
         {
-          opacity: Animated.multiply(fadeAnim, headerOpacity),
-          transform: [
-            { translateY: slideAnim },
-            { translateY: headerTranslateY }
-          ]
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }]
         }
       ]}
     >
@@ -1053,7 +1012,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
 
       {/* 컴팩트 통계 */}
       <View style={styles.compactStats}>
-        <Text style={[styles.compactStatText, { color: isDark ? 'rgba(255, 255, 255, 0.6)' : COLORS.textSecondary }]}>
+        <Text style={[styles.compactStatText, { color: isDark ? theme.colors.text.primarySecondary : COLORS.textSecondary }]}>
           생성 {createdChallenges.length} · 참여 {participatingChallenges.length}
         </Text>
       </View>
@@ -1205,14 +1164,14 @@ const MyChallengesScreenFixed = ({ route }: any) => {
             <MaterialCommunityIcons
               name={activeTab === 'created' ? 'crown-outline' : 'heart-multiple-outline'}
               size={60}
-              color={isDark ? 'rgba(255, 255, 255, 0.4)' : COLORS.textTertiary}
+              color={isDark ? theme.colors.text.primarySecondary : COLORS.textTertiary}
             />
             <Text style={[styles.emptyTitle, { color: isDark ? theme.colors.text.primary : COLORS.text }]}>
               {activeTab === 'created'
                 ? '아직 만든 챌린지가 없어요'
                 : '참여 중인 챌린지가 없어요'}
             </Text>
-            <Text style={[styles.emptySubtitle, { color: isDark ? 'rgba(255, 255, 255, 0.7)' : COLORS.textSecondary }]}>
+            <Text style={[styles.emptySubtitle, { color: isDark ? theme.colors.text.primarySecondary : COLORS.textSecondary }]}>
               {activeTab === 'created'
                 ? '첫 번째 감정 챌린지를 만들어보세요'
                 : '흥미로운 챌린지에 참여해보세요'}
@@ -1564,61 +1523,6 @@ const MyChallengesScreenFixed = ({ route }: any) => {
           </View>
         </Pressable>
       </Modal>
-
-      {/* 오류 Alert */}
-      <BottomSheetAlert
-        visible={errorAlert.visible}
-        title={errorAlert.title}
-        message={errorAlert.message}
-        buttons={[
-          {
-            text: '확인',
-            style: 'default',
-            onPress: () => setErrorAlert({ visible: false, title: '', message: '' }),
-          },
-        ]}
-        onClose={() => setErrorAlert({ visible: false, title: '', message: '' })}
-      />
-
-      {/* 확인 Alert */}
-      <BottomSheetAlert
-        visible={confirmAlert.visible}
-        title={confirmAlert.title}
-        message={confirmAlert.message}
-        buttons={[
-          {
-            text: '취소',
-            style: 'cancel',
-            onPress: () => setConfirmAlert({ visible: false, title: '', message: '', onConfirm: () => {} }),
-          },
-          {
-            text: '나가기',
-            style: 'destructive',
-            onPress: () => {
-              confirmAlert.onConfirm();
-              setConfirmAlert({ visible: false, title: '', message: '', onConfirm: () => {} });
-            },
-          },
-        ]}
-        onClose={() => setConfirmAlert({ visible: false, title: '', message: '', onConfirm: () => {} })}
-      />
-
-      {/* 성공 Alert */}
-      <BottomSheetAlert
-        visible={successAlert.visible}
-        title="성공"
-        message={successAlert.message}
-        buttons={[
-          {
-            text: '확인',
-            style: 'default',
-            onPress: () => setSuccessAlert({ visible: false, message: '' }),
-          },
-        ]}
-        onClose={() => setSuccessAlert({ visible: false, message: '' })}
-        icon="checkmark-circle"
-        iconColor="#10B981"
-      />
       </SafeAreaView>
     </View>
   );
@@ -1636,7 +1540,7 @@ const styles = StyleSheet.create({
    loadingText: {
     marginTop: 12,
     fontSize: scaleFontSize(15),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
 
   // 헤더
@@ -1659,7 +1563,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: scaleFontSize(18),
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     letterSpacing: -0.2,
     lineHeight: 24,
   },
@@ -1772,7 +1676,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     letterSpacing: 0,
     lineHeight: 18,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
 
   // 컴팩트 통계
@@ -1783,7 +1687,7 @@ const styles = StyleSheet.create({
   },
   compactStatText: {
     fontSize: scaleFontSize(13),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
 
   // 필터
@@ -1803,7 +1707,7 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: scaleFontSize(13),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginLeft: 4,
   },
 
@@ -1866,7 +1770,7 @@ const styles = StyleSheet.create({
   harmonyStatusText: {
     color: 'white',
     fontSize: scaleFontSize(13),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: 0,
   },
   harmonyOptionButton: {
@@ -1886,7 +1790,7 @@ const styles = StyleSheet.create({
   },
   harmonyCardTitle: {
     fontSize: scaleFontSize(15),
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     lineHeight: 20,
     marginBottom: 5,
     letterSpacing: -0.1,
@@ -1915,7 +1819,7 @@ const styles = StyleSheet.create({
   },
   compactSocialText: {
     fontSize: scaleFontSize(13),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: 0,
     lineHeight: 16,
   },
@@ -1927,14 +1831,14 @@ const styles = StyleSheet.create({
   },
   compactInfoText: {
     fontSize: scaleFontSize(13),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: 0,
     lineHeight: 16,
   },
   // 컴팩트 날짜 텍스트
   compactDateText: {
     fontSize: scaleFontSize(13),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: -0.1,
     lineHeight: 16,
   },
@@ -1960,18 +1864,18 @@ const styles = StyleSheet.create({
   },
   metaDivider: {
     fontSize: scaleFontSize(14),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginHorizontal: 2,         // 타이트한 간격
     opacity: 0.5,
   },
   participantText: {
     fontSize: scaleFontSize(15),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: 0,
   },
   harmonyDateText: {
     fontSize: scaleFontSize(15),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: 0,
   },
   progressSection: {
@@ -1994,7 +1898,7 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: scaleFontSize(13),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     textAlign: 'right',
     letterSpacing: 0,
   },
@@ -2015,7 +1919,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: scaleFontSize(18),
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     textAlign: 'center',
     marginTop: 16,
     marginBottom: 8,
@@ -2044,7 +1948,7 @@ const styles = StyleSheet.create({
   emptyActionText: {
     color: 'white',
     fontSize: scaleFontSize(14),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginLeft: 6,
   },
 
@@ -2069,7 +1973,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: scaleFontSize(18),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: 0,
     lineHeight: 24,
   },
@@ -2086,7 +1990,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: scaleFontSize(16),
     marginLeft: 10,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     letterSpacing: 0,
     lineHeight: 21,
   },
@@ -2101,7 +2005,7 @@ const styles = StyleSheet.create({
   searchApplyText: {
     color: 'white',
     fontSize: scaleFontSize(18),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
 
   // 옵션 모달 스타일 (하단에서 올라오는 형태 - 개선된 버전)
@@ -2139,19 +2043,19 @@ const styles = StyleSheet.create({
   },
   optionsModalTitle: {
     fontSize: scaleFontSize(18),
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     marginBottom: 6,
     lineHeight: 24,
     letterSpacing: -0.2,
   },
   optionsModalSubtitle: {
     fontSize: scaleFontSize(15),
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     opacity: 0.8,
   },
   optionTitle: {
     fontSize: scaleFontSize(16),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 2,
     lineHeight: 21,
     letterSpacing: 0,
@@ -2187,14 +2091,14 @@ const styles = StyleSheet.create({
   },
   optionTitle: {
     fontSize: scaleFontSize(16),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 2,
     lineHeight: 20,
     letterSpacing: 0,
   },
   optionSubtitle: {
     fontSize: scaleFontSize(14),
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     lineHeight: 18,
     letterSpacing: 0,
     opacity: 0.85,

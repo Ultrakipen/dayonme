@@ -1,18 +1,14 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { useModernTheme } from '../../../hooks/useModernTheme';
 import { Card } from '../../../components/common/Card';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
+import reviewService from '../../../services/api/reviewService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TwemojiImage } from '../../../components/common/TwemojiImage';
-import { useReviewData } from '../ReviewDataContext';
-import { EMOTION_AVATARS } from '../../../constants/emotions';
-import { useAuth } from '../../../contexts/AuthContext';
-import emotionService from '../../../services/api/emotionService';
 
 interface MoodOption {
-  id: number;
   emoji: string;
   label: string;
   color: string;
@@ -20,40 +16,31 @@ interface MoodOption {
 
 const STORAGE_KEY = '@mood_pulse_today';
 
-// 핵심 10개 감정 선별 (2줄 x 5개)
-// 1줄: 기쁨, 편안, 설렘, 감동, 우울
-// 2줄: 슬픔, 불안, 화남, 당황, 짜증
-const SELECTED_EMOTION_IDS = [1, 13, 15, 9, 4, 3, 5, 7, 11, 8];
-
-const moods: MoodOption[] = SELECTED_EMOTION_IDS.map(id => {
-  const emotion = EMOTION_AVATARS.find(e => e.id === id)!;
-  return {
-    id: emotion.id,
-    emoji: emotion.emoji,
-    label: emotion.shortName,
-    color: emotion.color,
-  };
-});
+const moods: MoodOption[] = [
+  { emoji: '😊', label: '좋음', color: '#4caf50' },
+  { emoji: '😌', label: '평온', color: '#81c784' },
+  { emoji: '😐', label: '보통', color: '#ffa726' },
+  { emoji: '😔', label: '우울', color: '#ef5350' },
+  { emoji: '😰', label: '불안', color: '#e57373' },
+  { emoji: '🥰', label: '설렘', color: '#f06292' },
+  { emoji: '🤗', label: '감사', color: '#ffb74d' },
+  { emoji: '😢', label: '슬픔', color: '#64b5f6' },
+  { emoji: '😡', label: '화남', color: '#e53935' },
+  { emoji: '😴', label: '피곤', color: '#9575cd' },
+];
 
 export const QuickMoodPulse: React.FC = React.memo(() => {
   const { colors, isDark } = useModernTheme();
   const scale = getScale(360, 0.9, 1.3);
-  const { isAuthenticated } = useAuth();
-
-  // Context에서 실시간 통계 가져오기 (이미 로드됨)
-  const { data } = useReviewData();
-  const globalStats = data.realTimeStats?.activeUsers || 0;
-
   const [selectedMood, setSelectedMood] = useState<number | null>(null);
+  const [globalStats, setGlobalStats] = useState<number>(0);
   const [hasCheckedToday, setHasCheckedToday] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // 오늘 이미 체크했는지 확인 (로컬 + 백엔드)
+  // 오늘 이미 체크했는지 확인 (로컬 저장소)
   useEffect(() => {
     const checkTodayMood = async () => {
       try {
-        // 1. 로컬 캐시 먼저 확인 (즉시 표시)
         const today = new Date().toDateString();
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
         if (stored) {
@@ -61,68 +48,47 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
           if (date === today) {
             setSelectedMood(mood);
             setHasCheckedToday(true);
-            return; // 로컬에 있으면 백엔드 호출 생략
-          }
-        }
-
-        // 2. 로그인 상태면 백엔드에서 오늘 감정 확인
-        if (isAuthenticated) {
-          try {
-            const response = await emotionService.getDailyEmotionCheck();
-            if (response.data?.data?.hasDailyCheck && response.data?.data?.lastCheck) {
-              const emotionId = response.data.data.lastCheck.emotion_id;
-              // emotion_id로 moods 배열에서 index 찾기
-              const moodIndex = moods.findIndex(m => m.id === emotionId);
-              if (moodIndex !== -1) {
-                setSelectedMood(moodIndex);
-                setHasCheckedToday(true);
-                // 로컬에도 캐시
-                await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, mood: moodIndex }));
-              }
-            }
-          } catch (backendErr) {
-            if (__DEV__) console.log('백엔드 감정 체크 실패 (무시):', backendErr);
+            loadGlobalStats();
           }
         }
       } catch (err) {
-        if (__DEV__) console.error('기분 체크 로드 실패:', err);
+        console.error('기분 체크 로드 실패:', err);
       }
     };
     checkTodayMood();
-  }, [isAuthenticated]);
+  }, []);
+
+  // 실시간 통계 로드
+  const loadGlobalStats = useCallback(async () => {
+    try {
+      const response = await reviewService.getRealTimeStats();
+      // API 응답에서 실시간 사용자 수 추출
+      const activeUsers = response.data?.activeUsers || 0;
+      setGlobalStats(activeUsers);
+    } catch (err) {
+      console.error('실시간 통계 로드 실패:', err);
+      // API 실패 시에도 안전하게 처리
+      setGlobalStats(0);
+    }
+  }, []);
 
   const handleMoodSelect = useCallback(async (index: number) => {
-    if (isSaving) return; // 저장 중 중복 클릭 방지
-
     // 같은 감정 클릭 시 취소
     if (selectedMood === index) {
       setSelectedMood(null);
-      setIsSaving(true);
-
+      setGlobalStats(0);
+      // 로컬 저장소에서 삭제
       try {
-        // 로컬 저장소에서 삭제
         await AsyncStorage.removeItem(STORAGE_KEY);
         setHasCheckedToday(false);
-
-        // 백엔드에서도 삭제 (로그인 상태일 때)
-        if (isAuthenticated) {
-          try {
-            await emotionService.deleteTodayEmotions();
-          } catch (backendErr) {
-            if (__DEV__) console.log('백엔드 감정 삭제 실패 (무시):', backendErr);
-          }
-        }
       } catch (err) {
-        if (__DEV__) console.error('기분 취소 실패:', err);
-      } finally {
-        setIsSaving(false);
+        console.error('기분 취소 실패:', err);
       }
       return;
     }
 
     // 다른 감정 선택 또는 새로 선택
     setSelectedMood(index);
-    setIsSaving(true);
 
     // 애니메이션
     Animated.sequence([
@@ -130,49 +96,32 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
       Animated.timing(scaleAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
     ]).start();
 
+    // 로컬 저장 (트래픽 감소)
     try {
       const today = new Date().toDateString();
-      const selectedEmotionId = moods[index].id;
-
-      // 1. 로컬 저장 (즉시 반영)
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ date: today, mood: index }));
       setHasCheckedToday(true);
-
-      // 2. 백엔드 저장 (로그인 상태일 때, 백그라운드)
-      if (isAuthenticated) {
-        try {
-          // 기존 오늘 감정 삭제 후 새로 저장
-          await emotionService.deleteTodayEmotions();
-          await emotionService.recordEmotions({
-            emotion_ids: [selectedEmotionId],
-            note: '빠른 기분 체크',
-            source: 'quick_check'
-          });
-          if (__DEV__) console.log('✅ 백엔드 감정 저장 성공 (quick_check):', moods[index].label);
-        } catch (backendErr) {
-          if (__DEV__) console.log('백엔드 감정 저장 실패 (로컬은 저장됨):', backendErr);
-        }
-      }
     } catch (err) {
-      if (__DEV__) console.error('기분 저장 실패:', err);
-    } finally {
-      setIsSaving(false);
+      console.error('기분 저장 실패:', err);
     }
-  }, [selectedMood, scaleAnim, isAuthenticated, isSaving]);
+
+    // 실시간 통계 로드
+    loadGlobalStats();
+  }, [selectedMood, scaleAnim, loadGlobalStats]);
 
   return (
     <Card accessible={true} accessibilityLabel="빠른 기분 체크">
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TwemojiImage emoji="⚡" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
+          <TwemojiImage emoji="⚡" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
           <Text
-            style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}
+            style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}
             accessibilityRole="header"
           >
             지금 기분은?
           </Text>
         </View>
-        <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+        <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
           {selectedMood !== null
             ? '같은 감정 클릭 시 취소 · 다른 감정 선택 가능'
             : '감정을 선택해보세요'}
@@ -184,9 +133,8 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
           const isSelected = selectedMood === index;
           return (
             <TouchableOpacity
-              key={mood.id}
+              key={index}
               onPress={() => handleMoodSelect(index)}
-              disabled={isSaving}
               style={[
                 styles.moodButton,
                 {
@@ -195,7 +143,6 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
                     : isDark ? colors.border : '#f5f5f5',
                   borderColor: isSelected ? mood.color : 'transparent',
                   borderWidth: isSelected ? 2 : 0,
-                  opacity: isSaving ? 0.6 : 1,
                 }
               ]}
               activeOpacity={0.7}
@@ -210,13 +157,13 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
                   isSelected && { transform: [{ scale: scaleAnim }] }
                 ]}
               >
-                <TwemojiImage emoji={mood.emoji} size={32 * scale} />
+                <TwemojiImage emoji={mood.emoji} size={40 * scale} />
               </Animated.View>
               <Text style={[
                 styles.moodLabel,
                 {
                   color: isSelected ? mood.color : colors.textSecondary,
-                  fontSize: FONT_SIZES.small * scale,
+                  fontSize: FONT_SIZES.caption,
                   fontWeight: isSelected ? '700' : '500'
                 }
               ]}>
@@ -235,11 +182,11 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
             <TwemojiImage emoji="💬" size={FONT_SIZES.body * scale} style={{ marginRight: 6 * scale }} />
-            <Text style={[styles.statsText, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>
-              지금 전 세계 <Text style={{ color: '#2196f3', fontFamily: 'Pretendard-Bold' }}>{globalStats.toLocaleString()}명</Text>이
+            <Text style={[styles.statsText, { color: colors.text, fontSize: FONT_SIZES.body }]}>
+              지금 전 세계 <Text style={{ color: '#2196f3', fontWeight: '700' }}>{globalStats.toLocaleString()}명</Text>이
             </Text>
           </View>
-          <Text style={[styles.statsText, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>
+          <Text style={[styles.statsText, { color: colors.text, fontSize: FONT_SIZES.body }]}>
             함께 감정을 기록하고 있어요
           </Text>
         </View>
@@ -250,30 +197,32 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
 
 const styles = StyleSheet.create({
   header: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 4,
   },
   subtitle: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   moodGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 4,
+    gap: 12,
     marginBottom: 12,
+    overflow: 'visible',
   },
   moodButton: {
-    width: '18.8%', // 5개씩 한 줄에 배치
-    aspectRatio: 0.9,
-    borderRadius: 10,
+    width: '18%',
+    aspectRatio: 0.85,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 2,
-    paddingTop: 8,
-    paddingBottom: 4,
+    padding: 6,
+    paddingTop: 14,
+    paddingBottom: 6,
+    overflow: 'visible',
   },
   moodEmojiContainer: {
     marginBottom: 4,

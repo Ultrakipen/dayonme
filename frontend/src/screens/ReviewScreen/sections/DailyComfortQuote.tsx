@@ -30,7 +30,7 @@ export const DailyComfortQuote: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('위로의 한 줄을 불러오는데 실패했습니다');
-      if (__DEV__) console.error('위로의 한 줄 로드 실패:', err);
+      console.error('위로의 한 줄 로드 실패:', err);
     } finally {
       setLoading(false);
     }
@@ -44,14 +44,14 @@ export const DailyComfortQuote: React.FC = React.memo(() => {
     return (
       <Card accessible={true} accessibilityLabel="오늘의 위로">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadQuote}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -62,8 +62,8 @@ export const DailyComfortQuote: React.FC = React.memo(() => {
     return (
       <Card accessible={true} accessibilityLabel="오늘의 위로 로딩 중">
         <View style={styles.header}>
-          <Text style={{ fontSize: FONT_SIZES.h2 * scale }}>✨</Text>
-          <Text style={[styles.loadingText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={{ fontSize: FONT_SIZES.h2 }}>✨</Text>
+          <Text style={[styles.loadingText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
             로딩 중...
           </Text>
         </View>
@@ -75,10 +75,10 @@ export const DailyComfortQuote: React.FC = React.memo(() => {
     return (
       <Card accessible={true} accessibilityLabel="오늘의 위로">
         <View style={styles.header}>
-          <Text style={{ fontSize: FONT_SIZES.h2 * scale }}>✨</Text>
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>오늘의 위로</Text>
+          <Text style={{ fontSize: FONT_SIZES.h2 }}>✨</Text>
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.body }]}>오늘의 위로</Text>
         </View>
-        <Text style={[styles.emptyText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+        <Text style={[styles.emptyText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
           아직 위로의 글이 없어요
         </Text>
       </Card>
@@ -88,16 +88,16 @@ export const DailyComfortQuote: React.FC = React.memo(() => {
   return (
     <Card accessible={true} accessibilityLabel={`오늘의 위로: ${quote.content}`} accessibilityHint={`좋아요 ${quote.likeCount}개`}>
       <View style={styles.header}>
-        <Text style={{ fontSize: FONT_SIZES.h2 * scale }}>✨</Text>
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>오늘의 위로</Text>
+        <Text style={{ fontSize: FONT_SIZES.h2 }}>✨</Text>
+        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.body }]}>오늘의 위로</Text>
         <View style={styles.statsRow} accessible={true} accessibilityLabel={`좋아요 ${quote.likeCount}개`}>
-          <Text style={{ fontSize: FONT_SIZES.small * scale }}>{quote.icon || '💝'}</Text>
-          <Text style={[styles.likeText, { color: colors.primary, fontSize: FONT_SIZES.tiny * scale }]}>
+          <Text style={{ fontSize: FONT_SIZES.small }}>{quote.icon || '💝'}</Text>
+          <Text style={[styles.likeText, { color: colors.primary, fontSize: FONT_SIZES.tiny }]}>
             {quote.likeCount}
           </Text>
         </View>
       </View>
-      <Text style={[styles.quoteContent, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale, lineHeight: 20 * scale }]} numberOfLines={2}>
+      <Text style={[styles.quoteContent, { color: colors.text, fontSize: FONT_SIZES.bodySmall, lineHeight: 20 * scale }]} numberOfLines={2}>
         "{quote.content}"
       </Text>
     </Card>
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     flex: 1,
   },
   loadingText: {
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   likeText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   errorContainer: {
     alignItems: 'center',

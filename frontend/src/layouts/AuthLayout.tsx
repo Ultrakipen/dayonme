@@ -2,7 +2,7 @@
 import React from 'react';
 import * as ReactNative from 'react-native';
 // @ts-ignore
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
 import LoadingIndicator from '../components/LoadingIndicator';
 
@@ -38,6 +38,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   logoVisible = true,
 }) => {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   
   // Keyboard.dismiss를 안전하게 호출
   const dismissKeyboard = () => {
@@ -46,7 +47,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
         Keyboard.dismiss();
       }
     } catch (error) {
-      if (__DEV__) console.error('키보드 닫기 오류', error);
+      console.error('키보드 닫기 오류', error);
     }
   };
   
@@ -93,7 +94,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   // SafeAreaView 대신 View 사용
   if (imageBackground) {
     return (
-      <View style={styles.container} testID="auth-layout">
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]} testID="auth-layout">
         <StatusBar
           backgroundColor="transparent"
           barStyle="light-content"
@@ -116,7 +117,7 @@ const AuthLayout: React.FC<AuthLayoutProps> = ({
   // SafeAreaView 대신 View 사용
   return (
     <View
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      style={[styles.container, { backgroundColor: theme.colors.background, paddingTop: insets.top, paddingBottom: insets.bottom }]}
       testID="auth-layout"
     >
       <StatusBar

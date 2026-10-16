@@ -41,7 +41,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
       setTotal(response.data.total);
     } catch (err) {
       setError('빛나는 순간을 불러오는데 실패했습니다');
-      if (__DEV__) console.error('빛나는 순간 로드 실패:', err);
+      console.error('빛나는 순간 로드 실패:', err);
     }
   }, []);
 
@@ -60,7 +60,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
       setShowAddModal(false);
       loadMoments();
     } catch (err) {
-      if (__DEV__) console.error('빛나는 순간 추가 실패:', err);
+      console.error('빛나는 순간 추가 실패:', err);
     }
   };
 
@@ -89,7 +89,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
       });
       setAlertVisible(true);
     } catch (err) {
-      if (__DEV__) console.error('빛나는 순간 수정 실패:', err);
+      console.error('빛나는 순간 수정 실패:', err);
       setAlertData({
         title: '수정 실패',
         message: '빛나는 순간 수정에 실패했습니다',
@@ -118,7 +118,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
       });
       setAlertVisible(true);
     } catch (err) {
-      if (__DEV__) console.error('빛나는 순간 삭제 실패:', err);
+      console.error('빛나는 순간 삭제 실패:', err);
       setAlertData({
         title: '삭제 실패',
         message: '빛나는 순간 삭제에 실패했습니다',
@@ -142,7 +142,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
         type: 'success'
       });
       setAlertVisible(true);
-    } catch (err: unknown) {
+    } catch (err: any) {
       if (err.response?.status === 404) {
         setAlertData({
           title: '알림',
@@ -151,7 +151,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
         });
         setAlertVisible(true);
       } else {
-        if (__DEV__) console.error('랜덤 조회 실패:', err);
+        console.error('랜덤 조회 실패:', err);
       }
     }
   };
@@ -160,14 +160,14 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
     return (
       <Card accessible={true} accessibilityLabel="빛나는 순간 섹션">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadMoments}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -177,7 +177,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
   return (
     <>
       <Card accessible={true} accessibilityLabel={`빛나는 순간 ${total}개`} accessibilityHint="작은 행복의 순간들을 모아둔 공간입니다">
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, marginBottom: 16 * scale }]}>{total}개의 빛나는 순간</Text>
+        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3, marginBottom: 16 * scale }]}>{total}개의 빛나는 순간</Text>
 
         {moments.length > 0 ? (
           <>
@@ -197,8 +197,8 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
                     accessible={true}
                     accessibilityLabel={`${moment.emoji} ${moment.content}`}
                   >
-                    <Text style={{ fontSize: FONT_SIZES.h2 * scale }}>{moment.emoji}</Text>
-                    <Text style={[styles.momentText, { color: colors.text, fontSize: FONT_SIZES.body * scale, lineHeight: 22 * scale }]} numberOfLines={1}>
+                    <Text style={{ fontSize: FONT_SIZES.h2 }}>{moment.emoji}</Text>
+                    <Text style={[styles.momentText, { color: colors.text, fontSize: FONT_SIZES.body, lineHeight: 22 * scale }]} numberOfLines={1}>
                       {moment.content}
                     </Text>
                   </View>
@@ -214,7 +214,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
                       accessibilityRole="button"
                       accessibilityLabel="수정"
                     >
-                      <Text style={[styles.actionButtonText, { color: colors.primary, fontSize: FONT_SIZES.small * scale }]}>✏️ 수정</Text>
+                      <Text style={[styles.actionButtonText, { color: colors.primary, fontSize: FONT_SIZES.small }]}>✏️ 수정</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.actionButton, {
@@ -227,7 +227,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
                       accessibilityRole="button"
                       accessibilityLabel="삭제"
                     >
-                      <Text style={[styles.actionButtonText, { color: '#ef5350', fontSize: FONT_SIZES.small * scale }]}>🗑️ 삭제</Text>
+                      <Text style={[styles.actionButtonText, { color: '#ef5350', fontSize: FONT_SIZES.small }]}>🗑️ 삭제</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -242,7 +242,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
                 accessibilityRole="button"
                 accessibilityHint="새로운 빛나는 순간을 기록합니다"
               >
-                <Text style={[styles.buttonText, { fontSize: FONT_SIZES.body * scale }]}>💫 모으기</Text>
+                <Text style={[styles.buttonText, { fontSize: FONT_SIZES.body }]}>💫 모으기</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, { backgroundColor: colors.secondary, padding: 12 * scale, borderRadius: 12 * scale }]}
@@ -251,7 +251,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
                 accessibilityRole="button"
                 accessibilityHint="과거의 빛나는 순간을 랜덤으로 확인합니다"
               >
-                <Text style={[styles.buttonText, { fontSize: FONT_SIZES.body * scale }]}>✨ 다시 빛나기</Text>
+                <Text style={[styles.buttonText, { fontSize: FONT_SIZES.body }]}>✨ 다시 빛나기</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -262,7 +262,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
             accessibilityRole="button"
             accessibilityLabel="첫 빛나는 순간 기록하기"
           >
-            <Text style={[styles.emptyText, { fontSize: FONT_SIZES.body * scale }]}>첫 빛나는 순간을 모아보세요 ✨</Text>
+            <Text style={[styles.emptyText, { fontSize: FONT_SIZES.body }]}>첫 빛나는 순간을 모아보세요 ✨</Text>
           </TouchableOpacity>
         )}
       </Card>
@@ -270,7 +270,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
       <Modal visible={showAddModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card, borderRadius: 20 * scale, padding: 20 * scale }]}>
-            <Text style={[styles.modalTitle, { color: colors.text, fontSize: FONT_SIZES.h2 * scale, marginBottom: 16 * scale }]}>✨ 빛나는 순간 모으기</Text>
+            <Text style={[styles.modalTitle, { color: colors.text, fontSize: FONT_SIZES.h2, marginBottom: 16 * scale }]}>✨ 빛나는 순간 모으기</Text>
 
             <View style={[styles.emojiRow, { gap: 8 * scale, marginBottom: 16 * scale }]}>
               {emojis.map((emoji) => (
@@ -297,7 +297,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
                 color: colors.text,
                 borderRadius: 12 * scale,
                 padding: 12 * scale,
-                fontSize: FONT_SIZES.body * scale,
+                fontSize: FONT_SIZES.body,
                 minHeight: 100 * scale,
                 marginBottom: 16 * scale
               }]}
@@ -320,7 +320,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
                 accessibilityRole="button"
                 accessibilityLabel="취소"
               >
-                <Text style={[styles.modalButtonText, { color: colors.text, fontSize: FONT_SIZES.bodyLarge * scale }]}>취소</Text>
+                <Text style={[styles.modalButtonText, { color: colors.text, fontSize: FONT_SIZES.bodyLarge }]}>취소</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: colors.primary, padding: 14 * scale, borderRadius: 12 * scale }]}
@@ -328,7 +328,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
                 accessibilityRole="button"
                 accessibilityLabel="저장"
               >
-                <Text style={[styles.modalButtonText, { fontSize: FONT_SIZES.bodyLarge * scale }]}>저장</Text>
+                <Text style={[styles.modalButtonText, { fontSize: FONT_SIZES.bodyLarge }]}>저장</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -339,7 +339,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
       <Modal visible={showEditModal} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card, borderRadius: 20 * scale, padding: 20 * scale }]}>
-            <Text style={[styles.modalTitle, { color: colors.text, fontSize: FONT_SIZES.h2 * scale, marginBottom: 16 * scale }]}>✏️ 빛나는 순간 수정</Text>
+            <Text style={[styles.modalTitle, { color: colors.text, fontSize: FONT_SIZES.h2, marginBottom: 16 * scale }]}>✏️ 빛나는 순간 수정</Text>
 
             <View style={[styles.emojiRow, { gap: 8 * scale, marginBottom: 16 * scale }]}>
               {emojis.map((emoji) => (
@@ -366,7 +366,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
                 color: colors.text,
                 borderRadius: 12 * scale,
                 padding: 12 * scale,
-                fontSize: FONT_SIZES.body * scale,
+                fontSize: FONT_SIZES.body,
                 minHeight: 100 * scale,
                 marginBottom: 16 * scale
               }]}
@@ -390,7 +390,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
                 accessibilityRole="button"
                 accessibilityLabel="취소"
               >
-                <Text style={[styles.modalButtonText, { color: colors.text, fontSize: FONT_SIZES.bodyLarge * scale }]}>취소</Text>
+                <Text style={[styles.modalButtonText, { color: colors.text, fontSize: FONT_SIZES.bodyLarge }]}>취소</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: colors.primary, padding: 14 * scale, borderRadius: 12 * scale }]}
@@ -398,7 +398,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
                 accessibilityRole="button"
                 accessibilityLabel="수정 저장"
               >
-                <Text style={[styles.modalButtonText, { fontSize: FONT_SIZES.bodyLarge * scale }]}>수정</Text>
+                <Text style={[styles.modalButtonText, { fontSize: FONT_SIZES.bodyLarge }]}>수정</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -435,7 +435,7 @@ export const GlimmeringMoments: React.FC = React.memo(() => {
 
 const styles = StyleSheet.create({
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   momentList: {
   },
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
   actionButton: {
   },
   actionButtonText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   buttonRow: {
     flexDirection: 'row',
@@ -466,14 +466,14 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   emptyButton: {
     alignItems: 'center',
   },
   emptyText: {
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   modalOverlay: {
     flex: 1,
@@ -484,7 +484,7 @@ const styles = StyleSheet.create({
   modalContent: {
   },
   modalTitle: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     textAlign: 'center',
   },
   emojiRow: {
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalButtonText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   errorContainer: {
     alignItems: 'center',

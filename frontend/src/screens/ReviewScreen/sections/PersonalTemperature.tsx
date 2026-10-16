@@ -40,7 +40,7 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
       setData(response.data);
     } catch (err) {
       setError('감정 온도를 불러오는데 실패했습니다');
-      if (__DEV__) console.error('개인 감정 온도 로드 실패:', err);
+      console.error('개인 감정 온도 로드 실패:', err);
     } finally {
       setLoading(false);
     }
@@ -86,14 +86,14 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
     return (
       <Card accessible={true} accessibilityLabel="나의 감정 온도계">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadData}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -107,15 +107,15 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
   return (
     <Card accessible={true} accessibilityLabel="나의 감정 온도계" accessibilityHint="나의 감정 상태를 체온으로 표현합니다">
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 * scale }}>
-        <TwemojiImage emoji="🌡️" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
-        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
+        <TwemojiImage emoji="🌡️" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+        <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>
           나의 {periodText} 감정 온도
         </Text>
       </View>
 
       <View style={[styles.tempContainer, { marginBottom: 12 * scale }]}>
         <TwemojiImage emoji={getPersonalTempIcon(data.temperature)} size={48 * scale} style={{ marginBottom: 8 * scale }} />
-        <Text style={[styles.tempText, { color: getPersonalTempColor(data.temperature), fontSize: FONT_SIZES.h1 * scale }]}>
+        <Text style={[styles.tempText, { color: getPersonalTempColor(data.temperature), fontSize: FONT_SIZES.h1 }]}>
           {getPersonalTempText(data.temperature)} {data.temperature.toFixed(1)}°
         </Text>
       </View>
@@ -137,7 +137,7 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
         />
       </View>
 
-      <Text style={[styles.postCount, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, marginBottom: 16 * scale }]}>
+      <Text style={[styles.postCount, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall, marginBottom: 16 * scale }]}>
         {periodText} {data.totalPosts}개의 감정을 기록했어요
       </Text>
 
@@ -152,10 +152,10 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
                 accessibilityLabel={`${emotion.name} 감정, ${emotion.count}회, ${emotion.percentage}퍼센트`}
               >
                 <TwemojiImage emoji={emotion.icon} size={FONT_SIZES.h2 * scale} />
-                <Text style={[styles.emotionName, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>
+                <Text style={[styles.emotionName, { color: colors.text, fontSize: FONT_SIZES.body }]}>
                   {emotion.name}
                 </Text>
-                <Text style={[styles.emotionCount, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+                <Text style={[styles.emotionCount, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
                   {emotion.count}회 ({emotion.percentage}%)
                 </Text>
               </View>
@@ -165,7 +165,7 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
           <View style={[styles.insight, { backgroundColor: colors.surface || colors.background, marginTop: 12 * scale, padding: 12 * scale, borderRadius: 12 * scale }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
               <TwemojiImage emoji="💭" size={FONT_SIZES.bodySmall * scale} style={{ marginRight: 6 * scale }} />
-              <Text style={[styles.insightText, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale, lineHeight: 20 * scale }]}>
+              <Text style={[styles.insightText, { color: colors.text, fontSize: FONT_SIZES.bodySmall, lineHeight: 20 * scale }]}>
                 {data.emotions[0].name}을 가장 많이 느꼈어요
               </Text>
             </View>
@@ -181,7 +181,7 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
         gap: 12 * scale
       }]}>
         <TwemojiImage emoji={predictiveInsight.icon} size={FONT_SIZES.h1 * scale} />
-        <Text style={[styles.predictiveText, { color: colors.text, fontSize: FONT_SIZES.body * scale, lineHeight: 22 * scale }]}>
+        <Text style={[styles.predictiveText, { color: colors.text, fontSize: FONT_SIZES.body, lineHeight: 22 * scale }]}>
           {predictiveInsight.message}
         </Text>
       </View>
@@ -191,13 +191,13 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
 
 const styles = StyleSheet.create({
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   tempContainer: {
     alignItems: 'center',
   },
   tempText: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   progressBar: {
     overflow: 'hidden',
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emotionName: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     flex: 1,
   },
   emotionCount: {
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   },
   predictiveText: {
     flex: 1,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   errorContainer: {
     alignItems: 'center',

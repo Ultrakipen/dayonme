@@ -12,6 +12,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { useModernTheme } from '../../../hooks/useModernTheme';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getScale } from '../../../utils/responsive';
+import { FONT_SIZES } from '../../../constants';
 import emotionService from '../../../services/api/emotionService';
 import { devLog } from '../../../utils/security';
 
@@ -264,7 +265,7 @@ const createStyles = (scale: number, colors: any, isDark: boolean) =>
       alignItems: 'center',
     },
     title: {
-      fontSize: 15 * scale,
+      fontSize: FONT_SIZES.body,
       fontFamily: 'Pretendard-Bold',
       color: colors.text,
       letterSpacing: -0.4,
@@ -291,7 +292,7 @@ const createStyles = (scale: number, colors: any, isDark: boolean) =>
       gap: 8 * scale,
     },
     loadingText: {
-      fontSize: 14 * scale,
+      fontSize: FONT_SIZES.bodySmall,
       color: colors.textSecondary,
     },
     scrollContent: {
@@ -323,14 +324,14 @@ const createStyles = (scale: number, colors: any, isDark: boolean) =>
     },
     dayText: {
       marginTop: 3 * scale,
-      fontSize: 13 * scale,
+      fontSize: FONT_SIZES.caption,
     },
     emptyContainer: {
       paddingVertical: 12 * scale,
     },
     emptyText: {
       textAlign: 'center',
-      fontSize: 14 * scale,
+      fontSize: FONT_SIZES.bodySmall,
       color: colors.textSecondary,
       lineHeight: 22 * scale,
     },

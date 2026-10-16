@@ -46,7 +46,7 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
       });
     } catch (err) {
       setError('위로 메시지를 불러오는데 실패했습니다');
-      if (__DEV__) console.error('위로 메시지 통계 로드 실패:', err);
+      console.error('위로 메시지 통계 로드 실패:', err);
       // 에러 발생 시 빈 데이터 설정
       setData({
         totalCount: 0,
@@ -66,14 +66,14 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
     return (
       <Card accessible={true} accessibilityLabel="익명 위로 메시지 통계">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadStats}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -103,7 +103,7 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
     >
       <Card accessible={true} accessibilityLabel="익명 위로 메시지 통계" accessibilityHint="받은 익명 위로 메시지 현황">
         <View style={[styles.header, { marginBottom: 16 * scale }]}>
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>
             💌 익명의 응원
           </Text>
           {data.unreadCount > 0 && (
@@ -118,7 +118,7 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
               accessible={true}
               accessibilityLabel={`읽지 않은 메시지 ${data.unreadCount}개`}
             >
-              <Text style={[styles.badgeText, { fontSize: FONT_SIZES.small * scale }]}>{data.unreadCount}</Text>
+              <Text style={[styles.badgeText, { fontSize: FONT_SIZES.small }]}>{data.unreadCount}</Text>
             </View>
           )}
         </View>
@@ -134,7 +134,7 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
           <View style={styles.statsTextContainer}>
             <Text style={[styles.statsText, {
               color: colors.text,
-              fontSize: FONT_SIZES.bodyLarge * scale,
+              fontSize: FONT_SIZES.bodyLarge,
               lineHeight: 24 * scale,
               marginBottom: 4 * scale
             }]}>
@@ -142,7 +142,7 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
             </Text>
             <Text style={[styles.statsSubtext, {
               color: colors.textSecondary,
-              fontSize: FONT_SIZES.caption * scale,
+              fontSize: FONT_SIZES.caption,
               lineHeight: 18 * scale
             }]}>
               따뜻한 마음을 전해받았어요
@@ -154,7 +154,7 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
           <View style={[styles.recentMessages, { marginBottom: 16 * scale }]}>
             <Text style={[styles.recentTitle, {
               color: colors.textSecondary,
-              fontSize: FONT_SIZES.caption * scale,
+              fontSize: FONT_SIZES.caption,
               marginBottom: 10 * scale
             }]}>
               최근 받은 메시지
@@ -174,7 +174,7 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
                 <Text
                   style={[styles.messageText, {
                     color: colors.text,
-                    fontSize: FONT_SIZES.bodySmall * scale,
+                    fontSize: FONT_SIZES.bodySmall,
                     lineHeight: 20 * scale
                   }]}
                   numberOfLines={2}
@@ -187,7 +187,7 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
             {data.totalCount > 2 && (
               <Text style={[styles.moreText, {
                 color: colors.primary,
-                fontSize: FONT_SIZES.caption * scale,
+                fontSize: FONT_SIZES.caption,
                 marginTop: 8 * scale
               }]}>
                 +{data.totalCount - 2}개의 메시지 더 보기
@@ -199,7 +199,7 @@ export const EncouragementStats: React.FC<Props> = React.memo(({ onPress }) => {
         <View style={[styles.footer, { borderTopColor: colors.border, paddingTop: 12 * scale }]}>
           <Text style={[styles.footerText, {
             color: colors.textSecondary,
-            fontSize: FONT_SIZES.caption * scale,
+            fontSize: FONT_SIZES.caption,
             lineHeight: 18 * scale
           }]}>
             💡 힘든 시간을 함께 나누고 있어요
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   badge: {
     justifyContent: 'center',
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   mainStats: {
     flexDirection: 'row',
@@ -235,14 +235,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statsText: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   statsSubtext: {
   },
   recentMessages: {
   },
   recentTitle: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   messagePreview: {
   },
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   moreText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     textAlign: 'center',
   },
   footer: {

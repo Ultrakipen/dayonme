@@ -19,7 +19,7 @@ export const SimilarMoment: React.FC = React.memo(() => {
       setData(response.data);
     } catch (err) {
       setError('데이터를 불러오는데 실패했습니다');
-      if (__DEV__) console.error('비슷한 순간 로드 실패:', err);
+      console.error('비슷한 순간 로드 실패:', err);
     }
   }, []);
 
@@ -31,14 +31,14 @@ export const SimilarMoment: React.FC = React.memo(() => {
     return (
       <Card style={{ padding: 14 * scale, marginBottom: 12 * scale }} accessible={true} accessibilityLabel="나와 비슷한 순간">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadData}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -53,14 +53,14 @@ export const SimilarMoment: React.FC = React.memo(() => {
       accessible={true}
       accessibilityLabel={`나와 비슷한 순간: ${data.userCurrentEmotion.name} 감정을 느끼는 사람이 ${data.userCurrentEmotion.matchCount}명 있습니다`}
     >
-      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.bodyLarge * scale, marginBottom: 10 * scale }]}>💭 나와 비슷한 순간</Text>
+      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.bodyLarge, marginBottom: 10 * scale }]}>💭 나와 비슷한 순간</Text>
 
       <View style={[styles.content, { gap: 6 * scale }]}>
-        <Text style={[styles.line1, { color: colors.text, fontSize: FONT_SIZES.body * scale, lineHeight: 22 * scale }]}>
-          지금 <Text style={[styles.emotionText, { color: colors.primary, fontSize: FONT_SIZES.bodyLarge * scale }]}>'{data.userCurrentEmotion.name}'</Text>을 느끼는 분이{' '}
-          <Text style={[styles.countText, { color: colors.primary, fontSize: FONT_SIZES.h2 * scale }]}>{data.userCurrentEmotion.matchCount}명</Text> 있어요
+        <Text style={[styles.line1, { color: colors.text, fontSize: FONT_SIZES.body, lineHeight: 22 * scale }]}>
+          지금 <Text style={[styles.emotionText, { color: colors.primary, fontSize: FONT_SIZES.bodyLarge }]}>'{data.userCurrentEmotion.name}'</Text>을 느끼는 분이{' '}
+          <Text style={[styles.countText, { color: colors.primary, fontSize: FONT_SIZES.h2 }]}>{data.userCurrentEmotion.matchCount}명</Text> 있어요
         </Text>
-        <Text style={[styles.line2, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, lineHeight: 20 * scale }]}>
+        <Text style={[styles.line2, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall, lineHeight: 20 * scale }]}>
           혼자가 아니에요 💙
         </Text>
       </View>
@@ -70,7 +70,7 @@ export const SimilarMoment: React.FC = React.memo(() => {
 
 const styles = StyleSheet.create({
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   content: {
     alignItems: 'center',
@@ -79,10 +79,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   emotionText: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   countText: {
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
   },
   line2: {
     textAlign: 'center',

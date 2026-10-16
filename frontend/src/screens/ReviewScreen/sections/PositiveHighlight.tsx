@@ -77,7 +77,7 @@ export const PositiveHighlight: React.FC = React.memo(() => {
         ])
       ).start();
     } catch (err) {
-      if (__DEV__) console.error('긍정 데이터 로드 실패:', err);
+      console.error('긍정 데이터 로드 실패:', err);
       setError('데이터를 불러올 수 없습니다');
     } finally {
       setLoading(false);
@@ -108,7 +108,7 @@ export const PositiveHighlight: React.FC = React.memo(() => {
           ✨
         </Animated.Text>
         <Text
-          style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}
+          style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}
           accessibilityRole="header"
         >
           당신의 럭키 모먼트
@@ -121,14 +121,14 @@ export const PositiveHighlight: React.FC = React.memo(() => {
         accessible={true}
         accessibilityLabel={`이번 주 긍정 지수 ${positiveData.positiveRatio}퍼센트`}
       >
-        <Text style={[styles.ratioLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale }]}>
+        <Text style={[styles.ratioLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall }]}>
           이번 주 긍정 지수
         </Text>
-        <Text style={[styles.ratioValue, { color: '#4caf50', fontSize: FONT_SIZES.h1 * scale }]}>
+        <Text style={[styles.ratioValue, { color: '#4caf50', fontSize: FONT_SIZES.h1 }]}>
           {positiveData.positiveRatio}%
         </Text>
         {positiveData.positiveRatio > 50 && (
-          <Text style={[styles.encouragement, { color: '#4caf50', fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={[styles.encouragement, { color: '#4caf50', fontSize: FONT_SIZES.caption }]}>
             🍀 행운이 함께하는 한 주!
           </Text>
         )}
@@ -155,10 +155,10 @@ export const PositiveHighlight: React.FC = React.memo(() => {
             accessibilityLabel={`${item.emotion} ${item.count}회`}
           >
             <Text style={styles.emotionEmoji}>{item.emoji}</Text>
-            <Text style={[styles.emotionName, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}>
+            <Text style={[styles.emotionName, { color: colors.text, fontSize: FONT_SIZES.bodySmall }]}>
               {item.emotion}
             </Text>
-            <Text style={[styles.emotionCount, { color: '#ff9800', fontSize: FONT_SIZES.h4 * scale }]}>
+            <Text style={[styles.emotionCount, { color: '#ff9800', fontSize: FONT_SIZES.h4 }]}>
               {item.count}회
             </Text>
           </View>
@@ -172,7 +172,7 @@ export const PositiveHighlight: React.FC = React.memo(() => {
           accessible={true}
           accessibilityLabel={`${positiveData.streak}일 연속 긍정 기록 중`}
         >
-          <Text style={[styles.streakText, { color: '#ffa726', fontSize: FONT_SIZES.body * scale }]}>
+          <Text style={[styles.streakText, { color: '#ffa726', fontSize: FONT_SIZES.body }]}>
             🔥 {positiveData.streak}일 연속 긍정 기록 중!
           </Text>
         </View>
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   ratioContainer: {
     borderRadius: 16,
@@ -204,11 +204,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   ratioValue: {
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     marginBottom: 4,
   },
   encouragement: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   emotionScroll: {
     marginBottom: 12,
@@ -226,11 +226,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   emotionName: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginBottom: 4,
   },
   emotionCount: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   streakBadge: {
     borderRadius: 12,
@@ -238,6 +238,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   streakText: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
 });

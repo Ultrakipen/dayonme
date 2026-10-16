@@ -5,11 +5,11 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface SearchModeProps {
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 15,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     marginLeft: 10,
     paddingVertical: 0,
   },
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   searchButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 17,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 16,
   },
   popularItem: {
@@ -209,11 +209,11 @@ const styles = StyleSheet.create({
   popularRank: {
     width: 28,
     fontSize: 16,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   popularText: {
     fontSize: 15,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   tagsContainer: {
     flexDirection: 'row',
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 14,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
 });
 

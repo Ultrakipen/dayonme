@@ -7,6 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { normalize, normalizeSpace, normalizeIcon, normalizeTouchable } from '../utils/responsive';
 
 type WelcomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -16,6 +17,7 @@ const WelcomeScreen: React.FC = () => {
   const { isDarkMode } = useTheme();
   const { theme, isDark, toggleTheme } = useModernTheme();
   const { isAuthenticated, isLoading } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const colors = useMemo(() => ({
     background: theme.colors.background,
@@ -34,7 +36,7 @@ const WelcomeScreen: React.FC = () => {
   }, [isLoading, isAuthenticated, navigation]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingBottom: insets.bottom }]}>
       <StatusBar
         backgroundColor={colors.background}
         barStyle={isDark ? 'light-content' : 'dark-content'}
@@ -43,7 +45,7 @@ const WelcomeScreen: React.FC = () => {
       {/* 다크모드 토글 버튼 (우측 상단) */}
       <TouchableOpacity
         style={[styles.themeToggle, {
-          top: normalizeSpace(40),
+          top: insets.top + normalizeSpace(8),
           right: normalizeSpace(20),
           minHeight: normalizeTouchable(44),
           minWidth: normalizeTouchable(44),
@@ -63,7 +65,7 @@ const WelcomeScreen: React.FC = () => {
 
       <View style={[styles.content, {
         paddingHorizontal: normalizeSpace(32),
-        paddingTop: normalizeSpace(100),
+        paddingTop: insets.top + normalizeSpace(80),
       }]}>
         <Text
           style={[styles.logo, {
@@ -144,7 +146,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.5,
   },
   subtitle: {
@@ -156,13 +158,13 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   secondaryButton: {
     // paddingVertical는 인라인으로 처리
   },
   secondaryButtonText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
 });
 

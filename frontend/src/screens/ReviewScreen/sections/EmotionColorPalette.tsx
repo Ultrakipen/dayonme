@@ -32,7 +32,7 @@ export const EmotionColorPalette: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('감정 팔레트를 불러오는데 실패했습니다');
-      if (__DEV__) console.log('감정 팔레트 로드 실패');
+      console.log('감정 팔레트 로드 실패');
     } finally {
       setLoading(false);
     }
@@ -46,14 +46,14 @@ export const EmotionColorPalette: React.FC = React.memo(() => {
     return (
       <Card accessible={true} accessibilityLabel="감정 색상 팔레트">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadData}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -66,8 +66,8 @@ export const EmotionColorPalette: React.FC = React.memo(() => {
         <View style={styles.header}>
           <Text style={[styles.icon, { fontSize: 28 * scale }]}>🎨</Text>
           <View style={styles.headerText}>
-            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>감정 색상 팔레트</Text>
-            <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>감정 색상 팔레트</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
               {loading ? '로딩 중...' : '이번 주 기록이 없어요'}
             </Text>
           </View>
@@ -81,8 +81,8 @@ export const EmotionColorPalette: React.FC = React.memo(() => {
       <View style={styles.header}>
         <Text style={[styles.icon, { fontSize: 28 * scale }]}>🎨</Text>
         <View style={styles.headerText}>
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>감정 색상 팔레트</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>감정 색상 팔레트</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
             이번 주 나의 감정 그라데이션
           </Text>
         </View>
@@ -96,7 +96,7 @@ export const EmotionColorPalette: React.FC = React.memo(() => {
             accessible={true}
             accessibilityLabel={`${day.day}요일 감정`}
           >
-            <Text style={[styles.dayLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny * scale }]}>
+            <Text style={[styles.dayLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny }]}>
               {day.day}
             </Text>
             <View style={styles.colorStack}>
@@ -114,7 +114,7 @@ export const EmotionColorPalette: React.FC = React.memo(() => {
                   accessible={true}
                   accessibilityLabel={`${emotion.name} 감정`}
                 >
-                  <Text style={{ fontSize: FONT_SIZES.small * scale }}>{emotion.icon}</Text>
+                  <Text style={{ fontSize: FONT_SIZES.small }}>{emotion.icon}</Text>
                 </View>
               ))}
             </View>
@@ -123,7 +123,7 @@ export const EmotionColorPalette: React.FC = React.memo(() => {
       </View>
 
       <View style={[styles.footer, { backgroundColor: isDark ? '#2A2A2A' : '#F5F5F5' }]}>
-        <Text style={[styles.footerText, { color: colors.textSecondary, fontSize: FONT_SIZES.small * scale }]}>
+        <Text style={[styles.footerText, { color: colors.textSecondary, fontSize: FONT_SIZES.small }]}>
           {palette.length}일간의 감정 기록
         </Text>
       </View>
@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   subtitle: {
     marginTop: 2,
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     marginBottom: 8,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   colorStack: {
     gap: 4,

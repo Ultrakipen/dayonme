@@ -52,7 +52,7 @@ export const RealTimeActivity: React.FC = React.memo(() => {
         }
       }
     } catch (err) {
-      if (__DEV__) console.error('실시간 캐시 로드 실패:', err);
+      console.error('실시간 캐시 로드 실패:', err);
     }
     return null;
   }, []);
@@ -65,7 +65,7 @@ export const RealTimeActivity: React.FC = React.memo(() => {
         timestamp: Date.now()
       }));
     } catch (err) {
-      if (__DEV__) console.error('실시간 캐시 저장 실패:', err);
+      console.error('실시간 캐시 저장 실패:', err);
     }
   }, []);
 
@@ -111,7 +111,7 @@ export const RealTimeActivity: React.FC = React.memo(() => {
         MAX_POLL_INTERVAL
       );
 
-      if (__DEV__) console.error(`실시간 통계 로드 실패 (재시도 ${retryCountRef.current}/${MAX_RETRY_COUNT}):`, err);
+      console.error(`실시간 통계 로드 실패 (재시도 ${retryCountRef.current}/${MAX_RETRY_COUNT}):`, err);
     }
   }, [loadFromCache, saveToCache]);
 
@@ -191,14 +191,14 @@ export const RealTimeActivity: React.FC = React.memo(() => {
     return (
       <Card variant="primary" accessible={true} accessibilityLabel="실시간 활동">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={handleRetry}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -217,12 +217,12 @@ export const RealTimeActivity: React.FC = React.memo(() => {
               { backgroundColor: '#FF4444', transform: [{ scale: pulseAnim }], width: 8 * scale, height: 8 * scale, borderRadius: 4 * scale }
             ]}
           />
-          <Text style={[styles.liveText, { color: colors.text, fontSize: FONT_SIZES.small * scale }]}>LIVE</Text>
+          <Text style={[styles.liveText, { color: colors.text, fontSize: FONT_SIZES.small }]}>LIVE</Text>
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TwemojiImage emoji="💫" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, lineHeight: 24 * scale }]}>
+          <TwemojiImage emoji="💫" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3, lineHeight: 24 * scale }]}>
             지금 이 순간
           </Text>
         </View>
@@ -233,8 +233,8 @@ export const RealTimeActivity: React.FC = React.memo(() => {
               end={data.activeNow}
               style={[styles.statNumber, { color: colors.primary, fontSize: 32 * scale }]}
             />
-            <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, lineHeight: 20 * scale }]}>
-              명이 '<Text style={{ color: colors.primary, fontFamily: 'Pretendard-Bold' }}>{data.topEmotion.name}</Text>' 기록 중
+            <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall, lineHeight: 20 * scale }]}>
+              명이 '<Text style={{ color: colors.primary, fontWeight: '700' }}>{data.topEmotion.name}</Text>' 기록 중
             </Text>
           </View>
         </View>
@@ -254,11 +254,11 @@ const styles = StyleSheet.create({
   liveDot: {
   },
   liveText: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: 1,
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   statsContainer: {
   },
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statNumber: {
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
   },
   statLabel: {
   },

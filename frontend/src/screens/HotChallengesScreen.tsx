@@ -4,7 +4,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   StatusBar,
   FlatList,
   RefreshControl,
@@ -17,6 +16,7 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
@@ -235,7 +235,7 @@ const HotChallengesScreen = () => {
         setHasMoreData(newChallenges.length === 10);
         setCurrentPage(page);
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (__DEV__) console.error('챌린지 로드 에러:', error.message);
       showAlert({
         type: 'error',
@@ -365,7 +365,7 @@ const HotChallengesScreen = () => {
                   cancelText: '',
                 });
               }
-            } catch (leaveError: unknown) {
+            } catch (leaveError: any) {
               if (__DEV__) console.error('챌린지 나가기 에러:', leaveError.message);
               showAlert({
                 type: 'error',
@@ -404,7 +404,7 @@ const HotChallengesScreen = () => {
           });
         }
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (__DEV__) console.error('챌린지 참여 에러:', error.message);
       showAlert({
         type: 'error',
@@ -1011,7 +1011,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: spacing.sm,
     fontSize: fonts.sm,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: -0.2,
     lineHeight: fonts.sm * 1.4,
     ...Platform.select({
@@ -1060,7 +1060,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: fonts.md,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     lineHeight: fonts.md * 1.3,
     letterSpacing: -0.3,
     ...Platform.select({
@@ -1070,7 +1070,7 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     fontSize: fonts.xxs,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     opacity: 0.8,
     letterSpacing: -0.2,
     ...Platform.select({
@@ -1114,7 +1114,7 @@ const styles = StyleSheet.create({
   },
   sortLabel: {
     fontSize: fonts.xxs,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginRight: spacing.xxs,
   },
   sortButton: {
@@ -1127,7 +1127,7 @@ const styles = StyleSheet.create({
   },
   sortButtonText: {
     fontSize: fonts.xxs,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginLeft: 2,
   },
 
@@ -1164,7 +1164,7 @@ const styles = StyleSheet.create({
   unifiedBadgeRank: {
     color: 'white',
     fontSize: fonts.xxs,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginLeft: 2,
     letterSpacing: -0.1,
     ...Platform.select({
@@ -1199,7 +1199,7 @@ const styles = StyleSheet.create({
   },
   trendingText: {
     fontSize: 10,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     color: '#FF6B6B',
     marginLeft: 2,
     letterSpacing: -0.1,
@@ -1214,7 +1214,7 @@ const styles = StyleSheet.create({
   },
   newText: {
     fontSize: 10,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     color: '#34C759',
     letterSpacing: -0.1,
   },
@@ -1245,7 +1245,7 @@ const styles = StyleSheet.create({
   // 상태 텍스트
   statusText: {
     fontSize: 10,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: -0.1,
     ...Platform.select({
       ios: { fontFamily: 'System' },
@@ -1270,7 +1270,7 @@ const styles = StyleSheet.create({
   // 인라인 태그 텍스트
   inlineTagText: {
     fontSize: 10,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: -0.1,
     ...Platform.select({
       ios: { fontFamily: 'System' },
@@ -1281,7 +1281,7 @@ const styles = StyleSheet.create({
   // 제목과 설명 - 컴팩트
   hotChallengeTitle: {
     fontSize: fonts.md,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     lineHeight: fonts.md * 1.4,
     marginBottom: spacing.xxs,
     letterSpacing: -0.3,
@@ -1292,7 +1292,7 @@ const styles = StyleSheet.create({
   },
   hotChallengeDescription: {
     fontSize: fonts.xs,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     lineHeight: fonts.xs * 1.5,
     marginBottom: spacing.xs,
     letterSpacing: -0.2,
@@ -1322,7 +1322,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: fonts.xxs,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginLeft: 2,
     letterSpacing: -0.1,
     ...Platform.select({
@@ -1348,7 +1348,7 @@ const styles = StyleSheet.create({
   },
   participantText: {
     fontSize: fonts.xxs,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     lineHeight: fonts.xxs * 1.3,
     marginLeft: 2,
     letterSpacing: -0.1,
@@ -1378,7 +1378,7 @@ const styles = StyleSheet.create({
   joinButtonText: {
     color: 'white',
     fontSize: fonts.xs,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.1,
     ...Platform.select({
       ios: { fontFamily: 'System' },
@@ -1394,7 +1394,7 @@ const styles = StyleSheet.create({
   loadingMoreText: {
     marginTop: spacing.xxs,
     fontSize: fonts.xs,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: -0.1,
     ...Platform.select({
       ios: { fontFamily: 'System' },
@@ -1438,7 +1438,7 @@ const styles = StyleSheet.create({
   },
   alertTitle: {
     fontSize: fonts.xl,
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     marginBottom: spacing.sm,
     textAlign: 'center',
     letterSpacing: -0.3,
@@ -1449,7 +1449,7 @@ const styles = StyleSheet.create({
   },
   alertMessage: {
     fontSize: fonts.md,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     textAlign: 'center',
     marginBottom: spacing.xl,
     lineHeight: fonts.md * 1.5,
@@ -1487,7 +1487,7 @@ const styles = StyleSheet.create({
   },
   alertButtonText: {
     fontSize: fonts.md,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.2,
     ...Platform.select({
       ios: { fontFamily: 'System' },
@@ -1496,7 +1496,7 @@ const styles = StyleSheet.create({
   },
   alertConfirmText: {
     fontSize: fonts.md,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     color: 'white',
     letterSpacing: -0.2,
     ...Platform.select({

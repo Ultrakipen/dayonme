@@ -5,12 +5,12 @@ import React from 'react';
 import {
   View,
   StyleSheet,
-  SafeAreaView,
   Platform,
   StatusBar,
   StyleProp,
   ViewStyle,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
 import LoadingIndicator from '../components/LoadingIndicator';
 

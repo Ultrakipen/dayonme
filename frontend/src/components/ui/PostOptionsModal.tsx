@@ -31,6 +31,7 @@ interface PostOptionsModalProps {
   onClose: () => void;
 }
 
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const PostOptionsModal: React.FC<PostOptionsModalProps> = ({
   visible,
   isOwner,
@@ -46,6 +47,7 @@ const PostOptionsModal: React.FC<PostOptionsModalProps> = ({
   const navigation = useNavigation<NavigationProp>();
   const { user, isAuthenticated } = useAuth();
   const { theme, isDark } = useModernTheme();
+  const insets = useSafeAreaInsets();
   const slideAnim = useRef(new Animated.Value(300)).current;
   const [loginPromptVisible, setLoginPromptVisible] = useState(false);
 
@@ -123,6 +125,7 @@ const PostOptionsModal: React.FC<PostOptionsModalProps> = ({
           style={[
             styles.bottomSheetContainer,
             {
+              paddingBottom: 16 + insets.bottom,
               transform: [{ translateY: slideAnim }]
             }
           ]}
@@ -268,7 +271,7 @@ const getStyles = (theme: any, isDark: boolean) => {
       fontSize: 15.5,
       color: theme.text.primary,
       marginLeft: 18,
-      fontFamily: 'Pretendard-SemiBold',
+      fontWeight: '600',
       letterSpacing: -0.2,
     },
   });

@@ -44,7 +44,7 @@ export const CommunityTemperature: React.FC<Props> = React.memo(({ period = 'wee
       setData(response.data);
     } catch (err) {
       setError('커뮤니티 온도를 불러오는데 실패했습니다');
-      if (__DEV__) console.error('커뮤니티 온도 로드 실패:', err);
+      console.error('커뮤니티 온도 로드 실패:', err);
     } finally {
       setLoading(false);
     }
@@ -75,14 +75,14 @@ export const CommunityTemperature: React.FC<Props> = React.memo(({ period = 'wee
     return (
       <Card accessible={true} accessibilityLabel="커뮤니티 감정 온도계">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadData}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -93,7 +93,7 @@ export const CommunityTemperature: React.FC<Props> = React.memo(({ period = 'wee
 
   return (
     <Card accessible={true} accessibilityLabel="커뮤니티 감정 온도계" accessibilityHint="현재 커뮤니티의 전체적인 감정 상태를 보여줍니다">
-      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, marginBottom: 16 * scale }]}>
+      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3, marginBottom: 16 * scale }]}>
         🌡️ {periodText} 우리의 감정 온도
       </Text>
 
@@ -101,7 +101,7 @@ export const CommunityTemperature: React.FC<Props> = React.memo(({ period = 'wee
         <Text style={{ fontSize: 48 * scale, marginBottom: 8 * scale }}>
           {getCommunityTempIcon(data.temperature)}
         </Text>
-        <Text style={[styles.tempText, { color: getCommunityTempColor(data.temperature), fontSize: FONT_SIZES.h1 * scale }]}>
+        <Text style={[styles.tempText, { color: getCommunityTempColor(data.temperature), fontSize: FONT_SIZES.h1 }]}>
           {getCommunityTempText(data.temperature)} {data.temperature.toFixed(1)}°
         </Text>
       </View>
@@ -123,7 +123,7 @@ export const CommunityTemperature: React.FC<Props> = React.memo(({ period = 'wee
         />
       </View>
 
-      <Text style={[styles.userCount, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, marginBottom: 16 * scale }]}>
+      <Text style={[styles.userCount, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall, marginBottom: 16 * scale }]}>
         {periodText} {data.totalUsers.toLocaleString()}명이 감정을 기록했어요
       </Text>
 
@@ -135,11 +135,11 @@ export const CommunityTemperature: React.FC<Props> = React.memo(({ period = 'wee
             accessible={true}
             accessibilityLabel={`${emotion.name} 감정, ${emotion.count}명, ${emotion.percentage}퍼센트`}
           >
-            <Text style={{ fontSize: FONT_SIZES.h2 * scale }}>{emotion.icon}</Text>
-            <Text style={[styles.emotionName, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>
+            <Text style={{ fontSize: FONT_SIZES.h2 }}>{emotion.icon}</Text>
+            <Text style={[styles.emotionName, { color: colors.text, fontSize: FONT_SIZES.body }]}>
               {emotion.name}
             </Text>
-            <Text style={[styles.emotionCount, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+            <Text style={[styles.emotionCount, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
               {emotion.count}명 ({emotion.percentage}%)
             </Text>
           </View>
@@ -148,7 +148,7 @@ export const CommunityTemperature: React.FC<Props> = React.memo(({ period = 'wee
 
       {data.userCurrentEmotion && (
         <View style={[styles.userMatch, { backgroundColor: colors.surface || colors.background, marginTop: 12 * scale, padding: 12 * scale, borderRadius: 12 * scale }]}>
-          <Text style={[styles.userMatchText, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale, lineHeight: 20 * scale }]}>
+          <Text style={[styles.userMatchText, { color: colors.text, fontSize: FONT_SIZES.bodySmall, lineHeight: 20 * scale }]}>
             💭 당신과 같은 '{data.userCurrentEmotion.name}'을 느끼는 분이{'\n'}
             {data.userCurrentEmotion.matchCount}명 있어요
           </Text>
@@ -160,13 +160,13 @@ export const CommunityTemperature: React.FC<Props> = React.memo(({ period = 'wee
 
 const styles = StyleSheet.create({
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   tempContainer: {
     alignItems: 'center',
   },
   tempText: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   progressBar: {
     overflow: 'hidden',
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emotionName: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     flex: 1,
   },
   emotionCount: {

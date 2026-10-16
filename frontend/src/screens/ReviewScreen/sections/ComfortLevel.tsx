@@ -19,7 +19,7 @@ export const ComfortLevel: React.FC = React.memo(() => {
       setStats(data);
     } catch (err) {
       setError('위로 통계를 불러오는데 실패했습니다');
-      if (__DEV__) console.error('위로 통계 로드 실패:', err);
+      console.error('위로 통계 로드 실패:', err);
       setStats(null);
     }
   }, []);
@@ -32,14 +32,14 @@ export const ComfortLevel: React.FC = React.memo(() => {
     return (
       <Card variant="warm" style={{ padding: 12 * scale, marginBottom: 10 * scale }} accessible={true} accessibilityLabel="위로 레벨">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadStats}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -62,14 +62,14 @@ export const ComfortLevel: React.FC = React.memo(() => {
           {stats.icon_emoji}
         </Text>
         <View style={styles.levelInfo}>
-          <Text style={[styles.levelName, { color: colors.text, fontSize: FONT_SIZES.bodyLarge * scale }]}>
+          <Text style={[styles.levelName, { color: colors.text, fontSize: FONT_SIZES.bodyLarge }]}>
             {stats.level_name}
           </Text>
-          <Text style={[styles.levelNumber, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={[styles.levelNumber, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
             Lv.{stats.comfort_level}
           </Text>
         </View>
-        <Text style={[styles.expText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale, marginLeft: 'auto' }]}>
+        <Text style={[styles.expText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption, marginLeft: 'auto' }]}>
           {stats.level_exp}/{stats.next_level_exp}
         </Text>
       </View>
@@ -95,29 +95,29 @@ export const ComfortLevel: React.FC = React.memo(() => {
 
       <View style={[styles.statsGrid, { marginTop: 10 * scale }]}>
         <View style={styles.statItem} accessible={true} accessibilityLabel={`응원 ${stats.comfort_given_count}개`}>
-          <Text style={{ fontSize: FONT_SIZES.bodyLarge * scale }}>💬</Text>
-          <Text style={[styles.statValue, { color: colors.text, fontSize: FONT_SIZES.bodyLarge * scale }]}>
+          <Text style={{ fontSize: FONT_SIZES.bodyLarge }}>💬</Text>
+          <Text style={[styles.statValue, { color: colors.text, fontSize: FONT_SIZES.bodyLarge }]}>
             {stats.comfort_given_count}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
             응원
           </Text>
         </View>
         <View style={styles.statItem} accessible={true} accessibilityLabel={`공감력 ${stats.impact_score}점`}>
-          <Text style={{ fontSize: FONT_SIZES.bodyLarge * scale }}>⭐</Text>
-          <Text style={[styles.statValue, { color: colors.text, fontSize: FONT_SIZES.bodyLarge * scale }]}>
+          <Text style={{ fontSize: FONT_SIZES.bodyLarge }}>⭐</Text>
+          <Text style={[styles.statValue, { color: colors.text, fontSize: FONT_SIZES.bodyLarge }]}>
             {stats.impact_score}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
             공감력
           </Text>
         </View>
         <View style={styles.statItem} accessible={true} accessibilityLabel={`연속 ${stats.streak_days}일`}>
-          <Text style={{ fontSize: FONT_SIZES.bodyLarge * scale }}>🔥</Text>
-          <Text style={[styles.statValue, { color: colors.text, fontSize: FONT_SIZES.bodyLarge * scale }]}>
+          <Text style={{ fontSize: FONT_SIZES.bodyLarge }}>🔥</Text>
+          <Text style={[styles.statValue, { color: colors.text, fontSize: FONT_SIZES.bodyLarge }]}>
             {stats.streak_days}
           </Text>
-          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
             연속
           </Text>
         </View>
@@ -138,11 +138,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   levelName: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 2,
   },
   levelNumber: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   expBarContainer: {
     gap: 6,
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statValue: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   statLabel: {},
   nextLevel: {
