@@ -9,7 +9,7 @@ import EmotionLogScreen from '../screens/EmotionLogScreen';
 import MyPostsScreen from '../screens/MyPostsScreen';
 import CreatePostScreen from '../screens/CreatePostScreen';
 import EditPostScreen from '../screens/EditPostScreen'; // 게시물 수정 화면 추가
-import PostDetailRouter from '../screens/PostDetail/PostDetailRouter';
+import PostDetailScreen from '../screens/PostDetail';
 import WriteMyDayScreen from '../screens/WriteMyDayScreen';
 import MyDayDetailScreen from '../screens/MyDayDetailScreen';
 import WriteComfortPostScreen from '../screens/WriteComfortPostScreen';
@@ -35,18 +35,18 @@ const HomeStack: React.FC = () => {
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
-          fontFamily: 'Pretendard-Bold',
+          fontWeight: 'bold',
         },
         headerStatusBarHeight: 0,
       }}
     >
-      <Stack.Screen
-        name="HomeMain"
-        component={HomeScreen}
-        options={{
+      <Stack.Screen 
+        name="HomeMain" 
+        component={HomeScreen} 
+        options={{ 
           title: '홈',
           headerShown: false // 탭 헤더 사용
-        }}
+        }} 
       />
       
       <Stack.Screen 
@@ -84,13 +84,12 @@ const HomeStack: React.FC = () => {
         }} 
       />
       
-      <Stack.Screen
-        name="PostDetail"
-        component={PostDetailRouter}
-        options={{
-          title: '게시물 상세',
-          headerShown: false
-        }}
+      <Stack.Screen 
+        name="PostDetail" 
+        component={PostDetailScreen} 
+        options={{ 
+          title: '게시물 상세'
+        }} 
       />
       
       <Stack.Screen 

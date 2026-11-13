@@ -11,7 +11,6 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import LinearGradient from 'react-native-linear-gradient';
 import { useModernTheme } from '../../contexts/ModernThemeContext';
 
 interface AlertButton {
@@ -26,9 +25,6 @@ interface BottomSheetAlertProps {
   message?: string;
   buttons?: AlertButton[];
   onClose: () => void;
-  icon?: string;
-  iconColor?: string;
-  showIcon?: boolean;
 }
 
 const BottomSheetAlert: React.FC<BottomSheetAlertProps> = ({
@@ -37,15 +33,11 @@ const BottomSheetAlert: React.FC<BottomSheetAlertProps> = ({
   message,
   buttons = [],
   onClose,
-  icon,
-  iconColor,
-  showIcon = true,
 }) => {
   const { theme, isDark } = useModernTheme();
-  const { height: screenHeight, width: screenWidth } = useWindowDimensions();
+  const { height: screenHeight } = useWindowDimensions();
   const slideAnim = useRef(new Animated.Value(screenHeight)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
 
   useEffect(() => {
     if (visible) {
@@ -53,41 +45,30 @@ const BottomSheetAlert: React.FC<BottomSheetAlertProps> = ({
         Animated.spring(slideAnim, {
           toValue: 0,
           useNativeDriver: true,
-          tension: 80,
-          friction: 12,
+          tension: 65,
+          friction: 11,
         }),
         Animated.timing(opacityAnim, {
           toValue: 1,
-          duration: 250,
+          duration: 200,
           useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          useNativeDriver: true,
-          tension: 80,
-          friction: 10,
         }),
       ]).start();
     } else {
       Animated.parallel([
         Animated.timing(slideAnim, {
           toValue: screenHeight,
-          duration: 200,
+          duration: 250,
           useNativeDriver: true,
         }),
         Animated.timing(opacityAnim, {
           toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 0.9,
-          duration: 150,
+          duration: 200,
           useNativeDriver: true,
         }),
       ]).start();
     }
-  }, [visible, slideAnim, opacityAnim, scaleAnim, screenHeight]);
+  }, [visible, slideAnim, opacityAnim, screenHeight]);
 
   const handleButtonPress = (button: AlertButton) => {
     if (button.onPress) {
@@ -96,154 +77,71 @@ const BottomSheetAlert: React.FC<BottomSheetAlertProps> = ({
     onClose();
   };
 
-  const getIconForTitle = (alertTitle?: string): string => {
-    if (icon) return icon;
-    if (!alertTitle) return 'information-circle';
-    if (alertTitle.includes('로그아웃')) return 'log-out-outline';
-    if (alertTitle.includes('삭제')) return 'trash-outline';
-    if (alertTitle.includes('차단')) return 'ban-outline';
-    if (alertTitle.includes('신고')) return 'flag-outline';
-    if (alertTitle.includes('경고')) return 'warning-outline';
-    if (alertTitle.includes('오류') || alertTitle.includes('에러')) return 'alert-circle-outline';
-    if (alertTitle.includes('성공') || alertTitle.includes('완료')) return 'checkmark-circle-outline';
-    return 'information-circle-outline';
-  };
-
-  const getIconColor = (alertTitle?: string): string => {
-    if (iconColor) return iconColor;
-    if (!alertTitle) return isDark ? '#60a5fa' : '#0095F6';
-    if (alertTitle.includes('로그아웃')) return isDark ? '#f97316' : '#EA580C';
-    if (alertTitle.includes('삭제')) return '#EF4444';
-    if (alertTitle.includes('차단')) return '#EF4444';
-    if (alertTitle.includes('신고')) return '#F59E0B';
-    if (alertTitle.includes('경고')) return '#F59E0B';
-    if (alertTitle.includes('오류') || alertTitle.includes('에러')) return '#EF4444';
-    if (alertTitle.includes('성공') || alertTitle.includes('완료')) return '#10B981';
-    return isDark ? '#60a5fa' : '#0095F6';
-  };
-
-  const currentIconColor = getIconColor(title);
-  const cancelButton = buttons.find(b => b.style === 'cancel');
-  const actionButtons = buttons.filter(b => b.style !== 'cancel');
-
   return (
     <Modal
       visible={visible}
       transparent
       animationType="none"
       onRequestClose={onClose}
-      statusBarTranslucent
     >
       <View style={styles.modalContainer}>
         <TouchableWithoutFeedback onPress={onClose}>
-          <Animated.View
-            style={[
-              styles.backdrop,
-              {
-                opacity: opacityAnim,
-                backgroundColor: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.5)',
-              }
-            ]}
-          />
+          <Animated.View style={[styles.backdrop, { opacity: opacityAnim }]} />
         </TouchableWithoutFeedback>
 
         <Animated.View
           style={[
             styles.bottomSheet,
             {
-              transform: [
-                { translateY: slideAnim },
-                { scale: scaleAnim },
-              ],
-              backgroundColor: isDark ? '#1a1a2e' : '#FFFFFF',
-              maxWidth: Math.min(screenWidth - 32, 400),
+              transform: [{ translateY: slideAnim }],
+              backgroundColor: theme.colors.card,
             },
           ]}
         >
-          <View style={[styles.handleBar, { backgroundColor: isDark ? '#404050' : '#E0E0E0' }]} />
-
-          {showIcon && (
-            <View style={[
-              styles.iconContainer,
-              { backgroundColor: `${currentIconColor}15` }
-            ]}>
-              <Icon
-                name={getIconForTitle(title)}
-                size={32}
-                color={currentIconColor}
-              />
-            </View>
-          )}
+          <View style={[styles.handleBar, { backgroundColor: isDark ? '#404040' : '#D0D0D0' }]} />
 
           {title && (
             <View style={styles.header}>
-              <Text style={[styles.title, { color: theme.colors.text.primary }]}>
-                {title}
-              </Text>
+              <Text style={[styles.title, { color: theme.colors.text.primary }]}>{title}</Text>
             </View>
           )}
 
           {message && (
             <View style={styles.messageContainer}>
-              <Text style={[styles.message, { color: isDark ? '#a0a0b0' : '#666666' }]}>
-                {message}
-              </Text>
+              <Text style={[styles.message, { color: theme.colors.text.secondary }]}>{message}</Text>
             </View>
           )}
 
           <View style={styles.buttonContainer}>
-            {actionButtons.map((button, index) => {
-              const isDestructive = button.style === 'destructive';
-              const gradientColors = isDestructive
-                ? ['#EF4444', '#DC2626']
-                : isDark
-                  ? ['#6366f1', '#8b5cf6']
-                  : ['#7C3AED', '#9333EA'];
-
-              return (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => handleButtonPress(button)}
-                  activeOpacity={0.85}
-                  style={styles.actionButtonWrapper}
-                >
-                  <LinearGradient
-                    colors={gradientColors}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.actionButton}
-                  >
-                    {isDestructive && (
-                      <Icon name="log-out-outline" size={18} color="#FFFFFF" style={styles.buttonIcon} />
-                    )}
-                    <Text style={styles.actionButtonText}>
-                      {button.text}
-                    </Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              );
-            })}
-
-            {cancelButton && (
+            {buttons.map((button, index) => (
               <TouchableOpacity
+                key={index}
                 style={[
-                  styles.cancelButton,
-                  {
-                    backgroundColor: isDark ? '#2a2a3e' : '#F5F5F7',
-                    borderColor: isDark ? '#3a3a4e' : '#E5E5EA',
-                  }
+                  styles.button,
+                  { backgroundColor: isDark ? '#60a5fa' : '#0095F6' },
+                  button.style === 'destructive' && styles.destructiveButton,
+                  button.style === 'cancel' && [
+                    styles.cancelButton,
+                    { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }
+                  ],
                 ]}
-                onPress={() => handleButtonPress(cancelButton)}
+                onPress={() => handleButtonPress(button)}
                 activeOpacity={0.7}
               >
-                <Text style={[
-                  styles.cancelButtonText,
-                  { color: isDark ? '#a0a0b0' : '#666666' }
-                ]}>
-                  {cancelButton.text}
+                <Text
+                  style={[
+                    styles.buttonText,
+                    button.style === 'destructive' && styles.destructiveText,
+                    button.style === 'cancel' && [
+                      styles.cancelText,
+                      { color: theme.colors.text.primary }
+                    ],
+                  ]}
+                >
+                  {button.text}
                 </Text>
               </TouchableOpacity>
-            )}
+            ))}
           </View>
         </Animated.View>
       </View>
@@ -255,94 +153,80 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     justifyContent: 'flex-end',
-    alignItems: 'center',
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   bottomSheet: {
-    width: '100%',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 28,
-    paddingHorizontal: 24,
-    paddingTop: 10,
-    elevation: 24,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    elevation: 8,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: -8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
   },
   handleBar: {
-    width: 36,
+    width: 40,
     height: 4,
+    backgroundColor: '#D0D0D0',
     borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
     alignSelf: 'center',
     marginBottom: 16,
   },
   header: {
-    marginBottom: 8,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 20,
-    fontFamily: 'Pretendard-Bold',
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#000000',
     textAlign: 'center',
-    letterSpacing: -0.3,
+    letterSpacing: 0.1,
   },
   messageContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   message: {
     fontSize: 15,
+    color: '#333333',
     textAlign: 'center',
     lineHeight: 22,
-    fontFamily: 'Pretendard-Regular',
+    fontWeight: '500',
   },
   buttonContainer: {
-    gap: 12,
+    gap: 10,
   },
-  actionButtonWrapper: {
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  actionButton: {
-    flexDirection: 'row',
+  button: {
+    backgroundColor: '#0095F6',
     paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 54,
+    minHeight: 52,
   },
-  buttonIcon: {
-    marginRight: 8,
+  cancelButton: {
+    backgroundColor: '#F8F9FA',
   },
-  actionButtonText: {
+  destructiveButton: {
+    backgroundColor: '#FF3B30',
+  },
+  buttonText: {
     fontSize: 16,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     color: '#FFFFFF',
     letterSpacing: 0.2,
   },
-  cancelButton: {
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 54,
-    borderWidth: 1,
+  cancelText: {
+    color: '#333333',
   },
-  cancelButtonText: {
-    fontSize: 16,
-    fontFamily: 'Pretendard-SemiBold',
-    letterSpacing: 0.2,
+  destructiveText: {
+    color: '#FFFFFF',
   },
 });
 

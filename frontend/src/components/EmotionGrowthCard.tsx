@@ -294,11 +294,11 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: '#fff',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   title: {
     color: '#fff',
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     textAlign: 'center',
   },
   statsContainer: {
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     color: '#fff',
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
   },
   statLabel: {
     color: 'rgba(255, 255, 255, 0.8)',
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   },
   shareButtonText: {
     color: '#fff',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   watermark: {
     color: 'rgba(255, 255, 255, 0.5)',

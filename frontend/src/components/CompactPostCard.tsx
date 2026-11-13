@@ -1,10 +1,10 @@
 // src/components/CompactPostCard.tsx
 import React from 'react';
-import { View, TouchableOpacity, Pressable, StyleSheet, Image, Text as RNText, Dimensions, Vibration } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Image, Text as RNText, Dimensions } from 'react-native';
 import { Card } from 'react-native-paper';
 import { Text, Box, HStack, VStack } from './ui';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { formatCommentTime } from '../utils/dateUtils';
+import { formatCommentTime, formatTimeAgo as dateUtilsFormatTimeAgo } from '../utils/dateUtils';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { normalizeImageUrl } from '../utils/imageUtils';
@@ -91,7 +91,6 @@ interface CompactPostCardProps {
   isBestPost?: boolean;
   onBookmark?: (postId: number) => void;
   isBookmarked?: boolean;
-  onShare?: (postId: number, content: string) => void;
 }
 
 const CompactPostCard: React.FC<CompactPostCardProps> = ({
@@ -101,34 +100,10 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
   liked = false,
   isBestPost = false,
   onBookmark,
-  isBookmarked = false,
-  onShare
+  isBookmarked = false
 }) => {
   const { theme: modernTheme, isDark } = useModernTheme();
   const { user } = useAuth();
-
-  // 더블탭 좋아요 제스처
-  const lastTapRef = React.useRef<number>(0);
-  const handleDoubleTap = () => {
-    const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
-
-    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      // 더블탭 감지
-      if (onLike && !liked) {
-        onLike(post.post_id);
-        // 햅틱 피드백
-        try {
-          Vibration.vibrate(50);
-        } catch (e) {}
-      }
-    } else {
-      // 싱글탭
-      onExpand(post);
-    }
-
-    lastTapRef.current = now;
-  };
 
   // 테마별 색상 정의
   const colors = {
@@ -216,33 +191,59 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
   const avatarText = emotionDisplay.emoji;
   const avatarColor = emotionDisplay.color;
 
-  // 상대시간 포맷 (현대적 트렌드)
+  // 상대시간 포맷 (dateUtils 사용)
   const getRelativeTime = (dateString: string) => {
     try {
-      if (!dateString) return '방금';
+      if (!dateString) {
+        console.log('⚠️ [CompactPostCard] created_at이 없음:', {
+          postId: post.post_id,
+          dateString
+        });
+        return '시간 없음';
+      }
 
-      const now = new Date();
-      const date = new Date(dateString);
+      // 입력값 로깅 (디버깅)
+      console.log('🕐 [CompactPostCard] 시간 계산 시작:', {
+        postId: post.post_id,
+        created_at: dateString,
+        type: typeof dateString,
+        length: dateString.length
+      });
 
-      // 유효하지 않은 날짜 체크
-      if (isNaN(date.getTime())) return '방금';
+      // dateUtils의 formatTimeAgo 사용
+      const result = dateUtilsFormatTimeAgo(dateString);
 
-      const diffMs = now.getTime() - date.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMs / 3600000);
-      const diffDays = Math.floor(diffMs / 86400000);
+      // 결과 로깅
+      console.log('🕐 [CompactPostCard] 시간 계산 결과:', {
+        postId: post.post_id,
+        input: dateString,
+        result: result,
+        resultType: typeof result
+      });
 
-      if (diffMins < 1) return '방금';
-      if (diffMins < 60) return `${diffMins}분 전`;
-      if (diffHours < 24) return `${diffHours}시간 전`;
-      if (diffDays === 1) return '어제';
-      if (diffDays < 7) return `${diffDays}일 전`;
+      // 결과가 빈 문자열이거나 undefined인 경우 체크
+      if (!result || result.trim() === '') {
+        console.error('❌ [CompactPostCard] formatTimeAgo가 빈 결과 반환:', {
+          postId: post.post_id,
+          dateString,
+          result
+        });
+        return '방금';
+      }
 
-      // 일주일 이상은 월.일 형식
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      return `${month}.${day}`;
+      // "방금 전"을 "방금"으로 간소화
+      if (result === '방금 전') {
+        return '방금';
+      }
+
+      return result;
     } catch (error) {
+      console.error('❌ [CompactPostCard] 시간 계산 오류:', {
+        error,
+        postId: post.post_id,
+        dateString,
+        errorMessage: error instanceof Error ? error.message : String(error)
+      });
       return '방금';
     }
   };
@@ -259,8 +260,9 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
   })();
 
   return (
-    <Pressable
-      onPress={handleDoubleTap}
+    <TouchableOpacity
+      onPress={() => onExpand(post)}
+      activeOpacity={0.9}
       accessible={true}
       accessibilityRole="button"
       accessibilityLabel={`${post.is_anonymous ? '익명' : (post.user?.nickname || '사용자')}의 게시물: ${post.content.substring(0, 50)}${post.content.length > 50 ? '...' : ''}`}
@@ -277,7 +279,7 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
         shadowOffset: { width: 0, height: isBestPost ? 0 : 2 },
         shadowOpacity: isBestPost ? 0 : 0.15,
         shadowRadius: isBestPost ? 0 : 4,
-        height: hasImages ? 340 : 185, // 이미지 유무에 따라 높이 조정
+        height: hasImages ? 380 : 250, // 이미지 + 좋아요/댓글 표시를 위해 충분한 높이 확보
       }]}
     >
       {/* 감정 배지 */}
@@ -303,7 +305,7 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
               <Text style={{
                 fontSize: 14,
                 lineHeight: 21,
-                fontFamily: 'Pretendard-SemiBold',
+                fontWeight: '600',
                 color: isDark ? '#ffffff' : '#1f2937',
                 textShadowColor: isDark ? 'rgba(0, 0, 0, 0.3)' :
   'rgba(255, 255, 255, 0.8)',
@@ -312,7 +314,7 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
               }}>오늘은</Text>
               <Text style={{
                 fontSize: 18,
-                fontFamily: 'Pretendard-ExtraBold',
+                fontWeight: '800',
                 color: post.emotions && post.emotions.length > 0 ?
   post.emotions[0].color : '#FFD700',
                 textShadowColor: 'rgba(0, 0, 0, 0.15)',
@@ -323,7 +325,7 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
               <Text style={{
                 fontSize: 14,
                 lineHeight: 21,
-                fontFamily: 'Pretendard-SemiBold',
+                fontWeight: '600',
                 color: isDark ? '#ffffff' : '#1f2937',
                 textShadowColor: isDark ? 'rgba(0, 0, 0, 0.3)' :
   'rgba(255, 255, 255, 0.8)',
@@ -345,7 +347,7 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
                   <RNText
                     style={{
                       fontSize: 12,
-                      fontFamily: 'Pretendard-Bold',
+                      fontWeight: '700',
                       color: '#ffffff'
                     }}
                   >
@@ -368,36 +370,11 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
               padding: isDark ? 8 : 0,
               borderRadius: isDark ? 6 : 0
             }]}
-            numberOfLines={hasImages ? 2 : (isBestPost ? 2 : 4)} // 이미지 있으면 2줄, 베스트 2줄, 일반 4줄
+            numberOfLines={isBestPost ? 2 : 3}
+            ellipsizeMode="tail"
           >
             {post.content}
           </RNText>
-
-          {/* 해시태그 표시 */}
-          {(() => {
-            const hashtags = Array.isArray(post.emotions) && post.emotions.length > 0
-              ? post.emotions.map(e => `#${e.name}`)
-              : [];
-
-            if (hashtags.length === 0) return null;
-
-            return (
-              <HStack style={{ marginTop: 6, gap: 6, flexWrap: 'wrap' }}>
-                {hashtags.slice(0, 3).map((tag, index) => (
-                  <Text
-                    key={index}
-                    style={{
-                      fontSize: 12,
-                      color: '#6200ee',
-                      fontFamily: 'Pretendard-SemiBold',
-                    }}
-                  >
-                    {tag}
-                  </Text>
-                ))}
-              </HStack>
-            );
-          })()}
 
           {/* 이미지 (있는 경우만) - ImageCarousel 사용 */}
           {(() => {
@@ -431,164 +408,116 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
               : (screenWidth - 4 - 8) / 2 - 24;  // 2-column grid calculation
 
             return (
-              <View style={{ marginTop: 8, marginBottom: 12 }}>
+              <View style={{ marginTop: 8, marginBottom: -6 }}>
                 <ImageCarousel
                   images={normalizedUrls}
-                  height={170}
+                  height={160}
                   borderRadius={12}
                   showFullscreenButton={true}
                   containerStyle={{ margin: 0 }}
                   width={cardWidth}
+                  priority="low"
                 />
               </View>
             );
           })()}
         </VStack>
 
-        {/* 하단 정보 (미니멀) - 배경 추가로 가독성 향상 */}
-        <View style={{
-          backgroundColor: isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.85)',
-          paddingVertical: 8,
-          paddingHorizontal: 12,
-          borderRadius: 8,
-          marginTop: 4,
-        }}>
-          <HStack style={styles.modernFooter}>
-            <HStack style={styles.modernStats}>
-              {/* 좋아요 */}
-              <Pressable
-                onPress={(e) => {
-                  e?.stopPropagation?.();
-                  onLike?.(post.post_id);
-                }}
-                style={styles.modernStatItem}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <MaterialCommunityIcons
-                  name={liked ? "heart" : "heart-outline"}
-                  size={17}
-                  color={liked ? "#ff3b5c" : (isDark ? '#ffffff' : '#262626')}
-                />
-                <Text style={{
-                  fontSize: 15,
-                  color: isDark ? '#ffffff' : '#262626',
-                  fontFamily: 'Pretendard-SemiBold'
-                }}>
-                  {post.like_count ?? 0}
-                </Text>
-              </Pressable>
+        {/* 하단 정보 (미니멀) */}
+        <HStack style={styles.modernFooter}>
+          <HStack style={styles.modernStats}>
+            {/* 좋아요 */}
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                onLike?.(post.post_id);
+              }}
+              style={styles.modernStatItem}
+              activeOpacity={0.7}
+            >
+              <MaterialCommunityIcons
+                name={liked ? "heart" : "heart-outline"}
+                size={16}
+                color={liked ? "#6200ee" : (isDark ? '#ffffff' : colors.textSecondary)}
+              />
+              <Text style={{
+                fontSize: 15,
+                color: isDark ? '#ffffff' : '#6b7280',
+                fontWeight: '500'
+              }}>
+                {post.like_count}
+              </Text>
+            </TouchableOpacity>
 
-              {/* 댓글 수 */}
-              <HStack style={styles.modernStatItem}>
-                <MaterialCommunityIcons
-                  name="chat-outline"
-                  size={17}
-                  color={isDark ? '#ffffff' : '#262626'}
-                />
-                <Text style={{
-                  fontSize: 15,
-                  color: isDark ? '#ffffff' : '#262626',
-                  fontFamily: 'Pretendard-SemiBold'
-                }}>
-                  {post.comment_count ?? 0}
-                </Text>
-              </HStack>
-
-              {/* 북마크 */}
-              {onBookmark && (
-                <Pressable
-                  onPress={(e) => {
-                    e?.stopPropagation?.();
-                    onBookmark(post.post_id);
-                  }}
-                  style={styles.modernStatItem}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <MaterialCommunityIcons
-                    name={isBookmarked ? "bookmark" : "bookmark-outline"}
-                    size={17}
-                    color={isBookmarked ? "#6200ee" : (isDark ? '#ffffff' : '#262626')}
-                  />
-                </Pressable>
-              )}
-
-              {/* 공유 */}
-              {onShare && (
-                <Pressable
-                  onPress={(e) => {
-                    e?.stopPropagation?.();
-                    onShare(post.post_id, post.content);
-                  }}
-                  style={styles.modernStatItem}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <MaterialCommunityIcons
-                    name="share-variant-outline"
-                    size={17}
-                    color={isDark ? '#ffffff' : '#262626'}
-                  />
-                </Pressable>
-              )}
-            </HStack>
-
-            {/* 시간 */}
-            <Text style={{
-              fontSize: 14,
-              color: isDark ? '#e0e0e0' : '#262626',
-              fontFamily: 'Pretendard-Bold',
-              paddingRight: 4,
-              minWidth: 45,
-              textAlign: 'right'
-            }}>
-              {post.created_at ? getRelativeTime(post.created_at) : '방금'}
-            </Text>
-          </HStack>
-        </View>
-
-        {/* 최신 댓글 미리보기 */}
-        {Array.isArray(post.comments) && post.comments.length > 0 && (
-          <Box style={{
-            marginTop: 8,
-            paddingTop: 8,
-            borderTopWidth: 1,
-            borderTopColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-          }}>
-            <HStack style={{ gap: 6, alignItems: 'flex-start' }}>
+            {/* 댓글 수 */}
+            <HStack style={styles.modernStatItem}>
               <MaterialCommunityIcons
                 name="chat-outline"
-                size={14}
-                color={isDark ? '#a0a0a0' : '#9ca3af'}
+                size={17}
+                color={isDark ? '#ffffff' : colors.textSecondary}
               />
-              <Text
-                style={{
-                  flex: 1,
-                  fontSize: 13,
-                  color: isDark ? '#d0d0d0' : '#6b7280',
-                  lineHeight: 18,
-                }}
-                numberOfLines={1}
-              >
-                <Text style={{ fontFamily: 'Pretendard-SemiBold' }}>
-                  {post.comments[0].is_anonymous ? '익명' : (post.comments[0].User?.nickname || '사용자')}
-                </Text>
-                {': '}
-                {post.comments[0].content}
+              <Text style={{
+                fontSize: 15,
+                color: isDark ? '#ffffff' : '#6b7280',
+                fontWeight: '500'
+              }}>
+                {post.comment_count}
               </Text>
             </HStack>
-          </Box>
-        )}
+
+            {/* 북마크 */}
+            {onBookmark && (
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onBookmark(post.post_id);
+                }}
+                style={styles.modernStatItem}
+                activeOpacity={0.7}
+              >
+                <MaterialCommunityIcons
+                  name={isBookmarked ? "bookmark" : "bookmark-outline"}
+                  size={16}
+                  color={isBookmarked ? "#6200ee" : (isDark ? '#ffffff' : colors.textSecondary)}
+                />
+              </TouchableOpacity>
+            )}
+          </HStack>
+
+          {/* 시간 */}
+          <Text style={{
+            fontSize: 13,
+            color: isDark ? '#d0d0d0' : '#374151',
+            fontWeight: '600',
+            paddingRight: 6,
+            minWidth: 50
+          }}>
+            {(() => {
+              if (!post.created_at || post.created_at.trim() === '') {
+                console.warn('⚠️ [CompactPostCard] 시간 데이터 없음:', post.post_id);
+                return '방금';
+              }
+              const time = getRelativeTime(post.created_at);
+              if (!time || time.trim() === '') {
+                console.warn('⚠️ [CompactPostCard] 시간 포맷 실패:', post.post_id, post.created_at);
+                return '방금';
+              }
+              return time;
+            })()}
+          </Text>
+        </HStack>
       </Box>
-    </Pressable>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   // 현대적인 카드 디자인
   modernCard: {
-    overflow: 'hidden',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    // height는 동적으로 설정됨 (이미지 유무에 따라 310 또는 185)
+    overflow: 'visible', // 하단 정보가 보이도록 변경
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    // height는 동적으로 설정됨 (이미지 유무에 따라 340 또는 220)
   },
   emotionBadgeLeftIcon: {
     alignSelf: 'flex-start',
@@ -622,7 +551,7 @@ const styles = StyleSheet.create({
   emotionWordEmphasized: {
     fontSize: 14,
     lineHeight: 24,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
   emotionBadgeFinal: {
@@ -682,11 +611,11 @@ const styles = StyleSheet.create({
   },
   emotionLabel: {
     fontSize: 14,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   emotionBadgeText: {
     fontSize: 14,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.1,
   },
   // 기존 스타일 (사용하지 않음)
@@ -698,13 +627,13 @@ const styles = StyleSheet.create({
   emotionWord: {
     fontSize: 14,
     lineHeight: 24,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
   modernContentContainer: {
     flex: 1,
     justifyContent: 'space-between', // 콘텐츠를 위아래로 분산 배치
-    minHeight: 200, // 충분한 최소 높이 확보
+    minHeight: 120, // 콘텐츠에 맞게 조정 (하단 정보를 위한 공간 확보)
   },
   // 기존 스타일 (사용하지 않음)
   emotionContainer: {
@@ -720,7 +649,7 @@ const styles = StyleSheet.create({
   modernContentText: {
     fontSize: 15,
     lineHeight: 23,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     marginBottom: 0,
     letterSpacing: 0,
     color: '#1a1a1a',
@@ -786,7 +715,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     lineHeight: 24,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     textAlign: 'center',
   },
   authorInfo: {
@@ -800,7 +729,7 @@ const styles = StyleSheet.create({
   },
   authorName: {
     fontSize: 14,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   timestamp: {
     fontSize: 11,
@@ -819,7 +748,7 @@ const styles = StyleSheet.create({
   },
   emotionText: {
     fontSize: 12,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   moreEmotions: {
     fontSize: 11,
@@ -850,7 +779,7 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: 11,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   likedText: {
     color: '#ef4444',
@@ -865,7 +794,7 @@ const styles = StyleSheet.create({
   },
   expandButtonText: {
     fontSize: 11,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   imagePreview: {
     alignItems: 'center',
@@ -881,7 +810,7 @@ const styles = StyleSheet.create({
   imageLabel: {
     fontSize: 12,
     marginTop: 4,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   imagePreviewContainer: {
     position: 'relative',
@@ -908,7 +837,7 @@ const styles = StyleSheet.create({
   imageOverlayText: {
     color: 'white',
     fontSize: 12,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     marginLeft: 4,
   },
 });

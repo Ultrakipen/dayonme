@@ -12,7 +12,7 @@ export const getRandomEmotion = (userId: number, postId: number, commentId: numb
   const result = baseGetRandomEmotion(userId, postId, commentId);
 
   if (__DEV__) {
-    if (__DEV__) console.log(`🎭 PostDetail 감정 할당:`, {
+    console.log(`🎭 PostDetail 감정 할당:`, {
       userId,
       postId,
       commentId,
@@ -36,7 +36,7 @@ export const getAnonymousEmotion = (
     const emotion = EMOTION_AVATARS.find(e => e.id === anonymousEmotionId);
     if (emotion) {
       if (__DEV__) {
-        if (__DEV__) console.log('🎭 PostDetail getAnonymousEmotion (ID 사용):', {
+        console.log('🎭 PostDetail getAnonymousEmotion (ID 사용):', {
           anonymousEmotionId,
           matchedEmotion: emotion.label
         });
@@ -52,7 +52,7 @@ export const getAnonymousEmotion = (
     );
     if (matched) {
       if (__DEV__) {
-        if (__DEV__) console.log('🎭 PostDetail getAnonymousEmotion (감정명 매칭):', {
+        console.log('🎭 PostDetail getAnonymousEmotion (감정명 매칭):', {
           postEmotion,
           matchedEmotion: matched.label
         });
@@ -71,7 +71,7 @@ export const getAnonymousEmotion = (
   const emotion = EMOTION_AVATARS[finalSeed];
 
   if (__DEV__) {
-    if (__DEV__) console.log('🎭 PostDetail getAnonymousEmotion:', {
+    console.log('🎭 PostDetail getAnonymousEmotion:', {
       userId,
       postId,
       commentId,

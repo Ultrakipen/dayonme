@@ -40,58 +40,58 @@ describe('dailyMessages', () => {
 
 // 콘솔 테스트 함수들
 export const testDailyMessages = () => {
-  if (__DEV__) console.log('=== 동적 메시지 시스템 테스트 ===\n');
+  console.log('=== 동적 메시지 시스템 테스트 ===\n');
 
   // 1. 오늘의 메시지 테스트
-  if (__DEV__) console.log('📅 오늘의 메시지:');
+  console.log('📅 오늘의 메시지:');
   const todayMessage = getDailyMessage();
-  if (__DEV__) console.log('- 인사말:', todayMessage.greeting);
-  if (__DEV__) console.log('- 응원메시지:', todayMessage.encouragement);
-  if (__DEV__) console.log('- 디버그 정보:', todayMessage.debug);
-  if (__DEV__) console.log('');
+  console.log('- 인사말:', todayMessage.greeting);
+  console.log('- 응원메시지:', todayMessage.encouragement);
+  console.log('- 디버그 정보:', todayMessage.debug);
+  console.log('');
 
   // 2. 사용자명 포맷팅 테스트
-  if (__DEV__) console.log('👤 사용자명 포맷팅 테스트:');
+  console.log('👤 사용자명 포맷팅 테스트:');
   const formattedGreeting1 = formatGreetingWithUsername(todayMessage.greeting, '김철수');
   const formattedGreeting2 = formatGreetingWithUsername(todayMessage.greeting, '');
-  if (__DEV__) console.log('- 김철수:', formattedGreeting1);
-  if (__DEV__) console.log('- 빈 이름:', formattedGreeting2);
-  if (__DEV__) console.log('');
+  console.log('- 김철수:', formattedGreeting1);
+  console.log('- 빈 이름:', formattedGreeting2);
+  console.log('');
 
   // 3. 시간대별 인사말 테스트
-  if (__DEV__) console.log('🕐 현재 시간대 인사말:');
+  console.log('🕐 현재 시간대 인사말:');
   const timeGreeting = getTimeBasedGreeting();
-  if (__DEV__) console.log('- 시간대별 인사:', timeGreeting);
-  if (__DEV__) console.log('');
+  console.log('- 시간대별 인사:', timeGreeting);
+  console.log('');
 
   // 4. 여러 날짜 미리보기 테스트
-  if (__DEV__) console.log('📊 다른 날짜들의 메시지 미리보기:');
+  console.log('📊 다른 날짜들의 메시지 미리보기:');
   for (let i = 0; i < 7; i++) {
     const testDate = new Date();
     testDate.setDate(testDate.getDate() + i);
     const preview = previewMessageForDate(testDate);
-    if (__DEV__) console.log(`${i === 0 ? '오늘' : `${i}일 후`}: ${preview.greeting} | ${preview.encouragement}`);
+    console.log(`${i === 0 ? '오늘' : `${i}일 후`}: ${preview.greeting} | ${preview.encouragement}`);
   }
-  if (__DEV__) console.log('');
+  console.log('');
 
   // 5. 메시지 풀 확인
-  if (__DEV__) console.log('📋 메시지 풀 정보:');
-  if (__DEV__) console.log(`- 인사말 총 ${DAILY_GREETINGS.length}개`);
-  if (__DEV__) console.log(`- 응원메시지 총 ${DAILY_ENCOURAGEMENTS.length}개`);
-  if (__DEV__) console.log('');
+  console.log('📋 메시지 풀 정보:');
+  console.log(`- 인사말 총 ${DAILY_GREETINGS.length}개`);
+  console.log(`- 응원메시지 총 ${DAILY_ENCOURAGEMENTS.length}개`);
+  console.log('');
 
   // 6. 같은 날짜 일관성 테스트
-  if (__DEV__) console.log('🔍 같은 날짜 일관성 테스트:');
+  console.log('🔍 같은 날짜 일관성 테스트:');
   const msg1 = getDailyMessage();
   const msg2 = getDailyMessage();
   const isConsistent = (
     msg1.greeting === msg2.greeting &&
     msg1.encouragement === msg2.encouragement
   );
-  if (__DEV__) console.log('- 일관성 유지:', isConsistent ? '✅ 성공' : '❌ 실패');
-  if (__DEV__) console.log('');
+  console.log('- 일관성 유지:', isConsistent ? '✅ 성공' : '❌ 실패');
+  console.log('');
 
-  if (__DEV__) console.log('=== 테스트 완료 ===');
+  console.log('=== 테스트 완료 ===');
 
   return {
     todayMessage,

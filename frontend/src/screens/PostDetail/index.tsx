@@ -177,7 +177,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const bottomInset = keyboardHeight > 0 ? 0 : insets.bottom;
+  // 일부 기기(S26 등)는 제스처/3버튼 내비 영역 inset이 0으로 보고되어 최소 여백 보장
+  const bottomInset = keyboardHeight > 0 ? 0 : Math.max(insets.bottom, Platform.OS === 'android' ? 24 : 0);
   const [isCommentInputFocused, setIsCommentInputFocused] = useState(false);
   const [highlightedCommentId, setHighlightedCommentId] = useState<number | null>(highlightCommentId || null);
 

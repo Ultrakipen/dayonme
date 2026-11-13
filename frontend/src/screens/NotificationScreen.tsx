@@ -1,397 +1,552 @@
 // src/screens/NotificationScreen.tsx
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { FlatList, TouchableOpacity, StyleSheet, View, Text, StatusBar, Platform, SafeAreaView, Animated, Alert, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef, createContext, useContext, useCallback, useMemo } from 'react';
+import { FlatList, Alert, TouchableOpacity, StyleSheet, View, Pressable, Text, StatusBar, Dimensions, Animated, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useInfiniteQuery } from '@tanstack/react-query';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import notificationService, { Notification } from '../services/api/notificationService';
 import { useModernTheme } from '../contexts/ModernThemeContext';
-import { FONT_SIZES, SPACING } from '../constants';
-import ConfirmationModal from '../components/ui/ConfirmationModal';
+import LoadingIndicator from '../components/LoadingIndicator';
+import Button from '../components/Button';
+import { FONT_SIZES, SPACING, moderateScale, verticalScale } from '../constants';
+import ModernToast, { ToastType } from '../components/ModernToast';
+import { NotificationItemSkeleton } from '../components/SkeletonLoader';
+
+// 스와이프 컨텍스트 생성
+const SwipeContext = createContext<{
+  openSwipeableRef: React.MutableRefObject<Swipeable | null>;
+} | null>(null);
 
 interface NotificationScreenProps {
   testNotifications?: Notification[];
   testLoading?: boolean;
   testError?: string | null;
+  testEmptyState?: boolean;  // 이 속성 추가
 }
-
-// 알림 타입별 색상 정의
-const NOTIFICATION_COLORS = {
-  reaction: { bg: '#FEE2E2', bgDark: '#7F1D1D', icon: '#EF4444' },
-  comment: { bg: '#DBEAFE', bgDark: '#1E3A8A', icon: '#3B82F6' },
-  reply: { bg: '#E0E7FF', bgDark: '#312E81', icon: '#6366F1' },
-  encouragement: { bg: '#FCE7F3', bgDark: '#831843', icon: '#EC4899' },
-  challenge: { bg: '#FEF3C7', bgDark: '#78350F', icon: '#F59E0B' },
-  default: { bg: '#F3F4F6', bgDark: '#374151', icon: '#6B7280' },
-};
 
 const NotificationScreen = (props: NotificationScreenProps = {}) => {
   const navigation = useNavigation();
   const { theme, isDark } = useModernTheme();
 
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [notificationToDelete, setNotificationToDelete] = useState<number | null>(null);
+  // Dimensions 호출은 컴포넌트 내부에서
+  const SCREEN_WIDTH = Dimensions.get('window').width;
+  const BASE_WIDTH = 360;
+  const scale = Math.max(0.9, Math.min(1.3, SCREEN_WIDTH / BASE_WIDTH));
 
-  // useInfiniteQuery로 알림 가져오기
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-    refetch,
-    isRefetching
-  } = useInfiniteQuery({
-    queryKey: ["notifications"],
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await notificationService.getNotifications({ 
-        page: pageParam, 
-        limit: 20 
-      });
-      return {
-        notifications: (response as any)?.notifications || (response as any)?.data?.notifications || [],
-        currentPage: pageParam,
-        hasMore: ((response as any)?.notifications?.length || 0) >= 20
-      };
-    },
-    getNextPageParam: (lastPage) => {
-      return lastPage.hasMore ? lastPage.currentPage + 1 : undefined;
-    },
-    initialPageParam: 1,
-    staleTime: 30 * 1000,
-    enabled: props.testNotifications === undefined && props.testLoading === undefined
-  });
+  const colors = useMemo(() => ({
+    background: theme.bg.primary,
+    card: theme.bg.card,
+    text: theme.text.primary,
+    textSecondary: theme.text.secondary,
+    border: theme.bg.border,
+    primary: isDark ? '#60a5fa' : '#3b82f6',
+    headerBg: theme.bg.card,
+    headerIcon: theme.text.primary,
+    readAction: isDark ? '#0EA5E9' : '#0095F6',
+    deleteAction: isDark ? '#EF4444' : '#FF3B30',
+    markAllButton: isDark ? '#6366F1' : '#667EEA',
+    iconBackground: isDark ? '#3B4BF9' : '#EEF2FF',
+  }), [theme, isDark]);
+  const [notifications, setNotifications] = useState<Notification[]>(props.testNotifications || []);
+  const [loading, setLoading] = useState(props.testLoading !== undefined ? props.testLoading : true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(props.testError || null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  // 모든 페이지의 알림을 하나의 배열로 합치기
-  const notifications = useMemo(() => {
-    if (props.testNotifications) return props.testNotifications;
-    return data?.pages.flatMap(page => page.notifications) || [];
-  }, [data, props.testNotifications]);
+  // Toast 상태
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastType, setToastType] = useState<ToastType>('info');
 
-  const loading = props.testLoading !== undefined ? props.testLoading : isLoading;
-  const error = props.testError || (isError ? "알림을 불러오는 중 오류가 발생했습니다." : null);
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+  }, []);
 
+  // 현재 열린 스와이프 카드의 ref를 추적
+  const openSwipeableRef = useRef<Swipeable | null>(null);
 
-  const handleNotificationPress = useCallback(async (notification: Notification) => {
-    try {
-      if (!notification.is_read) {
-        await notificationService.markAsRead(notification.notification_id);
-        refetch();
-      }
+// 두 번째 useEffect 제거 (이미 첫 번째 useEffect에서 동일한 기능 수행)
+useEffect(() => {
+  if (props.testNotifications !== undefined) {
+    setNotifications(props.testNotifications);
+  }
+  if (props.testLoading !== undefined) {
+    setLoading(props.testLoading);
+  }
+  if (props.testError !== undefined) {
+    setError(props.testError);
+  }
+  if (props.testEmptyState) {
+    setNotifications([]);
+  }
+}, [props.testNotifications, props.testLoading, props.testError, props.testEmptyState]);
 
-      switch (notification.notification_type) {
-        case 'encouragement':
-          (navigation as any).navigate('Main', {
-            screen: 'Profile',
-            params: { screen: 'Encouragement', params: { from: 'Notification' } }
-          });
-          break;
-        case 'comment':
-        case 'reply':
-        case 'reaction':
-          if (notification.post_id) {
-            try {
-              (navigation as any).navigate('PostDetail', {
-                postId: notification.post_id,
-                postType: notification.post_type || 'myday',
-                highlightCommentId: notification.related_id,
-                sourceScreen: 'notification',
-                relatedNotificationId: notification.notification_id
-              });
-            } catch (navError) {
-              // 게시물이 삭제된 경우
-              setNotificationToDelete(notification.notification_id);
-              setDeleteModalVisible(true);
-            }
+// fetchNotifications 함수 - useCallback으로 최적화
+const fetchNotifications = useCallback(async (refresh = false) => {
+  try {
+    if (refresh) {
+      setPage(1);
+      setHasMore(true);
+    }
+
+    if (!hasMore && !refresh) return;
+
+    setLoading(true);
+    setError(null);
+
+    const response = await notificationService.getNotifications({
+      page: refresh ? 1 : page,
+      limit: 20,
+    });
+
+    // 여기서 response 구조 수정
+    const data = (response as any)?.notifications || (response as any)?.data?.notifications || [];
+    const paginationData = (response as any)?.data?.pagination || (response as any)?.pagination;
+
+    if (refresh) {
+      setNotifications(data);
+    } else {
+      setNotifications(prev => [...prev, ...data]);
+    }
+
+    setHasMore(!!paginationData && paginationData.page * paginationData.limit < paginationData.total);
+    setPage(prev => refresh ? 2 : prev + 1);
+  } catch (err) {
+    console.error('알림 데이터 로딩 오류:', err);
+    setError('알림을 불러오는 중 오류가 발생했습니다.');
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
+}, [hasMore, page]);
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchNotifications(true);
+  }, [fetchNotifications]);
+
+  const handleLoadMore = useCallback(() => {
+    if (!loading && hasMore) {
+      fetchNotifications();
+    }
+  }, [loading, hasMore, fetchNotifications]);
+
+  // 초기 로드 시 알림 데이터 가져오기
+  useEffect(() => {
+    // 테스트 props가 없을 때만 실제 데이터 fetch
+    if (props.testNotifications === undefined && props.testLoading === undefined) {
+      fetchNotifications(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const navigateByNotificationType = useCallback((notification: Notification) => {
+    const { notification_type, post_id, post_type, related_id } = notification;
+
+    console.log('🧭 [navigateByNotificationType] 네비게이션 시작:', {
+      notification_type,
+      post_id,
+      post_type,
+      related_id,
+      post_id존재여부: !!post_id,
+      post_type존재여부: !!post_type
+    });
+
+    const nav = navigation as any; // 네비게이션 객체 자체를 any로 캐스팅
+
+    switch (notification_type) {
+      case 'reaction':
+      case 'comment':
+      case 'reply':
+        // 게시물로 이동
+        if (post_id && post_type) {
+          console.log(`✅ [navigateByNotificationType] ${post_type} 게시물로 이동: post_id=${post_id}, related_id(댓글ID)=${related_id}`);
+
+          // 댓글 알림인 경우 댓글 ID를 함께 전달하여 자동 스크롤 가능하게 함
+          const params: any = { postId: post_id };
+          if (notification_type === 'comment' || notification_type === 'reply') {
+            params.highlightCommentId = related_id; // 하이라이트할 댓글 ID 전달
           }
-          break;
-        case 'challenge':
-          if (notification.related_id) {
-            try {
-              (navigation as any).navigate('ChallengeDetail', {
-                challengeId: notification.related_id
-              });
-            } catch (navError) {
-              // 챌린지가 삭제된 경우
-              setNotificationToDelete(notification.notification_id);
-              setDeleteModalVisible(true);
-            }
+
+          if (post_type === 'my-day') {
+            nav.navigate('MyDayDetail', params);
+          } else if (post_type === 'someone-day') {
+            nav.navigate('PostDetail', params);
+          } else if (post_type === 'comfort-wall') {
+            nav.navigate('PostDetail', params);
           }
-          break;
-        default:
-          break;
-      }
-    } catch (err) {
-      if (__DEV__) console.error('알림 처리 오류:', err);
-      Alert.alert('오류', '알림을 처리하는 중 문제가 발생했습니다.');
+        } else {
+          console.warn('❌ [navigateByNotificationType] post_id 또는 post_type이 없습니다!', { post_id, post_type });
+        }
+        break;
+      case 'encouragement':
+        // 익명 격려 메시지 화면으로 이동 (Profile 탭의 Encouragement 화면)
+        nav.navigate('Profile', { screen: 'Encouragement' });
+        break;
+      case 'challenge':
+        // 챌린지 상세 화면으로 이동
+        if (related_id) {
+          nav.navigate('ChallengeDetail', { challengeId: related_id });
+        }
+        break;
+      default:
+        break;
     }
   }, [navigation]);
 
+  const handleNotificationPress = useCallback(async (notification: Notification) => {
+    try {
+      console.log('🔔 [NotificationScreen] 알림 클릭:', {
+        notification_id: notification.notification_id,
+        notification_type: notification.notification_type,
+        post_id: notification.post_id,
+        post_type: notification.post_type,
+        related_id: notification.related_id,
+        전체알림데이터: notification
+      });
+
+      // 읽음 표시
+      if (!notification.is_read) {
+        await notificationService.markAsRead(notification.notification_id);
+        setNotifications(prev =>
+          prev.map(n => n.notification_id === notification.notification_id ? { ...n, is_read: true } : n)
+        );
+      }
+
+      // 관련 화면으로 이동
+      navigateByNotificationType(notification);
+    } catch (err) {
+      console.error('알림 처리 오류:', err);
+    }
+  }, [navigateByNotificationType]);
+
+  // 알림 삭제 함수
   const handleDeleteNotification = useCallback(async (notificationId: number) => {
     try {
-      await notificationService.deleteNotification(notificationId);
-      refetch();
-    } catch (err) {
-      if (__DEV__) console.error('알림 삭제 오류:', err);
-      Alert.alert('오류', '알림 삭제에 실패했습니다.');
+      // UI에서 먼저 제거 (낙관적 업데이트)
+      setNotifications(prev => prev.filter(n => n.notification_id !== notificationId));
+
+      // 서버에서 삭제 (향후 API 구현 시)
+      // await notificationService.deleteNotification(notificationId);
+
+      console.log('🗑️ 알림 삭제:', notificationId);
+    } catch (error) {
+      console.error('알림 삭제 오류:', error);
+      // 실패 시 다시 불러오기
+      fetchNotifications(false);
     }
-  }, [refetch]);
+  }, [fetchNotifications]);
 
   const handleMarkAllAsRead = useCallback(async () => {
     try {
       await notificationService.markAllAsRead();
-      refetch();
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      showToast('모든 알림이 읽음 처리되었습니다', 'success');
     } catch (err) {
-      if (__DEV__) console.error('모두 읽음 처리 오류:', err);
+      console.error('모두 읽음 처리 오류:', err);
+      showToast('알림 읽음 처리 중 문제가 발생했습니다', 'error');
+    }
+  }, [showToast]);
+
+  // 트렌디한 Ionicons 아이콘 - 2026 모바일 트렌드에 맞춘 라인 스타일
+  const getNotificationIcon = useCallback((type: string) => {
+    switch (type) {
+      case 'reaction':
+        return 'heart';  // 하트 아이콘 (라인 스타일)
+      case 'comment':
+        return 'chatbubble-ellipses';  // 댓글 아이콘 (모던한 말풍선)
+      case 'reply':
+        return 'arrow-undo';  // 답글 아이콘 (깔끔한 화살표)
+      case 'encouragement':
+        return 'gift';  // 위로 메시지 아이콘 (선물 박스)
+      case 'challenge':
+        return 'trophy';  // 트로피 아이콘
+      default:
+        return 'notifications';  // 기본 알림 아이콘
     }
   }, []);
 
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'reaction': return 'heart';
-      case 'comment': return 'chatbubble';
-      case 'reply': return 'return-down-forward';
-      case 'encouragement': return 'gift';
-      case 'challenge': return 'trophy';
-      default: return 'notifications';
-    }
-  };
-
-  const getNotificationColors = (type: string) => {
-    return NOTIFICATION_COLORS[type as keyof typeof NOTIFICATION_COLORS] || NOTIFICATION_COLORS.default;
-  };
-
-  const getNotificationTime = (createdAt: string) => {
+  const getNotificationTime = useCallback((createdAt: string) => {
     const now = new Date();
     const notificationDate = new Date(createdAt);
-    const diffInMinutes = Math.floor((now.getTime() - notificationDate.getTime()) / (1000 * 60));
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
+    const diffInMilliseconds = now.getTime() - notificationDate.getTime();
+    const diffInMinutes = Math.floor(diffInMilliseconds / (1000 * 60));
+    const diffInHours = Math.floor(diffInMilliseconds / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInMilliseconds / (1000 * 60 * 60 * 24));
 
-    if (diffInMinutes < 1) return '방금 전';
-    if (diffInMinutes < 60) return `${diffInMinutes}분 전`;
-    if (diffInHours < 24) return `${diffInHours}시간 전`;
-    if (diffInDays < 7) return `${diffInDays}일 전`;
-    return notificationDate.toLocaleDateString('ko-KR');
-  };
+    if (diffInMinutes < 1) {
+      return '방금 전';
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes}분 전`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours}시간 전`;
+    } else if (diffInDays < 7) {
+      return `${diffInDays}일 전`;
+    } else {
+      return notificationDate.toLocaleDateString('ko-KR');
+    }
+  }, []);
 
-  // 스와이프 삭제 액션
+  // 스와이프 액션 렌더링 - colors를 파라미터로 받아 오류 수정
   const renderRightActions = useCallback((
-    progress: Animated.AnimatedInterpolation<number>,
-    dragX: Animated.AnimatedInterpolation<number>,
-    notificationId: number
-  ) => {
-    const trans = dragX.interpolate({
-      inputRange: [-100, 0],
-      outputRange: [0, 100],
-      extrapolate: 'clamp',
-    });
+    onRead: () => void,
+    onDelete: () => void,
+    isRead: boolean,
+    actionColors: typeof colors
+  ) => (
+    <Animated.View style={styles.swipeActionsContainer}>
+      <TouchableOpacity
+        style={[styles.swipeAction, { backgroundColor: actionColors.readAction }]}
+        onPress={onRead}
+        activeOpacity={0.8}
+      >
+        <Icon name={isRead ? 'eye-off-outline' : 'eye-outline'} size={moderateScale(22)} color="#FFFFFF" />
+        <Text style={[styles.swipeActionText, { color: '#FFFFFF' }]}>{isRead ? '읽지않음' : '읽음'}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.swipeAction, { backgroundColor: actionColors.deleteAction }]}
+        onPress={onDelete}
+        activeOpacity={0.8}
+      >
+        <Icon name="trash-outline" size={moderateScale(22)} color="#FFFFFF" />
+        <Text style={[styles.swipeActionText, { color: '#FFFFFF' }]}>삭제</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  ), []);
 
-    const scale = progress.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0.8, 1],
-      extrapolate: 'clamp',
-    });
+  // NotificationItem을 별도 컴포넌트로 분리
+  const NotificationItem: React.FC<{
+    item: Notification;
+    onPress: (item: Notification) => void;
+    onDelete: (id: number) => void;
+    getIcon: (type: string) => string;
+    getTime: (time: string) => string;
+    renderActions: (onRead: () => void, onDelete: () => void, isRead: boolean, actionColors: typeof colors) => React.ReactElement;
+    colors: typeof colors;
+    theme: typeof theme;
+    isDark: boolean;
+  }> = ({ item, onPress, onDelete, getIcon, getTime, renderActions, colors, theme, isDark }) => {
+    const swipeableRef = useRef<Swipeable>(null);
+    const swipeContext = useContext(SwipeContext);
 
-    return (
-      <Animated.View style={[styles.swipeActionContainer, { transform: [{ translateX: trans }] }]}>
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => {
-            setNotificationToDelete(notificationId);
-            setDeleteModalVisible(true);
-          }}
-        >
-          <Animated.View style={{ transform: [{ scale }] }}>
-            <Icon name="trash-outline" size={24} color="#FFFFFF" />
-          </Animated.View>
-        </TouchableOpacity>
-      </Animated.View>
-    );
-  }, [handleDeleteNotification]);
-
-  const renderNotificationItem = ({ item }: { item: Notification }) => {
-    const colors = getNotificationColors(item.notification_type);
-    const isUnread = !item.is_read;
+    // 새 카드가 열릴 때 이전 카드를 닫음
+    const handleSwipeOpen = () => {
+      ReactNativeHapticFeedback.trigger('impactLight');
+      if (swipeContext && swipeContext.openSwipeableRef.current && swipeContext.openSwipeableRef.current !== swipeableRef.current) {
+        swipeContext.openSwipeableRef.current.close();
+      }
+      if (swipeContext) {
+        swipeContext.openSwipeableRef.current = swipeableRef.current;
+      }
+    };
 
     return (
       <Swipeable
-        renderRightActions={(progress, dragX) => renderRightActions(progress, dragX, item.notification_id)}
+        ref={swipeableRef}
+        renderRightActions={() => renderActions(
+          () => {
+            onPress(item);
+            swipeableRef.current?.close();
+          },
+          () => {
+            onDelete(item.notification_id);
+            swipeableRef.current?.close();
+          },
+          item.is_read,
+          colors
+        )}
         overshootRight={false}
-        friction={2}
-        rightThreshold={40}
+        onSwipeableOpen={handleSwipeOpen}
       >
-        <TouchableOpacity
+        <Pressable
           style={[
             styles.notificationCard,
             {
-              backgroundColor: isUnread
-                ? (isDark ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.08)')
-                : theme.bg.card,
+              backgroundColor: theme.bg.card,
+              borderColor: theme.bg.border,
+              ...Platform.select({
+                ios: {
+                  shadowColor: isDark ? '#fff' : '#000',
+                  shadowOffset: { width: 0, height: verticalScale(2) },
+                  shadowOpacity: isDark ? 0.1 : 0.08,
+                  shadowRadius: moderateScale(8),
+                },
+                android: {
+                  elevation: 2,
+                },
+              }),
             },
+            item.is_read ? styles.readCard : styles.unreadCard
           ]}
-          onPress={() => handleNotificationPress(item)}
-          activeOpacity={0.7}
+          onPress={() => onPress(item)}
         >
-          {/* 읽지 않은 알림 왼쪽 컬러 바 */}
-          {isUnread && (
-            <View style={[styles.unreadIndicator, { backgroundColor: colors.icon }]} />
-          )}
+          <View style={styles.notificationContent}>
+            <View style={[
+              styles.iconContainer,
+              item.is_read ? { backgroundColor: theme.bg.border } : { backgroundColor: colors.iconBackground }
+            ]}>
+              <Icon
+                name={getIcon(item.notification_type)}
+                size={moderateScale(28)}
+                color={item.is_read ? theme.text.secondary : colors.primary}
+              />
+            </View>
 
-          {/* 아이콘 컨테이너 */}
-          <View style={[
-            styles.iconContainer,
-            { backgroundColor: isDark ? colors.bgDark : colors.bg }
-          ]}>
-            <Icon
-              name={getNotificationIcon(item.notification_type)}
-              size={20}
-              color={colors.icon}
-            />
-          </View>
-
-          {/* 텍스트 컨테이너 */}
-          <View style={styles.textContainer}>
-            <View style={styles.titleRow}>
-              <Text
-                style={[
-                  styles.notificationTitle,
-                  { color: theme.text.primary },
-                  isUnread && styles.unreadTitle
-                ]}
-                numberOfLines={1}
-              >
+            <View style={styles.textContainer}>
+              <Text style={[
+                styles.notificationTitle,
+                { color: theme.text.primary },
+                !item.is_read && styles.unreadTitle
+              ]}>
                 {item.title}
               </Text>
+              <Text style={[
+                styles.notificationMessage,
+                { color: theme.text.secondary },
+                !item.is_read && [styles.unreadMessage, { color: theme.text.primary }]
+              ]} numberOfLines={2}>
+                {item.message}
+              </Text>
               <Text style={[styles.notificationTime, { color: theme.text.tertiary }]}>
-                {getNotificationTime(item.created_at)}
+                {getTime(item.created_at)}
               </Text>
             </View>
-            <Text
-              style={[styles.notificationMessage, { color: theme.text.secondary }]}
-              numberOfLines={2}
-            >
-              {item.message}
-            </Text>
-          </View>
 
-          {/* 읽지 않은 알림 점 표시 */}
-          {isUnread && (
-            <View style={[styles.unreadDot, { backgroundColor: colors.icon }]} />
-          )}
-        </TouchableOpacity>
+            {!item.is_read && (
+              <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
+            )}
+          </View>
+        </Pressable>
       </Swipeable>
     );
   };
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  NotificationItem.displayName = 'NotificationItem';
 
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.bg.primary }]}>
-        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={theme.bg.card} />
+  const renderNotificationItem = useCallback(({ item }: { item: Notification }) => (
+    <NotificationItem
+      item={item}
+      onPress={handleNotificationPress}
+      onDelete={handleDeleteNotification}
+      getIcon={getNotificationIcon}
+      getTime={getNotificationTime}
+      renderActions={renderRightActions}
+      colors={colors}
+      theme={theme}
+      isDark={isDark}
+    />
+  ), [colors, theme, isDark, handleNotificationPress, handleDeleteNotification, getNotificationIcon, getNotificationTime, renderRightActions]);
 
-      {/* 헤더 */}
-      <View style={[styles.header, { backgroundColor: theme.bg.card, borderBottomColor: theme.bg.border }]}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={24} color={theme.text.primary} />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: theme.text.primary }]}>알림</Text>
-          {unreadCount > 0 && (
-            <View style={[styles.unreadBadge, { backgroundColor: '#EF4444' }]}>
-              <Text style={styles.unreadBadgeText}>{unreadCount > 99 ? '99+' : unreadCount}</Text>
-            </View>
-          )}
+  if (loading && !refreshing && notifications.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.bg.primary }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "light-content"} backgroundColor={colors.headerBg} />
+        <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: theme.bg.border }]}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={24} color={colors.headerIcon} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: colors.headerIcon }]}>알림</Text>
+          <View style={styles.headerRight} />
         </View>
-        <View style={styles.headerRight}>
-          {notifications.length > 0 && unreadCount > 0 && (
-            <TouchableOpacity
-              onPress={handleMarkAllAsRead}
-              style={[styles.markAllButton, { backgroundColor: isDark ? '#4F46E5' : '#6366F1' }]}
-            >
-              <Text style={styles.markAllText}>모두 읽음</Text>
-            </TouchableOpacity>
-          )}
+        <View style={{ padding: 16 }}>
+          {[...Array(6)].map((_, index) => (
+            <NotificationItemSkeleton key={index} />
+          ))}
         </View>
       </View>
+    );
+  }
 
-      {/* 콘텐츠 */}
-      {error ? (
-        <View style={styles.centerContainer}>
-          <View style={[styles.errorIconContainer, { backgroundColor: isDark ? '#7F1D1D' : '#FEE2E2' }]}>
-            <Icon name="alert-circle" size={48} color="#EF4444" />
-          </View>
-          <Text style={[styles.errorText, { color: theme.text.primary }]}>{error}</Text>
+  return (
+    <SwipeContext.Provider value={{ openSwipeableRef }}>
+      <View style={[styles.container, { backgroundColor: theme.bg.primary }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "light-content"} backgroundColor={colors.headerBg} />
+        {/* 헤더 */}
+        <View style={[
+          styles.header,
+          {
+            backgroundColor: colors.headerBg,
+            borderBottomColor: theme.bg.border,
+            ...Platform.select({
+              ios: {
+                shadowColor: isDark ? '#fff' : '#000',
+                shadowOffset: { width: 0, height: verticalScale(2) },
+                shadowOpacity: isDark ? 0.1 : 0.08,
+                shadowRadius: moderateScale(8),
+              },
+              android: {
+                elevation: 4,
+              },
+            }),
+          }
+        ]}>
           <TouchableOpacity
-            onPress={() => refetch()}
-            style={[styles.retryButton, { backgroundColor: isDark ? '#4F46E5' : '#6366F1' }]}
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+            accessibilityLabel="뒤로 가기"
+            accessibilityRole="button"
           >
-            <Icon name="refresh" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-            <Text style={styles.retryText}>다시 시도</Text>
+            <Icon name="arrow-back" size={24} color={colors.headerIcon} />
           </TouchableOpacity>
-        </View>
-      ) : notifications.length === 0 && !loading ? (
-        <View style={styles.centerContainer}>
-          <View style={[styles.emptyIconContainer, { backgroundColor: isDark ? '#374151' : '#F3F4F6' }]}>
-            <Icon name="notifications-off-outline" size={48} color={isDark ? '#9CA3AF' : '#6B7280'} />
+          <Text style={[styles.headerTitle, { color: colors.headerIcon }]}>알림</Text>
+          <View style={styles.headerRight}>
+            {notifications.length > 0 && (
+              <Pressable
+                onPress={handleMarkAllAsRead}
+                style={[styles.markAllButton, { backgroundColor: colors.markAllButton }]}
+                accessibilityLabel="모든 알림 읽음으로 표시"
+                accessibilityRole="button"
+              >
+                <Text style={[styles.markAllText, { color: '#FFFFFF' }]}>모두 읽음</Text>
+              </Pressable>
+            )}
           </View>
-          <Text style={[styles.emptyTitle, { color: theme.text.primary }]}>알림이 없습니다</Text>
-          <Text style={[styles.emptySubtitle, { color: theme.text.secondary }]}>
-            새로운 알림이 도착하면{'\n'}여기에 표시됩니다
-          </Text>
         </View>
-      ) : (
+
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={[styles.errorText, { color: theme.text.primary }]}>{error}</Text>
+            <Button title="다시 시도" onPress={() => fetchNotifications(true)} type="primary" />
+          </View>
+        )}
+
+        {!error && notifications.length === 0 && (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>🔔</Text>
+            <Text style={[styles.emptyTitle, { color: theme.text.primary }]}>알림이 없습니다</Text>
+            <Text style={[styles.emptySubtitle, { color: theme.text.secondary }]}>새로운 알림이 도착하면 여기에 표시됩니다</Text>
+          </View>
+        )}
+
         <FlatList
           data={notifications}
-          keyExtractor={(item) => item.notification_id.toString()}
+          keyExtractor={(item: Notification) => item.notification_id.toString()}
           renderItem={renderNotificationItem}
-          onRefresh={() => refetch()}
-          refreshing={isRefetching}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-          onEndReached={() => {
-            if (hasNextPage && !isFetchingNextPage) {
-              fetchNextPage();
-            }
-          }}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
+          onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
-          ListFooterComponent={() => 
-            isFetchingNextPage ? (
-              <View style={{ paddingVertical: 20, alignItems: 'center' }}>
-                <ActivityIndicator size="small" color={theme.colors.primary} />
-              </View>
-            ) : null
-          }
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          initialNumToRender={10}
+          contentContainerStyle={styles.listContent}
+          ListFooterComponent={loading && notifications.length > 0 ? <LoadingIndicator size="small" text="" /> : null}
         />
-      )}
 
-      {/* 삭제 확인 모달 */}
-      <ConfirmationModal
-        visible={deleteModalVisible}
-        title="알림 삭제"
-        message="이 알림을 삭제하시겠습니까?"
-        confirmText="삭제"
-        cancelText="취소"
-        type="danger"
-        onConfirm={() => {
-          if (notificationToDelete) {
-            handleDeleteNotification(notificationToDelete);
-          }
-          setDeleteModalVisible(false);
-          setNotificationToDelete(null);
-        }}
-        onCancel={() => {
-          setDeleteModalVisible(false);
-          setNotificationToDelete(null);
-        }}
-      />
-      </SafeAreaView>
-    </GestureHandlerRootView>
+        <ModernToast
+          visible={toastVisible}
+          message={toastMessage}
+          type={toastType}
+          duration={3000}
+          onHide={() => setToastVisible(false)}
+        />
+      </View>
+    </SwipeContext.Provider>
   );
 };
 
@@ -403,178 +558,158 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) + 12 : 12,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + SPACING.sm : moderateScale(48),
     borderBottomWidth: 1,
   },
   backButton: {
-    padding: 8,
-    width: 44,
-    height: 44,
+    padding: SPACING.xs,
+    width: moderateScale(44),
+    height: moderateScale(44),
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  headerCenter: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 18,
-    fontFamily: 'Pretendard-Bold',
-  },
-  unreadBadge: {
-    marginLeft: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    minWidth: 20,
-    alignItems: 'center',
-  },
-  unreadBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontFamily: 'Pretendard-Bold',
+    flex: 1,
+    fontSize: FONT_SIZES.h4,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginHorizontal: SPACING.md,
+    letterSpacing: 0,
   },
   headerRight: {
-    width: 90,
+    width: moderateScale(90),
     alignItems: 'flex-end',
   },
   markAllButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 16,
+    paddingVertical: moderateScale(8),
+    paddingHorizontal: moderateScale(14),
+    borderRadius: moderateScale(20),
   },
   markAllText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontFamily: 'Pretendard-SemiBold',
+    fontSize: FONT_SIZES.bodySmall,
+    fontWeight: '600',
+    letterSpacing: 0,
   },
   listContent: {
-    padding: 16,
-    paddingTop: 12,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.xl,
   },
   notificationCard: {
+    marginBottom: SPACING.sm,
+    borderRadius: moderateScale(16),
+    borderWidth: 1,
+  },
+  readCard: {
+    opacity: 0.85,
+  },
+  unreadCard: {
+    borderWidth: 1.5,
+  },
+  notificationContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    borderRadius: 16,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  unreadIndicator: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-    borderTopLeftRadius: 16,
-    borderBottomLeftRadius: 16,
+    padding: SPACING.md,
   },
   iconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: moderateScale(52),
+    height: moderateScale(52),
+    borderRadius: moderateScale(26),
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: SPACING.sm,
   },
   textContainer: {
     flex: 1,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
+    marginRight: SPACING.xs,
   },
   notificationTitle: {
-    fontSize: 15,
-    fontFamily: 'Pretendard-SemiBold',
-    flex: 1,
-    marginRight: 8,
+    fontSize: FONT_SIZES.body,
+    fontWeight: '600',
+    marginBottom: moderateScale(4),
+    lineHeight: moderateScale(22),
+    letterSpacing: 0,
   },
   unreadTitle: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   notificationMessage: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: FONT_SIZES.bodySmall,
+    fontWeight: '400',
+    marginBottom: moderateScale(6),
+    lineHeight: moderateScale(20),
+    letterSpacing: 0.1,
+  },
+  unreadMessage: {
+    fontWeight: '500',
   },
   notificationTime: {
-    fontSize: 11,
-    fontFamily: 'Pretendard-Medium',
+    fontSize: FONT_SIZES.small,
+    fontWeight: '500',
+    letterSpacing: 0.1,
   },
   unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginLeft: 8,
+    width: moderateScale(10),
+    height: moderateScale(10),
+    borderRadius: moderateScale(5),
+    marginLeft: moderateScale(4),
   },
-  centerContainer: {
+  swipeActionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  swipeAction: {
+    width: moderateScale(80),
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: moderateScale(2),
+    borderRadius: moderateScale(12),
+  },
+  swipeActionText: {
+    fontSize: FONT_SIZES.tiny,
+    fontWeight: '700',
+    marginTop: moderateScale(4),
+    letterSpacing: 0.1,
+  },
+  errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: SPACING.xl,
   },
-  errorIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
   errorText: {
-    fontSize: 15,
+    fontSize: FONT_SIZES.body,
+    fontWeight: '500',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: SPACING.lg,
+    lineHeight: moderateScale(24),
   },
-  retryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 24,
-  },
-  retryText: {
-    color: '#FFFFFF',
-    fontFamily: 'Pretendard-SemiBold',
-    fontSize: 14,
-  },
-  emptyIconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+  emptyContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    padding: SPACING.xxl,
+  },
+  emptyIcon: {
+    fontSize: moderateScale(72),
+    marginBottom: SPACING.md,
+    opacity: 0.5,
   },
   emptyTitle: {
-    fontSize: 18,
-    fontFamily: 'Pretendard-Bold',
-    marginBottom: 8,
+    fontSize: FONT_SIZES.h3,
+    fontWeight: '700',
+    marginBottom: SPACING.xs,
+    letterSpacing: 0,
   },
   emptySubtitle: {
-    fontSize: 14,
+    fontSize: FONT_SIZES.body,
+    fontWeight: '400',
     textAlign: 'center',
-    lineHeight: 20,
-  },
-  swipeActionContainer: {
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    marginLeft: 8,
-  },
-  deleteButton: {
-    backgroundColor: '#EF4444',
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 80,
-    height: '100%',
-    borderTopRightRadius: 16,
-    borderBottomRightRadius: 16,
+    lineHeight: moderateScale(22),
+    letterSpacing: 0.1,
   },
 });
 

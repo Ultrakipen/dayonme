@@ -57,7 +57,7 @@ const TermsOfServiceScreen: React.FC = () => {
     },
     headerTitle: {
       fontSize: scaleFont(18),
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700',
       color: colors.text,
     },
     content: {
@@ -74,7 +74,7 @@ const TermsOfServiceScreen: React.FC = () => {
     },
     sectionTitle: {
       fontSize: scaleFont(16),
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700',
       color: colors.text,
       marginBottom: 12,
     },

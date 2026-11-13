@@ -1,6 +1,5 @@
 import client from './client';
 import { AxiosResponse } from 'axios';
-import { compressImage, compressProfileImage } from '../../utils/imageCompression';
 
 export interface UploadResponse {
   image_url: any;
@@ -20,7 +19,7 @@ export interface UploadResponse {
 
 const uploadService = {
   uploadImage: async (
-    file: string | File,
+    file: string | File, 
     onProgress?: (progress: number) => void
   ): Promise<AxiosResponse<UploadResponse>> => {
     // 파일 유효성 검사
@@ -29,7 +28,7 @@ const uploadService = {
     }
 
     const formData = new FormData();
-
+    
     // 파일 타입에 따른 처리
     if (typeof file === 'string') {
       // 보안상 위험한 파일 경로만 필터링 (React Native 정상 경로는 허용)
@@ -37,11 +36,8 @@ const uploadService = {
         throw new Error('유효하지 않은 이미지 파일 경로입니다. 다시 선택해주세요.');
       }
 
-      // 이미지 자동 압축 (Galaxy S25 해상도에 최적화)
-      const compressedUri = await compressImage(file);
-
       // 파일명과 확장자 추출
-      const fileName = compressedUri.split('/').pop() || 'image.jpg';
+      const fileName = file.split('/').pop() || 'image.jpg';
       const ext = fileName.split('.').pop()?.toLowerCase() || 'jpg';
 
       // 확장자에 따른 MIME 타입 결정
@@ -56,7 +52,7 @@ const uploadService = {
 
       // URI 문자열인 경우 (React Native Image Picker 경로 포함)
       formData.append('images', {
-        uri: compressedUri,
+        uri: file,
         name: fileName,
         type: mimeType
       } as any);
@@ -110,30 +106,17 @@ const uploadService = {
   
   /**
    * 프로필 이미지 업로드
-   * @param file 업로드할 파일 (URI 문자열 또는 File 객체)
+   * @param file 업로드할 파일
    * @param onProgress 진행 상태 콜백 (선택 사항)
    */
-  uploadProfileImage: async (file: string | File, onProgress?: (progress: number) => void) => {
+  uploadProfileImage: async (file: File, onProgress?: (progress: number) => void) => {
     try {
       if (__DEV__) {
-        if (__DEV__) console.log('📤 uploadProfileImage 시작');
-      }
-
-      // 이미지 압축 (프로필용: 512x512 정사각형)
-      let fileToUpload: any = file;
-      if (typeof file === 'string') {
-        const compressedUri = await compressProfileImage(file);
-        const fileName = compressedUri.split('/').pop() || 'profile.jpg';
-
-        fileToUpload = {
-          uri: compressedUri,
-          name: fileName,
-          type: 'image/jpeg'
-        };
+        console.log('📤 uploadProfileImage 시작:', { name: file.name, size: file.size });
       }
 
       const formData = new FormData();
-      formData.append('profile_image', fileToUpload as any);
+      formData.append('profile_image', file as any);
 
       const response = await client.post('/uploads/profile', formData, {
         timeout: 120000,
@@ -149,13 +132,13 @@ const uploadService = {
       } as any);
 
       if (__DEV__) {
-        if (__DEV__) console.log('✅ uploadProfileImage 성공');
+        console.log('✅ uploadProfileImage 성공');
       }
 
       return response;
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (__DEV__) {
-        if (__DEV__) console.error('❌ uploadProfileImage 실패:', error.message);
+        console.error('❌ uploadProfileImage 실패:', error.message);
       }
       throw error;
     }
@@ -167,7 +150,7 @@ const uploadService = {
   deleteProfileImage: async () => {
     try {
       if (__DEV__) {
-        if (__DEV__) console.log('🗑️ deleteProfileImage 호출');
+        console.log('🗑️ deleteProfileImage 호출');
       }
 
       const response = await client.post('/uploads/profile/delete', {}, {
@@ -180,13 +163,13 @@ const uploadService = {
       } as any);
 
       if (__DEV__) {
-        if (__DEV__) console.log('✅ deleteProfileImage 성공');
+        console.log('✅ deleteProfileImage 성공');
       }
 
       return response;
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (__DEV__) {
-        if (__DEV__) console.error('❌ deleteProfileImage 실패:', error.message);
+        console.error('❌ deleteProfileImage 실패:', error.message);
       }
       throw error;
     }

@@ -16,20 +16,11 @@ export type HomeStackParamList = {
   MyPosts: undefined;
   CreatePost: undefined;
   EditPost: { postId: number }; // 게시물 수정 화면 추가
-  PostDetail: {
-    postId: number;
-    postType?: string;
-    highlightCommentId?: number;
-    sourceScreen?: string;
-    enableSwipe?: boolean;
-    openComments?: boolean;
-  };
+  PostDetail: { postId: number; highlightCommentId?: number };
   WriteMyDay: {
     isEditMode?: boolean;
-    editPostId?: number;
     postId?: number;
     existingPost?: any;
-    onPostCreated?: () => void;
   }; // 나의 하루 공유하기 화면 추가
   MyDayDetail: { postId: number; highlightCommentId?: number }; // 나의 하루 상세보기 화면 추가
   WriteComfortPost: {
@@ -74,9 +65,6 @@ export type ComfortStackParamList = {
     postId: number;
     postType?: string;
     highlightCommentId?: number;
-    sourceScreen?: string;
-    enableSwipe?: boolean;
-    openComments?: boolean;
   };
   ComfortMyPosts: undefined;
   MyPosts: undefined;
@@ -138,7 +126,6 @@ export type AuthStackParamList = {
 
 // 루트 네비게이션 타입
 export type RootStackParamList = {
-  Splash: undefined;
   Welcome: undefined;
   Auth: AuthStackParamList;
   Main: MainTabParamList;
@@ -150,9 +137,8 @@ export type RootStackParamList = {
     highlightCommentId?: number;
     sourceScreen?: 'home' | 'comfort' | 'profile';
     enableSwipe?: boolean;
-    openComments?: boolean; // 댓글 바텀시트 자동 열기
   };
-  Comment: { postId: number; postType?: string; showPostInfo?: boolean }; // 댓글 화면 추가
+  Comment: { postId: number }; // 댓글 화면 추가
   ChallengeDetail: { challengeId: number };
   ProfileEdit: undefined;
   CreatePost: undefined;
@@ -168,13 +154,6 @@ export type RootStackParamList = {
       images?: any[];
     };
   }; // 위로와 공감 게시물 작성/수정 화면 추가
-  WriteMyDay: {
-    isEditMode?: boolean;
-    editPostId?: number;
-    postId?: number;
-    existingPost?: any;
-    onPostCreated?: () => void;
-  }; // 나의 하루 작성/수정 화면 추가
   Settings: undefined;
   BlockManagement: undefined;
   MyPosts: undefined;

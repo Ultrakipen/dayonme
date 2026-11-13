@@ -125,7 +125,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
         Vibration.vibrate(200);
       }
     } catch (error) {
-      if (__DEV__) console.warn('진동 기능을 사용할 수 없습니다:', error);
+      console.warn('진동 기능을 사용할 수 없습니다:', error);
     }
 
     setShowSuccessToast(true);
@@ -211,6 +211,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     // XSS 방어: 입력 검증
     const validation = validatePostContent(content);
     if (!validation.valid) {
@@ -240,7 +241,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
         is_anonymous: isAnonymous
       };
 
-      if (__DEV__) console.log('🚀 게시물 작성 요청:', postData);
+      console.log('🚀 게시물 작성 요청:', postData);
       const response = await postService.createPost(postData);
       
       if (response.status === 'success') {
@@ -263,8 +264,8 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
         throw new Error(response.message || '게시물 작성에 실패했습니다.');
       }
       
-    } catch (error: unknown) {
-      if (__DEV__) console.error('게시물 작성 오류:', error);
+    } catch (error: any) {
+      console.error('게시물 작성 오류:', error);
       setIsSubmitting(false);
       Alert.alert(
         '오류',
@@ -329,7 +330,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
             
             {selectedEmotions.length > 0 && (
               <Surface style={{ padding: 12, borderRadius: 12, backgroundColor: isDark ? theme.bg.secondary : '#f3e8ff' }}>
-                <Text style={{ fontSize: FONT_SIZES.bodySmall, color: isDark ? theme.text.primary : '#6b21a8', fontFamily: 'Pretendard-Medium' }}>
+                <Text style={{ fontSize: FONT_SIZES.bodySmall, color: isDark ? theme.text.primary : '#6b21a8', fontWeight: '500' }}>
                   선택된 감정: {getSelectedEmotionLabel()}
                 </Text>
               </Surface>
@@ -377,7 +378,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
           <Card.Content>
             <HStack style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <VStack style={{ flex: 1, marginRight: 16 }}>
-                <Text style={{ fontSize: FONT_SIZES.bodyLarge, fontFamily: 'Pretendard-Medium', color: theme.text.primary, marginBottom: 4 }}>익명으로 게시</Text>
+                <Text style={{ fontSize: FONT_SIZES.bodyLarge, fontWeight: '500', color: theme.text.primary, marginBottom: 4 }}>익명으로 게시</Text>
                 <Text style={{ fontSize: FONT_SIZES.bodySmall, color: theme.text.secondary, lineHeight: 16 }}>
                   닉네임 대신 '익명'으로 표시됩니다
                 </Text>
@@ -391,7 +392,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
 
             <HStack style={{ alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.bg.border }}>
               <Text style={{ fontSize: FONT_SIZES.bodySmall, color: theme.text.secondary, marginRight: 8 }}>게시자 표시:</Text>
-              <Text style={{ fontSize: FONT_SIZES.bodySmall, fontFamily: 'Pretendard-Medium', color: isDark ? '#a78bfa' : '#6b21a8' }}>
+              <Text style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: isDark ? '#a78bfa' : '#6b21a8' }}>
                 {isAnonymous ? '익명' : (user?.nickname || user?.username || '사용자')}
               </Text>
             </HStack>
@@ -408,7 +409,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
             />
             <Card.Content>
               <HStack style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <Text style={{ fontSize: FONT_SIZES.bodySmall, fontFamily: 'Pretendard-Medium', color: isDark ? '#a78bfa' : '#6b21a8' }}>
+                <Text style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: isDark ? '#a78bfa' : '#6b21a8' }}>
                   {isAnonymous ? '익명' : (user?.nickname || user?.username || '사용자')}
                 </Text>
                 <Text style={{ fontSize: FONT_SIZES.small, color: theme.text.secondary }}>
@@ -419,27 +420,15 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
               <HStack style={{ flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                 {selectedEmotions.map(emotionId => {
                   const emotion = EMOTION_OPTIONS.find(e => e.id === emotionId);
-                  if (!emotion) return null;
-                  // 밝은 색상 체크
-                  const isLightColor = (hexColor: string) => {
-                    const hex = hexColor.replace('#', '');
-                    const r = parseInt(hex.substring(0, 2), 16);
-                    const g = parseInt(hex.substring(2, 4), 16);
-                    const b = parseInt(hex.substring(4, 6), 16);
-                    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-                    return brightness > 180;
-                  };
-                  const emotionColor = emotion.color || '#666666';
-                  const textColor = isLightColor(emotionColor) ? '#333333' : emotionColor;
-                  return (
+                  return emotion ? (
                     <Chip
                       key={emotion.id}
-                      style={[{ height: 24, backgroundColor: emotionColor + '25', borderWidth: 1, borderColor: emotionColor + '50' }]}
-                      textStyle={{ color: textColor, fontFamily: 'Pretendard-SemiBold' }}
+                      style={[{ height: 24, backgroundColor: emotion.color + '20' }]}
+                      textStyle={{ color: emotion.color }}
                     >
                       {emotion.label}
                     </Chip>
-                  );
+                  ) : null;
                 })}
               </HStack>
 
@@ -533,7 +522,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
               <VStack style={{ flex: 1 }}>
                 <Text style={{
                   fontSize: FONT_SIZES.h3,
-                  fontFamily: 'Pretendard-Bold',
+                  fontWeight: '700',
                   color: theme.text.primary,
                   marginBottom: 6,
                   letterSpacing: 0.3,

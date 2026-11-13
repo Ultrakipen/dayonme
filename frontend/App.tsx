@@ -12,16 +12,11 @@ import { ProfileProvider } from './src/contexts/ProfileContext';
 import { ModernThemeProvider, useModernTheme } from './src/contexts/ModernThemeContext';
 import { EmotionProvider } from './src/contexts/EmotionContext';
 import { AlertProvider } from './src/contexts/AlertContext';
-import { AccessibilityProvider } from './src/contexts/AccessibilityContext';
 import SafeAppWrapper from './src/components/SafeAppWrapper';
-import ModernToast, { setToastRef, ToastMethods } from './src/components/ModernToast';
-import NetworkErrorBoundary from './src/components/NetworkErrorBoundary';
 
 // RootNavigator는 정적 import (동적 import 시 로드 실패 문제)
 import RootNavigatorStatic from './src/navigation/RootNavigator';
 import ErrorBoundary from './src/components/ErrorBoundary';
-import { validateSecrets } from './src/config/secrets';
-import { validateApiConfig } from './src/config/api';
 import 'react-native-gesture-handler'; // Old Architecture에서 필요
 
 // Lazy imports - 초기화 함수들은 런타임에 import
@@ -32,26 +27,22 @@ let initializeScreenDimensions: any;
 let initializeUtilsTypography: any;
 let initOneSignal: any;
 
-// React Query 클라이언트 설정 (고도화된 캐싱 전략)
+// React Query 클라이언트 설정 (2026 모바일 트렌드 최적화)
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 10 * 60 * 1000, // 10분 (캐시 히트율 향상)
-      gcTime: 60 * 60 * 1000, // 60분 (메모리 효율과 성능 균형)
-      retry: 3, // 네트워크 불안정 대비 재시도 증가
-      retryDelay: attemptIndex => Math.min(500 * 2 ** attemptIndex, 5000),
+      staleTime: 5 * 60 * 1000, // 5분 (데이터 신선도 유지)
+      gcTime: 30 * 60 * 1000, // 30분 (메모리 효율)
+      retry: 2, // 네트워크 불안정 대비
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 3000),
       refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
-      refetchOnMount: false, // 캐시 우선 사용 (트래픽 절감)
-      networkMode: 'offlineFirst',
-      structuralSharing: true, // 메모리 최적화
+      refetchOnReconnect: true, // 네트워크 재연결 시 갱신
+      refetchOnMount: 'always', // 최신 데이터 보장
+      networkMode: 'offlineFirst', // 오프라인 우선 전략
     },
     mutations: {
-      retry: 2,
+      retry: 1,
       networkMode: 'offlineFirst',
-      onError: (error) => {
-        if (__DEV__) console.error('Mutation 오류:', error);
-      },
     },
   },
 });
@@ -106,7 +97,7 @@ if (__DEV__) {
 
 // 딥링크 설정
 const linking = {
-  prefixes: ['dayonme://', 'exp://'],
+  prefixes: ['dayonme://', 'https://dayonme.com', 'https://www.dayonme.com'],
   config: {
     screens: {
       Auth: {
@@ -128,7 +119,7 @@ const App = () => {
   // AppState 변경 핸들러를 useCallback으로 메모이제이션
   const handleAppStateChange = useCallback((nextAppState: string) => {
     if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
-      if (__DEV__) console.log('🔄 앱이 다시 활성화됨');
+      console.log('🔄 앱이 다시 활성화됨');
     }
     appStateRef.current = nextAppState;
   }, []);
@@ -136,19 +127,17 @@ const App = () => {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        if (__DEV__) console.log('🚀 앱 초기화 시작...');
+        console.log('🚀 앱 초기화 시작...');
 
         // 1단계: InteractionManager 대기 (네이티브 브릿지 준비)
         await new Promise((resolve) => {
           InteractionManager.runAfterInteractions(() => {
-            if (__DEV__) console.log('✅ InteractionManager 준비 완료');
+            console.log('✅ InteractionManager 준비 완료');
             resolve(true);
           });
         });
 
         // 2단계: 필요한 모듈들을 동적으로 import
-        await new Promise(resolve => setTimeout(resolve, 100));
-
         if (isMountedRef.current) {
           // 초기화 함수들 동적 import
           const [
@@ -180,31 +169,14 @@ const App = () => {
           initializeSpacing();
           initializeTypography();
           initializeUtilsTypography();
-          if (__DEV__) console.log('✅ Constants 초기화 완료');
+          console.log('✅ Constants 초기화 완료');
 
-          // 3.5단계: 환경변수 검증 (프로덕션에서만)
-          if (!__DEV__) {
-            const secretErrors = validateSecrets();
-            if (secretErrors.length > 0) {
-              console.error('🚨 보안 설정 오류:', secretErrors);
-            }
-
-            const apiValid = validateApiConfig();
-            if (!apiValid) {
-              console.error('🚨 API 설정 오류');
-            }
-          }
-
-          // 4단계: 에러 리포팅 서비스 초기화 (프로덕션 에러 추적)
-          await initErrorReporting();
-          if (__DEV__) console.log('✅ 에러 리포팅 서비스 초기화 완료');
-
-          // 5단계: OneSignal 푸시 알림 초기화 (완료 대기)
-          await initOneSignal();
-          if (__DEV__) console.log('✅ OneSignal 푸시 알림 초기화 완료');
+          // 4~5단계: 에러 리포팅/FCM은 네트워크 왕복이 있어 화면 표시를 막지 않도록 백그라운드 실행
+          Promise.resolve(initErrorReporting()).catch(() => {});
+          Promise.resolve(initOneSignal()).catch(() => {});
 
           setIsAppReady(true);
-          if (__DEV__) console.log('✅ 앱 준비 완료 - isAppReady: true');
+          console.log('✅ 앱 준비 완료 - isAppReady: true');
         }
       } catch (error) {
         console.error('❌ 앱 초기화 오류:', error);
@@ -239,9 +211,7 @@ const App = () => {
               <SafeAreaProvider>
                 <ThemeProvider>
                   <ModernThemeProvider>
-                    <AccessibilityProvider>
-                      <AppContent isAppReady={isAppReady} />
-                    </AccessibilityProvider>
+                    <AppContent isAppReady={isAppReady} />
                   </ModernThemeProvider>
                 </ThemeProvider>
               </SafeAreaProvider>
@@ -260,15 +230,6 @@ interface AppContentProps {
 
 const AppContent = ({ isAppReady }: AppContentProps) => {
   const { isDark } = useModernTheme();
-  const toastRef = useRef<ToastMethods>(null);
-
-  // Toast ref 설정
-  useEffect(() => {
-    if (toastRef.current) {
-      setToastRef(toastRef.current);
-    }
-    return () => setToastRef(null);
-  }, []);
 
   // React Navigation 테마 설정
   const navigationTheme = isDark
@@ -324,22 +285,20 @@ const AppContent = ({ isAppReady }: AppContentProps) => {
 
   // 앱 내용 렌더링
   const AppInner = (
-    <NetworkErrorBoundary>
-      <AuthProvider>
-        <ProfileProvider>
-          <EmotionProvider>
-            <NavigationContainer
-              theme={navigationTheme}
-              linking={linking}
-              onReady={() => __DEV__ && console.log('📱 네비게이션 준비 완료')}
-              fallback={<ActivityIndicator size="large" color="#405DE6" />}
-            >
-              <RootNavigatorStatic />
-            </NavigationContainer>
-          </EmotionProvider>
-        </ProfileProvider>
-      </AuthProvider>
-    </NetworkErrorBoundary>
+    <AuthProvider>
+      <ProfileProvider>
+        <EmotionProvider>
+          <NavigationContainer
+            theme={navigationTheme}
+            linking={linking}
+            onReady={() => __DEV__ && console.log('📱 네비게이션 준비 완료')}
+            fallback={<ActivityIndicator size="large" color="#405DE6" />}
+          >
+            <RootNavigatorStatic />
+          </NavigationContainer>
+        </EmotionProvider>
+      </ProfileProvider>
+    </AuthProvider>
   );
 
   // 앱 준비 완료 후
@@ -350,7 +309,6 @@ const AppContent = ({ isAppReady }: AppContentProps) => {
         barStyle={isDark ? 'light-content' : 'dark-content'}
       />
       <AlertProvider>{AppInner}</AlertProvider>
-      <ModernToast ref={toastRef} />
     </View>
   );
 };

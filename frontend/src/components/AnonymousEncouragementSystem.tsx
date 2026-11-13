@@ -143,7 +143,7 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
       setSelectedTarget(null);
       loadDailyStatus();
       loadTargets();
-    } catch (error: unknown) {
+    } catch (error: any) {
       Alert.alert('실패', error.response?.data?.message || '응원 전송에 실패했습니다');
     } finally {
       setSending(false);
@@ -301,7 +301,7 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
       {dailyStatus && (
         <View style={[styles.statusBar, { backgroundColor: colors.card, padding: 12 * scale, borderRadius: 10 * scale, marginBottom: 16 * scale }]}>
           <Text style={[styles.statusText, { color: colors.text, fontSize: 13 * scale }]}>
-            오늘 남은 응원: <Text style={{ color: colors.primary, fontFamily: 'Pretendard-Bold' }}>{dailyStatus.remaining}</Text>/{dailyStatus.limit}
+            오늘 남은 응원: <Text style={{ color: colors.primary, fontWeight: '700' }}>{dailyStatus.remaining}</Text>/{dailyStatus.limit}
           </Text>
         </View>
       )}
@@ -493,13 +493,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   headerTitle: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   closeButton: {
     padding: 4,
   },
   closeText: {
-    fontFamily: 'Pretendard-Light',
+    fontWeight: '300',
   },
   tabContainer: {
     flexDirection: 'row',
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   tabText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   badge: {
     paddingHorizontal: 6,
@@ -522,7 +522,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     color: '#fff',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   content: {
     flex: 1,
@@ -534,17 +534,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statusText: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   sectionTitle: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   targetCard: {
     alignItems: 'center',
     borderWidth: 1,
   },
   targetText: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   quickMessagesContainer: {
     flexDirection: 'row',
@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   quickMessageText: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   input: {
     borderWidth: 1,
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     color: '#fff',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   receivedSection: {
     flex: 1,
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   markAllText: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   receivedCard: {
     borderWidth: 1,
@@ -592,7 +592,7 @@ const styles = StyleSheet.create({
   },
   unreadText: {
     color: '#fff',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   receivedMessage: {
     lineHeight: 20,
@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyTitle: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   emptySubtitle: {
     textAlign: 'center',

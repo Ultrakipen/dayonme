@@ -33,9 +33,10 @@ interface AllSectionProps {
   onFilterChange: (filter: 'active' | 'completed') => void;
   onLoadMore: () => void;
   loadingMore: boolean;
+  hasMoreData: boolean;
   filterChallengesByStatus: (challenges: Challenge[], filter: 'active' | 'completed') => Challenge[];
   isDarkMode?: boolean;
-  isAuthenticated?: boolean;  // 인증 상태 추가
+  isAuthenticated?: boolean;
 }
 
 export const AllSection = memo<AllSectionProps>(({
@@ -47,6 +48,7 @@ export const AllSection = memo<AllSectionProps>(({
   onFilterChange,
   onLoadMore,
   loadingMore,
+  hasMoreData,
   filterChallengesByStatus,
   isDarkMode = false,
   isAuthenticated = false
@@ -88,7 +90,7 @@ export const AllSection = memo<AllSectionProps>(({
         <TouchableOpacity
           style={[styles.statusTab, allStatusFilter === 'active' && styles.statusTabActive]}
           onPress={() => {
-            if (__DEV__) console.log('🔘 진행 챌린지 버튼 클릭 - 현재 필터:', allStatusFilter);
+            console.log('🔘 진행 챌린지 버튼 클릭 - 현재 필터:', allStatusFilter);
             onFilterChange('active');
           }}
         >
@@ -103,7 +105,7 @@ export const AllSection = memo<AllSectionProps>(({
         <TouchableOpacity
           style={[styles.statusTab, allStatusFilter === 'completed' && styles.statusTabActive]}
           onPress={() => {
-            if (__DEV__) console.log('🔘 끝난 챌린지 버튼 클릭 - 현재 필터:', allStatusFilter);
+            console.log('🔘 끝난 챌린지 버튼 클릭 - 현재 필터:', allStatusFilter);
             onFilterChange('completed');
           }}
         >
@@ -156,18 +158,17 @@ export const AllSection = memo<AllSectionProps>(({
           scrollEnabled={false}
           showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
-          initialNumToRender={8}
-          maxToRenderPerBatch={4}
-          windowSize={5}
-          updateCellsBatchingPeriod={50}
+          initialNumToRender={10}
+          maxToRenderPerBatch={6}
+          windowSize={8}
           onEndReached={() => {
-            if (!loadingMore && challenges.length > 0 && challenges.length % 20 === 0) {
+            if (!loadingMore && hasMoreData) {
               onLoadMore();
             }
           }}
-          onEndReachedThreshold={0.3}
+          onEndReachedThreshold={0.5}
           ListFooterComponent={() => (
-            challenges.length > 0 && challenges.length % 20 === 0 && !loadingMore ? (
+            hasMoreData && !loadingMore ? (
               <TouchableOpacity
                 style={[styles.loadMoreButton, { backgroundColor: modernTheme.bg.card }]}
                 onPress={onLoadMore}
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   myChallengeButton: {
@@ -230,7 +231,7 @@ const styles = StyleSheet.create({
   },
   myChallengeText: {
     fontSize: 13,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginLeft: 4,
   },
   statusTabContainer: {
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
   },
   statusTabText: {
     fontSize: 13,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   statusTabTextActive: {
     color: '#FFFFFF',
@@ -280,7 +281,7 @@ const styles = StyleSheet.create({
   },
   loadMoreText: {
     fontSize: 14,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginLeft: 8,
   },
   loadingMore: {
@@ -292,7 +293,7 @@ const styles = StyleSheet.create({
   loadingMoreText: {
     marginLeft: 12,
     fontSize: 13,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   warningContainer: {
     alignItems: 'center',
@@ -309,14 +310,14 @@ const styles = StyleSheet.create({
   },
   warningTitle: {
     fontSize: 16,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginTop: 16,
     marginBottom: 8,
     textAlign: 'center',
   },
   warningMessage: {
     fontSize: 14,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
@@ -330,6 +331,6 @@ const styles = StyleSheet.create({
   warningButtonText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
 });

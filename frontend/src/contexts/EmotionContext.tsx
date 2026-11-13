@@ -1,5 +1,6 @@
 // src/contexts/EmotionContext.tsx
-import React, { createContext, useState, useContext, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import emotionService, { Emotion } from '../services/api/emotionService';
 
 // EmotionLog 타입 정의
@@ -38,6 +39,9 @@ export const useEmotion = () => {
   return context;
 };
 
+const EMOTIONS_CACHE_KEY = 'emotionsCache_v1';
+const EMOTIONS_CACHE_TTL = 24 * 60 * 60 * 1000;
+
 interface EmotionProviderProps {
   children: ReactNode;
 }
@@ -49,37 +53,27 @@ export const EmotionProvider: React.FC<EmotionProviderProps> = ({ children }) =>
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 중복 호출 방지를 위한 ref
-  const isFetchingRef = useRef<boolean>(false);
-  const hasInitializedRef = useRef<boolean>(false);
-
   // 감정 목록 조회 (백엔드 /api/emotions)
   const fetchEmotions = async () => {
-    // 이미 조회 중이거나 초기화 완료된 경우 스킵
-    if (isFetchingRef.current || hasInitializedRef.current) {
-      if (__DEV__) console.log('⏭️ 감정 목록 조회 스킵 (이미 진행 중 또는 완료)');
-      return;
-    }
-
-    isFetchingRef.current = true;
     try {
       setIsLoading(true);
       setError(null);
-      if (__DEV__) console.log('🔄 감정 목록 조회 시작');
+      console.log('🔄 감정 목록 조회 시작');
       
       const response = await emotionService.getAllEmotions();
       
       // 백엔드 응답 구조에 맞춰 데이터 추출
       if (response.data && response.data.status === 'success') {
         setEmotions(response.data.data);
-        if (__DEV__) console.log(`✅ 감정 목록 조회 성공: ${response.data.data.length}개`);
+        AsyncStorage.setItem(EMOTIONS_CACHE_KEY, JSON.stringify({ data: response.data.data, ts: Date.now() })).catch(() => {});
+        console.log(`✅ 감정 목록 조회 성공: ${response.data.data.length}개`);
       } else {
         throw new Error('감정 목록 조회 실패');
       }
-    } catch (err: unknown) {
+    } catch (err: any) {
       const errorMessage = err.message || '감정 목록을 불러오는데 실패했습니다.';
       setError(errorMessage);
-      if (__DEV__) console.error('❌ 감정 목록 불러오기 오류:', err);
+      console.error('❌ 감정 목록 불러오기 오류:', err);
       
       // 기본 감정 데이터로 fallback
       setEmotions([
@@ -96,11 +90,9 @@ export const EmotionProvider: React.FC<EmotionProviderProps> = ({ children }) =>
         { emotion_id: 11, name: '충격', icon: 'lightning-bolt', color: '#9932CC' },
         { emotion_id: 12, name: '편함', icon: 'sofa-outline', color: '#32CD32' }
       ]);
-      if (__DEV__) console.log('⚠️ 기본 감정 데이터로 설정됨');
+      console.log('⚠️ 기본 감정 데이터로 설정됨');
     } finally {
       setIsLoading(false);
-      isFetchingRef.current = false;
-      hasInitializedRef.current = true;
     }
   };
 
@@ -109,12 +101,12 @@ const fetchUserEmotions = async () => {
   try {
     setIsLoading(true);
     setError(null);
-    if (__DEV__) console.log('🔄 사용자 감정 기록 조회 시작');
+    console.log('🔄 사용자 감정 기록 조회 시작');
     
     // 현재 백엔드에 /emotions/logs 엔드포인트가 없으므로 
     // 임시로 빈 배열로 설정하거나 다른 API 사용
     setUserEmotions([]);
-    if (__DEV__) console.log(`✅ 사용자 감정 기록 조회 완료 (임시)`);
+    console.log(`✅ 사용자 감정 기록 조회 완료 (임시)`);
     
     // 대안: 일일 감정 체크 API 사용 (존재하는 경우)
     // const response = await emotionService.getDailyEmotionCheck();
@@ -122,10 +114,10 @@ const fetchUserEmotions = async () => {
     //   setUserEmotions(response.data.data || []);
     // }
     
-  } catch (err: unknown) {
+  } catch (err: any) {
     const errorMessage = err.message || '사용자 감정 기록을 불러오는데 실패했습니다.';
     setError(errorMessage);
-    if (__DEV__) console.error('❌ 사용자 감정 기록 불러오기 오류:', err);
+    console.error('❌ 사용자 감정 기록 불러오기 오류:', err);
     setUserEmotions([]);
   } finally {
     setIsLoading(false);
@@ -137,7 +129,7 @@ const logEmotion = async (emotionId: number, note?: string) => {
   try {
     setIsLoading(true);
     setError(null);
-    if (__DEV__) console.log('🔄 감정 기록 시작:', { emotionId, note });
+    console.log('🔄 감정 기록 시작:', { emotionId, note });
     
     const response = await emotionService.recordEmotions({
       emotion_ids: [emotionId],
@@ -146,7 +138,7 @@ const logEmotion = async (emotionId: number, note?: string) => {
     
     // HTTP 상태코드가 2xx이면 성공으로 처리
     if (response.status === 200 || response.status === 201) {
-      if (__DEV__) console.log('✅ 감정 기록 성공');
+      console.log('✅ 감정 기록 성공');
       // 기록 후 사용자 감정 목록 새로고침
       await fetchUserEmotions();
       return; // 성공 시 함수 종료
@@ -154,7 +146,7 @@ const logEmotion = async (emotionId: number, note?: string) => {
     
     // status 필드 체크 (백업)
     if (response.data && response.data.status === 'success') {
-      if (__DEV__) console.log('✅ 감정 기록 성공');
+      console.log('✅ 감정 기록 성공');
       await fetchUserEmotions();
       return;
     }
@@ -162,10 +154,10 @@ const logEmotion = async (emotionId: number, note?: string) => {
     // 여기까지 오면 예상치 못한 응답
     throw new Error('예상치 못한 서버 응답입니다.');
     
-  } catch (err: unknown) {
+  } catch (err: any) {
     const errorMessage = err.message || '감정 기록에 실패했습니다.';
     setError(errorMessage);
-    if (__DEV__) console.error('❌ 감정 기록 오류:', err);
+    console.error('❌ 감정 기록 오류:', err);
     throw err;
   } finally {
     setIsLoading(false);
@@ -175,25 +167,38 @@ const logEmotion = async (emotionId: number, note?: string) => {
 const selectEmotion = (emotionId: number) => {
   if (!selectedEmotions.includes(emotionId)) {
     setSelectedEmotions([...selectedEmotions, emotionId]);
-    if (__DEV__) console.log('✅ 감정 선택:', emotionId);
+    console.log('✅ 감정 선택:', emotionId);
   }
 };
 
 // 감정 선택 해제 (기존)
 const unselectEmotion = (emotionId: number) => {
   setSelectedEmotions(selectedEmotions.filter(id => id !== emotionId));
-  if (__DEV__) console.log('❌ 감정 선택 해제:', emotionId);
+  console.log('❌ 감정 선택 해제:', emotionId);
 };
 
   // 선택된 감정 모두 해제
   const clearSelectedEmotions = () => {
     setSelectedEmotions([]);
-    if (__DEV__) console.log('🧹 선택된 감정 모두 해제');
+    console.log('🧹 선택된 감정 모두 해제');
   };
 
   // 컴포넌트 마운트 시 감정 목록 로드
+  // 캐시(24시간)가 유효하면 즉시 사용하고 서버 호출을 생략 (감정 목록은 거의 변하지 않음)
   useEffect(() => {
-    fetchEmotions();
+    (async () => {
+      try {
+        const raw = await AsyncStorage.getItem(EMOTIONS_CACHE_KEY);
+        if (raw) {
+          const { data, ts } = JSON.parse(raw);
+          if (Array.isArray(data) && data.length > 0) {
+            setEmotions(data);
+            if (Date.now() - ts < EMOTIONS_CACHE_TTL) return;
+          }
+        }
+      } catch {}
+      fetchEmotions();
+    })();
   }, []);
 
   return (

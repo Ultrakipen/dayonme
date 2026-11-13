@@ -33,18 +33,18 @@ export const tryMultipleApis = async <T>(
   for (const api of sequence) {
     try {
       if (__DEV__) {
-        if (__DEV__) console.log(`🚀 ${api} API 시도 중...`);
+        console.log(`🚀 ${api} API 시도 중...`);
       }
       const result = await apiMethods[api]();
       if (__DEV__) {
-        if (__DEV__) console.log(`✅ ${api} API 성공`);
+        console.log(`✅ ${api} API 성공`);
       }
       return result;
     } catch (error: unknown) {
       const apiError = error as ApiError;
       const statusCode = apiError.response?.status;
       if (__DEV__) {
-        if (__DEV__) console.log(`❌ ${api} API 실패:`, statusCode, apiError.message);
+        console.log(`❌ ${api} API 실패:`, statusCode, apiError.message);
       }
       lastError = apiError;
 
@@ -77,7 +77,7 @@ export const retryApiCall = async <T>(
       if (attempt > 0) {
         const delay = initialDelay * Math.pow(2, attempt - 1);
         if (__DEV__) {
-          if (__DEV__) console.log(`🔄 재시도 ${attempt}/${maxRetries - 1} (${delay}ms 대기)`);
+          console.log(`🔄 재시도 ${attempt}/${maxRetries - 1} (${delay}ms 대기)`);
         }
         await new Promise(resolve => setTimeout(resolve, delay));
       }

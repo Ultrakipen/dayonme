@@ -30,13 +30,7 @@ export const normalizeImageUrl = (
   bypassCache: boolean = false
 ): string => {
   if (!imageUrl) {
-    devLog('⚠️ [imageUtils] normalizeImageUrl: 빈 URL');
     return '';
-  }
-
-  // 디버그: 원본 URL 로깅 (챌린지 이미지 확인용)
-  if (imageUrl.includes('challenge')) {
-    devLog(`🖼️ [imageUtils] 챌린지 이미지 URL 정규화: ${imageUrl}`);
   }
 
   // ⚠️ 레거시 URL 처리: 단수형 /profile/을 복수형 /profiles/로 변환
@@ -46,37 +40,21 @@ export const normalizeImageUrl = (
     devLog('🔄 [imageUtils] 레거시 프로필 경로 변환:', imageUrl);
   }
 
-  // bypassCache가 명시적으로 true일 때만 캐시 우회
-  // 프로필 이미지는 기본적으로 캐싱하여 깜빡임 방지
-  const shouldBypassCache = bypassCache;
+  // 프로필 이미지는 항상 캐시 우회 (URL에 'profile'이 포함된 경우)
+  const isProfileImage = imageUrl.includes('/profiles/') || imageUrl.includes('profile_');
+  const shouldBypassCache = bypassCache || isProfileImage;
 
   // 이미 절대 URL인 경우 포트 정정 후 반환
   if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    let normalizedUrl = imageUrl;
-
-    // Android 에뮬레이터 주소를 실제 서버 주소로 변환
-    if (normalizedUrl.includes('://10.0.2.2:')) {
-      normalizedUrl = normalizedUrl.replace(/http:\/\/10\.0\.2\.2:\d+/, 'https://dayonme.com');
-    } else if (normalizedUrl.includes('://localhost:')) {
-      normalizedUrl = normalizedUrl.replace(/http:\/\/localhost:\d+/, 'https://dayonme.com');
-    } else if (normalizedUrl.includes('://127.0.0.1:')) {
-      normalizedUrl = normalizedUrl.replace(/http:\/\/127\.0\.0\.1:\d+/, 'https://dayonme.com');
-    }
-
-    // HTTP를 HTTPS로 변환 (Mixed Content 보안 정책 대응)
-    // dayonme.com 도메인의 경우 HTTPS로 강제 변환
-    if (normalizedUrl.startsWith('http://dayonme.com')) {
-      normalizedUrl = normalizedUrl.replace('http://dayonme.com', 'https://dayonme.com');
-    }
-
     // 기존 3002, 3004 포트를 3001로 변경 (호환성 처리)
-    if (normalizedUrl.includes(':3002/')) {
-      normalizedUrl = normalizedUrl.replace(':3002/', ':3001/');
-    } else if (normalizedUrl.includes(':3004/')) {
-      normalizedUrl = normalizedUrl.replace(':3004/', ':3001/');
+    let normalizedUrl = imageUrl;
+    if (imageUrl.includes(':3002/')) {
+      normalizedUrl = imageUrl.replace(':3002/', ':3001/');
+    } else if (imageUrl.includes(':3004/')) {
+      normalizedUrl = imageUrl.replace(':3004/', ':3001/');
     }
 
-    // bypassCache가 true일 때만 타임스탬프로 캐시 우회
+    // 프로필 이미지는 항상 새로운 타임스탬프로 캐시 우회
     if (shouldBypassCache) {
       const separator = normalizedUrl.includes('?') ? '&' : '?';
       normalizedUrl = `${normalizedUrl}${separator}t=${Date.now()}`;
@@ -101,22 +79,14 @@ export const normalizeImageUrl = (
   } else if (imageUrl.startsWith('/')) {
     // 기타 절대 경로
     normalizedUrl = `${serverUrl}${imageUrl}`;
-  } else if (imageUrl.startsWith('uploads/')) {
-    // uploads로 시작하는 상대 경로는 /api 추가
-    normalizedUrl = `${serverUrl}/api/${imageUrl}`;
   } else {
-    // 기타 상대 경로
+    // 상대 경로
     normalizedUrl = `${serverUrl}/${imageUrl}`;
   }
 
-  // bypassCache가 true일 때만 타임스탬프로 캐시 우회
+  // 프로필 이미지는 항상 새로운 타임스탬프로 캐시 우회
   if (shouldBypassCache) {
     normalizedUrl = `${normalizedUrl}?t=${Date.now()}`;
-  }
-
-  // 디버그: 챌린지 이미지 최종 URL 로깅
-  if (imageUrl.includes('challenge')) {
-    devLog(`🖼️ [imageUtils] 챌린지 이미지 최종 URL: ${normalizedUrl}`);
   }
 
   return normalizedUrl;

@@ -51,11 +51,8 @@ const UserProfileScreen: React.FC = React.memo(() => {
   const route = useRoute<UserProfileScreenRouteProp>();
   const { userId, nickname } = route.params;
   const { width: screenWidth } = useWindowDimensions();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const { theme, isDark } = useModernTheme();
-
-  // 본인 프로필인지 확인
-  const isOwnProfile = user?.user_id === userId;
 
   const colors = useMemo(() => ({
     background: theme.bg.primary,
@@ -99,7 +96,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     headerTitle: {
       fontSize: moderateScale(17),
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700',
       color: theme.text.primary,
       letterSpacing: -0.3,
     },
@@ -124,7 +121,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       marginTop: moderateScale(12),
       fontSize: moderateScale(16),
       color: theme.text.secondary,
-      fontFamily: 'Pretendard-Medium',
+      fontWeight: '500',
     },
     header: {
       flexDirection: 'row',
@@ -142,7 +139,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     headerTitle: {
       fontSize: moderateScale(17),
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700',
       color: theme.text.primary,
       letterSpacing: -0.3,
     },
@@ -196,7 +193,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     nickname: {
       fontSize: moderateScale(17),
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700',
       color: theme.text.primary,
       marginBottom: moderateScale(8),
       letterSpacing: -0.3,
@@ -241,7 +238,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     actionButtonText: {
       fontSize: moderateScale(15),
-      fontFamily: 'Pretendard-SemiBold',
+      fontWeight: '600',
       color: '#FFFFFF',
       letterSpacing: -0.2,
     },
@@ -266,7 +263,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     sectionTitle: {
       fontSize: moderateScale(17),
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700',
       color: theme.text.primary,
       marginBottom: moderateScale(16),
       letterSpacing: -0.3,
@@ -282,7 +279,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     statValue: {
       fontSize: moderateScale(20),
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700',
       color: theme.text.primary,
       marginBottom: moderateScale(4),
       letterSpacing: -0.5,
@@ -290,7 +287,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     statLabel: {
       fontSize: Math.max(moderateScale(13), 12),
       color: theme.text.secondary,
-      fontFamily: 'Pretendard-Medium',
+      fontWeight: '500',
     },
     statDivider: {
       width: 1,
@@ -325,12 +322,12 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     emotionName: {
       fontSize: moderateScale(14),
-      fontFamily: 'Pretendard-SemiBold',
+      fontWeight: '600',
     },
     emotionCount: {
       fontSize: Math.max(moderateScale(13), 12),
       color: theme.text.secondary,
-      fontFamily: 'Pretendard-Medium',
+      fontWeight: '500',
     },
     postsCard: {
       backgroundColor: theme.bg.card,
@@ -344,7 +341,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       color: theme.text.secondary,
       textAlign: 'center',
       paddingVertical: moderateScale(20),
-      fontFamily: 'Pretendard-Medium',
+      fontWeight: '500',
     },
     emptyText: {
       fontSize: moderateScale(16),
@@ -352,7 +349,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       color: theme.text.secondary,
       textAlign: 'center',
       paddingVertical: moderateScale(32),
-      fontFamily: 'Pretendard-Medium',
+      fontWeight: '500',
     },
     postsLoadingContainer: {
       paddingVertical: moderateScale(40),
@@ -372,7 +369,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     postCount: {
       fontSize: moderateScale(14),
-      fontFamily: 'Pretendard-SemiBold',
+      fontWeight: '600',
       color: emotionColors.primary,
     },
     postsContainer: {
@@ -413,7 +410,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     postEmotionName: {
       fontSize: Math.max(moderateScale(12), 12),
-      fontFamily: 'Pretendard-SemiBold',
+      fontWeight: '600',
       color: theme.text.secondary,
     },
     postTypeBadge: {
@@ -432,7 +429,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     postTypeText: {
       fontSize: Math.max(moderateScale(13), 12),
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700',
       letterSpacing: -0.2,
     },
     myDayText: {
@@ -444,7 +441,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     postDate: {
       fontSize: Math.max(moderateScale(13), 12),
       color: theme.text.secondary,
-      fontFamily: 'Pretendard-Medium',
+      fontWeight: '500',
     },
     postContent: {
       fontSize: moderateScale(15),
@@ -475,7 +472,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     postStatText: {
       fontSize: Math.max(moderateScale(13), 12),
       color: theme.text.secondary,
-      fontFamily: 'Pretendard-Medium',
+      fontWeight: '500',
     },
     showMoreButton: {
       flexDirection: 'row',
@@ -493,7 +490,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     showMoreText: {
       fontSize: moderateScale(14),
-      fontFamily: 'Pretendard-SemiBold',
+      fontWeight: '600',
       color: emotionColors.primary,
     },
     blockedBanner: {
@@ -516,7 +513,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     blockedBannerText: {
       fontSize: moderateScale(14),
-      fontFamily: 'Pretendard-SemiBold',
+      fontWeight: '600',
       color: isDark ? '#FF8A80' : '#D32F2F',
       letterSpacing: -0.2,
     },
@@ -528,7 +525,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     unblockButtonText: {
       fontSize: Math.max(moderateScale(13), 12),
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700',
       color: '#FFFFFF',
       letterSpacing: -0.2,
     },
@@ -541,7 +538,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     errorTitle: {
       fontSize: moderateScale(20),
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700',
       color: theme.text.primary,
       marginTop: moderateScale(24),
       marginBottom: moderateScale(12),
@@ -575,7 +572,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     retryButtonText: {
       fontSize: moderateScale(16),
-      fontFamily: 'Pretendard-SemiBold',
+      fontWeight: '600',
       color: '#FFFFFF',
       letterSpacing: -0.3,
     },
@@ -585,7 +582,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     },
     backButtonErrorText: {
       fontSize: moderateScale(15),
-      fontFamily: 'Pretendard-Medium',
+      fontWeight: '500',
       color: theme.text.secondary,
       letterSpacing: -0.2,
     },
@@ -638,16 +635,6 @@ const UserProfileScreen: React.FC = React.memo(() => {
 
       if (profileResponse.status === 'success' && profileResponse.data) {
         setUserProfile(profileResponse.data);
-        // 🔍 프로필 이미지 URL 디버깅
-        if (__DEV__) {
-          if (__DEV__) console.log('🖼️ 프로필 데이터:', {
-            userId: profileResponse.data.user_id,
-            nickname: profileResponse.data.nickname,
-            profile_image_url: profileResponse.data.profile_image_url,
-            profile_image_type: typeof profileResponse.data.profile_image_url,
-            profile_image_length: profileResponse.data.profile_image_url?.length
-          });
-        }
         // ✅ 프로필만 로드되면 바로 화면 표시
         setLoading(false);
         if (__DEV__) console.log(`✅ [PERF] 화면 표시: ${Date.now() - startTime}ms`);
@@ -676,7 +663,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
         });
         if (__DEV__) console.log('✅ 통계 로드 완료');
       } else if (__DEV__) {
-        if (__DEV__) console.warn('⚠️ 통계 로드 실패 (계속 진행)');
+        console.warn('⚠️ 통계 로드 실패 (계속 진행)');
       }
 
       // ✅ 감정 태그 처리 (선택)
@@ -691,7 +678,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
         setEmotionTags(emotionTagsData);
         if (__DEV__) console.log('✅ 감정 태그 로드 완료');
       } else if (__DEV__) {
-        if (__DEV__) console.warn('⚠️ 감정 태그 로드 실패 (계속 진행)');
+        console.warn('⚠️ 감정 태그 로드 실패 (계속 진행)');
       }
 
       // ✅ 차단 상태 처리 (선택)
@@ -708,12 +695,12 @@ const UserProfileScreen: React.FC = React.memo(() => {
         setUserPosts(postsResponse.value.data.posts || []);
         if (__DEV__) console.log('✅ 게시물 로드 완료:', postsResponse.value.data.posts.length);
       } else if (__DEV__) {
-        if (__DEV__) console.warn('⚠️ 게시물 로드 실패 (계속 진행)');
+        console.warn('⚠️ 게시물 로드 실패 (계속 진행)');
       }
 
       if (__DEV__) console.log(`🎉 [PERF] 전체 로드 완료: ${Date.now() - startTime}ms`);
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (__DEV__) console.error(`❌ [PERF] 프로필 로드 오류 (${Date.now() - startTime}ms):`, error);
       setLoading(false); // 에러 발생 시 로딩 상태 해제
 
@@ -745,7 +732,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
           },
         },
       ]);
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (__DEV__) console.error('❌ 사용자 차단 실패:', error);
       showAlert.error('오류', error.message || '차단에 실패했습니다.');
     }
@@ -785,7 +772,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       }
 
       showAlert.success('완료', '차단을 해제했습니다.');
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (__DEV__) console.error('❌ 사용자 차단 해제 실패:', error);
       showAlert.error('오류', error.message || '차단 해제에 실패했습니다.');
     }
@@ -807,7 +794,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
         setUserPosts(postsResponse.data.posts || []);
         if (__DEV__) console.log('✅ 사용자 게시물 로드 완료:', postsResponse.data.posts.length);
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (__DEV__) console.error('❌ 사용자 게시물 로드 오류:', error);
       // 게시물은 선택적이므로 오류가 나도 계속 진행
     } finally {
@@ -830,26 +817,19 @@ const UserProfileScreen: React.FC = React.memo(() => {
 
       <RNText style={headerStyles.headerTitle}>프로필</RNText>
 
-      {/* 본인 프로필이 아닐 때만 옵션 버튼 표시 */}
-      {!isOwnProfile ? (
-        <TouchableOpacity
-          style={headerStyles.moreButton}
-          onPress={() => setShowOptionsSheet(true)}
-        >
-          <Icon name="ellipsis-vertical" size={24} color={theme.text.primary} />
-        </TouchableOpacity>
-      ) : (
-        <View style={headerStyles.moreButton} />
-      )}
+      <TouchableOpacity
+        style={headerStyles.moreButton}
+        onPress={() => setShowOptionsSheet(true)}
+      >
+        <Icon name="ellipsis-vertical" size={24} color={theme.text.primary} />
+      </TouchableOpacity>
     </View>
   );
 
   const renderProfileInfo = () => {
     if (!userProfile) return null;
 
-    // is_private 플래그 또는 privacy_settings.show_profile 체크
-    const isPrivate = (userProfile as any).is_private === true;
-    const showProfile = !isPrivate && (userProfile.privacy_settings?.show_profile ?? true);
+    const showProfile = userProfile.privacy_settings?.show_profile ?? true;
 
     if (!showProfile) {
       return (
@@ -866,28 +846,28 @@ const UserProfileScreen: React.FC = React.memo(() => {
       <View style={styles.profileInfoContainer}>
         {/* 프로필 이미지 */}
         <View style={styles.profileImageContainer}>
-          {userProfile.profile_image_url && userProfile.profile_image_url.trim() !== '' && !imageLoadError ? (
+          {userProfile.profile_image_url && !imageLoadError ? (
             <>
               <FastImage
                 source={{
                   uri: userProfile.profile_image_url,
                   priority: FastImage.priority.high,
-                  cache: FastImage.cacheControl.web,
+                  cache: FastImage.cacheControl.immutable,
                 }}
                 style={styles.profileImage}
                 resizeMode={FastImage.resizeMode.cover}
                 onLoad={() => {
-                  if (__DEV__) console.log('✅ 프로필 이미지 로드 성공:', userProfile.profile_image_url);
+                  if (__DEV__) console.log('✅ 프로필 이미지 로드 성공');
                   setProfileImageLoading(false);
                   setImageLoadError(false);
                 }}
                 onError={(error) => {
-                  if (__DEV__) console.error('❌ 프로필 이미지 로드 실패:', userProfile.profile_image_url, error);
+                  if (__DEV__) console.error('❌ 프로필 이미지 로드 실패');
                   setProfileImageLoading(false);
                   setImageLoadError(true);
                 }}
                 onLoadStart={() => {
-                  if (__DEV__) console.log('🔄 프로필 이미지 로드 시작:', userProfile.profile_image_url);
+                  if (__DEV__) console.log('🔄 프로필 이미지 로드 시작');
                   setProfileImageLoading(true);
                 }}
               />
@@ -918,31 +898,25 @@ const UserProfileScreen: React.FC = React.memo(() => {
 
         {/* 가입일 */}
         <RNText style={styles.joinDate}>
-          {new Date(userProfile.created_at).toLocaleDateString('ko-KR', {
-            year: 'numeric',
-            month: 'long'
-          })} 가입
+          가입일: {new Date(userProfile.created_at).toLocaleDateString('ko-KR')}
         </RNText>
 
-        {/* 액션 버튼 - 본인이 아닐 때만 익명 격려 표시 */}
-        {!isOwnProfile && (
-          <View style={styles.actionButtonsContainer}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.encouragementButton]}
-              onPress={() => setShowEncouragementModal(true)}
-            >
-              <Icon name="heart-outline" size={20} color="#FFFFFF" style={styles.actionButtonIcon} />
-              <RNText style={styles.actionButtonText}>익명으로 마음 보내기</RNText>
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* 액션 버튼 - 익명 격려만 표시 */}
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.encouragementButton]}
+            onPress={() => setShowEncouragementModal(true)}
+          >
+            <Icon name="heart-outline" size={20} color="#FFFFFF" style={styles.actionButtonIcon} />
+            <RNText style={styles.actionButtonText}>익명으로 격려하기</RNText>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   };
 
   const renderStats = () => {
-    const isPrivate = (userProfile as any)?.is_private === true;
-    if (isPrivate || !userProfile?.privacy_settings?.show_profile) return null;
+    if (!userProfile?.privacy_settings?.show_profile) return null;
 
     const showStats = userProfile.privacy_settings?.show_posts ?? true;
 
@@ -985,8 +959,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
   };
 
   const renderEmotionStats = () => {
-    const isPrivate = (userProfile as any)?.is_private === true;
-    if (isPrivate || !userProfile?.privacy_settings?.show_profile) return null;
+    if (!userProfile?.privacy_settings?.show_profile) return null;
 
     const showEmotions = userProfile.privacy_settings?.show_emotions ?? true;
 
@@ -1093,8 +1066,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
   };
 
   const renderPosts = () => {
-    const isPrivate = (userProfile as any)?.is_private === true;
-    if (isPrivate || !userProfile?.privacy_settings?.show_profile) return null;
+    if (!userProfile?.privacy_settings?.show_profile) return null;
 
     const showPosts = userProfile.privacy_settings?.show_posts ?? true;
 
@@ -1153,12 +1125,11 @@ const UserProfileScreen: React.FC = React.memo(() => {
               style={styles.postItem}
               activeOpacity={0.7}
               onPress={() => {
-                if (__DEV__) console.log('🔍 게시물 클릭:', post.post_id, post.post_type);
+                if (__DEV__) console.log('🔍 게시물 클릭:', post.post_id);
                 navigation.navigate('PostDetail', {
                   postId: post.post_id,
-                  postType: post.post_type === 'my_day' ? 'myday' : 'comfort',
                   sourceScreen: 'profile',
-                  enableSwipe: false
+                  enableSwipe: true
                 });
               }}
             >
@@ -1312,7 +1283,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       },
       headerTitle: {
         fontSize: moderateScale(17),
-        fontFamily: 'Pretendard-Bold',
+        fontWeight: '700',
         color: theme.text.primary,
         letterSpacing: -0.3,
       },
@@ -1328,7 +1299,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       },
       errorTitle: {
         fontSize: moderateScale(20),
-        fontFamily: 'Pretendard-Bold',
+        fontWeight: '700',
         color: theme.text.primary,
         marginTop: moderateScale(24),
         marginBottom: moderateScale(12),
@@ -1362,7 +1333,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       },
       retryButtonText: {
         fontSize: moderateScale(16),
-        fontFamily: 'Pretendard-SemiBold',
+        fontWeight: '600',
         color: '#FFFFFF',
         letterSpacing: -0.3,
       },
@@ -1372,7 +1343,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       },
       backButtonErrorText: {
         fontSize: moderateScale(15),
-        fontFamily: 'Pretendard-Medium',
+        fontWeight: '500',
         color: theme.text.secondary,
         letterSpacing: -0.2,
       },
@@ -1466,39 +1437,36 @@ const UserProfileScreen: React.FC = React.memo(() => {
         isDarkMode={isDark}
       />
 
-      {/* 옵션 바텀시트 - 본인 프로필이 아닐 때만 */}
-      {!isOwnProfile && (
-        <BottomSheetAlert
-          visible={showOptionsSheet}
-          onClose={() => setShowOptionsSheet(false)}
-          showIcon={false}
-          buttons={[
-            {
-              text: isBlocked ? '차단 해제' : '차단',
-              style: 'destructive',
-              onPress: () => {
-                setShowOptionsSheet(false);
-                if (isBlocked) {
-                  handleUnblockUser();
-                } else {
-                  handleBlockUser();
-                }
-              },
+      {/* 옵션 바텀시트 */}
+      <BottomSheetAlert
+        visible={showOptionsSheet}
+        onClose={() => setShowOptionsSheet(false)}
+        buttons={[
+          {
+            text: isBlocked ? '차단 해제' : '차단',
+            style: 'destructive',
+            onPress: () => {
+              setShowOptionsSheet(false);
+              if (isBlocked) {
+                handleUnblockUser();
+              } else {
+                handleBlockUser();
+              }
             },
-            {
-              text: '신고',
-              onPress: () => {
-                setShowOptionsSheet(false);
-                handleReportUser();
-              },
+          },
+          {
+            text: '신고',
+            onPress: () => {
+              setShowOptionsSheet(false);
+              handleReportUser();
             },
-            {
-              text: '취소',
-              style: 'cancel',
-            },
-          ]}
-        />
-      )}
+          },
+          {
+            text: '취소',
+            style: 'cancel',
+          },
+        ]}
+      />
     </View>
   );
 });

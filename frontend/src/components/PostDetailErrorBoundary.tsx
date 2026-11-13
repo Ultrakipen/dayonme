@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: normalize(20),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     color: '#1f2937',
     marginBottom: normalizeSpace(12),
     textAlign: 'center',
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: normalize(16),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     color: '#ffffff',
   },
   hint: {

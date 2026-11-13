@@ -204,7 +204,7 @@ const SendEncouragementModal: React.FC<SendEncouragementModalProps> = ({
         setRemainingCount(response.data.remaining);
       }
     } catch (error) {
-      if (__DEV__) console.error('남은 횟수 조회 오류:', error);
+      console.error('남은 횟수 조회 오류:', error);
     }
   };
 
@@ -259,8 +259,8 @@ const SendEncouragementModal: React.FC<SendEncouragementModalProps> = ({
           }
         );
       }
-    } catch (error: unknown) {
-      if (__DEV__) console.error('격려 메시지 전송 오류:', error);
+    } catch (error: any) {
+      console.error('격려 메시지 전송 오류:', error);
       const errorMessage = error.response?.data?.message || '메시지 전송에 실패했습니다.';
       if (Platform.OS === 'ios' || Platform.OS === 'android') {
         Vibration.vibrate([100, 50, 100]);
@@ -494,13 +494,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   alertTitle: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: 12,
     letterSpacing: -0.3,
   },
   alertMessage: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 28,
@@ -525,7 +525,7 @@ const styles = StyleSheet.create({
   },
   alertButtonText: {
     color: '#ffffff',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
 
@@ -570,11 +570,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   headerSubtitle: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     marginTop: 4,
   },
   closeButton: {
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   infoText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginLeft: 12,
     flex: 1,
     letterSpacing: -0.2,
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 18,
     minHeight: 140,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     letterSpacing: -0.2,
   },
   counterContainer: {
@@ -611,7 +611,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   counterText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   anonymityBox: {
     flexDirection: 'row',
@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
   anonymityText: {
     marginLeft: 12,
     flex: 1,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     letterSpacing: -0.1,
   },
   buttonContainer: {
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
     }),
   },
   buttonText: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
 });

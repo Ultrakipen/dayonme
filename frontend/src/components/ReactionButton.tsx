@@ -56,7 +56,7 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
         setReactionTypes(response.data.reactionTypes);
       }
     } catch (error) {
-      if (__DEV__) console.error('리액션 타입 로드 오류:', error);
+      console.error('리액션 타입 로드 오류:', error);
     }
   };
 
@@ -74,7 +74,7 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
         }
       }
     } catch (error) {
-      if (__DEV__) console.error('리액션 통계 로드 오류:', error);
+      console.error('리액션 통계 로드 오류:', error);
     }
   };
 
@@ -110,11 +110,11 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
         await loadReactions();
         setShowReactionPicker(false);
       }
-    } catch (error: unknown) {
-      if (__DEV__) console.error('리액션 토글 오류:', error);
+    } catch (error: any) {
+      console.error('리액션 토글 오류:', error);
       if (error.response?.data?.message) {
         // Alert나 Toast로 에러 메시지 표시 가능
-        if (__DEV__) console.log('에러:', error.response.data.message);
+        console.log('에러:', error.response.data.message);
       }
     } finally {
       setLoading(false);
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   countText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   reactionPicker: {
     position: 'absolute',
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   },
   reactionName: {
     marginTop: 2,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   reactionStats: {
     flexDirection: 'row',

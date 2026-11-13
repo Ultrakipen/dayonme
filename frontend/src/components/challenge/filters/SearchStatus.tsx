@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 14,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     lineHeight: 20,
     textAlignVertical: 'center',
     includeFontPadding: false,

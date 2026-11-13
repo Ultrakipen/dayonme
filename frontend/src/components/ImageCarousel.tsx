@@ -1,19 +1,20 @@
 // src/components/ImageCarousel.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
+  Image,
   ScrollView,
   Dimensions,
   TouchableOpacity,
+  Modal,
   StyleSheet,
+  Platform,
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import ImageView from 'react-native-image-viewing';
 import { Text } from './ui';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { getImageProps } from '../utils/imageOptimization';
 
 // React Native 0.80 호환성: lazy 초기화
 const getScreenWidth = () => {
@@ -34,9 +35,12 @@ interface ImageCarouselProps {
   accessible?: boolean;
   accessibilityLabel?: string;
   accessibilityHint?: string;
+  priority?: 'low' | 'normal' | 'high';
 }
 
-const ImageCarousel = React.memo<ImageCarouselProps>(({
+import ImageViewerModal from '../screens/PostDetail/components/ImageViewerModal';
+
+const ImageCarousel: React.FC<ImageCarouselProps> = ({
   images,
   height = 280,
   borderRadius = 16,
@@ -46,11 +50,13 @@ const ImageCarousel = React.memo<ImageCarouselProps>(({
   accessible,
   accessibilityLabel,
   accessibilityHint,
+  priority = 'normal',
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [viewerVisible, setViewerVisible] = useState(false);
-  const [viewerIndex, setViewerIndex] = useState(0);
+  const [fullscreenVisible, setFullscreenVisible] = useState(false);
+  const [fullscreenIndex, setFullscreenIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  const fullscreenScrollRef = useRef<ScrollView>(null);
 
   const SCREEN_WIDTH = getScreenWidth();
   const carouselWidth = width || SCREEN_WIDTH;
@@ -60,21 +66,58 @@ const ImageCarousel = React.memo<ImageCarouselProps>(({
     return null;
   }
 
-  // 이미지 프리로드 (첫 번째 이미지만 - Lazy Loading 최적화)
-  useEffect(() => {
-    if (images && images.length > 0) {
-      const firstImage = {
-        uri: getImageProps(images[0], 'detail', 0).uri,
-        priority: FastImage.priority.high,
-      };
-      FastImage.preload([firstImage]);
-    }
-  }, [images]);
+  // 단일 이미지인 경우 간단하게 표시
+  if (images.length === 1) {
+    return (
+      <View
+        style={[styles.container, containerStyle]}
+        accessible={accessible}
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
+      >
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => {
+            if (showFullscreenButton) {
+              setFullscreenIndex(0);
+              setFullscreenVisible(true);
+            }
+          }}
+        >
+          <FastImage
+            source={{
+              uri: images[0],
+              priority: priority === 'low' ? FastImage.priority.low : priority === 'high' ? FastImage.priority.high : FastImage.priority.normal,
+              cache: FastImage.cacheControl.immutable
+            }}
+            style={[styles.singleImage, { height, borderRadius }]}
+            resizeMode={FastImage.resizeMode.cover}
+          />
+        </TouchableOpacity>
 
-  // 이미지 뷰어 포맷 변환 (최적화된 URL 사용)
-  const imageViewerData = images.map(uri => ({ uri: getImageProps(uri, 'full').uri }));
+        {showFullscreenButton && (
+          <TouchableOpacity
+            style={styles.fullscreenButton}
+            onPress={() => {
+              setFullscreenIndex(0);
+              setFullscreenVisible(true);
+            }}
+          >
+            <MaterialCommunityIcons name="arrow-expand" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
 
-  // 스크롤 이벤트 핸들러
+        <ImageViewerModal
+          visible={fullscreenVisible}
+          urls={images}
+          initialIndex={fullscreenIndex}
+          onClose={() => setFullscreenVisible(false)}
+        />
+      </View>
+    );
+  }
+
+  // 스크롤 이벤트 핸들러 - 정확한 인덱스 계산
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
     const index = Math.min(
@@ -84,12 +127,13 @@ const ImageCarousel = React.memo<ImageCarouselProps>(({
     setCurrentIndex(index);
   };
 
-  // 이미지 뷰어 열기
-  const openImageViewer = (index: number) => {
-    if (showFullscreenButton) {
-      setViewerIndex(index);
-      setViewerVisible(true);
-    }
+  const handleFullscreenScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.min(
+      Math.max(Math.round(contentOffsetX / SCREEN_WIDTH), 0),
+      images.length - 1
+    );
+    setFullscreenIndex(index);
   };
 
   return (
@@ -112,43 +156,46 @@ const ImageCarousel = React.memo<ImageCarouselProps>(({
         snapToAlignment="center"
         style={{ borderRadius }}
       >
-        {images.map((imageUri, index) => {
-          const imageProps = getImageProps(imageUri, 'detail', index);
-          return (
-            <TouchableOpacity
-              key={`image-${index}-${imageUri}`}
-              activeOpacity={0.9}
-              onPress={() => openImageViewer(index)}
-              style={{ width: carouselWidth }}
-            >
-              <FastImage
-                source={{
-                  uri: imageProps.uri,
-                  priority: FastImage.priority.high, // 고정 우선순위 (깜빡임 방지)
-                  cache: FastImage.cacheControl.immutable, // 캐싱 강화
-                }}
-                style={[styles.carouselImage, { width: carouselWidth, height, borderRadius }]}
-                resizeMode={FastImage.resizeMode.cover}
-              />
-            </TouchableOpacity>
-          );
-        })}
+        {images.map((imageUri, index) => (
+          <TouchableOpacity
+            key={`image-${index}`}
+            activeOpacity={0.9}
+            onPress={() => {
+              if (showFullscreenButton) {
+                setFullscreenIndex(index);
+                setFullscreenVisible(true);
+              }
+            }}
+            style={{ width: carouselWidth }}
+          >
+            <FastImage
+              source={{
+                uri: imageUri,
+                priority: priority === 'low' ? FastImage.priority.low : priority === 'high' ? FastImage.priority.high : FastImage.priority.normal,
+                cache: FastImage.cacheControl.immutable
+              }}
+              style={[styles.carouselImage, { width: carouselWidth, height, borderRadius }]}
+              resizeMode={FastImage.resizeMode.cover}
+              onError={() => {
+                console.warn('이미지 로드 실패:', imageUri);
+              }}
+            />
+          </TouchableOpacity>
+        ))}
       </ScrollView>
 
-      {/* 페이지 인디케이터 - 다중 이미지일 때만 */}
-      {images.length > 1 && (
-        <View style={styles.indicatorContainer}>
-          {images.map((_, index) => (
-            <View
-              key={`indicator-${index}`}
-              style={[
-                styles.indicator,
-                index === currentIndex ? styles.indicatorActive : styles.indicatorInactive,
-              ]}
-            />
-          ))}
-        </View>
-      )}
+      {/* 페이지 인디케이터 */}
+      <View style={styles.indicatorContainer}>
+        {images.map((_, index) => (
+          <View
+            key={`indicator-${index}`}
+            style={[
+              styles.indicator,
+              index === currentIndex ? styles.indicatorActive : styles.indicatorInactive,
+            ]}
+          />
+        ))}
+      </View>
 
       {/* 이미지 카운터 */}
       <View style={styles.counterContainer}>
@@ -161,32 +208,34 @@ const ImageCarousel = React.memo<ImageCarouselProps>(({
       {showFullscreenButton && (
         <TouchableOpacity
           style={styles.fullscreenButton}
-          onPress={() => openImageViewer(currentIndex)}
+          onPress={() => {
+            setFullscreenIndex(currentIndex);
+            setFullscreenVisible(true);
+          }}
         >
           <MaterialCommunityIcons name="arrow-expand" size={20} color="#FFFFFF" />
         </TouchableOpacity>
       )}
 
-      {/* react-native-image-viewing: 줌인/줌아웃 가능한 이미지 뷰어 */}
-      <ImageView
-        images={imageViewerData}
-        imageIndex={viewerIndex}
-        visible={viewerVisible}
-        onRequestClose={() => setViewerVisible(false)}
-        swipeToCloseEnabled={true}
-        doubleTapToZoomEnabled={true}
-        presentationStyle="overFullScreen"
+      <ImageViewerModal
+        visible={fullscreenVisible}
+        urls={images}
+        initialIndex={fullscreenIndex}
+        onClose={() => setFullscreenVisible(false)}
       />
     </View>
   );
-});
+};
 
 const styles = StyleSheet.create({
   container: {
     position: 'relative',
   },
+  singleImage: {
+    width: '100%',
+  },
   carouselImage: {
-    // Width/height set dynamically
+    // Width is set dynamically via inline style
   },
   indicatorContainer: {
     position: 'absolute',
@@ -227,7 +276,7 @@ const styles = StyleSheet.create({
   counterText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   fullscreenButton: {
     position: 'absolute',
@@ -239,6 +288,70 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  fullscreenContainer: {
+    flex: 1,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    right: 20,
+    zIndex: 1000,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenCounterContainer: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 20,
+    left: 20,
+    zIndex: 1000,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  fullscreenCounterText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  fullscreenImageContainer: {
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenImage: {
+    width: '100%',
+    height: '100%',
+  },
+  fullscreenIndicatorContainer: {
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullscreenIndicator: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  fullscreenIndicatorActive: {
+    backgroundColor: '#FFFFFF',
+    width: 30,
+  },
+  fullscreenIndicatorInactive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
 });
 

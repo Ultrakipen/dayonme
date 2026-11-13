@@ -77,8 +77,8 @@ const bookmarkService = {
       }
 
       return response.data;
-    } catch (error: unknown) {
-      if (__DEV__) console.error('북마크 토글 오류:', error);
+    } catch (error: any) {
+      console.error('북마크 토글 오류:', error);
       throw error;
     }
   },
@@ -102,8 +102,26 @@ const bookmarkService = {
       }
 
       return response.data;
-    } catch (error: unknown) {
-      if (__DEV__) console.error('북마크 목록 조회 오류:', error);
+    } catch (error: any) {
+      // Rate limiting 오류는 경고로만 처리 (화면에 표시 안 함)
+      if (error.message?.includes('너무 많은 요청') || error.response?.status === 429) {
+        console.warn('⚠️ 북마크 조회 rate limit - 일시적으로 건너뜀');
+        // 빈 응답 반환
+        return {
+          status: 'success',
+          data: {
+            bookmarks: [],
+            pagination: {
+              currentPage: 1,
+              totalPages: 0,
+              totalItems: 0,
+              itemsPerPage: 10
+            }
+          }
+        };
+      }
+
+      console.error('북마크 목록 조회 오류:', error);
       throw error;
     }
   },
@@ -124,8 +142,8 @@ const bookmarkService = {
       }
 
       return response.data;
-    } catch (error: unknown) {
-      if (__DEV__) console.error('북마크 상태 확인 오류:', error);
+    } catch (error: any) {
+      console.error('북마크 상태 확인 오류:', error);
       throw error;
     }
   },
@@ -144,8 +162,8 @@ const bookmarkService = {
       }
 
       return response.data;
-    } catch (error: unknown) {
-      if (__DEV__) console.error('북마크 개수 조회 오류:', error);
+    } catch (error: any) {
+      console.error('북마크 개수 조회 오류:', error);
       throw error;
     }
   },

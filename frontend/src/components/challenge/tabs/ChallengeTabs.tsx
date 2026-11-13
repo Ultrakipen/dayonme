@@ -126,9 +126,9 @@ const styles = StyleSheet.create({
   },
   tabText: {
     fontSize: 13,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   tabTextActive: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
 });
