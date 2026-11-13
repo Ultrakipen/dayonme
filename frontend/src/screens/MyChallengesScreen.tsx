@@ -671,12 +671,15 @@ const MyChallengesScreenFixed = ({ route }: any) => {
     const cardAnim = useRef(new Animated.Value(0)).current;
     const scaleValue = useRef(new Animated.Value(1)).current;
     const glowAnim = useRef(new Animated.Value(0)).current;
-    const statusInfo = getStatusInfo(challenge.status);
+    // 서버 상태가 active 로 남아 있어도 종료일이 지났으면 화면에서는 종료로 취급한다(표시 전용)
+    const endedByDate = !!challenge.end_date && !isNaN(new Date(challenge.end_date).getTime()) && new Date(challenge.end_date).getTime() < Date.now() - 24 * 60 * 60 * 1000;
+    const displayStatus = challenge.status === 'active' && endedByDate ? 'completed' : challenge.status;
+    const statusInfo = getStatusInfo(displayStatus);
     const isCreated = activeTab === 'created';
 
     // 상태별 조화로운 그라데이션 선택
     const getHarmonyGradient = () => {
-      switch (challenge.status) {
+      switch (displayStatus) {
         case 'active':
           return COLORS.gradientHarmony;  // 메인 하모니
         case 'upcoming':
