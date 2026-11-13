@@ -3651,7 +3651,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     borderColor: sortOrder === 'recent' ? colors.primary : colors.border,
                                 }}
                             >
-                                <Text style={{ color: sortOrder === 'recent' ? '#fff' : colors.text, fontWeight: '600', fontSize: normalize(12, 11, 14) }}>
+                                <Text style={{ color: sortOrder === 'recent' ? modernTheme.colors.onAccent : colors.text, fontWeight: '600', fontSize: normalize(12, 11, 14) }}>
                                     최신순
                                 </Text>
                             </Pressable>
@@ -3666,7 +3666,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     borderColor: sortOrder === 'popular' ? colors.primary : colors.border,
                                 }}
                             >
-                                <Text style={{ color: sortOrder === 'popular' ? '#fff' : colors.text, fontWeight: '600', fontSize: normalize(12, 11, 14) }}>
+                                <Text style={{ color: sortOrder === 'popular' ? modernTheme.colors.onAccent : colors.text, fontWeight: '600', fontSize: normalize(12, 11, 14) }}>
                                     인기순
                                 </Text>
                             </Pressable>

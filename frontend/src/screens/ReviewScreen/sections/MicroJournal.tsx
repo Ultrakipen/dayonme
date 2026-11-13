@@ -201,7 +201,7 @@ export const MicroJournal: React.FC = React.memo(() => {
           <Text style={[
             styles.submitButtonText,
             {
-              color: inputValue.trim() && !isOverLimit ? '#fff' : colors.textSecondary,
+              color: inputValue.trim() && !isOverLimit ? colors.onAccent : colors.textSecondary,
               fontSize: FONT_SIZES.body
             }
           ]}>

@@ -29,6 +29,7 @@ export const useModernTheme = () => {
       success: colors.success,
       error: colors.error,
       warning: colors.warning,
+      onAccent: colors.onAccent,
     },
     isDark,
     theme,

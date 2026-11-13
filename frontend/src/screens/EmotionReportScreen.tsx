@@ -238,7 +238,7 @@ const EmotionReportScreen: React.FC = () => {
           <Text style={[
             styles.monthButtonText,
             {
-              color: selectedPeriod === item.report_period ? '#fff' : colors.text,
+              color: selectedPeriod === item.report_period ? theme.colors.onAccent : colors.text,
               fontSize: 13 * scale,
             }
           ]}>

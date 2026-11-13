@@ -491,7 +491,7 @@ const MyReportsScreen: React.FC = () => {
             style={[styles.retryButton, { backgroundColor: colors.primary }]}
             onPress={onRefresh}
           >
-            <Text style={styles.retryText}>다시 시도</Text>
+            <Text style={[styles.retryText, { color: theme.colors.onAccent }]}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       ) : isInitialLoading ? (

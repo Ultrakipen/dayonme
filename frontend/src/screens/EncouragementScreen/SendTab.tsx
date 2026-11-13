@@ -157,7 +157,7 @@ export const SendTab: React.FC = () => {
             accessibilityRole="button"
             accessibilityState={{ disabled: sending || remaining <= 0 }}
           >
-            <Text style={[styles.sendButtonText, { color: '#FFFFFF' }]}>
+            <Text style={[styles.sendButtonText, { color: remaining > 0 ? colors.onAccent : colors.textSecondary }]}>
               {sending ? '전송 중...' : '💌 보내기'}
             </Text>
           </TouchableOpacity>

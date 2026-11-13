@@ -165,7 +165,7 @@ export const WeeklyGoal: React.FC = React.memo(() => {
             accessibilityRole="button"
             accessibilityLabel="목표 설정하기"
           >
-            <Text style={[styles.setGoalButtonText, { fontSize: FONT_SIZES.body }]}>
+            <Text style={[styles.setGoalButtonText, { fontSize: FONT_SIZES.body, color: colors.onAccent }]}>
               목표 설정하기
             </Text>
           </TouchableOpacity>
@@ -242,7 +242,7 @@ export const WeeklyGoal: React.FC = React.memo(() => {
                     style={[styles.customSubmitButton, { backgroundColor: colors.primary }]}
                     onPress={() => setGoal(customGoal, parseInt(customTarget) || 5)}
                   >
-                    <Text style={[styles.customSubmitText, { fontSize: FONT_SIZES.body }]}>
+                    <Text style={[styles.customSubmitText, { fontSize: FONT_SIZES.body, color: colors.onAccent }]}>
                       이 목표로 설정
                     </Text>
                   </TouchableOpacity>

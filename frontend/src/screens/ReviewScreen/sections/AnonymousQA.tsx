@@ -355,7 +355,7 @@ export const AnonymousQA: React.FC = React.memo(() => {
         >
           <Text style={[
             styles.filterTabText,
-            { color: filter === 'all' ? '#FFFFFF' : colors.textSecondary }
+            { color: filter === 'all' ? colors.onAccent : colors.textSecondary }
           ]}>
             전체
           </Text>
@@ -369,7 +369,7 @@ export const AnonymousQA: React.FC = React.memo(() => {
         >
           <Text style={[
             styles.filterTabText,
-            { color: filter === 'mine' ? '#FFFFFF' : colors.textSecondary }
+            { color: filter === 'mine' ? colors.onAccent : colors.textSecondary }
           ]}>
             내 질문
           </Text>
@@ -440,7 +440,7 @@ export const AnonymousQA: React.FC = React.memo(() => {
         accessibilityLabel="익명으로 질문하기"
       >
         <TwemojiImage emoji="✏️" size={FONT_SIZES.body * scale} style={styles.askIcon} />
-        <Text style={styles.askMainBtnText}>익명으로 질문하기</Text>
+        <Text style={[styles.askMainBtnText, { color: colors.onAccent }]}>익명으로 질문하기</Text>
       </TouchableOpacity>
 
       {/* 전체보기 모달 */}
@@ -457,7 +457,7 @@ export const AnonymousQA: React.FC = React.memo(() => {
               style={[styles.askSmallBtn, { backgroundColor: colors.primary }]}
               onPress={() => setShowAskModal(true)}
             >
-              <Text style={styles.askSmallBtnText}>질문</Text>
+              <Text style={[styles.askSmallBtnText, { color: colors.onAccent }]}>질문</Text>
             </TouchableOpacity>
           </View>
 
@@ -556,7 +556,7 @@ export const AnonymousQA: React.FC = React.memo(() => {
                 disabled={!newQuestion.trim() || submitting}
               >
                 <Text style={[styles.modalButtonText, {
-                  color: newQuestion.trim() ? '#FFFFFF' : colors.textSecondary
+                  color: newQuestion.trim() ? colors.onAccent : colors.textSecondary
                 }]}>
                   {submitting ? '등록 중...' : '질문하기'}
                 </Text>
@@ -618,7 +618,7 @@ export const AnonymousQA: React.FC = React.memo(() => {
                 disabled={!answerText.trim() || submitting}
               >
                 <Text style={[styles.modalButtonText, {
-                  color: answerText.trim() ? '#FFFFFF' : colors.textSecondary
+                  color: answerText.trim() ? colors.onAccent : colors.textSecondary
                 }]}>
                   {submitting ? '등록 중...' : '답변 등록'}
                 </Text>
