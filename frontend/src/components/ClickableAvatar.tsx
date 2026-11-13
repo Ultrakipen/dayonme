@@ -214,7 +214,8 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
       );
     }
     if (emotionMatch) {
-      return <EmotionIcon emotionId={emotionMatch.id} size={size} />;
+      // 클릭 가능한 아바타는 2px 테두리가 있어 안쪽 영역이 size-4 → 얼굴이 잘리지 않게 맞춘다
+      return <EmotionIcon emotionId={emotionMatch.id} size={isClickable ? size - 4 : size} />;
     }
     // Twemoji 코드가 있고 이모지이면 고해상도 Twemoji 이미지 사용
     if (avatarEmojiCode && isEmoji && twemojiSource && !twemojiError) {

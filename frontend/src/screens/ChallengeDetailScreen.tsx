@@ -58,6 +58,7 @@ import {
   RADIUS,
   SHADOWS,
 } from "../constants/designSystem";
+import { getReadableEmotionColor } from "../utils/emotionTextColor";
 import { EMOTION_AVATARS, getEmotionById } from "../constants/emotions";
 import SvgEmotionIcon from "../components/common/EmotionIcon";
 import { showAlert } from "../contexts/AlertContext";
@@ -1793,7 +1794,7 @@ const ChallengeDetailScreen = () => {
 
               {emotion && (
                 <View style={[styles.miniEmotionTag, { backgroundColor: emotion.color + '20' }]}>
-                  <Text style={[styles.miniEmotionText, { color: theme.text.primary }]}>{emotionName}</Text>
+                  <Text style={[styles.miniEmotionText, { color: getReadableEmotionColor(emotion.color, isDark, theme.text.primary) }]}>{emotionName}</Text>
                 </View>
               )}
 

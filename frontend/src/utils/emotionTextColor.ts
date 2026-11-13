@@ -5,7 +5,7 @@
 
 const LIGHT_BG: [number, number, number] = [255, 255, 255];
 const DARK_BG: [number, number, number] = [30, 30, 34];
-const MIN_RATIO = 4.5;
+const MIN_RATIO = 5.4; // 칩 배경이 감정색으로 살짝 물든 경우를 감안해 4.5보다 여유를 둔다
 
 const toRgb = (hex: string): [number, number, number] | null => {
   const m = /^#?([0-9a-fA-F]{6})$/.exec((hex || '').trim());

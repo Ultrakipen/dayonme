@@ -20,6 +20,7 @@ import blockService from '../services/api/blockService';
 import { RootStackParamList } from '../types/navigation';
 import SendEncouragementModal from '../components/SendEncouragementModal';
 import EmotionIcon from '../components/common/EmotionIcon';
+import { getReadableEmotionColor } from '../utils/emotionTextColor';
 import { useAuth } from '../contexts/AuthContext';
 import GuestPromptBottomSheet from '../components/GuestPromptBottomSheet';
 import { showAlert } from '../contexts/AlertContext';
@@ -1011,7 +1012,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
                     color={tag.color}
                   />
                 )}
-                <RNText style={[styles.emotionName, { color: theme.text.primary }]}>
+                <RNText style={[styles.emotionName, { color: getReadableEmotionColor(tag.color, isDark, theme.text.primary) }]}>
                   {tag.name}
                 </RNText>
                 <RNText style={styles.emotionCount}>{tag.count}회</RNText>

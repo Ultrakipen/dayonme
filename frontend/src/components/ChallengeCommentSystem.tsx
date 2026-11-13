@@ -19,6 +19,7 @@ import { Box, HStack, VStack } from './ui';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { formatCommentTime } from '../utils/dateUtils';
+import { getReadableEmotionColor } from '../utils/emotionTextColor';
 import { getRelativeTime } from '../utils/date';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { anonymousManager } from '../utils/anonymousNickname';
@@ -798,7 +799,7 @@ const CommentItem: React.FC<{
                     {emotion && (
                       <View style={[styles.emotionTag, { backgroundColor: emotion.color + '20', borderColor: emotion.color }]}>
                         <MaterialCommunityIcons name={emotion.icon} size={scaleSize(14)} color={emotion.color} />
-                        <Text style={[styles.emotionTagText, { color: theme.text.primary }]}>{emotionName}</Text>
+                        <Text style={[styles.emotionTagText, { color: getReadableEmotionColor(emotion.color, isDarkMode, theme.text.primary) }]}>{emotionName}</Text>
                       </View>
                     )}
                   </View>

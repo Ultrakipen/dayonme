@@ -59,6 +59,7 @@ import { normalize, normalizeSpace, normalizeIcon, normalizeTouchable } from '..
 import { COLORS } from '../../constants/designSystem';
 import { EMOTION_CHARACTERS, getRandomEmotion, getAnonymousEmotion } from './utils/emotionHelper';
 import { getEmotionByName } from '../../constants/emotions';
+import { getReadableEmotionColor } from '../../utils/emotionTextColor';
 import EmotionIcon from '../../components/common/EmotionIcon';
 import { tryMultipleApis, getErrorMessage } from './utils/apiHelper';
 import PostImages from './components/PostImages';
@@ -2964,7 +2965,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                             <RNText style={{
                               fontSize: normalize(13),
                               fontWeight: '700',
-                              color: modernTheme.text.primary
+                              color: getReadableEmotionColor(emotion.color, isDark, modernTheme.text.primary)
                             }}>
                               {emotion.label}
                             </RNText>
@@ -3231,7 +3232,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     <RNText style={{
                       fontSize: normalize(13),
                       fontWeight: '600',
-                      color: modernTheme.text.primary,
+                      color: getReadableEmotionColor(emotion.color, isDark, modernTheme.text.primary),
                     }}>
                       오늘의 감정: {typeof emotion.name === 'string' ? emotion.name : '감정'}
                     </RNText>
