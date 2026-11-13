@@ -27,7 +27,8 @@ import { normalizeImageUrl, isValidImageUrl } from '../utils/imageUtils';
 import { sanitizeText, sanitizeComment } from '../utils/sanitize';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../styles/challengeDesignSystem';
 import BottomSheet from './BottomSheet';
-import { EMOTION_AVATARS, getTwemojiUrl } from '../constants/emotions';
+import { EMOTION_AVATARS } from '../constants/emotions';
+import EmotionIcon from './common/EmotionIcon';
 import { useAuth } from '../contexts/AuthContext';
 import reportService from '../services/api/reportService';
 
@@ -347,17 +348,12 @@ const EmotionRecordCard: React.FC<{
       onPress: () => setReportSuccessVisible(false),
     },
   ];
-  // Twemoji URL을 반환하는 함수
-  const getEmotionTwemojiUrl = (emotionName: string): string => {
-    // EMOTION_AVATARS에서 감정 찾기
+  // 감정 이름 -> 감정 id (EmotionIcon용, 기본값 1: 기쁨이)
+  const getEmotionIconId = (emotionName: string): number => {
     const emotion = EMOTION_AVATARS.find(
       e => e.label === emotionName || e.shortName === emotionName
     );
-    if (emotion) {
-      return getTwemojiUrl(emotion.emojiCode);
-    }
-    // 기본값 (기쁨이)
-    return getTwemojiUrl('1f60a');
+    return emotion ? emotion.id : 1;
   };
 
   const CardContent = (
@@ -373,11 +369,7 @@ const EmotionRecordCard: React.FC<{
         styles.emotionRecordAvatar,
         { backgroundColor: record.emotion_color || '#FFD700' }
       ]}>
-        <Image
-          source={{ uri: getEmotionTwemojiUrl(record.emotion_name) }}
-          style={styles.emotionRecordEmoji}
-          resizeMode="contain"
-        />
+        <EmotionIcon emotionId={getEmotionIconId(record.emotion_name)} size={scaleSize(30)} />
       </View>
 
       {/* 감정 정보 */}

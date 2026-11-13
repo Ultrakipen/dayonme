@@ -9,6 +9,8 @@ import { useAuth } from '../contexts/AuthContext';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { normalizeImageUrl } from '../utils/imageUtils';
 import EmotionLoginPromptModal from './EmotionLoginPromptModal';
+import EmotionIcon from './common/EmotionIcon';
+import { EMOTION_AVATARS } from '../constants/emotions';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -107,6 +109,15 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
     return emojiRegex.test(avatarText);
   }, [avatarText]);
 
+  // 서버 감정 20종 이모지와 일치하면 직접 그린 EmotionIcon 사용
+  const emotionMatch = useMemo(() => {
+    if (avatarEmojiCode) {
+      const byCode = EMOTION_AVATARS.find((e) => e.emojiCode === avatarEmojiCode);
+      if (byCode) return byCode;
+    }
+    return avatarText ? EMOTION_AVATARS.find((e) => e.emoji === avatarText) : undefined;
+  }, [avatarEmojiCode, avatarText]);
+
   // 아바타 스타일 (메모이제이션)
   const avatarContainerStyle: ViewStyle = useMemo(() => ({
     width: size,
@@ -199,6 +210,9 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
         />
       );
     }
+    if (emotionMatch) {
+      return <EmotionIcon emotionId={emotionMatch.id} size={Math.round(size * 0.9)} />;
+    }
     // Twemoji 코드가 있고 이모지이면 고해상도 Twemoji 이미지 사용
     if (avatarEmojiCode && isEmoji && twemojiSource && !twemojiError) {
       return (
@@ -212,7 +226,7 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
     }
     // 폴백: 일반 텍스트 이모지
     return <Text style={avatarTextStyle}>{avatarText}</Text>;
-  }, [shouldShowImage, imageSource, imageStyle, handleImageError, handleImageLoad, avatarText, avatarTextStyle, avatarEmojiCode, isEmoji, twemojiStyle, twemojiSource, twemojiError, handleTwemojiError]);
+  }, [shouldShowImage, emotionMatch, size, imageSource, imageStyle, handleImageError, handleImageLoad, avatarText, avatarTextStyle, avatarEmojiCode, isEmoji, twemojiStyle, twemojiSource, twemojiError, handleTwemojiError]);
 
   // 클릭 불가능한 경우 일반 View로 렌더링
   if (!isClickable) {

@@ -31,6 +31,7 @@ import ClickableNickname from '../components/ClickableNickname';
 import ClickableAvatar from '../components/ClickableAvatar';
 import { PostSkeletonList } from '../components/SkeletonCard';
 import { EMOTION_AVATARS } from '../constants/emotions';
+import EmotionIcon from '../components/common/EmotionIcon';
 
 // React Native 0.80 호환성: 기본값만 정의 (모듈 레벨에서 normalize 호출 금지)
 const DEFAULT_GRID_PADDING = 12;
@@ -330,7 +331,7 @@ const BestPostsScreen: React.FC = () => {
               {post.is_anonymous ? (
                 <>
                   <View style={[styles.emotionAvatar, { backgroundColor: `${emotion.color}15` }]}>
-                    <Text style={styles.emotionEmoji}>{emotion.emoji}</Text>
+                    <EmotionIcon emotionId={emotion.id} size={24} />
                   </View>
                   <View style={styles.authorTextContainer}>
                     <Text style={[styles.emotionLabel, { color: colors.text }]}>{emotion.label}</Text>

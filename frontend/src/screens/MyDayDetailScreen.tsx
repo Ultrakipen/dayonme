@@ -32,6 +32,7 @@ import { useModernTheme } from '../contexts/ModernThemeContext';
 import ModernToast, { ToastType } from '../components/ModernToast';
 import { FONT_SIZES } from '../constants';
 import { EMOTION_AVATARS } from '../constants/emotions';
+import EmotionIcon from '../components/common/EmotionIcon';
 
 // 반응형 폰트 스케일링 함수 - React Native 0.80 호환
 const BASE_WIDTH = 360;
@@ -851,9 +852,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
                   borderWidth: 1,
                   borderColor: isDark ? post.emotions[0].color + '60' : post.emotions[0].color + '40',
                 }}>
-                  <Text style={{ fontSize: FONT_SIZES.bodyLarge }}>
-                    {getRandomEmotion(post.user_id, post.post_id).emoji}
-                  </Text>
+                  <EmotionIcon emotionId={getRandomEmotion(post.user_id, post.post_id).id} size={FONT_SIZES.bodyLarge + 4} />
                   <Text style={{
                     fontSize: FONT_SIZES.caption,
                     fontWeight: '600',

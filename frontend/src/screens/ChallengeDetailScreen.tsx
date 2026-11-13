@@ -58,7 +58,8 @@ import {
   RADIUS,
   SHADOWS,
 } from "../constants/designSystem";
-import { EMOTION_AVATARS, getTwemojiUrl, getEmotionById } from "../constants/emotions";
+import { EMOTION_AVATARS, getEmotionById } from "../constants/emotions";
+import SvgEmotionIcon from "../components/common/EmotionIcon";
 import { showAlert } from "../contexts/AlertContext";
 
 // React Native 0.80 호환: 동적 화면 크기 계산
@@ -397,15 +398,12 @@ const ChallengeDetailScreen = () => {
     욕심: { emoji: "🤑", color: "#32CD32" },
   };
 
-  // 감정 Twemoji URL 가져오기 (고해상도 이미지)
-  const getEmotionTwemojiUrl = (emotionName: string): string => {
+  // 감정 이름 -> 감정 id (EmotionIcon용, 기본값 1: 기쁨이)
+  const getEmotionIconId = (emotionName: string): number => {
     const emotion = EMOTION_AVATARS.find(
       e => e.label === emotionName || e.shortName === emotionName
     );
-    if (emotion) {
-      return getTwemojiUrl(emotion.emojiCode);
-    }
-    return getTwemojiUrl('1f60a'); // 기본값 (기쁨이)
+    return emotion ? emotion.id : 1;
   };
 
   // 감정 색상 가져오기
@@ -1299,11 +1297,7 @@ const ChallengeDetailScreen = () => {
                     { backgroundColor: item.emotion_color },
                   ]}
                 >
-                  <Image
-                    source={{ uri: getEmotionTwemojiUrl(item.emotion_name) }}
-                    style={styles.instagramAvatarEmoji}
-                    resizeMode="contain"
-                  />
+                  <SvgEmotionIcon emotionId={getEmotionIconId(item.emotion_name)} size={scaleSize(22)} />
                 </View>
                 <View style={styles.instagramUserDetails}>
                   <Text
@@ -2762,11 +2756,7 @@ const ChallengeDetailScreen = () => {
             { backgroundColor: emotionColor },
           ]}
         >
-          <Image
-            source={{ uri: getEmotionTwemojiUrl(item.name) }}
-            style={styles.emotionModalEmoji}
-            resizeMode="contain"
-          />
+          <SvgEmotionIcon emotionId={getEmotionIconId(item.name)} size={scaleSize(32)} />
         </View>
         <Text
           style={[
@@ -3627,11 +3617,7 @@ const ChallengeDetailScreen = () => {
                         },
                       ]}
                     >
-                      <Image
-                        source={{ uri: getEmotionTwemojiUrl(replyingToItem.emotion_name) }}
-                        style={styles.originalPostAvatarEmoji}
-                        resizeMode="contain"
-                      />
+                      <SvgEmotionIcon emotionId={getEmotionIconId(replyingToItem.emotion_name)} size={scaleSize(22)} />
                     </View>
                     <Text
                       style={[

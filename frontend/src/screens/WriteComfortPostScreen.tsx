@@ -35,7 +35,8 @@ import ConfirmationModal from '../components/ui/ConfirmationModal';
 import ImageCarousel from '../components/ImageCarousel';
 import { API_CONFIG } from '../config/api';
 import { FONT_SIZES } from '../constants';
-import { EMOTION_AVATARS, getTwemojiUrl } from '../constants/emotions';
+import { EMOTION_AVATARS } from '../constants/emotions';
+import EmotionIcon from '../components/common/EmotionIcon';
 
 interface Tag {
   tag_id: number;
@@ -1544,11 +1545,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                           justifyContent: 'center',
                           marginBottom: scale(6),
                         }}>
-                          <Image
-                            source={{ uri: getTwemojiUrl(emotion.emojiCode) }}
-                            style={{ width: scale(28), height: scale(28) }}
-                            resizeMode="contain"
-                          />
+                          <EmotionIcon emotionId={emotion.id} size={scale(28)} />
                         </View>
                         <StyledText
                           style={{

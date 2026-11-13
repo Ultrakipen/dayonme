@@ -15,8 +15,7 @@ import {
   Animated,
   Modal,
   StatusBar,
-  DeviceEventEmitter,
-  Image
+  DeviceEventEmitter
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -59,7 +58,8 @@ import logger from '../../utils/logger';
 import { normalize, normalizeSpace, normalizeIcon, normalizeTouchable } from '../../utils/responsive';
 import { COLORS } from '../../constants/designSystem';
 import { EMOTION_CHARACTERS, getRandomEmotion, getAnonymousEmotion } from './utils/emotionHelper';
-import { getEmotionEmoji, getTwemojiUrl } from '../../constants/emotions';
+import { getEmotionByName } from '../../constants/emotions';
+import EmotionIcon from '../../components/common/EmotionIcon';
 import { tryMultipleApis, getErrorMessage } from './utils/apiHelper';
 import PostImages from './components/PostImages';
 import { extractBestComments, findCommentById, calculateTotalCommentCount } from './utils/commentHelper';
@@ -2254,15 +2254,9 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
 
               {/* 익명 댓글의 감정 이모지 */}
               {commentIsAnonymous && emotionEmojiCode && (
-                <Image
-                  source={{ uri: getTwemojiUrl(emotionEmojiCode) }}
-                  style={{
-                    width: normalizeIcon(14),
-                    height: normalizeIcon(14),
-                    marginRight: normalizeSpace(3)
-                  }}
-                  resizeMode="contain"
-                />
+                <View style={{ marginRight: normalizeSpace(3) }}>
+                  <EmotionIcon emojiCode={emotionEmojiCode} size={normalizeIcon(14)} />
+                </View>
               )}
 
               {isPostAuthor && (
@@ -2948,14 +2942,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                           elevation: 2,
                         }}
                       >
-                        <Image
-                          source={{ uri: getTwemojiUrl(emotion.emojiCode) }}
-                          style={{
-                            width: normalizeIcon(22),
-                            height: normalizeIcon(22),
-                          }}
-                          resizeMode="contain"
-                        />
+                        <EmotionIcon emotionId={emotion.id} size={normalizeIcon(22)} />
                       </Box>
                       <VStack style={{ marginLeft: normalizeSpace(10), flex: 1 }}>
                         <HStack style={{ alignItems: 'center', marginBottom: normalizeSpace(3) }}>
@@ -3213,9 +3200,6 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           {post.emotions && post.emotions.length > 0 && (
             <Box style={{ paddingHorizontal: 10, paddingBottom: 10 }}>
               {post.emotions.slice(0, 1).map((emotion, index) => {
-                // 공통 getEmotionEmoji 함수 사용 (../../constants/emotions에서 import)
-                const emotionEmoji = getEmotionEmoji(typeof emotion.name === 'string' ? emotion.name : '감정');
-
                 return (
                   <Box
                     key={`emotion-${emotion.emotion_id || index}`}
@@ -3236,12 +3220,13 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                       elevation: 2,
                     }}
                   >
-                    <RNText style={{
-                      fontSize: normalizeIcon(15),
-                      marginRight: normalizeSpace(6),
-                    }}>
-                      {emotionEmoji}
-                    </RNText>
+                    <View style={{ marginRight: normalizeSpace(6) }}>
+                      <EmotionIcon
+                        emotionId={emotion.emotion_id || (typeof emotion.name === 'string' ? getEmotionByName(emotion.name)?.id : undefined)}
+                        label={typeof emotion.name === 'string' ? emotion.name : undefined}
+                        size={normalizeIcon(15)}
+                      />
+                    </View>
                     <RNText style={{
                       fontSize: normalize(13),
                       fontWeight: '600',
@@ -3466,11 +3451,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                               justifyContent: 'center',
                               marginRight: normalizeSpace(10),
                             }}>
-                              <Image
-                                source={{ uri: getTwemojiUrl(emotion.emojiCode) }}
-                                style={{ width: normalizeIcon(18), height: normalizeIcon(18) }}
-                                resizeMode="contain"
-                              />
+                              <EmotionIcon emotionId={emotion.id} size={normalizeIcon(18)} />
                             </Box>
                           );
                         })()
