@@ -51,7 +51,7 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
 }) => {
   const navigation = useNavigation<NavigationProp>();
   const { user, isAuthenticated } = useAuth();
-  const { theme } = useModernTheme();
+  const { theme, isDark } = useModernTheme();
   const [imageError, setImageError] = useState(false);
   const [twemojiError, setTwemojiError] = useState(false);
   const [loginPromptVisible, setLoginPromptVisible] = useState(false);
@@ -133,13 +133,13 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
     ...(isClickable && {
       borderWidth: 2,
       borderColor: theme.colors.primary,
-      shadowColor: theme.colors.primary,
+      shadowColor: isDark ? '#000000' : theme.colors.primary,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.3,
       shadowRadius: 4,
       elevation: 4,
     }),
-  }), [size, avatarColor, isClickable, isEmoji, theme.colors.primary]);
+  }), [size, avatarColor, isClickable, isEmoji, theme.colors.primary, isDark]);
 
   const avatarTextStyle = useMemo(() => {
     if (isEmoji) {

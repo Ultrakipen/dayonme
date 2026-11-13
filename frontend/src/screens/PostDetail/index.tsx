@@ -3800,7 +3800,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
               backgroundColor: (!commentText.trim() || submitting) ? (isDark ? '#3f3f46' : '#d1d5db') : modernTheme.colors.primary,
               borderWidth: 1,
               borderColor: modernTheme.colors.border,
-              shadowColor: modernTheme.colors.primary,
+              shadowColor: isDark ? '#000000' : modernTheme.colors.primary,
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.1,
               shadowRadius: 3,

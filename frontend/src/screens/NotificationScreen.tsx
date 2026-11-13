@@ -370,7 +370,7 @@ const fetchNotifications = useCallback(async (refresh = false) => {
               borderColor: theme.bg.border,
               ...Platform.select({
                 ios: {
-                  shadowColor: isDark ? '#fff' : '#000',
+                  shadowColor: isDark ? '#000000' : '#000',
                   shadowOffset: { width: 0, height: verticalScale(2) },
                   shadowOpacity: isDark ? 0.1 : 0.08,
                   shadowRadius: moderateScale(8),
@@ -473,7 +473,7 @@ const fetchNotifications = useCallback(async (refresh = false) => {
             borderBottomColor: theme.bg.border,
             ...Platform.select({
               ios: {
-                shadowColor: isDark ? '#fff' : '#000',
+                shadowColor: isDark ? '#000000' : '#000',
                 shadowOffset: { width: 0, height: verticalScale(2) },
                 shadowOpacity: isDark ? 0.1 : 0.08,
                 shadowRadius: moderateScale(8),

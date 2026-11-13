@@ -850,9 +850,9 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                       <MaterialCommunityIcons
                         name="comment-text-outline"
                         size={13}
-                        color={COLORS.primary}
+                        color={theme.colors.accentText}
                       />
-                      <Text style={[styles.compactSocialText, { color: COLORS.primary }]}>
+                      <Text style={[styles.compactSocialText, { color: theme.colors.accentText }]}>
                         {challenge.comment_count || 0}
                       </Text>
                     </View>
@@ -954,7 +954,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
             style={styles.searchButton}
             onPress={() => setShowSearchModal(true)}
           >
-            <MaterialCommunityIcons name="magnify" size={20} color={COLORS.primary} />
+            <MaterialCommunityIcons name="magnify" size={20} color={theme.colors.accentText} />
           </TouchableOpacity>
 
         </View>
@@ -966,7 +966,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
           <TouchableOpacity
             style={[
               styles.simpleTabButton,
-              activeTab === 'created' && [styles.activeCreatedTabButton, { backgroundColor: theme.colors.primary, shadowColor: theme.colors.primary }]
+              activeTab === 'created' && [styles.activeCreatedTabButton, { backgroundColor: theme.colors.primary, shadowColor: isDark ? '#000000' : theme.colors.primary }]
             ]}
             onPress={() => setActiveTab('created')}
           >
@@ -1121,7 +1121,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? theme.colors.background : COLORS.background} translucent={false} />
         <SafeAreaView style={{ backgroundColor: isDark ? theme.colors.background : COLORS.background }}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={theme.colors.accentText} />
           <Text style={[styles.loadingText, { color: isDark ? theme.colors.text.primary : COLORS.text }]}>
             챌린지 불러오는 중...
           </Text>
@@ -1336,7 +1336,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                     onPress={() => handleOptionSelect('editTitle')}
                   >
                     <View style={[styles.optionIcon, { backgroundColor: COLORS.primary + '20' }]}>
-                      <MaterialCommunityIcons name="pencil" size={22} color={COLORS.primary} />
+                      <MaterialCommunityIcons name="pencil" size={22} color={theme.colors.accentText} />
                     </View>
                     <View style={styles.optionTextContainer}>
                       <Text style={[styles.optionTitle, { color: isDark ? theme.colors.text.primary : COLORS.text }]}>

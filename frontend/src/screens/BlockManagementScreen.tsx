@@ -391,7 +391,7 @@ const BlockManagementScreen: React.FC = () => {
         overshootRight={false}
         onSwipeableOpen={handleSwipeableOpen}
       >
-        <View style={[styles.userCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, shadowColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)' }]}>
+        <View style={[styles.userCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, shadowColor: isDark ? '#000000' : 'rgba(0, 0, 0, 0.08)' }]}>
           <View style={styles.userInfo}>
             {user.profile_image_url && !imageError ? (
               <Image
@@ -486,7 +486,7 @@ const BlockManagementScreen: React.FC = () => {
         overshootRight={false}
         onSwipeableOpen={handleSwipeableOpen}
       >
-        <View style={[styles.contentCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, shadowColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)' }]}>
+        <View style={[styles.contentCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, shadowColor: isDark ? '#000000' : 'rgba(0, 0, 0, 0.08)' }]}>
           <View style={styles.contentHeader}>
             <View style={styles.contentTypeContainer}>
               <View
@@ -604,7 +604,7 @@ const BlockManagementScreen: React.FC = () => {
     const statusBadge = getStatusBadge(report.status);
 
     return (
-      <View style={[styles.contentCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, shadowColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)' }]}>
+      <View style={[styles.contentCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border, shadowColor: isDark ? '#000000' : 'rgba(0, 0, 0, 0.08)' }]}>
         <View style={styles.contentHeader}>
           <View style={styles.contentTypeContainer}>
             <View style={[styles.contentIconContainer, { backgroundColor: '#5856D6' }]}>
@@ -677,7 +677,7 @@ const BlockManagementScreen: React.FC = () => {
       paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 0) + SPACING.sm : moderateScale(48),
       ...Platform.select({
         ios: {
-          shadowColor: isDark ? '#ffffff' : '#000000',
+          shadowColor: isDark ? '#000000' : '#000000',
           shadowOffset: { width: 0, height: verticalScale(2) },
           shadowOpacity: 0.08,
           shadowRadius: moderateScale(8),

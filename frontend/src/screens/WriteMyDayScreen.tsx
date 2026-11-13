@@ -1088,7 +1088,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
       headerStyle: {
         backgroundColor: headerBgColor,
         elevation: 2,
-        shadowColor: isDark ? '#fff' : '#000',
+        shadowColor: isDark ? '#000000' : '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: isDark ? 0.1 : 0.1,
         shadowRadius: 3
@@ -1110,7 +1110,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             paddingVertical: SPACING.xs,
             borderRadius: normalize(14, false),
             marginRight: SPACING.sm,
-            shadowColor: isDark ? '#ffffff' : '#000000',
+            shadowColor: isDark ? '#000000' : '#000000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: isDark ? 0.1 : 0.15,
             shadowRadius: 3,
@@ -1191,7 +1191,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           borderRadius: normalize(16),
           backgroundColor: theme.bg.card,
           elevation: 2,
-          shadowColor: isDark ? '#fff' : '#000',
+          shadowColor: isDark ? '#000000' : '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDark ? 0.1 : 0.06,
           shadowRadius: 8
@@ -1410,7 +1410,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           borderRadius: normalize(16),
           backgroundColor: theme.bg.card,
           elevation: 2,
-          shadowColor: isDark ? '#fff' : '#000',
+          shadowColor: isDark ? '#000000' : '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDark ? 0.1 : 0.06,
           shadowRadius: 8
@@ -1501,7 +1501,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           borderRadius: normalize(16),
           backgroundColor: theme.bg.card,
           elevation: 2,
-          shadowColor: isDark ? '#fff' : '#000',
+          shadowColor: isDark ? '#000000' : '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDark ? 0.1 : 0.06,
           shadowRadius: 8
@@ -1668,7 +1668,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           borderRadius: normalize(16),
           backgroundColor: theme.bg.card,
           elevation: 2,
-          shadowColor: isDark ? '#fff' : '#000',
+          shadowColor: isDark ? '#000000' : '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDark ? 0.1 : 0.06,
           shadowRadius: 8
@@ -1767,7 +1767,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
               margin: SPACING.xl,
               width: SCREEN_WIDTH - normalize(40, false),
               maxWidth: normalize(300, false),
-              shadowColor: isDark ? '#fff' : '#000',
+              shadowColor: isDark ? '#000000' : '#000',
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: isDark ? 0.2 : 0.3,
               shadowRadius: 8,

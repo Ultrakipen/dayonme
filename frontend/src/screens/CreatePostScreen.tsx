@@ -293,7 +293,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
     >
       <ScrollView style={{ flex: 1, padding: 16 }} keyboardShouldPersistTaps="handled">
         {/* 감정 선택 섹션 */}
-        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
+        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
           <Card.Title
             title="오늘의 감정을 선택해주세요"
             titleStyle={{ color: theme.text.primary }}
@@ -343,7 +343,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
         </Card>
 
         {/* 게시물 내용 작성 섹션 */}
-        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
+        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
           <Card.Title
             title="나의 하루를 공유해주세요"
             titleStyle={{ color: theme.text.primary }}
@@ -373,7 +373,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
         </Card>
 
         {/* 설정 섹션 */}
-        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
+        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
           <Card.Title
             title="게시 설정"
             titleStyle={{ color: theme.text.primary }}
@@ -405,7 +405,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
 
         {/* 미리보기 섹션 */}
         {content.length >= 10 && selectedEmotions.length > 0 && (
-          <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
+          <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
             <Card.Title
               title="미리보기"
               titleStyle={{ color: theme.text.primary }}
@@ -472,7 +472,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
               backgroundColor: theme.bg.card,
               borderRadius: 20,
               padding: 24,
-              shadowColor: isDark ? '#fff' : '#000',
+              shadowColor: isDark ? '#000000' : '#000',
               shadowOffset: { width: 0, height: 8 },
               shadowOpacity: isDark ? 0.1 : 0.2,
               shadowRadius: 16,

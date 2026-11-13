@@ -64,8 +64,8 @@ export const HotSection = memo<HotSectionProps>(({
             accessibilityLabel="HOT 챌린지 더보기"
             accessibilityRole="button"
           >
-            <Text style={[styles.viewAllText, { color: COLORS.primary }]}>전체보기</Text>
-            <MaterialCommunityIcons name="chevron-right" size={18} color={COLORS.primary} />
+            <Text style={[styles.viewAllText, { color: theme.colors.accentText }]}>전체보기</Text>
+            <MaterialCommunityIcons name="chevron-right" size={18} color={theme.colors.accentText} />
           </TouchableOpacity>
         </View>
 
@@ -88,8 +88,8 @@ export const HotSection = memo<HotSectionProps>(({
             style={[styles.loadMoreButton, { backgroundColor: theme.colors.surface }]}
             onPress={onLoadMore}
           >
-            <Text style={[styles.loadMoreText, { color: COLORS.primary }]}>더 보기</Text>
-            <MaterialCommunityIcons name="chevron-down" size={20} color={COLORS.primary} />
+            <Text style={[styles.loadMoreText, { color: theme.colors.accentText }]}>더 보기</Text>
+            <MaterialCommunityIcons name="chevron-down" size={20} color={theme.colors.accentText} />
           </TouchableOpacity>
         )}
 

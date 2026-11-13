@@ -627,7 +627,7 @@ const ProfileScreen: React.FC = () => {
               justifyContent: 'center',
               alignItems: 'center',
               marginBottom: 12,
-              shadowColor: theme.colors.primary,
+              shadowColor: isDark ? '#000000' : theme.colors.primary,
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.3,
               shadowRadius: 8,

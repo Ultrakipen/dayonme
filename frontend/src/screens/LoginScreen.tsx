@@ -403,7 +403,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       paddingVertical: spacing(13),
       minHeight: spacing(50),
       justifyContent: 'center' as const,
-      shadowColor: theme.colors.primary,
+      shadowColor: isDark ? '#000000' : theme.colors.primary,
       shadowOffset: { width: 0, height: spacing(5) },
       shadowOpacity: 0.25,
       shadowRadius: spacing(10),
@@ -506,7 +506,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           color: isDark ? COLORS.white : '#1a1a1a',
                           letterSpacing: -0.5,
                           marginBottom: spacing(6),
-                          textShadowColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                          textShadowColor: isDark ? '#000000' : 'rgba(0, 0, 0, 0.08)',
                           textShadowOffset: { width: 0, height: 1 },
                           textShadowRadius: 2
                         }}>

@@ -254,7 +254,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                           color: theme.colors.text.primary,
                           letterSpacing: -1.2,
                           marginBottom: 12,
-                          textShadowColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                          textShadowColor: isDark ? '#000000' : 'rgba(0, 0, 0, 0.1)',
                           textShadowOffset: { width: 0, height: 1 },
                           textShadowRadius: 2
                         }}>

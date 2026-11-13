@@ -169,7 +169,7 @@ const getStyles = (theme: any, isDark: boolean, accent?: any) => StyleSheet.crea
     maxWidth: 400,
     maxHeight: '85%',
     overflow: 'hidden',
-    shadowColor: isDark ? '#fff' : '#000',
+    shadowColor: isDark ? '#000000' : '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: isDark ? 0.15 : 0.25,
     shadowRadius: 16,

@@ -416,7 +416,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       paddingVertical: spacing(16),
       minHeight: spacing(54),
       justifyContent: 'center' as const,
-      shadowColor: theme.colors.primary,
+      shadowColor: isDark ? '#000000' : theme.colors.primary,
       shadowOffset: { width: 0, height: spacing(6) },
       shadowOpacity: 0.25,
       shadowRadius: spacing(12),

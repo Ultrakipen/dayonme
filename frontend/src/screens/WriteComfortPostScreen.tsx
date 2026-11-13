@@ -1342,7 +1342,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                       borderWidth: 1,
                       borderColor: theme.colors.primary,
                       marginBottom: scale(8),
-                      shadowColor: theme.colors.primary,
+                      shadowColor: isDark ? '#000000' : theme.colors.primary,
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: isDark ? 0.3 : 0.1,
                       shadowRadius: 4,

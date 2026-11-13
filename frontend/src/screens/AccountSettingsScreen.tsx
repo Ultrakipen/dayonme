@@ -329,7 +329,7 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
           styles.userCard,
           {
             backgroundColor: theme.colors.surface,
-            shadowColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+            shadowColor: isDark ? '#000000' : 'rgba(0, 0, 0, 0.08)',
           }
         ]}>
           {/* 🖼️ 이미지 최적화: FastImage 사용 */}
@@ -369,7 +369,7 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
               styles.sectionCard,
               {
                 backgroundColor: theme.colors.surface,
-                shadowColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+                shadowColor: isDark ? '#000000' : 'rgba(0, 0, 0, 0.08)',
               }
             ]}>
               {section.items.map((item, itemIndex) => (

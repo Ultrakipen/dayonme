@@ -764,7 +764,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
         keyboardShouldPersistTaps="handled"
       >
         {/* 게시물 카드 */}
-        <Box style={[styles.postCard, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.04 }]}>
+        <Box style={[styles.postCard, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.04 }]}>
           {/* 게시물 헤더 */}
           <HStack style={styles.postHeader} pointerEvents="box-none">
             <ClickableAvatar
@@ -912,7 +912,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
         </Box>
 
         {/* 댓글 섹션 */}
-        <Box style={[styles.commentSection, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.04 }]}>
+        <Box style={[styles.commentSection, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.04 }]}>
           <HStack style={styles.commentHeader}>
             <Text style={[styles.commentTitle, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>댓글 {comments.length}개</Text>
             <TouchableOpacity

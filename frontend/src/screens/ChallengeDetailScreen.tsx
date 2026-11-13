@@ -1309,7 +1309,7 @@ const ChallengeDetailScreen = () => {
                     {item.nickname}
                     {item.user_id === user?.user_id && (
                       <Text
-                        style={[styles.authorTag, { color: COLORS.primary }]}
+                        style={[styles.authorTag, { color: theme.colors.accentText }]}
                       >
                         {" "}
                         (나)
@@ -1761,7 +1761,7 @@ const ChallengeDetailScreen = () => {
         <View style={styles.commentPreviewHeader}>
           <Text style={[styles.commentPreviewTitle, { color: theme.text.primary }]}>💬 최근 활동</Text>
           <TouchableOpacity onPress={() => setCommentModalVisible(true)}>
-            <Text style={[styles.viewAllButton, { color: COLORS.primary }]}>모두 보기 ({comments.length})</Text>
+            <Text style={[styles.viewAllButton, { color: theme.colors.accentText }]}>모두 보기 ({comments.length})</Text>
           </TouchableOpacity>
         </View>
 
@@ -2966,7 +2966,7 @@ const ChallengeDetailScreen = () => {
                 opacity: fadeAnim,
                 transform: [{ scale: scaleAnim }],
                 backgroundColor: theme.bg.card,
-                shadowColor: isDark ? '#ffffff' : '#000000',
+                shadowColor: isDark ? '#000000' : '#000000',
                 shadowOpacity: isDark ? 0.1 : 0.15,
               },
             ]}
@@ -2979,7 +2979,7 @@ const ChallengeDetailScreen = () => {
                   {
                     backgroundColor: getStatusColor(challenge.status),
                     ...(challenge.status === "completed" && {
-                      shadowColor: theme.colors.primary,
+                      shadowColor: isDark ? '#000000' : theme.colors.primary,
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: 0.15,
                       shadowRadius: 4,
@@ -3239,7 +3239,7 @@ const ChallengeDetailScreen = () => {
                   <MaterialCommunityIcons
                     name="comment-text-outline"
                     size={scaleSize(24)}
-                    color="#0984E3"
+                    color={theme.colors.accentText}
                   />
                   <Text
                     style={[
@@ -3403,13 +3403,13 @@ const ChallengeDetailScreen = () => {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[COLORS.primary, COLORS.secondary]}
+                colors={[theme.colors.primary, theme.colors.primary]}
                 style={styles.scrollToTopGradient}
               >
                 <MaterialCommunityIcons
                   name="chevron-up"
                   size={24}
-                  color="white"
+                  color={theme.colors.onAccent}
                 />
               </LinearGradient>
             </TouchableOpacity>
@@ -3740,7 +3740,7 @@ const ChallengeDetailScreen = () => {
               {/* 참여자 통계 */}
               <View style={[styles.participantStats, { borderBottomColor: isDarkMode ? COLORS.darkBorder : COLORS.border }]}>
                 <View style={styles.statItem}>
-                  <Text style={[styles.statNumber, { color: COLORS.primary }]}>
+                  <Text style={[styles.statNumber, { color: theme.colors.accentText }]}>
                     {challenge.participants?.length || 0}
                   </Text>
                   <Text
@@ -3795,12 +3795,12 @@ const ChallengeDetailScreen = () => {
                     <MaterialCommunityIcons
                       name="account-edit"
                       size={18}
-                      color={COLORS.primary}
+                      color={theme.colors.accentText}
                     />
                     <Text
                       style={[
                         styles.participantActionButtonText,
-                        { color: COLORS.primary },
+                        { color: theme.colors.accentText },
                       ]}
                     >
                       참여자 수 수정
@@ -4158,7 +4158,7 @@ const ChallengeDetailScreen = () => {
                       <MaterialCommunityIcons
                         name="image-plus"
                         size={32}
-                        color={COLORS.primary}
+                        color={theme.colors.accentText}
                       />
                       <Text
                         style={[
@@ -4565,7 +4565,7 @@ const ChallengeDetailScreen = () => {
                     <MaterialCommunityIcons
                       name="pencil"
                       size={24}
-                      color={COLORS.primary}
+                      color={theme.colors.accentText}
                     />
                     <Text style={[styles.bottomModalOptionText, { color: theme.text.primary }]}>수정하기</Text>
                   </TouchableOpacity>

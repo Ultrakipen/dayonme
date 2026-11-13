@@ -1237,7 +1237,7 @@ const executeSearch = useCallback((query: string) => {
           translucent={false}
         />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={theme.colors.accentText} />
           <Text style={[styles.loadingText, { color: theme.text.primary }]}>
             챌린지 불러오는 중...
           </Text>
@@ -1255,7 +1255,7 @@ const executeSearch = useCallback((query: string) => {
           translucent={false}
         />
         {/* 검색 헤더 */}
-        <View style={[styles.searchHeader, { borderBottomColor: theme.bg.border, shadowColor: isDark ? '#ffffff' : '#000000' }]}>
+        <View style={[styles.searchHeader, { borderBottomColor: theme.bg.border, shadowColor: isDark ? '#000000' : '#000000' }]}>
           <TouchableOpacity onPress={exitSearchMode} style={styles.backButton}>
             <MaterialCommunityIcons
               name="arrow-left"
@@ -1263,7 +1263,7 @@ const executeSearch = useCallback((query: string) => {
               color={theme.text.primary}
             />
           </TouchableOpacity>
-          <View style={[styles.searchInputContainer, { backgroundColor: theme.bg.card, shadowColor: theme.colors.primary }]}>
+          <View style={[styles.searchInputContainer, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : theme.colors.primary }]}>
             <MaterialCommunityIcons
               name="magnify"
               size={20}
@@ -1344,7 +1344,7 @@ const executeSearch = useCallback((query: string) => {
                     executeSearch(item);
                   }}
                 >
-                  <Text style={[styles.popularSearchRank, { color: COLORS.primary }]}>
+                  <Text style={[styles.popularSearchRank, { color: theme.colors.accentText }]}>
                     {index + 1}
                   </Text>
                   <Text style={[styles.popularSearchText, { color: theme.text.primary }]}>
@@ -1374,7 +1374,7 @@ const executeSearch = useCallback((query: string) => {
                       {challenge.description}
                     </Text>
                     <View style={styles.searchResultMeta}>
-                      <Text style={[styles.searchResultParticipants, { color: COLORS.primary }]}>
+                      <Text style={[styles.searchResultParticipants, { color: theme.colors.accentText }]}>
                         {challenge.participant_count}명 참여
                       </Text>
                       <View style={[styles.statusBadge, { backgroundColor: getStatusColor(challenge.status) }]}>
@@ -1577,7 +1577,7 @@ const executeSearch = useCallback((query: string) => {
                 backgroundColor: isDark ? 'rgba(28, 28, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 borderWidth: 0.5,
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)',
-                shadowColor: isDark ? '#ffffff' : '#000000',
+                shadowColor: isDark ? '#000000' : '#000000',
                 shadowOpacity: isDark ? 0.1 : 0.15,
               },
             ]}
@@ -1644,7 +1644,7 @@ const executeSearch = useCallback((query: string) => {
           <View style={[styles.modalHeader, {
             borderBottomColor: theme.bg.border,
             backgroundColor: theme.bg.card,
-            shadowColor: isDark ? '#ffffff' : '#000000',
+            shadowColor: isDark ? '#000000' : '#000000',
           }]}>
             <TouchableOpacity
               onPress={handleCloseEditModal}
@@ -1704,7 +1704,7 @@ const executeSearch = useCallback((query: string) => {
                   <MaterialCommunityIcons
                     name="format-title"
                     size={20}
-                    color={COLORS.primary}
+                    color={theme.colors.accentText}
                     style={{ marginRight: 8 }}
                   />
                   <Text style={[styles.modernFieldLabel, { color: theme.text.primary }]}>
@@ -1754,7 +1754,7 @@ const executeSearch = useCallback((query: string) => {
                   <MaterialCommunityIcons
                     name="text-long"
                     size={20}
-                    color={COLORS.primary}
+                    color={theme.colors.accentText}
                     style={{ marginRight: 8 }}
                   />
                   <Text style={[styles.modernFieldLabel, { color: theme.text.primary }]}>
@@ -1806,7 +1806,7 @@ const executeSearch = useCallback((query: string) => {
                   <MaterialCommunityIcons
                     name="calendar-range"
                     size={20}
-                    color={COLORS.primary}
+                    color={theme.colors.accentText}
                     style={{ marginRight: 8 }}
                   />
                   <Text style={[styles.modernFieldLabel, { color: theme.text.primary }]}>
@@ -1839,7 +1839,7 @@ const executeSearch = useCallback((query: string) => {
                     <MaterialCommunityIcons
                       name="calendar"
                       size={20}
-                      color={COLORS.primary}
+                      color={theme.colors.accentText}
                       style={{ marginRight: 10 }}
                     />
                     <TextInput
@@ -1863,7 +1863,7 @@ const executeSearch = useCallback((query: string) => {
                     <MaterialCommunityIcons
                       name="arrow-right"
                       size={24}
-                      color={COLORS.primary}
+                      color={theme.colors.accentText}
                     />
                   </View>
                 </View>
@@ -1888,7 +1888,7 @@ const executeSearch = useCallback((query: string) => {
                     <MaterialCommunityIcons
                       name="calendar"
                       size={20}
-                      color={COLORS.primary}
+                      color={theme.colors.accentText}
                       style={{ marginRight: 10 }}
                     />
                     <TextInput
@@ -1913,7 +1913,7 @@ const executeSearch = useCallback((query: string) => {
                   <MaterialCommunityIcons
                     name="account-multiple"
                     size={20}
-                    color={COLORS.primary}
+                    color={theme.colors.accentText}
                     style={{ marginRight: 8 }}
                   />
                   <Text style={[styles.modernFieldLabel, { color: theme.text.primary }]}>
@@ -1940,7 +1940,7 @@ const executeSearch = useCallback((query: string) => {
                 <MaterialCommunityIcons
                   name="account-multiple"
                   size={20}
-                  color={COLORS.primary}
+                  color={theme.colors.accentText}
                   style={{ marginRight: 12 }}
                 />
                 <TextInput
