@@ -1,5 +1,6 @@
 // src/screens/NotificationScreen.tsx
 import React, { useEffect, useState, useRef, createContext, useContext, useCallback, useMemo } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlatList, Alert, TouchableOpacity, StyleSheet, View, Pressable, Text, StatusBar, Dimensions, Animated, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -28,6 +29,7 @@ interface NotificationScreenProps {
 const NotificationScreen = (props: NotificationScreenProps = {}) => {
   const navigation = useNavigation();
   const { theme, isDark } = useModernTheme();
+  const insets = useSafeAreaInsets();
 
   // Dimensions 호출은 컴포넌트 내부에서
   const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -444,8 +446,8 @@ const fetchNotifications = useCallback(async (refresh = false) => {
   if (loading && !refreshing && notifications.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg.primary }]}>
-        <StatusBar barStyle={isDark ? "light-content" : "light-content"} backgroundColor={colors.headerBg} />
-        <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: theme.bg.border }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.headerBg} />
+        <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: theme.bg.border, paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + SPACING.sm }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={24} color={colors.headerIcon} />
           </TouchableOpacity>
@@ -464,13 +466,14 @@ const fetchNotifications = useCallback(async (refresh = false) => {
   return (
     <SwipeContext.Provider value={{ openSwipeableRef }}>
       <View style={[styles.container, { backgroundColor: theme.bg.primary }]}>
-        <StatusBar barStyle={isDark ? "light-content" : "light-content"} backgroundColor={colors.headerBg} />
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.headerBg} />
         {/* 헤더 */}
         <View style={[
           styles.header,
           {
             backgroundColor: colors.headerBg,
             borderBottomColor: theme.bg.border,
+            paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + SPACING.sm,
             ...Platform.select({
               ios: {
                 shadowColor: isDark ? '#000000' : '#000',

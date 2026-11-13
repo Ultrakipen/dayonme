@@ -1047,7 +1047,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
               styles.filterChip,
               {
                 backgroundColor: isActive
-                  ? (filter.type === 'status' ? COLORS.primary : COLORS.accent)
+                  ? theme.colors.primary
                   : (isDark ? theme.colors.border : COLORS.surfaceVariant),
               }
             ]}
@@ -1058,11 +1058,11 @@ const MyChallengesScreenFixed = ({ route }: any) => {
             <MaterialCommunityIcons
               name={filter.icon as any}
               size={14}
-              color={isActive ? 'white' : (isDark ? theme.colors.text.primary : COLORS.text)}
+              color={isActive ? theme.colors.onAccent : (isDark ? theme.colors.text.primary : COLORS.text)}
             />
             <Text style={[
               styles.filterChipText,
-              { color: isActive ? 'white' : (isDark ? theme.colors.text.primary : COLORS.text) }
+              { color: isActive ? theme.colors.onAccent : (isDark ? theme.colors.text.primary : COLORS.text) }
             ]}>
               {filter.label}
             </Text>

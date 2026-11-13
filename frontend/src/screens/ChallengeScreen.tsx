@@ -1250,7 +1250,7 @@ const executeSearch = useCallback((query: string) => {
     return (
       <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: theme.bg.primary }]}>
         <StatusBar
-          barStyle="light-content"
+          barStyle={isDark ? "light-content" : "dark-content"}
           backgroundColor={theme.bg.primary}
           translucent={false}
         />
