@@ -48,6 +48,7 @@ import uploadService from '../services/api/uploadService';
 import { normalizeImageUrl, logImageError, logImageSuccess } from '../utils/imageUtils';
 import ImageCarousel from '../components/ImageCarousel';
 import { EMOTION_AVATARS } from '../constants/emotions';
+import EmotionIcon from '../components/common/EmotionIcon';
 
 // 반응형 설정 (모듈 레벨에서 Dimensions.get() 호출 제거 - React Native 0.80 호환)
 const BASE_WIDTH = 360;
@@ -1231,23 +1232,9 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                   flexShrink: 0
                 }}>
                   {/* 로컬 감정 이모지 표시 */}
-                  {(() => {
-                    const localEmotion = localEmotions.find(local => local.label === selectedEmotion.name);
-                    if (localEmotion) {
-                      return (
-                        <Image
-                          source={{ uri: getTwemojiUrl(localEmotion.emojiCode) }}
-                          style={{
-                            width: normalize(20, false),
-                            height: normalize(20, false),
-                            marginRight: SPACING.xs
-                          }}
-                          resizeMode="contain"
-                        />
-                      );
-                    }
-                    return null;
-                  })()}
+                  <Box style={{ marginRight: SPACING.xs }}>
+                    <EmotionIcon emotionId={selectedEmotion.emotion_id} label={selectedEmotion.name} size={normalize(20, false)} />
+                  </Box>
                   <Text style={{
                     fontSize: FONT_SIZES.sm,
                     fontWeight: '600',
@@ -1370,16 +1357,10 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                         accessibilityLabel={emotion ? `${emotion.name} 감정 선택` : undefined}
                         accessibilityState={emotion ? { selected: selectedEmotion?.emotion_id === emotion.emotion_id } : undefined}
                       >
-                        {emotion && localEmotion && (
-                          <Image
-                            source={{ uri: getTwemojiUrl(localEmotion.emojiCode) }}
-                            style={{
-                              width: normalize(28, false),
-                              height: normalize(28, false),
-                              marginBottom: normalize(2, false)
-                            }}
-                            resizeMode="contain"
-                          />
+                        {emotion && (
+                          <Box style={{ marginBottom: normalize(2, false) }}>
+                            <EmotionIcon emotionId={emotion.emotion_id} label={emotion.name} size={normalize(28, false)} />
+                          </Box>
                         )}
                         {emotion && (
                           <Text style={{
