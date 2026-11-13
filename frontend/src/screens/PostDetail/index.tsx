@@ -3028,7 +3028,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   isAnonymous={false}
                   avatarUrl={post.user?.profile_image_url}
                   avatarText={post.user?.nickname?.[0] || 'U'}
-                  avatarColor="#667eea"
+                  avatarColor={modernTheme.colors.primary}
                   size={48}
                 />
                 <VStack style={{ marginLeft: normalizeSpace(12), flex: 1 }} pointerEvents="box-none">

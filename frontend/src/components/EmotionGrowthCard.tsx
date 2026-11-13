@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../contexts/ThemeContext';
+import { useModernTheme } from '../contexts/ModernThemeContext';
 import { viralApi, CompletionCard } from '../services/api/emotionFeatureService';
 
 const getScreenWidth = () => Dimensions.get('window').width;
@@ -35,6 +36,7 @@ const EmotionGrowthCard: React.FC<EmotionGrowthCardProps> = ({
   compact = false,
 }) => {
   const { isDarkMode } = useTheme();
+  const { theme } = useModernTheme();
   const [data, setData] = useState<CompletionCard | null>(completionData || null);
   const [loading, setLoading] = useState(!completionData && !!completionId);
   const [sharing, setSharing] = useState(false);
@@ -124,7 +126,7 @@ ${data.top_emotions?.map(e => e.icon).join(' ') || ''}
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: isDarkMode ? '#1a1a2e' : '#f5f5f5' }]}>
-        <ActivityIndicator size="large" color={isDarkMode ? '#667eea' : '#764ba2'} />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }

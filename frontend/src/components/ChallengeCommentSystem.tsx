@@ -1289,19 +1289,19 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
               contentContainerStyle={styles.emotionPickerContent}
             >
               <TouchableOpacity
-                style={[styles.emotionChip, !selectedEmotion && styles.emotionChipActive]}
+                style={[styles.emotionChip, !selectedEmotion && styles.emotionChipActive, !selectedEmotion && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}
                 onPress={() => setSelectedEmotion(null)}
               >
-                <Text style={[styles.emotionChipText, { color: theme.text.primary }]}>응원만</Text>
+                <Text style={[styles.emotionChipText, { color: !selectedEmotion ? theme.colors.onAccent : theme.text.primary }]}>응원만</Text>
               </TouchableOpacity>
               {anonymousEmotions.slice(0, 10).map((emotion) => (
                 <TouchableOpacity
                   key={emotion.label}
-                  style={[styles.emotionChip, selectedEmotion === emotion.label && styles.emotionChipActive]}
+                  style={[styles.emotionChip, selectedEmotion === emotion.label && styles.emotionChipActive, selectedEmotion === emotion.label && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}
                   onPress={() => setSelectedEmotion(emotion.label)}
                 >
                   <MaterialCommunityIcons name={emotion.icon} size={scaleSize(16)} color={emotion.color} />
-                  <Text style={[styles.emotionChipText, { color: theme.text.primary, marginLeft: 4 }]}>{emotion.label}</Text>
+                  <Text style={[styles.emotionChipText, { color: selectedEmotion === emotion.label ? theme.colors.onAccent : theme.text.primary, marginLeft: 4 }]}>{emotion.label}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -1331,7 +1331,7 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
                       : 'emoticon-outline'}
                     size={Math.max(scaleSize(22), 20)}
                     color={selectedEmotion
-                      ? (anonymousEmotions.find(e => e.label === selectedEmotion)?.color || '#667eea')
+                      ? (anonymousEmotions.find(e => e.label === selectedEmotion)?.color || theme.colors.primary)
                       : theme.text.tertiary}
                   />
                 </TouchableOpacity>
@@ -1344,7 +1344,7 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
                   <MaterialCommunityIcons
                     name={isAnonymous ? 'incognito' : 'incognito-off'}
                     size={Math.max(scaleSize(22), 20)}
-                    color={isAnonymous ? '#667eea' : theme.text.tertiary}
+                    color={isAnonymous ? theme.colors.primary : theme.text.tertiary}
                   />
                 </TouchableOpacity>
               </View>
@@ -1370,7 +1370,7 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
                   styles.sendButtonInner,
                   {
                     opacity: (editingComment ? editContent.trim() : newComment.trim()) ? 1 : 0.4,
-                    backgroundColor: (editingComment ? editContent.trim() : newComment.trim()) ? '#667eea' : theme.bg.secondary,
+                    backgroundColor: (editingComment ? editContent.trim() : newComment.trim()) ? theme.colors.primary : theme.bg.secondary,
                   }
                 ]}
                 onPress={editingComment ? handleEditComment : handleAddComment}
@@ -1379,7 +1379,7 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
                 <MaterialCommunityIcons
                   name={editingComment ? 'check' : 'arrow-up'}
                   size={Math.max(scaleSize(18), 16)}
-                  color={(editingComment ? editContent.trim() : newComment.trim()) ? '#FFFFFF' : theme.text.tertiary}
+                  color={(editingComment ? editContent.trim() : newComment.trim()) ? theme.colors.onAccent : theme.text.tertiary}
                 />
               </TouchableOpacity>
             </View>
@@ -1690,8 +1690,8 @@ const styles = StyleSheet.create({
     marginRight: scaleSize(8),
   },
   emotionChipActive: {
-    backgroundColor: '#667eea',
-    borderColor: '#667eea',
+    backgroundColor: '#5566DD',
+    borderColor: '#5566DD',
   },
   emotionChipText: {
     fontSize: scaleFont(12),

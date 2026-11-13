@@ -45,7 +45,7 @@ const NotificationScreen = (props: NotificationScreenProps = {}) => {
     headerIcon: theme.text.primary,
     readAction: isDark ? '#0EA5E9' : '#0095F6',
     deleteAction: isDark ? '#EF4444' : '#FF3B30',
-    markAllButton: isDark ? '#6366F1' : '#667EEA',
+    markAllButton: theme.colors.primary,
     iconBackground: isDark ? '#3B4BF9' : '#EEF2FF',
   }), [theme, isDark]);
   const [notifications, setNotifications] = useState<Notification[]>(props.testNotifications || []);
@@ -501,7 +501,7 @@ const fetchNotifications = useCallback(async (refresh = false) => {
                 accessibilityLabel="모든 알림 읽음으로 표시"
                 accessibilityRole="button"
               >
-                <Text style={[styles.markAllText, { color: '#FFFFFF' }]}>모두 읽음</Text>
+                <Text style={[styles.markAllText, { color: theme.colors.onAccent }]}>모두 읽음</Text>
               </Pressable>
             )}
           </View>

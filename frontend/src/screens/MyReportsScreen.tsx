@@ -81,7 +81,7 @@ const MyReportsScreen: React.FC = () => {
     resolvedBg: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
     dismissed: '#9CA3AF',
     dismissedBg: isDark ? 'rgba(156, 163, 175, 0.15)' : 'rgba(156, 163, 175, 0.1)',
-    challengeIcon: '#667EEA',
+    challengeIcon: theme.colors.primary,
     postIcon: '#10B981',
     cardShadow: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)',
     emptyIcon: isDark ? '#38383A' : '#E5E5E5',

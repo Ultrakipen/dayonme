@@ -68,7 +68,7 @@ const NoticeScreen: React.FC<NoticeScreenProps> = ({ navigation }) => {
     text: isDark ? theme.colors.text.primary : '#1A1A1A',
     textSecondary: isDark ? theme.colors.text.secondary : '#666666',
     border: isDark ? theme.colors.border : '#E5E5E5',
-    accent: '#667EEA',
+    accent: theme.colors.primary,
     important: '#FF6B6B',
     maintenance: '#FF9500',
   }), [isDark, theme]);

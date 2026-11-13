@@ -200,7 +200,7 @@ const ProfileScreen: React.FC = () => {
       '버럭': '#E17055',
       '지루': '#B2BEC3'
     };
-    return colorMap[emotionName] || '#667eea';
+    return colorMap[emotionName] || '#5566DD';
   }, []);
 
   // 🔥 연속 작성일 계산
@@ -567,7 +567,7 @@ const ProfileScreen: React.FC = () => {
           <MaterialCommunityIcons
             name={isDark ? 'weather-sunny' : 'weather-night'}
             size={normalizeIcon(28)}
-            color={isDark ? '#A78BFA' : '#667eea'}
+            color={theme.colors.primary}
           />
         </TouchableOpacity>
 
@@ -589,7 +589,7 @@ const ProfileScreen: React.FC = () => {
             alignItems: 'center',
             marginBottom: 20,
             borderWidth: 3,
-            borderColor: '#667eea',
+            borderColor: theme.colors.primary,
           }}>
             <RNText style={{ fontSize: 48 }}>😊</RNText>
           </View>
@@ -622,12 +622,12 @@ const ProfileScreen: React.FC = () => {
               width: '100%',
               maxWidth: 320,
               height: 48,
-              backgroundColor: '#667eea',
+              backgroundColor: theme.colors.primary,
               borderRadius: 24,
               justifyContent: 'center',
               alignItems: 'center',
               marginBottom: 12,
-              shadowColor: '#667eea',
+              shadowColor: theme.colors.primary,
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.3,
               shadowRadius: 8,
@@ -637,7 +637,7 @@ const ProfileScreen: React.FC = () => {
             accessibilityLabel="로그인하기"
           >
             <RNText style={{
-              color: '#FFFFFF',
+              color: theme.colors.onAccent,
               fontSize: getFontSize(15),
               fontWeight: '700',
               letterSpacing: -0.3,
@@ -658,13 +658,13 @@ const ProfileScreen: React.FC = () => {
               justifyContent: 'center',
               alignItems: 'center',
               borderWidth: 2,
-              borderColor: '#667eea',
+              borderColor: theme.colors.primary,
             }}
             accessibilityRole="button"
             accessibilityLabel="회원가입하기"
           >
             <RNText style={{
-              color: '#667eea',
+              color: theme.colors.primary,
               fontSize: getFontSize(15),
               fontWeight: '700',
               letterSpacing: -0.3,
@@ -1169,7 +1169,7 @@ const ProfileScreen: React.FC = () => {
               activeOpacity={0.7}
               accessibilityLabel="전체 설정"
             >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(102, 126, 234, 0.1)' }]}>
+              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(85, 102, 221, 0.1)' }]}>
                 <Icon name="settings-outline" size={20} color={emotionColors.primary} />
               </View>
               <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>전체 설정</RNText>
@@ -1207,16 +1207,16 @@ const ProfileScreen: React.FC = () => {
             {/* 관리자 대시보드 */}
             {(user?.role === 'admin' || user?.is_admin) && (
               <TouchableOpacity
-                style={[styles.settingItem, { backgroundColor: isDark ? 'rgba(102, 126, 234, 0.08)' : 'rgba(102, 126, 234, 0.06)' }]}
+                style={[styles.settingItem, { backgroundColor: isDark ? 'rgba(85, 102, 221, 0.08)' : 'rgba(85, 102, 221, 0.06)' }]}
                 onPress={() => navigation.navigate('AdminDashboard')}
                 activeOpacity={0.7}
                 accessibilityLabel="관리자 대시보드"
               >
-                <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(102, 126, 234, 0.2)' : 'rgba(102, 126, 234, 0.12)' }]}>
-                  <Icon name="shield-checkmark" size={20} color="#667EEA" />
+                <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(85, 102, 221, 0.2)' : 'rgba(85, 102, 221, 0.12)' }]}>
+                  <Icon name="shield-checkmark" size={20} color={theme.colors.primary} />
                 </View>
-                <RNText style={[styles.settingText, { color: '#667EEA', fontWeight: '700' }]}>관리자</RNText>
-                <Icon name="chevron-forward" size={16} color="#667EEA" />
+                <RNText style={[styles.settingText, { color: theme.colors.primary, fontWeight: '700' }]}>관리자</RNText>
+                <Icon name="chevron-forward" size={16} color={theme.colors.primary} />
               </TouchableOpacity>
             )}
 

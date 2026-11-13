@@ -31,7 +31,7 @@ const ContactScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     text: isDark ? theme.colors.text.primary : '#1A1A1A',
     textSecondary: isDark ? theme.colors.text.secondary : '#666666',
     border: isDark ? theme.colors.border : '#E5E5E5',
-    accent: '#667EEA',
+    accent: theme.colors.primary,
     inputBg: isDark ? theme.bg.tertiary : '#F0F0F0',
   }), [isDark, theme]);
 
@@ -82,7 +82,7 @@ const ContactScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 ]}
                 onPress={() => setCategory(cat)}
               >
-                <Text style={[styles.categoryText, { color: category === cat ? '#FFF' : colors.text, fontSize: 13 * scale }]}>
+                <Text style={[styles.categoryText, { color: category === cat ? theme.colors.onAccent : colors.text, fontSize: 13 * scale }]}>
                   {cat}
                 </Text>
               </TouchableOpacity>
@@ -132,9 +132,9 @@ const ContactScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             activeOpacity={0.8}
           >
             {loading ? (
-              <ActivityIndicator color="#FFF" />
+              <ActivityIndicator color={theme.colors.onAccent} />
             ) : (
-              <Text style={[styles.submitText, { fontSize: 16 * scale }]}>문의 접수하기</Text>
+              <Text style={[styles.submitText, { color: theme.colors.onAccent, fontSize: 16 * scale }]}>문의 접수하기</Text>
             )}
           </TouchableOpacity>
         </View>

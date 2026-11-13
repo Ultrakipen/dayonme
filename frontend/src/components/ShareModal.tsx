@@ -29,7 +29,7 @@ const ShareModal: React.FC<ShareModalProps> = ({ visible, onClose, challenge }) 
           </View>
 
           <TouchableOpacity style={styles.option} onPress={handleCopyLink}>
-            <Icon name="link" size={normalizeIcon(22)} color="#667EEA" />
+            <Icon name="link" size={normalizeIcon(22)} color="#5566DD" />
             <Text style={styles.optionText}>링크 복사</Text>
           </TouchableOpacity>
         </View>

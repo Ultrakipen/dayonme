@@ -44,7 +44,7 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
   onClose,
   mode = 'both',
 }) => {
-  const { isDark } = useModernTheme();
+  const { isDark, theme } = useModernTheme();
   const [activeTab, setActiveTab] = useState<'send' | 'received'>(mode === 'received' ? 'received' : 'send');
   const [message, setMessage] = useState('');
   const [targets, setTargets] = useState<any[]>([]);
@@ -65,11 +65,12 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
     card: isDark ? '#1e1e1e' : '#f8f9fa',
     text: isDark ? '#ffffff' : '#1a1a1a',
     textSecondary: isDark ? '#a0a0a0' : '#666666',
-    primary: isDark ? '#667eea' : '#764ba2',
+    primary: theme.colors.primary,
+    onPrimary: theme.colors.onAccent,
     border: isDark ? '#333333' : '#e0e0e0',
     success: '#4CAF50',
     inputBg: isDark ? '#2a2a2a' : '#f5f5f5',
-  }), [isDark]);
+  }), [isDark, theme]);
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -201,7 +202,7 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
       <Text style={[
         styles.targetText,
         {
-          color: selectedTarget === item.user_id ? '#fff' : colors.textSecondary,
+          color: selectedTarget === item.user_id ? colors.onPrimary : colors.textSecondary,
           fontSize: 11 * scale,
           marginTop: 4 * scale,
         }
@@ -231,7 +232,7 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
         <Text style={{ fontSize: 20 * scale }}>{item.emotion_type || '💝'}</Text>
         {!item.is_read && (
           <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.unreadText, { fontSize: 10 * scale }]}>NEW</Text>
+            <Text style={[styles.unreadText, { color: colors.onPrimary, fontSize: 10 * scale }]}>NEW</Text>
           </View>
         )}
       </View>
@@ -284,7 +285,7 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
           </Text>
           {receivedList.filter(e => !e.is_read).length > 0 && (
             <View style={[styles.badge, { backgroundColor: colors.primary, marginLeft: 4 * scale }]}>
-              <Text style={[styles.badgeText, { fontSize: 10 * scale }]}>
+              <Text style={[styles.badgeText, { color: colors.onPrimary, fontSize: 10 * scale }]}>
                 {receivedList.filter(e => !e.is_read).length}
               </Text>
             </View>
@@ -351,7 +352,7 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
             <Text style={{ fontSize: 14 * scale }}>{item.emoji}</Text>
             <Text style={[
               styles.quickMessageText,
-              { color: message === item.message ? '#fff' : colors.text, fontSize: 12 * scale, marginLeft: 4 * scale }
+              { color: message === item.message ? colors.onPrimary : colors.text, fontSize: 12 * scale, marginLeft: 4 * scale }
             ]}>
               {item.message}
             </Text>
@@ -400,9 +401,9 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
         activeOpacity={0.8}
       >
         {sending ? (
-          <ActivityIndicator size="small" color="#fff" />
+          <ActivityIndicator size="small" color={selectedTarget && message.trim() ? colors.onPrimary : colors.textSecondary} />
         ) : (
-          <Text style={[styles.sendButtonText, { fontSize: 15 * scale }]}>
+          <Text style={[styles.sendButtonText, { color: selectedTarget && message.trim() ? colors.onPrimary : colors.textSecondary, fontSize: 15 * scale }]}>
             💝 익명 응원 보내기
           </Text>
         )}

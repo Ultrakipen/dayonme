@@ -31,7 +31,7 @@ const FAQScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     text: isDark ? theme.colors.text.primary : '#1A1A1A',
     textSecondary: isDark ? theme.colors.text.secondary : '#666666',
     border: isDark ? theme.colors.border : '#E5E5E5',
-    accent: '#667EEA',
+    accent: theme.colors.primary,
   }), [isDark, theme]);
 
   const renderItem = ({ item }: { item: typeof FAQ_DATA[0] }) => {

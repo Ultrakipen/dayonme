@@ -966,19 +966,19 @@ const MyChallengesScreenFixed = ({ route }: any) => {
           <TouchableOpacity
             style={[
               styles.simpleTabButton,
-              activeTab === 'created' && styles.activeCreatedTabButton
+              activeTab === 'created' && [styles.activeCreatedTabButton, { backgroundColor: theme.colors.primary, shadowColor: theme.colors.primary }]
             ]}
             onPress={() => setActiveTab('created')}
           >
             <MaterialCommunityIcons
               name="crown"
               size={16}
-              color={activeTab === 'created' ? 'white' : (isDark ? theme.colors.text.primary : COLORS.text)}
+              color={activeTab === 'created' ? theme.colors.onAccent : (isDark ? theme.colors.text.primary : COLORS.text)}
             />
             <Text style={[
               styles.simpleTabText,
               {
-                color: activeTab === 'created' ? 'white' : (isDark ? theme.colors.text.primary : COLORS.text),
+                color: activeTab === 'created' ? theme.colors.onAccent : (isDark ? theme.colors.text.primary : COLORS.text),
                 fontWeight: activeTab === 'created' ? '700' : '600'
               }
             ]}>
@@ -1661,10 +1661,10 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   activeCreatedTabButton: {
-    backgroundColor: '#667EEA',         // 밝은 Primary 컬러로 명확한 대비
+    backgroundColor: '#5566DD',         // 밝은 Primary 컬러로 명확한 대비
     shadowOpacity: 0.15,
     elevation: 4,
-    shadowColor: '#667EEA',
+    shadowColor: '#5566DD',
   },
   activeParticipatingTabButton: {
     backgroundColor: '#764BA2',         // 밝은 Secondary 컬러로 명확한 대비

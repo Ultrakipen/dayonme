@@ -77,7 +77,7 @@ const COLORS = {
     text: '#ffffff'
   },
   progress: {
-    active: '#667eea',
+    active: '#5566DD',
     inactive: '#e0e0e0'
   },
   border: {

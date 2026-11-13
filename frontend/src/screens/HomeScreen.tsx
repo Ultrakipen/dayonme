@@ -4175,10 +4175,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             {/* 수정하기 버튼 - Primary */}
                             <TouchableOpacity
                                 style={{
-                                    backgroundColor: '#667EEA',
+                                    backgroundColor: modernTheme.colors.primary,
                                     paddingVertical: normalizeSpace(16),
                                     borderRadius: normalizeBorderRadius(16),
-                                    shadowColor: '#667EEA',
+                                    shadowColor: modernTheme.colors.primary,
                                     shadowOffset: { width: 0, height: 4 },
                                     shadowOpacity: 0.3,
                                     shadowRadius: 8,
@@ -4197,12 +4197,12 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 activeOpacity={0.8}
                             >
                                 <HStack style={{ justifyContent: 'center', alignItems: 'center', gap: 8 }}>
-                                    <MaterialCommunityIcons name="pencil-outline" size={normalize(20)} color="#FFFFFF" />
+                                    <MaterialCommunityIcons name="pencil-outline" size={normalize(20)} color={modernTheme.colors.onAccent} />
                                     <RNText
                                         style={{
                                             fontSize: normalize(16),
                                             fontWeight: '600',
-                                            color: '#FFFFFF',
+                                            color: modernTheme.colors.onAccent,
                                             fontFamily: 'Pretendard-SemiBold',
                                             letterSpacing: -0.3,
                                         }}

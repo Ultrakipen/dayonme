@@ -444,7 +444,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
       {isSubmitting && !showSuccessToast && (
         <Box style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' }}>
           <Surface style={{ backgroundColor: theme.bg.card, padding: 24, borderRadius: 16, alignItems: 'center', minWidth: 200 }}>
-            <ActivityIndicator size="large" color="#667eea" />
+            <ActivityIndicator size="large" color={theme.colors.primary} />
             <Text style={{ marginTop: 12, fontSize: FONT_SIZES.bodySmall, color: theme.text.secondary, textAlign: 'center' }}>게시물을 작성하고 있습니다...</Text>
           </Surface>
         </Box>

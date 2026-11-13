@@ -797,7 +797,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             style={{
               backgroundColor: (!isFormValid || isSubmitting || isUploadingImages)
                 ? 'transparent'
-                : '#667eea',
+                : theme.colors.primary,
               paddingHorizontal: scale(16),
               paddingVertical: scale(8),
               borderRadius: scale(20),
@@ -808,15 +808,15 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             activeOpacity={0.7}
           >
             {(isSubmitting || isUploadingImages) ? (
-              <ActivityIndicator size="small" color="#667eea" />
+              <ActivityIndicator size="small" color={theme.colors.primary} />
             ) : (
               <StyledText
                 style={{
                   fontWeight: '600',
                   fontSize: scale(14.5),
                   color: (!isFormValid || isSubmitting || isUploadingImages)
-                    ? (isDark ? 'rgba(102, 126, 234, 0.4)' : 'rgba(102, 126, 234, 0.5)')
-                    : '#FFFFFF',
+                    ? (isDark ? 'rgba(85, 102, 221, 0.4)' : 'rgba(85, 102, 221, 0.5)')
+                    : theme.colors.onAccent,
                   fontFamily: 'Pretendard-SemiBold'
                 }}
               >
@@ -1899,9 +1899,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 30,
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    backgroundColor: '#667eea',
+    backgroundColor: '#5566DD',
     borderWidth: 0,
-    shadowColor: 'rgba(102, 126, 234, 0.4)',
+    shadowColor: 'rgba(85, 102, 221, 0.4)',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
@@ -2006,10 +2006,10 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderWidth: 3,
-    borderColor: 'rgba(102, 126, 234, 0.3)',
+    borderColor: 'rgba(85, 102, 221, 0.3)',
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: 'rgba(102, 126, 234, 0.3)',
+    shadowColor: 'rgba(85, 102, 221, 0.3)',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 16,

@@ -229,7 +229,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                         backgroundColor: theme.bg.card,
                         justifyContent: 'center',
                         alignItems: 'center',
-                        shadowColor: isDark ? '#000' : '#667eea',
+                        shadowColor: isDark ? '#000' : theme.colors.primary,
                         shadowOffset: { width: 0, height: 8 },
                         shadowOpacity: isDark ? 0.5 : 0.3,
                         shadowRadius: 16,
@@ -270,7 +270,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                         {userEmail && (
                           <Text style={{
                             fontSize: FONT_SIZES.body,
-                            color: isDark ? theme.colors.primary : '#667eea',
+                            color: theme.colors.primary,
                             fontWeight: '600',
                             textAlign: 'center',
                             marginBottom: 8
@@ -316,7 +316,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                           outlineStyle={{
                             borderRadius: 16,
                             borderWidth: 2,
-                            borderColor: errors.password ? '#FF3040' : password ? (isDark ? theme.colors.primary : '#667eea') : 'transparent'
+                            borderColor: errors.password ? '#FF3040' : password ? (theme.colors.primary) : 'transparent'
                           }}
                           secureTextEntry
                           autoComplete="password-new"
@@ -328,7 +328,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                           onSubmitEditing={() => confirmPasswordRef.current?.focus()}
                           theme={{
                             colors: {
-                              primary: isDark ? theme.colors.primary : '#667eea',
+                              primary: theme.colors.primary,
                               onSurfaceVariant: theme.colors.text.secondary,
                               outline: 'transparent',
                               text: theme.colors.text.primary
@@ -371,7 +371,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                           outlineStyle={{
                             borderRadius: 16,
                             borderWidth: 2,
-                            borderColor: errors.confirmPassword ? '#FF3040' : confirmPassword ? (isDark ? theme.colors.primary : '#667eea') : 'transparent'
+                            borderColor: errors.confirmPassword ? '#FF3040' : confirmPassword ? (theme.colors.primary) : 'transparent'
                           }}
                           secureTextEntry
                           autoComplete="password-new"
@@ -383,7 +383,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                           onSubmitEditing={handleResetPassword}
                           theme={{
                             colors: {
-                              primary: isDark ? theme.colors.primary : '#667eea',
+                              primary: theme.colors.primary,
                               onSurfaceVariant: theme.colors.text.secondary,
                               outline: 'transparent',
                               text: theme.colors.text.primary
@@ -415,7 +415,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                             borderRadius: 16,
                             paddingVertical: 18,
                             paddingHorizontal: 24,
-                            shadowColor: isDark ? '#000' : '#667eea',
+                            shadowColor: isDark ? '#000' : theme.colors.primary,
                             shadowOffset: { width: 0, height: 8 },
                             shadowOpacity: isDark ? 0.5 : 0.3,
                             shadowRadius: 16,
@@ -464,7 +464,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                         </Text>
                         <TouchableWithoutFeedback onPress={() => navigation.navigate('Login')}>
                           <Text style={{
-                            color: isDark ? theme.colors.primary : '#667eea',
+                            color: theme.colors.primary,
                             fontSize: FONT_SIZES.h4,
                             fontWeight: '700'
                           }}>

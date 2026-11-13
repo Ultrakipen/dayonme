@@ -1112,7 +1112,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         shadowOpacity: isDark ? 0.1 : 0.1,
         shadowRadius: 3
       },
-      headerTintColor: '#667eea',
+      headerTintColor: theme.colors.primary,
       headerTitleStyle: {
         fontWeight: 'bold',
         fontFamily: 'Pretendard-Bold',
@@ -1124,7 +1124,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           onPress={() => handleSubmitRef.current()}
           disabled={!isFormValid || isSubmitting}
           style={{
-            backgroundColor: isFormValid && !isSubmitting ? '#667eea' : 'rgba(102,126,234,0.3)',
+            backgroundColor: isFormValid && !isSubmitting ? theme.colors.primary : 'rgba(85,102,221,0.3)',
             paddingHorizontal: SPACING.md,
             paddingVertical: SPACING.xs,
             borderRadius: normalize(14, false),
@@ -1144,7 +1144,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           <Text style={{
             fontSize: FONT_SIZES.sm,
             fontWeight: '700',
-            color: '#FFFFFF',
+            color: isFormValid && !isSubmitting ? theme.colors.onAccent : '#FFFFFF',
             fontFamily: 'Pretendard-Bold',
           }}>
             {isSubmitting
@@ -1155,7 +1155,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         </Pressable>
       ),
     });
-  }, [navigation, isEditMode, isFormValid, isSubmitting, headerBgColor, headerTextColor, isDark, FONT_SIZES.base, SPACING.md, SPACING.xs, SPACING.sm]);
+  }, [navigation, isEditMode, isFormValid, isSubmitting, headerBgColor, headerTextColor, isDark, theme.colors.primary, theme.colors.onAccent, FONT_SIZES.base, SPACING.md, SPACING.xs, SPACING.sm]);
 
   return (
     <>

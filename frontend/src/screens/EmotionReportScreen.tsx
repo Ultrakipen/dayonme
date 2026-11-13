@@ -23,7 +23,7 @@ const BASE_WIDTH = 360;
 
 const EmotionReportScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { isDark } = useModernTheme();
+  const { theme, isDark } = useModernTheme();
   const [report, setReport] = useState<EmotionReport | null>(null);
   const [reportList, setReportList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,13 +40,13 @@ const EmotionReportScreen: React.FC = () => {
     card: isDark ? '#1e1e1e' : '#ffffff',
     text: isDark ? '#ffffff' : '#1a1a1a',
     textSecondary: isDark ? '#a0a0a0' : '#666666',
-    primary: isDark ? '#667eea' : '#764ba2',
+    primary: theme.colors.primary,
     border: isDark ? '#333333' : '#e0e0e0',
     success: '#4CAF50',
     warning: '#FF9800',
     error: '#F44336',
     chartBg: isDark ? '#2a2a2a' : '#f0f0f0',
-  }), [isDark]);
+  }), [isDark, theme]);
 
   // 트렌드 아이콘 및 색상
   const getTrendInfo = useCallback((trend: string) => {

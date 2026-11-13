@@ -41,7 +41,7 @@ const getResponsiveSizes = () => {
 };
 
 const MainTabs = () => {
-  const { isDark } = useModernTheme();
+  const { isDark, theme } = useModernTheme();
   const { isAuthenticated, isLoading } = useAuth();
   const insets = useSafeAreaInsets();
 
@@ -89,7 +89,7 @@ const MainTabs = () => {
     <Tab.Navigator
       screenOptions={{
         // 진하고 뚜렷한 감정 앱 컬러 팔레트
-        tabBarActiveTintColor: isDark ? '#A78BFA' : '#667eea', // 더 선명한 보라색
+        tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: isDark ? '#9ca3af' : '#9ca3af',
         tabBarStyle: {
           backgroundColor: isDark ? '#1f2937' : '#FFFFFF', // 순백으로 변경 (대비 향상)
@@ -101,7 +101,7 @@ const MainTabs = () => {
           height: getTabBarHeight(),
           // 부드럽고 자연스러운 그림자
           elevation: 16,
-          shadowColor: isDark ? '#000' : '#667eea',
+          shadowColor: isDark ? '#000' : theme.colors.primary,
           shadowOffset: { width: 0, height: sizes.SHADOW_OFFSET },
           shadowOpacity: isDark ? 0.3 : 0.12,
           shadowRadius: sizes.SHADOW_RADIUS,
@@ -142,7 +142,7 @@ const MainTabs = () => {
               paddingTop: sizes.PADDING_TOP,
               height: getTabBarHeight(),
               elevation: 16,
-              shadowColor: isDark ? '#000' : '#667eea',
+              shadowColor: isDark ? '#000' : theme.colors.primary,
               shadowOffset: { width: 0, height: sizes.SHADOW_OFFSET },
               shadowOpacity: isDark ? 0.3 : 0.12,
               shadowRadius: sizes.SHADOW_RADIUS,
@@ -191,7 +191,7 @@ const MainTabs = () => {
               paddingTop: sizes.PADDING_TOP,
               height: getTabBarHeight(),
               elevation: 16,
-              shadowColor: isDark ? '#000' : '#667eea',
+              shadowColor: isDark ? '#000' : theme.colors.primary,
               shadowOffset: { width: 0, height: sizes.SHADOW_OFFSET },
               shadowOpacity: isDark ? 0.3 : 0.12,
               shadowRadius: sizes.SHADOW_RADIUS,
@@ -233,7 +233,7 @@ const MainTabs = () => {
               paddingTop: sizes.PADDING_TOP,
               height: getTabBarHeight(),
               elevation: 16,
-              shadowColor: isDark ? '#000' : '#667eea',
+              shadowColor: isDark ? '#000' : theme.colors.primary,
               shadowOffset: { width: 0, height: sizes.SHADOW_OFFSET },
               shadowOpacity: isDark ? 0.3 : 0.12,
               shadowRadius: sizes.SHADOW_RADIUS,

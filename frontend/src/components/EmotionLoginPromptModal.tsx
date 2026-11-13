@@ -14,6 +14,7 @@ import { Text, VStack, HStack, Box } from './ui';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../contexts/ThemeContext';
+import { useModernTheme } from '../contexts/ModernThemeContext';
 import { normalize, wp, hp } from '../utils/responsive';
 
 interface EmotionLoginPromptModalProps {
@@ -56,6 +57,7 @@ const EmotionLoginPromptModal: React.FC<EmotionLoginPromptModalProps> = ({
   actionType = 'like',
 }) => {
   const { isDarkMode } = useTheme();
+  const { theme } = useModernTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const floatAnim = useRef(new Animated.Value(0)).current;
@@ -118,7 +120,7 @@ const EmotionLoginPromptModal: React.FC<EmotionLoginPromptModalProps> = ({
           title: '함께 이야기 나눠볼까요?',
           description: '당신의 감정도 소중해요\n회원가입하고 따뜻한 위로를 주고받아보세요',
           icon: 'comment-text',
-          iconColor: '#667eea',
+          iconColor: theme.colors.primary,
         };
       case 'post':
         return {
@@ -139,7 +141,7 @@ const EmotionLoginPromptModal: React.FC<EmotionLoginPromptModalProps> = ({
           title: '함께해요!',
           description: '회원가입하고 더 많은 이야기를 나눠보세요',
           icon: 'emoticon-happy',
-          iconColor: '#667eea',
+          iconColor: theme.colors.primary,
         };
     }
   };
@@ -290,7 +292,7 @@ const EmotionLoginPromptModal: React.FC<EmotionLoginPromptModalProps> = ({
                       <MaterialCommunityIcons
                         name="account-group"
                         size={18}
-                        color="#667eea"
+                        color={theme.colors.primary}
                       />
                       <Text
                         style={[styles.statsText, { color: colors.textSecondary }]}

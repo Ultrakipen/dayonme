@@ -1480,7 +1480,7 @@ const ChallengeDetailScreen = () => {
                     style={[
                       styles.inlineReplySend,
                       {
-                        backgroundColor: inlineReplyText.trim() ? '#667eea' : theme.bg.secondary,
+                        backgroundColor: inlineReplyText.trim() ? theme.colors.primary : theme.bg.secondary,
                         opacity: inlineReplyText.trim() ? 1 : 0.5,
                       }
                     ]}
@@ -1501,7 +1501,7 @@ const ChallengeDetailScreen = () => {
                     <MaterialCommunityIcons
                       name="send"
                       size={scaleSize(16)}
-                      color={inlineReplyText.trim() ? "#FFFFFF" : theme.text.tertiary}
+                      color={inlineReplyText.trim() ? theme.colors.onAccent : theme.text.tertiary}
                     />
                   </TouchableOpacity>
                 </View>

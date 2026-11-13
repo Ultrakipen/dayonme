@@ -25,7 +25,7 @@ const WelcomeScreen: React.FC = () => {
     text: theme.colors.text.primary,
     textSecondary: theme.colors.text.secondary,
     border: theme.colors.border,
-    primary: isDark ? '#A78BFA' : '#667eea',
+    primary: theme.colors.primary,
   }), [theme, isDark]);
 
   // 로그인된 사용자는 Main으로 자동 리다이렉트
@@ -59,7 +59,7 @@ const WelcomeScreen: React.FC = () => {
         <MaterialCommunityIcons
           name={isDark ? 'weather-sunny' : 'weather-night'}
           size={normalizeIcon(28)}
-          color={isDark ? '#A78BFA' : '#667eea'}
+          color={theme.colors.primary}
         />
       </TouchableOpacity>
 

@@ -307,7 +307,10 @@ const HighlightedText: React.FC<{
   numberOfLines?: number;
   highlightColor?: string;
   highlightTextColor?: string;
-}> = ({ text, highlight, style, numberOfLines, highlightColor = '#667eea', highlightTextColor = '#FFFFFF' }) => {
+}> = ({ text, highlight, style, numberOfLines, highlightColor, highlightTextColor }) => {
+  const { theme: hlTheme } = useModernTheme();
+  const hlBg = highlightColor ?? hlTheme.colors.primary;
+  const hlFg = highlightTextColor ?? hlTheme.colors.onAccent;
   // text가 undefined이거나 null인 경우 처리
   if (!text || typeof text !== 'string') {
     return <Text style={style} numberOfLines={numberOfLines} />;
@@ -324,8 +327,8 @@ const HighlightedText: React.FC<{
       {parts.map((part, index) =>
         part.toLowerCase() === highlight.toLowerCase() ? (
           <Text key={index} style={[style, {
-            backgroundColor: highlightColor,
-            color: highlightTextColor,
+            backgroundColor: hlBg,
+            color: hlFg,
             fontWeight: '700',
             paddingHorizontal: 4,
             paddingVertical: 1,

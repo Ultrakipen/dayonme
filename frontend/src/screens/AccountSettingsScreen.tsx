@@ -341,13 +341,13 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
                   priority: FastImage.priority.high,
                   cache: FastImage.cacheControl.immutable,
                 }}
-                style={styles.profileImage}
+                style={[styles.profileImage, { borderColor: theme.colors.primary }]}
                 resizeMode={FastImage.resizeMode.cover}
                 onError={() => setImageLoadError(true)}
               />
             ) : (
-              <View style={[styles.profileImagePlaceholder, { borderColor: colors.primary }]}>
-                <Text style={[styles.profileImagePlaceholderText, { color: colors.text }]}>
+              <View style={[styles.profileImagePlaceholder, { backgroundColor: theme.colors.primary, borderColor: colors.primary }]}>
+                <Text style={[styles.profileImagePlaceholderText, { color: theme.colors.onAccent }]}>
                   {(user?.nickname || user?.username || 'U')[0].toUpperCase()}
                 </Text>
               </View>
@@ -538,7 +538,7 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
                       { backgroundColor:
                         button.style === 'destructive' ? '#FF3B30' :
                         button.style === 'cancel' ? (isDark ? '#2A2A2A' : '#F0F0F0') :
-                        (isDark ? '#667eea' : '#667eea')
+                        theme.colors.primary
                       }
                     ]}
                     onPress={() => {
@@ -548,7 +548,7 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
                   >
                     <Text style={[
                       styles.alertButtonText,
-                      { color: button.style === 'cancel' ? (isDark ? '#FFFFFF' : '#1A1A1A') : '#FFFFFF' }
+                      { color: button.style === 'cancel' ? (isDark ? '#FFFFFF' : '#1A1A1A') : button.style === 'destructive' ? '#FFFFFF' : theme.colors.onAccent }
                     ]}>
                       {button.text}
                     </Text>
@@ -614,13 +614,13 @@ const styles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     borderWidth: 3,
-    borderColor: '#667eea',
+    borderColor: '#5566DD',
   },
   profileImagePlaceholder: {
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: '#667eea',
+    backgroundColor: '#5566DD',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,

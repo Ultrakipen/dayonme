@@ -7,7 +7,7 @@
 // ===== 색상 팔레트 =====
 export const COLORS = {
   // Primary Colors - 통일된 브랜드 컬러
-  primary: '#667EEA',
+  primary: '#5566DD',
   primaryLight: '#8B9FFF',
   primaryDark: '#5568D3',
 
