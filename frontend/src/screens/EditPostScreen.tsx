@@ -1054,9 +1054,9 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                     paddingVertical: scale(12),
                     borderRadius: scale(20),
                     borderWidth: 2,
-                    borderColor: selectedEmotions.includes(emotion.id) ? 'transparent' : theme.bg.border,
-                    backgroundColor: selectedEmotions.includes(emotion.id) ? emotion.color : theme.bg.secondary,
-                    shadowColor: selectedEmotions.includes(emotion.id) ? emotion.color : (isDark ? '#fff' : '#000'),
+                    borderColor: selectedEmotions.includes(emotion.id) ? theme.colors.accent : 'transparent',
+                    backgroundColor: selectedEmotions.includes(emotion.id) ? theme.colors.tint : theme.colors.surface,
+                    shadowColor: isDark ? '#fff' : '#000',
                     shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: selectedEmotions.includes(emotion.id) ? 0.3 : (isDark ? 0.1 : 0.2),
                     shadowRadius: 4,
@@ -1067,7 +1067,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                     <MaterialCommunityIcons
                       name={emotion.icon as any}
                       size={scale(18)}
-                      color={selectedEmotions.includes(emotion.id) ? colors.text : emotion.color}
+                      color={theme.colors.text.primary}
                     />
                     <Text
                       style={{
@@ -1075,7 +1075,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                         fontSize: scale(15),
                         fontWeight: 'bold',
                         textAlign: 'center',
-                        color: selectedEmotions.includes(emotion.id) ? colors.text : emotion.color,
+                        color: theme.colors.text.primary,
                         fontFamily: 'Pretendard-Bold',
                         includeFontPadding: false,
                         lineHeight: scale(20)
@@ -1083,6 +1083,12 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                     >
                       {emotion.label}
                     </Text>
+                    <MaterialCommunityIcons
+                      name="check-circle"
+                      size={scale(16)}
+                      color={theme.colors.accent}
+                      style={{ marginLeft: scale(6), opacity: selectedEmotions.includes(emotion.id) ? 1 : 0 }}
+                    />
                   </HStack>
                 </Pressable>
               ))}

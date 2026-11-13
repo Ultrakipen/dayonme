@@ -1364,20 +1364,16 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                           alignItems: 'center',
                           backgroundColor: emotion ? (
                             selectedEmotion?.emotion_id === emotion.emotion_id
-                              ? emotion.color
-                              : emotion.color + '12'
+                              ? theme.colors.tint
+                              : theme.colors.card
                           ) : 'transparent',
                           borderWidth: emotion ? (selectedEmotion?.emotion_id === emotion.emotion_id ? 2 : 1) : 0,
                           borderColor: emotion ? (
                             selectedEmotion?.emotion_id === emotion.emotion_id
-                              ? emotion.color
-                              : emotion.color + '30'
+                              ? theme.colors.accent
+                              : theme.colors.border
                           ) : 'transparent',
-                          shadowColor: emotion && selectedEmotion?.emotion_id === emotion.emotion_id ? emotion.color : 'transparent',
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: 0.2,
-                          shadowRadius: 4,
-                          elevation: emotion && selectedEmotion?.emotion_id === emotion.emotion_id ? 3 : 1,
+                          elevation: 0,
                           opacity: emotion ? 1 : 0,
                           paddingVertical: normalize(2, false),
                           paddingHorizontal: normalize(2, false)
@@ -1409,14 +1405,30 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                           <Text style={{
                             fontSize: FONT_SIZES.sm,
                             fontWeight: '700',
-                            color: selectedEmotion?.emotion_id === emotion.emotion_id
-                              ? 'white'
-                              : isDark ? '#FFFFFF' : '#111827',
+                            color: theme.colors.text.primary,
                             fontFamily: 'Pretendard-Bold',
                             textAlign: 'center'
                           }}>
                             {emotion.name}
                           </Text>
+                        )}
+                        {emotion && selectedEmotion?.emotion_id === emotion.emotion_id && (
+                          <Box
+                            pointerEvents="none"
+                            style={{
+                              position: 'absolute',
+                              top: normalize(4, false),
+                              right: normalize(4, false),
+                              width: normalize(18, false),
+                              height: normalize(18, false),
+                              borderRadius: normalize(9, false),
+                              backgroundColor: theme.colors.accent,
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <MaterialCommunityIcons name="check" size={normalize(12, false)} color={theme.colors.onAccent} />
+                          </Box>
                         )}
                       </Pressable>
                       );

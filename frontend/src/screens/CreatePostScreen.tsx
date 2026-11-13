@@ -308,18 +308,19 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
                   onPress={() => handleEmotionToggle(emotion.id)}
                   style={[
                     { marginBottom: 8 },
-                    selectedEmotions.includes(emotion.id) && {
-                      backgroundColor: emotion.color + '40'
-                    }
+                    selectedEmotions.includes(emotion.id)
+                      ? { backgroundColor: theme.colors.tint, borderWidth: 2, borderColor: theme.colors.accent }
+                      : { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }
                   ]}
                   textStyle={{
-                    color: selectedEmotions.includes(emotion.id) ? emotion.color : '#666'
+                    color: theme.colors.text.primary,
+                    fontWeight: selectedEmotions.includes(emotion.id) ? '700' : '600'
                   }}
                   icon={() => (
                     <MaterialCommunityIcons
-                      name={emotion.icon}
+                      name={selectedEmotions.includes(emotion.id) ? 'check' : emotion.icon}
                       size={16}
-                      color={selectedEmotions.includes(emotion.id) ? emotion.color : '#666'}
+                      color={theme.colors.text.primary}
                     />
                   )}
                 >
@@ -423,8 +424,8 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
                   return emotion ? (
                     <Chip
                       key={emotion.id}
-                      style={[{ height: 24, backgroundColor: emotion.color + '20' }]}
-                      textStyle={{ color: emotion.color }}
+                      style={[{ height: 24, backgroundColor: theme.colors.tint, borderWidth: 1, borderColor: theme.colors.border }]}
+                      textStyle={{ color: theme.colors.text.primary }}
                     >
                       {emotion.label}
                     </Chip>

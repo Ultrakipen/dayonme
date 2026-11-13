@@ -1528,13 +1528,9 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                           paddingVertical: scale(10),
                           paddingHorizontal: scale(8),
                           borderRadius: scale(16),
-                          backgroundColor: isSelected
-                            ? (isDark ? `${emotion.color}30` : `${emotion.color}20`)
-                            : 'transparent',
+                          backgroundColor: isSelected ? theme.colors.tint : theme.colors.card,
                           borderWidth: isSelected ? 2 : 1,
-                          borderColor: isSelected
-                            ? emotion.color
-                            : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'),
+                          borderColor: isSelected ? theme.colors.accent : theme.colors.border,
                           minWidth: scale(64),
                         }}
                         activeOpacity={0.7}
@@ -1543,7 +1539,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                           width: scale(44),
                           height: scale(44),
                           borderRadius: scale(22),
-                          backgroundColor: isSelected ? `${emotion.color}40` : `${emotion.color}20`,
+                          backgroundColor: 'transparent',
                           alignItems: 'center',
                           justifyContent: 'center',
                           marginBottom: scale(6),
@@ -1558,12 +1554,30 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                           style={{
                             fontSize: scale(12),
                             fontWeight: isSelected ? '700' : '500',
-                            color: isSelected ? emotion.color : theme.text.secondary,
+                            color: theme.colors.text.primary,
                             textAlign: 'center',
                           }}
                         >
                           {emotion.shortName}
                         </StyledText>
+                        {isSelected && (
+                          <View
+                            pointerEvents="none"
+                            style={{
+                              position: 'absolute',
+                              top: scale(4),
+                              right: scale(4),
+                              width: scale(18),
+                              height: scale(18),
+                              borderRadius: scale(9),
+                              backgroundColor: theme.colors.accent,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <MaterialCommunityIcons name="check" size={scale(12)} color={theme.colors.onAccent} />
+                          </View>
+                        )}
                       </TouchableOpacity>
                     );
                   })}
