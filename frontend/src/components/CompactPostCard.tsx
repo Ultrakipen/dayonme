@@ -9,6 +9,7 @@ import { useModernTheme } from '../contexts/ModernThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { normalizeImageUrl } from '../utils/imageUtils';
 import { devLog, safeJsonParse } from '../utils/security';
+import { getReadableEmotionColor } from '../utils/emotionTextColor';
 import ImageCarousel from './ImageCarousel';
 import ClickableNickname from './ClickableNickname';
 import ClickableAvatar from './ClickableAvatar';
@@ -317,7 +318,13 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
               <Text style={{
                 fontSize: 18,
                 fontWeight: '800',
-                color: modernTheme.text.primary,
+                color: getReadableEmotionColor(
+                  (post.emotions && post.emotions.length > 0
+                    ? (post.emotions[0].color || getEmotionByName(post.emotions[0].name)?.color)
+                    : undefined) as string | undefined,
+                  isDark,
+                  modernTheme.text.primary
+                ),
                 textShadowColor: 'rgba(0, 0, 0, 0.15)',
                 textShadowOffset: { width: 0, height: 0.5 },
                 textShadowRadius: 1,
