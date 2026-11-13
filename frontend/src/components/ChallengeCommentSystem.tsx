@@ -124,7 +124,7 @@ const anonymousEmotions = [
   { label: '설렘이', icon: 'heart-multiple', color: '#FF69B4' },
   { label: '편안이', icon: 'emoticon-kiss', color: '#98FB98' },
   { label: '궁금이', icon: 'emoticon-outline', color: '#DAA520' },
-  { label: '사랑이', icon: 'heart', color: '#E8D5F2' },
+  { label: '사랑이', icon: 'heart', color: '#E91E63' },
   { label: '아픔이', icon: 'medical-bag', color: '#8B4513' },
   { label: '희망이', icon: 'star', color: '#FFD700' },
 ];

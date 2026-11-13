@@ -35,19 +35,22 @@ const EMOTION_OPTIONS = [
   { id: 2, label: '행복이', icon: 'emoticon-excited', color: '#FFA500' },
   { id: 3, label: '슬픔이', icon: 'emoticon-sad', color: '#4682B4' },
   { id: 4, label: '우울이', icon: 'emoticon-neutral', color: '#708090' },
-  { id: 5, label: '지루미', icon: 'emoticon-dead', color: '#A9A9A9' },
-  { id: 6, label: '버럭이', icon: 'emoticon-angry', color: '#FF4500' },
-  { id: 7, label: '불안이', icon: 'emoticon-confused', color: '#DDA0DD' },
-  { id: 8, label: '걱정이', icon: 'emoticon-frown', color: '#FFA07A' },
+  { id: 5, label: '불안이', icon: 'emoticon-confused', color: '#DDA0DD' },
+  { id: 6, label: '걱정이', icon: 'emoticon-frown', color: '#FFA07A' },
+  { id: 7, label: '버럭이', icon: 'emoticon-angry', color: '#FF4500' },
+  { id: 8, label: '짜증이', icon: 'emoticon-devil', color: '#DC143C' },
   { id: 9, label: '감동이', icon: 'heart', color: '#FF6347' },
   { id: 10, label: '황당이', icon: 'emoticon-wink', color: '#20B2AA' },
   { id: 11, label: '당황이', icon: 'emoticon-tongue', color: '#FF8C00' },
-  { id: 12, label: '짜증이', icon: 'emoticon-devil', color: '#DC143C' },
-  { id: 13, label: '무섭이', icon: 'emoticon-cry', color: '#9370DB' },
+  { id: 12, label: '무섭이', icon: 'emoticon-cry', color: '#9370DB' },
+  { id: 13, label: '편안이', icon: 'emoticon-kiss', color: '#98FB98' },
   { id: 14, label: '추억이', icon: 'emoticon-cool', color: '#87CEEB' },
   { id: 15, label: '설렘이', icon: 'heart-multiple', color: '#FF69B4' },
-  { id: 16, label: '편안이', icon: 'emoticon-kiss', color: '#98FB98' },
-  { id: 17, label: '궁금이', icon: 'emoticon-outline', color: '#DAA520' }
+  { id: 16, label: '지루미', icon: 'emoticon-dead', color: '#A9A9A9' },
+  { id: 17, label: '궁금이', icon: 'emoticon-outline', color: '#DAA520' },
+  { id: 18, label: '사랑이', icon: 'heart', color: '#E91E63' },
+  { id: 19, label: '아픔이', icon: 'bandage', color: '#8B4513' },
+  { id: 20, label: '욕심이', icon: 'cash', color: '#32CD32' }
 ];
 
 interface CreatePostScreenProps {

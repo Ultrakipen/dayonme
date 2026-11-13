@@ -47,6 +47,7 @@ import myDayService from '../services/api/myDayService';
 import uploadService from '../services/api/uploadService';
 import { normalizeImageUrl, logImageError, logImageSuccess } from '../utils/imageUtils';
 import ImageCarousel from '../components/ImageCarousel';
+import { EMOTION_AVATARS } from '../constants/emotions';
 
 // 반응형 설정 (모듈 레벨에서 Dimensions.get() 호출 제거 - React Native 0.80 호환)
 const BASE_WIDTH = 360;
@@ -114,28 +115,7 @@ const getTwemojiUrl = (code: string) =>
   `https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/${code}.png`;
 
 // 사용자 지정 감정 목록 (이모지와 색상 포함) - DB/공통상수 순서와 일치
-const localEmotions: LocalEmotion[] = [
-  { label: '기쁨이', emoji: '😊', emojiCode: '1f60a', color: '#FFD700' },    // 1
-  { label: '행복이', emoji: '😄', emojiCode: '1f604', color: '#FFA500' },    // 2
-  { label: '슬픔이', emoji: '😢', emojiCode: '1f622', color: '#4682B4' },    // 3
-  { label: '우울이', emoji: '😞', emojiCode: '1f61e', color: '#708090' },    // 4
-  { label: '불안이', emoji: '😰', emojiCode: '1f630', color: '#DDA0DD' },    // 5
-  { label: '걱정이', emoji: '😟', emojiCode: '1f61f', color: '#FFA07A' },    // 6
-  { label: '버럭이', emoji: '😠', emojiCode: '1f620', color: '#FF4500' },    // 7
-  { label: '짜증이', emoji: '😤', emojiCode: '1f624', color: '#DC143C' },    // 8
-  { label: '감동이', emoji: '🥺', emojiCode: '1f97a', color: '#FF6347' },    // 9
-  { label: '황당이', emoji: '🤨', emojiCode: '1f928', color: '#20B2AA' },    // 10
-  { label: '당황이', emoji: '😲', emojiCode: '1f632', color: '#FF8C00' },    // 11
-  { label: '무섭이', emoji: '😨', emojiCode: '1f628', color: '#9370DB' },    // 12
-  { label: '편안이', emoji: '😌', emojiCode: '1f60c', color: '#98FB98' },    // 13
-  { label: '추억이', emoji: '🥰', emojiCode: '1f970', color: '#87CEEB' },    // 14
-  { label: '설렘이', emoji: '🤗', emojiCode: '1f917', color: '#FF69B4' },    // 15
-  { label: '지루미', emoji: '😑', emojiCode: '1f611', color: '#A9A9A9' },    // 16
-  { label: '궁금이', emoji: '🤔', emojiCode: '1f914', color: '#DAA520' },    // 17
-  { label: '사랑이', emoji: '❤️', emojiCode: '2764', color: '#F8BBD9' },    // 18
-  { label: '아픔이', emoji: '🤕', emojiCode: '1f915', color: '#8B4513' },    // 19
-  { label: '욕심이', emoji: '🤑', emojiCode: '1f911', color: '#32CD32' }     // 20
-];
+const localEmotions: LocalEmotion[] = EMOTION_AVATARS.map(({ label, emoji, emojiCode, color }) => ({ label, emoji, emojiCode, color }));
 
 // 기본 감정 색상 매핑 (백엔드에서 색상이 없을 경우 사용)
 const getEmotionColor = (emotionName: string): string => {
