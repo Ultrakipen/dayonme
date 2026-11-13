@@ -299,7 +299,7 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
                   ? (post.emotions[0].emotion_id || getEmotionByName(post.emotions[0].name)?.id)
                   : 1
               }
-              size={28}
+              size={34}
               variant={emotionIconVariant}
             />
           </View>
@@ -605,8 +605,8 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   emotionIconImage: {
-    width: 28,
-    height: 28,
+    width: 34,
+    height: 34,
     marginBottom: 6,
     marginRight: 6,
   },
