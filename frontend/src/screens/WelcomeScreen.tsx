@@ -116,7 +116,7 @@ const WelcomeScreen: React.FC = () => {
           accessibilityLabel="시작하기"
           accessibilityHint="로그인 또는 회원가입 화면으로 이동합니다"
         >
-          <Text style={[styles.primaryButtonText, { fontSize: normalize(16) }]}>시작하기</Text>
+          <Text style={[styles.primaryButtonText, { fontSize: normalize(16), color: theme.colors.onAccent }]}>시작하기</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -131,7 +131,7 @@ const WelcomeScreen: React.FC = () => {
           accessibilityHint="로그인 없이 앱을 둘러봅니다"
         >
           <Text style={[styles.secondaryButtonText, {
-            color: colors.primary,
+            color: theme.colors.accentText,
             fontSize: normalize(15),
           }]}>
             둘러보기 먼저

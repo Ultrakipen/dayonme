@@ -154,7 +154,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: theme.colors.accentText,
   };
 
   if (isCheckingToken) {

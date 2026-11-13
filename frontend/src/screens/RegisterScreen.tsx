@@ -453,7 +453,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       fontWeight: '600' as const
     },
     loginLinkHighlight: {
-      color: isDark ? '#60a5fa' : COLORS.gradient.primary[0],
+      color: theme.colors.accentText,
       fontSize: normalizeFontSize(15),
       fontWeight: '700' as const
     }
@@ -753,7 +753,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           <Text style={{
             textAlign: 'center',
             fontSize: normalizeFontSize(15),
-            color: isDark ? '#60a5fa' : COLORS.gradient.primary[0],
+            color: theme.colors.accentText,
             fontWeight: '700'
           }}>
             {minutes}:{seconds.toString().padStart(2, '0')}
@@ -796,7 +796,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
             <Text style={{
               textAlign: 'center',
               fontSize: normalizeFontSize(15),
-              color: isDark ? '#60a5fa' : COLORS.gradient.primary[0],
+              color: theme.colors.accentText,
               fontWeight: '700'
             }}>
               코드 재전송
