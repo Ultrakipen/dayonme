@@ -798,7 +798,7 @@ const CommentItem: React.FC<{
                     {emotion && (
                       <View style={[styles.emotionTag, { backgroundColor: emotion.color + '20', borderColor: emotion.color }]}>
                         <MaterialCommunityIcons name={emotion.icon} size={scaleSize(14)} color={emotion.color} />
-                        <Text style={[styles.emotionTagText, { color: emotion.color }]}>{emotionName}</Text>
+                        <Text style={[styles.emotionTagText, { color: theme.text.primary }]}>{emotionName}</Text>
                       </View>
                     )}
                   </View>

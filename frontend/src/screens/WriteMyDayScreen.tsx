@@ -1238,7 +1238,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                   <Text style={{
                     fontSize: FONT_SIZES.sm,
                     fontWeight: '600',
-                    color: selectedEmotion.color,
+                    color: theme.text.primary,
                     fontFamily: 'Pretendard-SemiBold'
                   }} numberOfLines={1}>
                     {selectedEmotion.name}

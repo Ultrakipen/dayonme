@@ -1793,7 +1793,7 @@ const ChallengeDetailScreen = () => {
 
               {emotion && (
                 <View style={[styles.miniEmotionTag, { backgroundColor: emotion.color + '20' }]}>
-                  <Text style={[styles.miniEmotionText, { color: emotion.color }]}>{emotionName}</Text>
+                  <Text style={[styles.miniEmotionText, { color: theme.text.primary }]}>{emotionName}</Text>
                 </View>
               )}
 

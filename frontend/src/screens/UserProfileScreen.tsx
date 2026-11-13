@@ -19,6 +19,7 @@ import userService, { UserProfile } from '../services/api/userService';
 import blockService from '../services/api/blockService';
 import { RootStackParamList } from '../types/navigation';
 import SendEncouragementModal from '../components/SendEncouragementModal';
+import EmotionIcon from '../components/common/EmotionIcon';
 import { useAuth } from '../contexts/AuthContext';
 import GuestPromptBottomSheet from '../components/GuestPromptBottomSheet';
 import { showAlert } from '../contexts/AlertContext';
@@ -1002,7 +1003,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
                 ]}
               >
                 {isEmoji ? (
-                  <RNText style={styles.emotionEmoji}>{tag.icon}</RNText>
+                  <EmotionIcon emotionId={tag.emotion_id} label={tag.name} size={moderateScale(22)} />
                 ) : (
                   <MaterialCommunityIcons
                     name={tag.icon || 'emoticon-happy-outline'}
@@ -1010,7 +1011,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
                     color={tag.color}
                   />
                 )}
-                <RNText style={[styles.emotionName, { color: tag.color }]}>
+                <RNText style={[styles.emotionName, { color: theme.text.primary }]}>
                   {tag.name}
                 </RNText>
                 <RNText style={styles.emotionCount}>{tag.count}회</RNText>
@@ -1156,7 +1157,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
                         const isEmoji = emotion.icon && (emotion.icon.length <= 4 || /[\u{1F600}-\u{1F64F}]/u.test(emotion.icon));
 
                         return isEmoji ? (
-                          <RNText style={styles.postEmotionIcon}>{emotion.icon}</RNText>
+                          <EmotionIcon emotionId={emotion.emotion_id} label={emotion.name} size={moderateScale(18)} />
                         ) : (
                           <MaterialCommunityIcons
                             name={emotion.icon || 'emoticon-happy-outline'}

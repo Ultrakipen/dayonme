@@ -2963,7 +2963,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                             <RNText style={{
                               fontSize: normalize(13),
                               fontWeight: '700',
-                              color: emotion.color
+                              color: modernTheme.text.primary
                             }}>
                               {emotion.label}
                             </RNText>
@@ -3230,7 +3230,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     <RNText style={{
                       fontSize: normalize(13),
                       fontWeight: '600',
-                      color: emotion.color,
+                      color: modernTheme.text.primary,
                     }}>
                       오늘의 감정: {typeof emotion.name === 'string' ? emotion.name : '감정'}
                     </RNText>

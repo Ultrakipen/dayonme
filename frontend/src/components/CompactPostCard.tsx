@@ -314,8 +314,7 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
               <Text style={{
                 fontSize: 18,
                 fontWeight: '800',
-                color: post.emotions && post.emotions.length > 0 ?
-  post.emotions[0].color : '#FFD700',
+                color: modernTheme.text.primary,
                 textShadowColor: 'rgba(0, 0, 0, 0.15)',
                 textShadowOffset: { width: 0, height: 0.5 },
                 textShadowRadius: 1,
