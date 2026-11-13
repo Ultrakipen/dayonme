@@ -108,12 +108,12 @@ const NoticeScreen: React.FC<NoticeScreenProps> = ({ navigation }) => {
           <View style={styles.noticeHeader}>
             {item.is_pinned && (
               <View style={[styles.badge, { backgroundColor: colors.accent + '20' }]}>
-                <Text style={[styles.badgeText, { color: colors.accent, fontSize: 10 * scale }]}>고정</Text>
+                <Text style={[styles.badgeText, { color: colors.accent, fontSize: Math.max(12, 12 * scale) }]}>고정</Text>
               </View>
             )}
             {item.type === 'important' && (
               <View style={[styles.badge, { backgroundColor: colors.important + '20' }]}>
-                <Text style={[styles.badgeText, { color: colors.important, fontSize: 10 * scale }]}>중요</Text>
+                <Text style={[styles.badgeText, { color: colors.important, fontSize: Math.max(12, 12 * scale) }]}>중요</Text>
               </View>
             )}
           </View>

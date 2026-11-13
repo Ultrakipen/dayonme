@@ -69,7 +69,7 @@ const normalize = (size: number, applyFontScale = true) => {
 
 // 폰트 크기 표준화 (시스템 폰트 크기 설정 적용)
 const getFontSizes = () => ({
-  xs: normalize(10, true),
+  xs: normalize(12, true),
   sm: normalize(12, true),
   base: normalize(14, true),
   lg: normalize(16, true),

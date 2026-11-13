@@ -203,7 +203,7 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
         styles.targetText,
         {
           color: selectedTarget === item.user_id ? colors.onPrimary : colors.textSecondary,
-          fontSize: 11 * scale,
+          fontSize: Math.max(12, 12 * scale),
           marginTop: 4 * scale,
         }
       ]}>
@@ -232,14 +232,14 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
         <Text style={{ fontSize: 20 * scale }}>{item.emotion_type || '💝'}</Text>
         {!item.is_read && (
           <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
-            <Text style={[styles.unreadText, { color: colors.onPrimary, fontSize: 10 * scale }]}>NEW</Text>
+            <Text style={[styles.unreadText, { color: colors.onPrimary, fontSize: Math.max(12, 12 * scale) }]}>NEW</Text>
           </View>
         )}
       </View>
       <Text style={[styles.receivedMessage, { color: colors.text, fontSize: 14 * scale, marginTop: 8 * scale }]}>
         {item.message}
       </Text>
-      <Text style={[styles.receivedDate, { color: colors.textSecondary, fontSize: 11 * scale, marginTop: 8 * scale }]}>
+      <Text style={[styles.receivedDate, { color: colors.textSecondary, fontSize: Math.max(12, 12 * scale), marginTop: 8 * scale }]}>
         {new Date(item.sent_at).toLocaleDateString('ko-KR', {
           month: 'short',
           day: 'numeric',
@@ -285,7 +285,7 @@ const AnonymousEncouragementSystem: React.FC<AnonymousEncouragementSystemProps> 
           </Text>
           {receivedList.filter(e => !e.is_read).length > 0 && (
             <View style={[styles.badge, { backgroundColor: colors.primary, marginLeft: 4 * scale }]}>
-              <Text style={[styles.badgeText, { color: colors.onPrimary, fontSize: 10 * scale }]}>
+              <Text style={[styles.badgeText, { color: colors.onPrimary, fontSize: Math.max(12, 12 * scale) }]}>
                 {receivedList.filter(e => !e.is_read).length}
               </Text>
             </View>

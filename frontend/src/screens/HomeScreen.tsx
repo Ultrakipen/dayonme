@@ -2936,7 +2936,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             >
                                 <Text style={{
                                     color: modernTheme.colors.onAccent,
-                                    fontSize: normalize(11, 10, 13),
+                                    fontSize: normalize(12, 12, 13),
                                     fontWeight: '600',
                                 }}>
                                     전체보기
@@ -3044,14 +3044,14 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     <VStack className="items-center" style={{ gap: normalizeSpace(2), marginBottom: normalizeSpace(2) }}>
                                         <HStack style={{ gap: normalizeSpace(6) }}>
                                             <Text style={{
-                                                fontSize: normalize(11, 10, 13),
+                                                fontSize: normalize(12, 12, 13),
                                                 color: colors.textSecondary,
                                                 fontWeight: '500',
                                             }}>
                                                 ❤️ {post.like_count}
                                             </Text>
                                             <Text style={{
-                                                fontSize: normalize(11, 10, 13),
+                                                fontSize: normalize(12, 12, 13),
                                                 color: colors.textSecondary,
                                                 fontWeight: '500',
                                             }}>
@@ -3060,7 +3060,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         </HStack>
                                         <Text
                                             style={{
-                                                fontSize: normalize(11, 10, 13),
+                                                fontSize: normalize(12, 12, 13),
                                                 color: colors.textSecondary,
                                                 textAlign: 'center',
                                             }}
@@ -4004,7 +4004,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             <RNText
                                 style={{
                                     color: modernTheme.colors.onAccent,
-                                    fontSize: normalize(11, 10, 12),
+                                    fontSize: normalize(12, 12, 13),
                                     fontWeight: '500',
                                     letterSpacing: -0.1,
                                     includeFontPadding: false,

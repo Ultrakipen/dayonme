@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   timeText: {
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 2,
   },
   postTitle: {

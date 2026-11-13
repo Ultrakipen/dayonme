@@ -1198,7 +1198,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 107, 107, 0.3)',
   },
   trendingText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     color: '#FF6B6B',
     marginLeft: 2,
@@ -1213,7 +1213,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(52, 199, 89, 0.3)',
   },
   newText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     color: '#34C759',
     letterSpacing: -0.1,
@@ -1244,7 +1244,7 @@ const styles = StyleSheet.create({
   },
   // 상태 텍스트
   statusText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: -0.1,
     ...Platform.select({
@@ -1269,7 +1269,7 @@ const styles = StyleSheet.create({
   },
   // 인라인 태그 텍스트
   inlineTagText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: -0.1,
     ...Platform.select({

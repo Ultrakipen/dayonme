@@ -1522,7 +1522,7 @@ const styles = StyleSheet.create({
   },
   authorBadgeText: {
     color: 'white',
-    fontSize: scaleFont(11),
+    fontSize: scaleFont(12),
     fontWeight: '600',
   },
   commentTime: {
@@ -1704,7 +1704,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   emotionTagText: {
-    fontSize: scaleFont(11),
+    fontSize: scaleFont(12),
     fontWeight: '600',
     marginLeft: scaleSize(4),
     letterSpacing: -0.1,

@@ -3473,7 +3473,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     elevation: 2,
   },
   filterChipText: {
-    fontSize: normalize(11, 11, 12),
+    fontSize: normalize(12, 12, 13),
     fontWeight: '600',
     marginLeft: 4,
     letterSpacing: -0.2,
@@ -3563,7 +3563,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
       minHeight: 22,
     },
     viewAllText: {
-      fontSize: 11,
+      fontSize: 12,
       fontWeight: '600',
       color: COLORS.primary,
       marginRight: 4,
@@ -3725,7 +3725,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     marginBottom: 4,
   },
   myRecentSimpleTagText: {
-    fontSize: normalize(11, 11, 12), // 최근 게시물 태그 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 최근 게시물 태그 (최소 12px)
     color: COLORS.primary,
     fontWeight: '600',
     letterSpacing: 0.2,
@@ -3736,7 +3736,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     textDecorationLine: 'underline',
   },
   myRecentSimpleTagMoreText: {
-    fontSize: normalize(11, 11, 12),
+    fontSize: normalize(12, 12, 13),
     color: COLORS.onSurfaceVariant,
     fontWeight: '500',
     marginLeft: 4,
@@ -3894,13 +3894,13 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
      marginLeft: 5,
   },
   authorBadge: {
-    fontSize: normalize(11, 11, 12), // 배지 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 배지 (최소 12px)
     fontWeight: '700',
     color: COLORS.onSurfaceVariant,
     marginLeft: 4,
   },
   instagramPostDate: {
-    fontSize: normalize(11, 11, 12), // 작성 시간 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 작성 시간 (최소 12px)
     color: COLORS.onSurfaceVariant,
     marginLeft: 5,
   },
@@ -4008,7 +4008,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     backgroundColor: COLORS.primary,
   },
   instagramTagText: {
-    fontSize: normalize(11, 11, 12), // 태그 텍스트 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 태그 텍스트 (최소 12px)
     color: COLORS.primary,
     fontWeight: '600',
   },
@@ -4042,7 +4042,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     elevation: 4, // 안드로이드 그림자 증가 (3 → 4)
   },
   instagramTagAboveActionText: {
-    fontSize: normalize(11, 11, 12), // 액션 버튼 위 태그 텍스트 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 액션 버튼 위 태그 텍스트 (최소 12px)
     color: COLORS.primary,
     fontWeight: '800',
     letterSpacing: 0.2,
@@ -4056,7 +4056,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     fontWeight: '800',
   },
   instagramTagMoreCount: {
-    fontSize: normalize(11, 11, 12), // 추가 태그 개수 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 추가 태그 개수 (최소 12px)
     color: COLORS.primary + '90',
     fontWeight: '700',
     marginLeft: 5,
@@ -4080,7 +4080,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     paddingVertical: 3,
   },
   instagramSimpleTagText: {
-    fontSize: normalize(11, 11, 12), // 간단한 태그 텍스트 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 간단한 태그 텍스트 (최소 12px)
     color: COLORS.primary,
     fontWeight: '600',
     letterSpacing: 0.2,
@@ -4091,7 +4091,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     textDecorationLine: 'underline',
   },
   instagramSimpleTagMoreText: {
-    fontSize: normalize(11, 11, 12), // 더보기 텍스트 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 더보기 텍스트 (최소 12px)
     color: COLORS.onSurfaceVariant,
     fontWeight: '500',
     marginLeft: 4,

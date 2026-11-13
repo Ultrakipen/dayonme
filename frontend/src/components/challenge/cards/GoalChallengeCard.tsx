@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(107, 114, 128, 0.3)',
   },
   activeBadgeText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: -0.2,
     lineHeight: 14,
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(245, 158, 11, 0.3)',
   },
   ddayText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.2,
     lineHeight: 14,
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   miniProgressText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: -0.1,
     lineHeight: 14,
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   tagText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     lineHeight: 16,
     letterSpacing: -0.2,
@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
   },
   participatingBadgeText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     color: 'white',
     letterSpacing: -0.2,

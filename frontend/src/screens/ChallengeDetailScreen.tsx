@@ -5719,7 +5719,7 @@ const styles = StyleSheet.create({
     marginBottom: scaleVertical(6),
   },
   miniEmotionText: {
-    fontSize: scaleFont(11),
+    fontSize: scaleFont(12),
     fontWeight: '600',
   },
   commentPreviewText: {
@@ -5891,7 +5891,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   instagramTagText: {
-    fontSize: scaleFont(11),
+    fontSize: scaleFont(12),
     fontWeight: "600",
     letterSpacing: -0.1,
     color: "white",

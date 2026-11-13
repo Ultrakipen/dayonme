@@ -231,7 +231,7 @@ const createStyles = (scale: number) => StyleSheet.create({
   },
   unreadText: {
     color: '#fff',
-    fontSize: 10 * scale,
+    fontSize: Math.max(12, 12 * scale),
     fontWeight: '700',
   },
   emptyContainer: {

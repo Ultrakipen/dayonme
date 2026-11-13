@@ -2270,7 +2270,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   }}
                 >
                   <RNText style={{
-                    fontSize: normalize(9, 8),
+                    fontSize: normalize(12, 12),
                     color: '#ffffff',
                     fontWeight: '600'
                   }}>
@@ -2279,7 +2279,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 </Box>
               )}
               <RNText style={{
-                fontSize: normalize(10, 9),
+                fontSize: normalize(12, 12),
                 color: colors.textSecondary
               }}>
                 {formatCommentTime(comment.created_at)}
@@ -2402,7 +2402,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   style={{ marginRight: normalizeSpace(4) }}
                 />
                 <RNText style={{
-                  fontSize: normalize(11, 10),
+                  fontSize: normalize(12, 12),
                   color: comment.is_liked ? "#f59e0b" : colors.textSecondary,
                   fontWeight: comment.is_liked ? '600' : '500'
                 }}>
@@ -2451,7 +2451,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     color={colors.textSecondary}
                     style={{ marginRight: normalizeSpace(3) }}
                   />
-                  <RNText style={{ fontSize: normalize(10, 9), color: colors.textSecondary, fontWeight: '500' }}>
+                  <RNText style={{ fontSize: normalize(12, 12), color: colors.textSecondary, fontWeight: '500' }}>
                     답글
                   </RNText>
                 </TouchableOpacity>
@@ -2479,7 +2479,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     color={colors.textSecondary}
                     style={{ marginRight: normalizeSpace(3) }}
                   />
-                  <RNText style={{ fontSize: normalize(10, 9), color: colors.textSecondary, fontWeight: '500' }}>
+                  <RNText style={{ fontSize: normalize(12, 12), color: colors.textSecondary, fontWeight: '500' }}>
                     수정
                   </RNText>
                 </TouchableOpacity>
@@ -2507,7 +2507,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     color={colors.danger}
                     style={{ marginRight: normalizeSpace(3) }}
                   />
-                  <RNText style={{ fontSize: normalize(10, 9), color: colors.danger, fontWeight: '500' }}>
+                  <RNText style={{ fontSize: normalize(12, 12), color: colors.danger, fontWeight: '500' }}>
                     삭제
                   </RNText>
                 </TouchableOpacity>
@@ -2993,7 +2993,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                           )}
                         </HStack>
                         <RNText style={{
-                          fontSize: normalize(11, 10),
+                          fontSize: normalize(12, 12),
                           color: colors.textSecondary,
                           fontWeight: '500',
                           letterSpacing: 0.2
@@ -3036,7 +3036,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     </ClickableNickname>
                   </View>
                   <RNText style={{
-                    fontSize: normalize(11, 10),
+                    fontSize: normalize(12, 12),
                     color: colors.textSecondary,
                     fontWeight: '500',
                     letterSpacing: 0.2
@@ -3130,7 +3130,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 }}
               >
                 <RNText style={{
-                  fontSize: normalize(11),
+                  fontSize: normalize(12),
                   fontWeight: '600',
                   color: '#FFFFFF',
                   letterSpacing: 0.1,

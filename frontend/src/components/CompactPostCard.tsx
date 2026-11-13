@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   timestamp: {
-    fontSize: 11,
+    fontSize: 12,
   },
   emotionsContainer: {
     flexWrap: 'wrap',
@@ -749,7 +749,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   moreEmotions: {
-    fontSize: 11,
+    fontSize: 12,
     marginLeft: 2,
   },
   previewText: {
@@ -776,7 +776,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
   },
   likedText: {
@@ -791,7 +791,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   expandButtonText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
   imagePreview: {

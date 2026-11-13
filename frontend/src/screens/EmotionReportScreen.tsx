@@ -148,7 +148,7 @@ const EmotionReportScreen: React.FC = () => {
                   }
                 ]}
               />
-              <Text style={[styles.barText, { color: colors.text, fontSize: 11 * scale }]}>
+              <Text style={[styles.barText, { color: colors.text, fontSize: Math.max(12, 12 * scale) }]}>
                 {emotion.count}회 ({emotion.percentage}%)
               </Text>
             </View>
@@ -186,10 +186,10 @@ const EmotionReportScreen: React.FC = () => {
                   ]}
                 />
               </View>
-              <Text style={[styles.dayLabel, { color: colors.textSecondary, fontSize: 11 * scale, marginTop: 4 * scale }]}>
+              <Text style={[styles.dayLabel, { color: colors.textSecondary, fontSize: Math.max(12, 12 * scale), marginTop: 4 * scale }]}>
                 {day.day_name}
               </Text>
-              <Text style={[styles.dayCount, { color: colors.text, fontSize: 10 * scale }]}>
+              <Text style={[styles.dayCount, { color: colors.text, fontSize: Math.max(12, 12 * scale) }]}>
                 {day.count}
               </Text>
             </View>
@@ -206,7 +206,7 @@ const EmotionReportScreen: React.FC = () => {
       <Text style={[styles.statValue, { color: color || colors.primary, fontSize: 24 * scale, marginTop: 8 * scale }]}>
         {value}
       </Text>
-      <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: 11 * scale, marginTop: 4 * scale }]}>
+      <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: Math.max(12, 12 * scale), marginTop: 4 * scale }]}>
         {label}
       </Text>
     </View>
@@ -246,7 +246,7 @@ const EmotionReportScreen: React.FC = () => {
           </Text>
           {!item.is_viewed && (
             <View style={[styles.newBadge, { backgroundColor: colors.error, marginLeft: 4 * scale }]}>
-              <Text style={{ color: '#fff', fontSize: 8 * scale }}>N</Text>
+              <Text style={{ color: '#fff', fontSize: Math.max(10, 10 * scale) }}>N</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -392,7 +392,7 @@ const EmotionReportScreen: React.FC = () => {
             )}
 
             {/* 생성 시간 */}
-            <Text style={[styles.generatedAt, { color: colors.textSecondary, fontSize: 11 * scale, textAlign: 'center', marginBottom: 24 * scale }]}>
+            <Text style={[styles.generatedAt, { color: colors.textSecondary, fontSize: Math.max(12, 12 * scale), textAlign: 'center', marginBottom: 24 * scale }]}>
               {new Date(report.generated_at).toLocaleDateString('ko-KR', {
                 year: 'numeric',
                 month: 'long',

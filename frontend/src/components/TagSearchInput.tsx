@@ -773,7 +773,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#374151',
   },
   sectionTitle: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: '#374151',
     marginLeft: 6,
@@ -794,7 +794,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#374151',
   },
   popularBadgeText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     color: '#D97706',
   },
