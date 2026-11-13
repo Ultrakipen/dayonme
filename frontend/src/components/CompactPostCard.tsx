@@ -92,6 +92,7 @@ interface CompactPostCardProps {
   isBestPost?: boolean;
   onBookmark?: (postId: number) => void;
   isBookmarked?: boolean;
+  emotionIconVariant?: 'b5' | 'b3';
 }
 
 const CompactPostCard: React.FC<CompactPostCardProps> = ({
@@ -101,7 +102,8 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
   liked = false,
   isBestPost = false,
   onBookmark,
-  isBookmarked = false
+  isBookmarked = false,
+  emotionIconVariant
 }) => {
   const { theme: modernTheme, isDark } = useModernTheme();
   const { user } = useAuth();
@@ -298,6 +300,7 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
                   : 1
               }
               size={28}
+              variant={emotionIconVariant}
             />
           </View>
      <HStack style={{ flex: 1, flexWrap: 'wrap', alignItems: 'center', gap: 4, padding: 3 ,paddingTop:8}}>

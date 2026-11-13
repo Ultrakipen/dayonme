@@ -125,7 +125,8 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
     width: size,
     height: size,
     borderRadius: size / 2,
-    backgroundColor: isEmoji ? avatarColor + '40' : avatarColor + '30', // 이모지는 배경 더 진하게
+    // 직접 그린 감정 얼굴은 배경 없이 그대로 보여준다(미리보기와 같은 모습)
+    backgroundColor: emotionMatch ? 'transparent' : (isEmoji ? avatarColor + '40' : avatarColor + '30'),
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden', // 이미지가 borderRadius 밖으로 나가지 않도록
@@ -139,7 +140,7 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
       shadowRadius: 4,
       elevation: 4,
     }),
-  }), [size, avatarColor, isClickable, isEmoji, theme.colors.primary, isDark]);
+  }), [size, avatarColor, isClickable, isEmoji, emotionMatch, theme.colors.primary, isDark]);
 
   const avatarTextStyle = useMemo(() => {
     if (isEmoji) {
@@ -213,7 +214,7 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
       );
     }
     if (emotionMatch) {
-      return <EmotionIcon emotionId={emotionMatch.id} size={Math.round(size * 0.9)} />;
+      return <EmotionIcon emotionId={emotionMatch.id} size={size} />;
     }
     // Twemoji 코드가 있고 이모지이면 고해상도 Twemoji 이미지 사용
     if (avatarEmojiCode && isEmoji && twemojiSource && !twemojiError) {

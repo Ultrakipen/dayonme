@@ -61,6 +61,7 @@ import {
 } from '../utils/anonymousNickname';
 import { getDailyMessage, formatGreetingWithUsername } from '../utils/dailyMessages';
 import CompactPostCard, { resetEmotionUsage } from '../components/CompactPostCard';
+import EmotionIcon from '../components/common/EmotionIcon';
 import { getEmotionEmoji } from '../constants/emotions';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import BottomSheet from '../components/BottomSheet';
@@ -1339,7 +1340,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             <Pressable key={dateInfo.dateStr} style={{ alignItems: 'center', minWidth: normalizeSpace(50) }}>
                                 <Box style={{ width: normalizeIcon(35), height: normalizeIcon(35), borderRadius: normalizeSpace(23), padding: normalizeSpace(2), backgroundColor: hasEmotion ? topEmotion?.color + '30' : 'transparent', borderWidth: 3, borderColor: dateInfo.isToday ? SEMANTIC_COLORS.primary : hasEmotion ? topEmotion?.color || SEMANTIC_COLORS.border : SEMANTIC_COLORS.border, justifyContent: 'center', alignItems: 'center' }}>
                                     <Box style={{ width: normalizeIcon(35), height: normalizeIcon(35), borderRadius: normalizeSpace(23), backgroundColor: colors.cardBackground, justifyContent: 'center', alignItems: 'center' }}>
-                                        {hasEmotion && topEmotion ? (/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]/u.test(topEmotion.icon) ? <RNText style={{ fontSize: normalizeIcon(30) }}>{topEmotion.icon}</RNText> : <MaterialCommunityIcons name={topEmotion.icon} size={normalizeIcon(30)} color={topEmotion.color || SEMANTIC_COLORS.purple} />) : <MaterialCommunityIcons name="emoticon-outline" size={normalizeIcon(30)} color={SEMANTIC_COLORS.border} />}
+                                        {hasEmotion && topEmotion ? (topEmotion.name ? <EmotionIcon label={topEmotion.name} variant="b3" size={normalizeIcon(30)} /> : /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]/u.test(topEmotion.icon) ? <RNText style={{ fontSize: normalizeIcon(30) }}>{topEmotion.icon}</RNText> : <MaterialCommunityIcons name={topEmotion.icon} size={normalizeIcon(30)} color={topEmotion.color || SEMANTIC_COLORS.purple} />) : <MaterialCommunityIcons name="emoticon-outline" size={normalizeIcon(30)} color={SEMANTIC_COLORS.border} />}
                                     </Box>
                                 </Box>
                                 <Text style={{ marginTop: 3, fontSize: dateInfo.isToday ? normalize(13, 11, 15) : normalize(13, 11, 15), fontWeight: dateInfo.isToday ? '700' : '600', color: dateInfo.isToday ? colors.primary : colors.text }}>{dateInfo.dayName}</Text>
@@ -1773,6 +1774,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 {!isDailyBestCollapsed && (
                     <Box style={{ padding: 4 }}>
                         <CompactPostCard
+                            emotionIconVariant="b3"
                             post={{
                                 ...bestPost,
                                 updated_at: bestPost.updated_at || bestPost.created_at,
@@ -1915,6 +1917,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     ]}
                 >
                     <CompactPostCard
+                        emotionIconVariant="b3"
                         post={{
                             ...post,
                             updated_at: post.updated_at || post.created_at,
@@ -3116,13 +3119,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     justifyContent: 'center',
                     alignItems: 'center'
                 }}>
-                    <Text style={{
-                        fontSize: normalize(24, 26, 28),
-                        lineHeight: normalize(24, 26, 28),
-                        textAlign: 'center',
-                        textAlignVertical: 'center',
-                        includeFontPadding: false
-                    }}>😊</Text>
+                    <EmotionIcon emotionId={1} variant="b3" size={normalizeIcon(38)} />
                 </Box>
             )}
         </Box>
