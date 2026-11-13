@@ -875,7 +875,13 @@ const ProfileScreen: React.FC = () => {
               </RNText>
             </TouchableOpacity>
 
-            <View style={styles.statItem}>
+            <TouchableOpacity
+              style={styles.statItem}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="내가 쓴 글 보기"
+              onPress={() => (navigation as any).navigate('MyPosts')}
+            >
               <Icon name="happy-outline" size={20} color={emotionColors.primary} />
               <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_post_count)}
@@ -883,7 +889,7 @@ const ProfileScreen: React.FC = () => {
               <RNText style={[styles.statLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
                 나의 하루
               </RNText>
-            </View>
+            </TouchableOpacity>
 
             <View style={styles.statItem}>
               <Icon name="heart-outline" size={20} color={emotionColors.error} />

@@ -3632,6 +3632,8 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     </HStack>
                     <HStack className="items-center" style={{ gap: 6 }}>
                         {/* 개수 배지 */}
+                        {/* 필터로 목록이 줄었을 때만 "표시/전체" 개수 표시 (20/20 같은 무의미한 칩 제거) */}
+                        {filteredPosts.length !== posts.length && (
                         <Box
                             style={{
                                 backgroundColor: isDark ? '#404040' : '#f3f4f6',
@@ -3650,6 +3652,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 {filteredPosts.length}/{posts.length}
                             </Text>
                         </Box>
+                        )}
                         {/* 최신순/인기순 토글 */}
                         <HStack style={{ gap: 4 }}>
                             <Pressable
