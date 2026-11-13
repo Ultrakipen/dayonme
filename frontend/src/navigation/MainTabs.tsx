@@ -3,7 +3,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { ActivityIndicator, View, Dimensions, PixelRatio, Platform } from 'react-native';
+import { ActivityIndicator, View, Text, Dimensions, PixelRatio, Platform } from 'react-native';
 import { NavigationProp, getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import HomeStack from './HomeStack';
 import ComfortStack from './ComfortStack';
@@ -18,6 +18,20 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+// 탭 라벨은 글자 크기 설정이 커져도 1.15배까지만 커지게 제한(라벨 겹침 방지)
+const renderTabLabel = (title: string) => ({ color }: { color: string }) => {
+  const sizes = getResponsiveSizes();
+  return (
+    <Text
+      maxFontSizeMultiplier={1.15}
+      numberOfLines={1}
+      style={{ color, fontSize: sizes.FONT_SIZE, fontWeight: '700', letterSpacing: -0.2, marginTop: sizes.MARGIN_TOP_LABEL, marginBottom: sizes.MARGIN_BOTTOM }}
+    >
+      {title}
+    </Text>
+  );
+};
 const Stack = createStackNavigator();
 
 // 인스타그램 스타일 탭바 크기 (2026 모바일 트렌드)
@@ -129,7 +143,7 @@ const MainTabs = () => {
         component={HomeStack}
         options={({ route }) => ({
           headerShown: false,
-          tabBarLabel: '나의 하루',
+          tabBarLabel: renderTabLabel('나의 하루'),
           tabBarStyle: (() => {
             const routeName = getFocusedRouteNameFromRoute(route);
             if (routeName === 'PostDetail' || routeName === 'WriteMyDay' || routeName === 'EditPost') {
@@ -178,7 +192,7 @@ const MainTabs = () => {
         component={ComfortStack}
         options={({ route }) => ({
           headerShown: false,
-          tabBarLabel: '위로와 공감',
+          tabBarLabel: renderTabLabel('위로와 공감'),
           tabBarStyle: (() => {
             const routeName = getFocusedRouteNameFromRoute(route);
             if (routeName === 'PostDetail' || routeName === 'WriteComfortPost') {
@@ -220,7 +234,7 @@ const MainTabs = () => {
         component={ChallengeStack}
         options={({ route }) => ({
           headerShown: false,
-          tabBarLabel: '감정 챌린지',
+          tabBarLabel: renderTabLabel('감정 챌린지'),
           tabBarStyle: (() => {
             const routeName = getFocusedRouteNameFromRoute(route);
             if (routeName === 'PostDetail' || routeName === 'ChallengeDetail') {
@@ -262,7 +276,7 @@ const MainTabs = () => {
         component={ReviewScreen}
         options={{
           headerShown: false,
-          tabBarLabel: '감정 리뷰',
+          tabBarLabel: renderTabLabel('감정 리뷰'),
           tabBarIcon: ({ color, size, focused }: { color: string; size: number; focused: boolean }) => (
             <MaterialCommunityIcons
               name={focused ? 'chart-line' : 'chart-line-variant'}
@@ -284,7 +298,7 @@ const MainTabs = () => {
         component={ProfileStack}
         options={{
           headerShown: false,
-          tabBarLabel: '프로필',
+          tabBarLabel: renderTabLabel('프로필'),
           tabBarIcon: ({ color, size, focused }: { color: string; size: number; focused: boolean }) => (
             <MaterialCommunityIcons
               name={focused ? 'account' : 'account-outline'}
