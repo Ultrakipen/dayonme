@@ -14,6 +14,7 @@ export interface Theme {
     card: string;
     cardHover: string;
     border: string;
+    inputBorder: string;
     error: string;
     success: string;
     warning: string;
@@ -66,6 +67,7 @@ export const createTheme = (mode: ColorTheme = 'light'): Theme => {
       card: themeColors.card,
       cardHover: isDark ? '#2E2E34' : '#f5f5f5',
       border: themeColors.border,
+      inputBorder: isDark ? '#7A7A85' : '#8A8A94', // 입력칸 경계(비텍스트 3:1)
       error: isDark ? '#F87171' : '#DC2626',
       success: isDark ? '#34D399' : '#047857',
       warning: Colors.warning[500],

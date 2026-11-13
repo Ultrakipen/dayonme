@@ -940,7 +940,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                         inputRange: [0, 1],
                         outputRange: ['0%', '100%'],
                       }),
-                      backgroundColor: trimmedTitle.length < 5 ? '#FF6B6B' : trimmedTitle.length < 20 ? '#4ECDC4' : '#45B7D1'
+                      backgroundColor: trimmedTitle.length < 5 ? theme.colors.error : trimmedTitle.length < 20 ? theme.colors.primary : theme.colors.primary
                     }
                   ]}
                 />
@@ -949,7 +949,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 variant="caption"
                 style={{
                   fontSize: scale(14),
-                  color: trimmedTitle.length < 5 ? '#FF6B6B' : theme.text.secondary,
+                  color: trimmedTitle.length < 5 ? theme.colors.error : theme.text.secondary,
                   fontWeight: '600',
                   letterSpacing: -0.1
                 }}
@@ -1056,7 +1056,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                   height: '100%',
                   borderRadius: scale(2),
                   width: `${Math.min(content.length / 2000 * 100, 100)}%`,
-                  backgroundColor: trimmedContent.length < 20 ? '#FF6B6B' : content.length < 100 ? '#4ECDC4' : '#45B7D1'
+                  backgroundColor: trimmedContent.length < 20 ? theme.colors.error : content.length < 100 ? theme.colors.primary : theme.colors.primary
                 }}
               />
             </View>
@@ -1064,7 +1064,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               variant="caption"
               style={{
                 fontSize: scale(14),
-                color: trimmedContent.length < 20 ? '#FF6B6B' : theme.colors.textSecondary,
+                color: trimmedContent.length < 20 ? theme.colors.error : theme.colors.textSecondary,
                 fontWeight: '600',
                 letterSpacing: -0.1
               }}

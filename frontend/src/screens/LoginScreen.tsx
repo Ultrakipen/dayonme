@@ -541,8 +541,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           contentStyle={styles.textInputContent}
                           outlineStyle={{
                             borderRadius: spacing(12),
-                            borderWidth: isDark ? 0 : (errors.email ? 1.5 : email ? 1 : 0),
-                            borderColor: errors.email ? COLORS.error : email ? theme.colors.primary : 'transparent'
+                            borderWidth: errors.email ? 1.5 : 1,
+                            borderColor: errors.email ? COLORS.error : email ? theme.colors.primary : theme.colors.inputBorder
                           }}
                           keyboardType="email-address"
                           autoCapitalize="none"
@@ -590,8 +590,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           contentStyle={styles.textInputContent}
                           outlineStyle={{
                             borderRadius: spacing(12),
-                            borderWidth: isDark ? 0 : (errors.password ? 1.5 : password ? 1 : 0),
-                            borderColor: errors.password ? COLORS.error : password ? theme.colors.primary : 'transparent'
+                            borderWidth: errors.password ? 1.5 : 1,
+                            borderColor: errors.password ? COLORS.error : password ? theme.colors.primary : theme.colors.inputBorder
                           }}
                           secureTextEntry={!showPassword}
                           autoComplete="password"

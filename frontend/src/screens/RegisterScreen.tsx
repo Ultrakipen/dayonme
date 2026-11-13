@@ -25,6 +25,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
 import { FONT_SIZES } from '../constants';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // 타입 정의
 type RootStackParamList = {
@@ -108,6 +109,7 @@ const TIMER_DURATION = 300;
 const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const { register } = useAuth();
   const { theme, isDark, toggleTheme } = useModernTheme();
+  const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [step, setStep] = useState(1); // 1: 이메일, 2: 인증, 3: 정보, 4: 프로필
 
@@ -373,7 +375,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     },
     themeToggle: {
       position: 'absolute' as const,
-      top: spacing(16),
+      top: insets.top + spacing(8),
       right: spacing(16),
       zIndex: 1000,
       padding: spacing(8),
@@ -451,7 +453,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       fontSize: normalizeFontSize(15),
       fontWeight: '700' as const
     }
-  }), [theme, isDark, height, spacing, normalizeFontSize]);
+  }), [theme, isDark, height, spacing, normalizeFontSize, insets.top]);
 
   // 진행률 표시 스타일
   const progressBarStyles = useMemo(() => ({
@@ -520,8 +522,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           contentStyle={styles.textInputContent}
           outlineStyle={{
             borderRadius: 16,
-            borderWidth: 2,
-            borderColor: formData.email ? theme.colors.primary : 'transparent'
+            borderWidth: formData.email ? 2 : 1,
+            borderColor: formData.email ? theme.colors.primary : theme.colors.inputBorder
           }}
           keyboardType="email-address"
           autoCapitalize="none"
@@ -836,8 +838,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           contentStyle={styles.textInputContent}
           outlineStyle={{
             borderRadius: 16,
-            borderWidth: 2,
-            borderColor: formData.username ? theme.colors.primary : 'transparent'
+            borderWidth: formData.username ? 2 : 1,
+            borderColor: formData.username ? theme.colors.primary : theme.colors.inputBorder
           }}
           autoCapitalize="none"
           maxLength={20}
@@ -863,8 +865,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           contentStyle={styles.textInputContent}
           outlineStyle={{
             borderRadius: 16,
-            borderWidth: 2,
-            borderColor: formData.password ? theme.colors.primary : 'transparent'
+            borderWidth: formData.password ? 2 : 1,
+            borderColor: formData.password ? theme.colors.primary : theme.colors.inputBorder
           }}
           secureTextEntry={!showPassword}
           theme={{
@@ -1027,8 +1029,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         contentStyle={styles.textInputContent}
         outlineStyle={{
           borderRadius: 16,
-          borderWidth: 2,
-          borderColor: formData.nickname ? theme.colors.primary : 'transparent'
+          borderWidth: formData.nickname ? 2 : 1,
+          borderColor: formData.nickname ? theme.colors.primary : theme.colors.inputBorder
         }}
         maxLength={20}
         theme={{

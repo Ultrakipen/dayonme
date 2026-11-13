@@ -2479,7 +2479,7 @@ const ComfortScreen: React.FC = () => {
                     <Text style={[cardStyles.authorBadge, { color: themeColors.onSurfaceVariant }]}> [나]</Text>
                   )}
                 </View>
-                <Text style={[cardStyles.instagramPostDate, { color: themeColors.onSurfaceVariant }]}>
+                <Text numberOfLines={1} style={[cardStyles.instagramPostDate, { color: themeColors.onSurfaceVariant }]}>
                   {timeAgo}
                 </Text>
               </View>
