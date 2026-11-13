@@ -77,14 +77,22 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
 
   useEffect(() => {
     navigation.setOptions({
+      headerShown: true,
       title: '설정',
+      headerStyle: { backgroundColor: theme.bg.primary, elevation: 0, shadowOpacity: 0, borderBottomWidth: 0 },
+      headerTitleStyle: { color: theme.text.primary },
+      headerTintColor: theme.text.primary,
       headerLeft: () => (
         <IconButton
           icon="arrow-left"
+          iconColor={theme.text.primary}
           onPress={() => navigation.goBack()}
         />
       ),
     });
+  }, [navigation, theme]);
+
+  useEffect(() => {
     loadSettings();
   }, [navigation]);
 
@@ -269,7 +277,7 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: theme.colors.accentText,
   }), [theme, isDark]);
 
   const styles = useMemo(() => StyleSheet.create({
@@ -372,8 +380,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                 <Switch
                   value={notificationSettings.push_enabled}
                   onValueChange={(value: boolean) => updateNotificationSetting('push_enabled', value)}
-                  thumbColor={notificationSettings.push_enabled ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
+                  thumbColor={notificationSettings.push_enabled ? theme.colors.primary : theme.text.tertiary}
+                  trackColor={{ false: theme.bg.border, true: theme.colors.primary + '40' }}
                 />
               )}
             />
@@ -387,8 +395,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                   value={notificationSettings.like_notifications}
                   onValueChange={(value: boolean) => updateNotificationSetting('like_notifications', value)}
                   disabled={!notificationSettings.push_enabled}
-                  thumbColor={notificationSettings.like_notifications ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
+                  thumbColor={notificationSettings.like_notifications ? theme.colors.primary : theme.text.tertiary}
+                  trackColor={{ false: theme.bg.border, true: theme.colors.primary + '40' }}
                 />
               )}
             />
@@ -402,8 +410,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                   value={notificationSettings.comment_notifications}
                   onValueChange={(value: boolean) => updateNotificationSetting('comment_notifications', value)}
                   disabled={!notificationSettings.push_enabled}
-                  thumbColor={notificationSettings.comment_notifications ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
+                  thumbColor={notificationSettings.comment_notifications ? theme.colors.primary : theme.text.tertiary}
+                  trackColor={{ false: theme.bg.border, true: theme.colors.primary + '40' }}
                 />
               )}
             />
@@ -417,8 +425,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                   value={notificationSettings.challenge_notifications}
                   onValueChange={(value: boolean) => updateNotificationSetting('challenge_notifications', value)}
                   disabled={!notificationSettings.push_enabled}
-                  thumbColor={notificationSettings.challenge_notifications ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
+                  thumbColor={notificationSettings.challenge_notifications ? theme.colors.primary : theme.text.tertiary}
+                  trackColor={{ false: theme.bg.border, true: theme.colors.primary + '40' }}
                 />
               )}
             />
@@ -432,8 +440,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                   value={notificationSettings.encouragement_notifications}
                   onValueChange={(value: boolean) => updateNotificationSetting('encouragement_notifications', value)}
                   disabled={!notificationSettings.push_enabled}
-                  thumbColor={notificationSettings.encouragement_notifications ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
+                  thumbColor={notificationSettings.encouragement_notifications ? theme.colors.primary : theme.text.tertiary}
+                  trackColor={{ false: theme.bg.border, true: theme.colors.primary + '40' }}
                 />
               )}
             />
@@ -450,8 +458,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                   value={notificationSettings.daily_reminder}
                   onValueChange={(value: boolean) => updateNotificationSetting('daily_reminder', value)}
                   disabled={!notificationSettings.push_enabled}
-                  thumbColor={notificationSettings.daily_reminder ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
+                  thumbColor={notificationSettings.daily_reminder ? theme.colors.primary : theme.text.tertiary}
+                  trackColor={{ false: theme.bg.border, true: theme.colors.primary + '40' }}
                 />
               )}
             />
@@ -465,8 +473,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                   value={notificationSettings.weekly_summary}
                   onValueChange={(value: boolean) => updateNotificationSetting('weekly_summary', value)}
                   disabled={!notificationSettings.push_enabled}
-                  thumbColor={notificationSettings.weekly_summary ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
+                  thumbColor={notificationSettings.weekly_summary ? theme.colors.primary : theme.text.tertiary}
+                  trackColor={{ false: theme.bg.border, true: theme.colors.primary + '40' }}
                 />
               )}
             />
@@ -482,8 +490,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                 <Switch
                   value={privacySettings.show_profile}
                   onValueChange={(value: boolean) => updatePrivacySetting('show_profile', value)}
-                  thumbColor={privacySettings.show_profile ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
+                  thumbColor={privacySettings.show_profile ? theme.colors.primary : theme.text.tertiary}
+                  trackColor={{ false: theme.bg.border, true: theme.colors.primary + '40' }}
                 />
               )}
             />
@@ -496,8 +504,8 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ navigation }) => {
                 <Switch
                   value={privacySettings.show_posts}
                   onValueChange={(value: boolean) => updatePrivacySetting('show_posts', value)}
-                  thumbColor={privacySettings.show_posts ? '#007AFF' : '#E5E5EA'}
-                  trackColor={{ false: '#E5E5EA', true: '#007AFF40' }}
+                  thumbColor={privacySettings.show_posts ? theme.colors.primary : theme.text.tertiary}
+                  trackColor={{ false: theme.bg.border, true: theme.colors.primary + '40' }}
                 />
               )}
             />

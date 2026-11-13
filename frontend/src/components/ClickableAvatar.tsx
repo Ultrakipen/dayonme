@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../contexts/AuthContext';
+import { useModernTheme } from '../contexts/ModernThemeContext';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { normalizeImageUrl } from '../utils/imageUtils';
 import EmotionLoginPromptModal from './EmotionLoginPromptModal';
@@ -50,6 +51,7 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
 }) => {
   const navigation = useNavigation<NavigationProp>();
   const { user, isAuthenticated } = useAuth();
+  const { theme } = useModernTheme();
   const [imageError, setImageError] = useState(false);
   const [twemojiError, setTwemojiError] = useState(false);
   const [loginPromptVisible, setLoginPromptVisible] = useState(false);
@@ -130,14 +132,14 @@ const ClickableAvatar: React.FC<ClickableAvatarProps> = ({
     // 클릭 가능한 경우 테두리와 그림자 추가
     ...(isClickable && {
       borderWidth: 2,
-      borderColor: '#405DE6',
-      shadowColor: '#405DE6',
+      borderColor: theme.colors.primary,
+      shadowColor: theme.colors.primary,
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.3,
       shadowRadius: 4,
       elevation: 4,
     }),
-  }), [size, avatarColor, isClickable, isEmoji]);
+  }), [size, avatarColor, isClickable, isEmoji, theme.colors.primary]);
 
   const avatarTextStyle = useMemo(() => {
     if (isEmoji) {

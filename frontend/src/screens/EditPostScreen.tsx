@@ -1417,7 +1417,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               fontSize: FONT_SIZES.h3,
               fontWeight: 'bold',
               textAlign: 'center',
-              color: theme.text.success || '#10b981',
+              color: theme.colors.success || '#10b981',
               marginBottom: 16
             }}>✅ 수정 완료!</Text>
             <Text style={{
@@ -1433,7 +1433,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               }}
               style={{
                 paddingVertical: 12,
-                backgroundColor: theme.text.success || '#10b981',
+                backgroundColor: theme.colors.success || '#10b981',
                 borderRadius: 8
               }}
             >
@@ -1469,7 +1469,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               fontSize: FONT_SIZES.h3,
               fontWeight: 'bold',
               textAlign: 'center',
-              color: theme.text.error || '#ef4444',
+              color: theme.colors.error || '#ef4444',
               marginBottom: 16
             }}>❌ 알림</Text>
             <Text style={{
@@ -1482,7 +1482,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               onPress={() => setErrorModalVisible(false)}
               style={{
                 paddingVertical: 12,
-                backgroundColor: theme.text.error || '#ef4444',
+                backgroundColor: theme.colors.error || '#ef4444',
                 borderRadius: 8
               }}
             >
@@ -1554,7 +1554,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 }}
                 style={{
                   paddingVertical: 12,
-                  backgroundColor: theme.text.error || '#ef4444',
+                  backgroundColor: theme.colors.error || '#ef4444',
                   borderRadius: 8
                 }}
               >

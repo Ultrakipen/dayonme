@@ -35,19 +35,19 @@ export const StyledText: React.FC<StyledTextProps> = ({
   const getTextColor = (): string => {
     switch (color) {
       case 'primary':
-        return theme.colors.text;
+        return theme.text.primary;
       case 'secondary':
-        return theme.colors.textSecondary;
+        return theme.text.secondary;
       case 'tertiary':
-        return theme.colors.textTertiary;
+        return theme.text.tertiary;
       case 'white':
-        return theme.colors.instagram.white;
+        return '#FFFFFF';
       case 'black':
-        return theme.colors.instagram.black;
+        return '#000000';
       case 'inherit':
         return 'inherit';
       default:
-        return theme.colors.text;
+        return theme.text.primary;
     }
   };
 

@@ -3211,7 +3211,7 @@ const ChallengeDetailScreen = () => {
                     {
                       backgroundColor: isDark
                         ? `${COLORS.danger}15`
-                        : theme.bg.surface,
+                        : theme.bg.secondary,
                     },
                   ]}
                   onPress={() => toggleLike(challenge.challenge_id)}

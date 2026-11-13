@@ -2132,7 +2132,7 @@ const ComfortScreen: React.FC = () => {
             <View style={[
               styles.filtersSection,
               {
-                backgroundColor: isDark ? modernTheme.bg.surface : 'transparent',
+                backgroundColor: isDark ? modernTheme.bg.secondary : 'transparent',
               }
             ]}>
               {/* 검색 버튼 */}

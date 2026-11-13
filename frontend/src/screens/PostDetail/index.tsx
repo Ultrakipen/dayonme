@@ -2264,14 +2264,14 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   style={{
                     paddingHorizontal: normalizeSpace(4),
                     paddingVertical: normalizeSpace(1),
-                    backgroundColor: isDark ? '#10b981' : '#059669',
+                    backgroundColor: modernTheme.colors.success,
                     borderRadius: normalizeSpace(3),
                     marginRight: normalizeSpace(3),
                   }}
                 >
                   <RNText style={{
                     fontSize: normalize(12, 12),
-                    color: '#ffffff',
+                    color: modernTheme.colors.onAccent,
                     fontWeight: '600'
                   }}>
                     작성자

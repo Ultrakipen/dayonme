@@ -1671,7 +1671,7 @@ const executeSearch = useCallback((query: string) => {
               disabled={isUpdating || !editTitle.trim() || !editDescription.trim()}
               style={[styles.modernSaveButton, {
                 backgroundColor: (isUpdating || !editTitle.trim() || !editDescription.trim())
-                  ? theme.colors.disabled
+                  ? theme.text.tertiary
                   : COLORS.primary,
                 opacity: (isUpdating || !editTitle.trim() || !editDescription.trim()) ? 0.6 : 1
               }]}

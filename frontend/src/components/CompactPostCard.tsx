@@ -113,7 +113,7 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
     textSecondary: modernTheme.text.secondary,
     previewText: modernTheme.text.primary,
     buttonBackground: isDark ? '#404040' : '#f8fafc',
-    primary: isDark ? '#60a5fa' : '#405DE6',
+    primary: modernTheme.colors.accentText,
     border: modernTheme.bg.border,
   };
   

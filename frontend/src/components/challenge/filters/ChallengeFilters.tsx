@@ -37,7 +37,7 @@ export const ChallengeFilters = memo<ChallengeFiltersProps>(({
     <View style={[
       styles.container,
       {
-        backgroundColor: isDark ? theme.bg.surface : 'transparent',
+        backgroundColor: isDark ? theme.bg.secondary : 'transparent',
         borderWidth: 0,
         borderColor: 'transparent',
         shadowOpacity: 0,

@@ -86,7 +86,7 @@ export const AllSection = memo<AllSectionProps>(({
       </View>
 
       {/* 상태 탭 */}
-      <View style={[styles.statusTabContainer, { backgroundColor: modernTheme.bg.surface }]}>
+      <View style={[styles.statusTabContainer, { backgroundColor: modernTheme.bg.secondary }]}>
         <TouchableOpacity
           style={[styles.statusTab, allStatusFilter === 'active' && [styles.statusTabActive, { backgroundColor: modernTheme.colors.primary }]]}
           onPress={() => {

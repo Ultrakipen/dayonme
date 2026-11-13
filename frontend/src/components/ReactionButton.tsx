@@ -27,7 +27,7 @@ const ReactionButton: React.FC<ReactionButtonProps> = ({
     card: isDarkMode ? '#3d3d3d' : '#ffffff',
     text: isDarkMode ? '#ffffff' : '#111827',
     textSecondary: isDarkMode ? '#a0a0a0' : '#6b7280',
-    primary: isDarkMode ? '#60a5fa' : '#405DE6',
+    primary: isDarkMode ? '#9AA6FF' : '#4A5AD0',
     border: isDarkMode ? '#4d4d4d' : '#e5e7eb',
   };
   const [showReactionPicker, setShowReactionPicker] = useState(false);

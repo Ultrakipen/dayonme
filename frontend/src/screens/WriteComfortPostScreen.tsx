@@ -1064,7 +1064,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               variant="caption"
               style={{
                 fontSize: scale(14),
-                color: trimmedContent.length < 20 ? theme.colors.error : theme.colors.textSecondary,
+                color: trimmedContent.length < 20 ? theme.colors.error : theme.text.secondary,
                 fontWeight: '600',
                 letterSpacing: -0.1
               }}
