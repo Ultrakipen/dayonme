@@ -83,12 +83,23 @@ const WelcomeScreen: React.FC = () => {
             color: colors.textSecondary,
             fontSize: normalize(14),
             lineHeight: normalize(22),
-            marginBottom: normalizeSpace(120),
+            marginBottom: normalizeSpace(28),
           }]}
           accessible={true}
         >
           작은 공감들의 큰 이야기{'\n'}
           오늘도 나의 마음에{'\n'}따뜻함이 켜집니다
+        </Text>
+        <Text
+          style={[styles.valueLine, {
+            color: colors.text,
+            fontSize: normalize(15),
+            lineHeight: normalize(22),
+            marginBottom: normalizeSpace(84),
+          }]}
+          accessible={true}
+        >
+          익명으로 털어놓고, 따뜻한 답을 받는 곳
         </Text>
 
         <TouchableOpacity
@@ -151,6 +162,10 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     textAlign: 'center',
+  },
+  valueLine: {
+    textAlign: 'center',
+    fontWeight: '600',
   },
   primaryButton: {
     width: '100%',
