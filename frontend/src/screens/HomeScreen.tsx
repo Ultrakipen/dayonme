@@ -2934,7 +2934,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 }}
                             >
                                 <Text style={{
-                                    color: 'white',
+                                    color: modernTheme.colors.onAccent,
                                     fontSize: normalize(11, 10, 13),
                                     fontWeight: '600',
                                 }}>

@@ -20,6 +20,15 @@ export interface Theme {
     info: string;
     alwaysWhite: string;
     alwaysBlack: string;
+    accent: string;
+    accentText: string;
+    onAccent: string;
+    tint: string;
+    warningBg: string;
+    warningText: string;
+    primaryLight: string;
+    primaryDark: string;
+    secondary: string;
     text: {
       primary: string;
       secondary: string;
@@ -51,18 +60,27 @@ export const createTheme = (mode: ColorTheme = 'light'): Theme => {
   return {
     colors: {
       raw: Colors,
-      primary: Colors.gradient.primary[0], // 그라데이션 메인 컬러 사용
+      primary: isDark ? '#9AA6FF' : '#5566DD', // 후보 A accent (모드별)
       background: themeColors.background,
       surface: themeColors.surface,
       card: themeColors.card,
-      cardHover: isDark ? '#333333' : '#f5f5f5',
+      cardHover: isDark ? '#2E2E34' : '#f5f5f5',
       border: themeColors.border,
-      error: Colors.error[500],
-      success: Colors.success[500],
+      error: isDark ? '#F87171' : '#DC2626',
+      success: isDark ? '#34D399' : '#047857',
       warning: Colors.warning[500],
       info: Colors.info[500],
       alwaysWhite: '#FFFFFF',
       alwaysBlack: '#000000',
+      accent: isDark ? '#9AA6FF' : '#5566DD',
+      accentText: isDark ? '#9AA6FF' : '#4A5AD0',
+      onAccent: isDark ? '#121212' : '#FFFFFF',
+      tint: isDark ? '#262A44' : '#EEF0FF',
+      warningBg: isDark ? '#3A2E12' : '#FFF4DC',
+      warningText: isDark ? '#FBBF24' : '#8A5300',
+      primaryLight: isDark ? '#B4BCFF' : '#8590EA',
+      primaryDark: isDark ? '#7C89F0' : '#4A5AD0',
+      secondary: isDark ? '#A78BFA' : '#764BA2',
       text: {
         primary: themeColors.text,
         secondary: themeColors.textSecondary,

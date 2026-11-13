@@ -448,7 +448,7 @@ const BlockManagementScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel={`${user.nickname || user.username} 차단 해제`}
             >
-              <Text style={[styles.unblockButtonText, { color: theme.colors.alwaysWhite || '#FFFFFF' }]}>차단 해제</Text>
+              <Text style={[styles.unblockButtonText, { color: theme.colors.onAccent }]}>차단 해제</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -548,7 +548,7 @@ const BlockManagementScreen: React.FC = () => {
             accessibilityRole="button"
             accessibilityLabel={`${contentTypeLabel} 차단 해제`}
           >
-            <Text style={[styles.unblockButtonText, { color: theme.colors.alwaysWhite || '#FFFFFF' }]}>차단 해제</Text>
+            <Text style={[styles.unblockButtonText, { color: theme.colors.onAccent }]}>차단 해제</Text>
           </TouchableOpacity>
         </View>
       </Swipeable>
