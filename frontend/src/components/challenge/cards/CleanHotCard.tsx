@@ -55,7 +55,7 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
     const diffTime = endDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return { text: 'D-DAY', color: '#EF4444' };
-    if (diffDays > 0) return { text: `D-${diffDays}`, color: diffDays <= 3 ? '#F59E0B' : '#3B82F6' };
+    if (diffDays > 0) return { text: `D-${diffDays}`, color: diffDays <= 3 ? '#F59E0B' : theme.colors.primary, onColor: diffDays <= 3 ? undefined : theme.colors.onAccent };
     return { text: '종료', color: '#9CA3AF' };
   };
 
@@ -164,7 +164,7 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
               transform: [{ scale: ddayPulse }]
             }
           ]}>
-            <Text style={styles.ddayText}>
+            <Text style={[styles.ddayText, (ddayInfo as any).onColor ? { color: (ddayInfo as any).onColor } : null]}>
               {ddayInfo.text}
             </Text>
           </Animated.View>
@@ -198,8 +198,8 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
           {Array.isArray(challenge.tags) && challenge.tags.length > 0 && (
             <View style={styles.tagsContainer}>
               {challenge.tags.slice(0, 2).map((tag, idx) => (
-                <View key={idx} style={styles.tagBadge}>
-                  <Text style={styles.tagText}>#{tag}</Text>
+                <View key={idx} style={[styles.tagBadge, { backgroundColor: theme.colors.tint }]}>
+                  <Text style={[styles.tagText, { color: theme.colors.accentText }]}>#{tag}</Text>
                 </View>
               ))}
             </View>
@@ -207,19 +207,19 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
 
           <View style={styles.footer}>
             <View style={styles.socialItem}>
-              <MaterialCommunityIcons name="account-group" size={13} color={COLORS.primary} />
+              <MaterialCommunityIcons name="account-group" size={13} color={theme.text.secondary} />
               <Text style={[styles.socialText, { color: theme.text.secondary }]}>
                 {challenge.participant_count || 0}
               </Text>
             </View>
             <View style={styles.socialRow}>
               <View style={styles.socialItem}>
-                <MaterialCommunityIcons name="heart" size={13} color={COLORS.danger} />
-                <Text style={[styles.socialText, { color: COLORS.danger }]}>{challenge.like_count || 0}</Text>
+                <MaterialCommunityIcons name="heart" size={13} color={theme.text.secondary} />
+                <Text style={[styles.socialText, { color: theme.text.secondary }]}>{challenge.like_count || 0}</Text>
               </View>
               <View style={styles.socialItem}>
-                <MaterialCommunityIcons name="comment-text-outline" size={13} color={COLORS.primary} />
-                <Text style={[styles.socialText, { color: COLORS.primary }]}>{challenge.comment_count || 0}</Text>
+                <MaterialCommunityIcons name="comment-text-outline" size={13} color={theme.text.secondary} />
+                <Text style={[styles.socialText, { color: theme.text.secondary }]}>{challenge.comment_count || 0}</Text>
               </View>
             </View>
           </View>

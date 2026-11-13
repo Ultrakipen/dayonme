@@ -1263,7 +1263,7 @@ const executeSearch = useCallback((query: string) => {
               color={theme.text.primary}
             />
           </TouchableOpacity>
-          <View style={[styles.searchInputContainer, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#ffffff' : '#6366F1' }]}>
+          <View style={[styles.searchInputContainer, { backgroundColor: theme.bg.card, shadowColor: theme.colors.primary }]}>
             <MaterialCommunityIcons
               name="magnify"
               size={20}
@@ -1619,12 +1619,12 @@ const executeSearch = useCallback((query: string) => {
             accessibilityRole="button"
           >
             <LinearGradient
-              colors={isDark ? ['#8B5CF6', '#A855F7'] : [COLORS.primary, COLORS.secondary]}
+              colors={[theme.colors.primary, theme.colors.primary]}
               style={styles.floatingButtonGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <MaterialCommunityIcons name="plus" size={24} color="white" />
+              <MaterialCommunityIcons name="plus" size={24} color={theme.colors.onAccent} />
             </LinearGradient>
           </TouchableOpacity>
         )}
@@ -2567,7 +2567,7 @@ fontSize: FONT_SIZES.h3,
     fontWeight: '700',
     letterSpacing: -0.2,
     // 2025 트렌드: 글로우 효과
-    textShadowColor: '#6366F120',
+    textShadowColor: `${COLORS.primary}20`,
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },

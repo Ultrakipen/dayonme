@@ -80,10 +80,10 @@ export const ChallengeFilters = memo<ChallengeFiltersProps>(({
               styles.filterChip,
               {
                 backgroundColor: sortBy === filter.key
-                  ? COLORS.primary
+                  ? theme.colors.primary
                   : theme.bg.card,
                 borderColor: sortBy === filter.key
-                  ? COLORS.primary
+                  ? theme.colors.primary
                   : theme.bg.border
               }
             ]}
@@ -92,11 +92,11 @@ export const ChallengeFilters = memo<ChallengeFiltersProps>(({
             <MaterialCommunityIcons
               name={filter.icon}
               size={normalizeIcon(14)}
-              color={sortBy === filter.key ? 'white' : COLORS.primary}
+              color={sortBy === filter.key ? theme.colors.onAccent : theme.colors.accentText}
             />
             <Text style={[
               styles.filterChipText,
-              { color: sortBy === filter.key ? 'white' : COLORS.primary }
+              { color: sortBy === filter.key ? theme.colors.onAccent : theme.colors.accentText }
             ]}>
               {filter.label}
             </Text>

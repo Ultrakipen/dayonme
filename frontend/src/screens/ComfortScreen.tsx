@@ -236,7 +236,8 @@ const filterReducer = (state: FilterState, action: FilterAction): FilterState =>
 // 2025년 트렌드 컬러 팔레트
 // COLORS를 동적으로 생성하는 함수로 변경
 const getColors = (theme: any, isDark: boolean) => ({
-  primary: '#6366F1', // Modern indigo
+  primary: theme.colors.accentText, // 테마 단일 출처
+  onPrimary: theme.colors.onAccent,
   secondary: '#EC4899', // Vibrant pink
   accent: '#10B981', // Success green
   background: theme.bg.primary,
@@ -251,8 +252,8 @@ const getColors = (theme: any, isDark: boolean) => ({
   warning: isDark ? '#FFC107' : '#F59E0B',
   success: '#10B981',
   glassmorphism: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)',
-  gradientStart: isDark ? '#4C51BF' : '#667EEA',
-  gradientEnd: isDark ? '#5B21B6' : '#764BA2',
+  gradientStart: theme.colors.primary,
+  gradientEnd: theme.colors.primary,
 });
 
 interface ComfortPost {
@@ -2203,11 +2204,11 @@ const ComfortScreen: React.FC = () => {
                     <MaterialCommunityIcons
                       name={filter.icon as any}
                       size={normalizeIcon(14)}
-                      color={selectedFilter === filter.key ? 'white' : COLORS.primary}
+                      color={selectedFilter === filter.key ? COLORS.onPrimary : COLORS.primary}
                     />
                     <Text style={[
                       styles.filterChipText,
-                      { color: selectedFilter === filter.key ? 'white' : COLORS.primary }
+                      { color: selectedFilter === filter.key ? COLORS.onPrimary : COLORS.primary }
                     ]}>
                       {filter.label}
                     </Text>
@@ -2231,7 +2232,7 @@ const ComfortScreen: React.FC = () => {
       <View style={styles.bestCardGradient}>
         <View style={styles.bestCardHeader}>
           <View style={[styles.bestBadge, { backgroundColor: index < 3 ? COLORS.warning : COLORS.primary }]}>
-            <Text style={styles.bestBadgeText}>{`#${index + 1}`}</Text>
+            <Text style={[styles.bestBadgeText, index >= 3 && { color: COLORS.onPrimary }]}>{`#${index + 1}`}</Text>
           </View>
           <MaterialCommunityIcons name="heart" size={16} color={COLORS.error} />
         </View>
@@ -3125,7 +3126,7 @@ const ComfortScreen: React.FC = () => {
                       <MaterialCommunityIcons
                         name="clock-outline"
                         size={14}
-                        color={postsSortOrder === 'latest' ? 'white' : COLORS.onSurfaceVariant}
+                        color={postsSortOrder === 'latest' ? COLORS.onPrimary : COLORS.onSurfaceVariant}
                       />
                       <Text style={[
                         styles.sortButtonText,
@@ -3142,7 +3143,7 @@ const ComfortScreen: React.FC = () => {
                       <MaterialCommunityIcons
                         name="heart"
                         size={14}
-                        color={postsSortOrder === 'popular' ? 'white' : COLORS.onSurfaceVariant}
+                        color={postsSortOrder === 'popular' ? COLORS.onPrimary : COLORS.onSurfaceVariant}
                       />
                       <Text style={[
                         styles.sortButtonText,
@@ -3179,7 +3180,7 @@ const ComfortScreen: React.FC = () => {
               icon="plus"
               style={styles.fab}
               onPress={() => navigation.navigate('WriteComfortPost')}
-              color="white"
+              color={COLORS.onPrimary}
               size="small"
             />
           )}
@@ -3819,7 +3820,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     letterSpacing: 0.3,
   },
   sortButtonTextActive: {
-    color: '#FFFFFF',
+    color: COLORS.onPrimary,
     fontWeight: '700',
   },
 
@@ -4012,7 +4013,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     fontWeight: '600',
   },
   instagramTagTextSelected: {
-    color: 'white',
+    color: COLORS.onPrimary,
   },
   
   // 액션 버튼 상단 태그 스타일 - 시인성 대폭 개선
@@ -4051,7 +4052,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     borderColor: COLORS.primary,
   },
   instagramTagAboveActionTextSelected: {
-    color: '#FFFFFF',
+    color: COLORS.onPrimary,
     fontWeight: '800',
   },
   instagramTagMoreCount: {

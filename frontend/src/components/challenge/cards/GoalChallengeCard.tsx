@@ -191,10 +191,10 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
           {challenge.progress !== undefined && (
             <View style={[
               styles.miniProgressBadge,
-              { backgroundColor: isDarkMode ? 'rgba(108, 92, 231, 0.2)' : 'rgba(108, 92, 231, 0.15)' }
+              { backgroundColor: theme.colors.tint }
             ]}>
-              <MaterialCommunityIcons name="target" size={normalizeIcon(10)} color={COLORS.primary} />
-              <Text style={[styles.miniProgressText, { color: COLORS.primary }]}>
+              <MaterialCommunityIcons name="target" size={normalizeIcon(10)} color={theme.colors.accentText} />
+              <Text style={[styles.miniProgressText, { color: theme.colors.accentText }]}>
                 {challenge.progress}%
               </Text>
             </View>
@@ -268,7 +268,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
           ) : (
             <View style={[
               styles.textCard,
-              { backgroundColor: isDarkMode ? 'rgba(108, 92, 231, 0.15)' : 'rgba(108, 92, 231, 0.05)' }
+              { backgroundColor: theme.colors.tint }
             ]}>
               <Text style={[
                 styles.textCardTitle,
@@ -279,7 +279,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
               {Array.isArray(challenge.tags) && challenge.tags.length > 0 && (
                 <View style={styles.textCardTagsContainer}>
                   {challenge.tags.slice(0, 2).map((tag, index) => (
-                    <Text key={index} style={[styles.textCardTag, { color: COLORS.primary }]}>
+                    <Text key={index} style={[styles.textCardTag, { color: theme.colors.accentText }]}>
                       #{tag}
                     </Text>
                   ))}
@@ -299,10 +299,10 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
           >
             {challenge.tags.map((tag, index) => (
               <View key={index} style={[styles.tagBadge, {
-                backgroundColor: isDarkMode ? 'rgba(108, 92, 231, 0.15)' : 'rgba(108, 92, 231, 0.1)',
-                borderColor: isDarkMode ? 'rgba(108, 92, 231, 0.3)' : 'rgba(108, 92, 231, 0.2)'
+                backgroundColor: theme.colors.tint,
+                borderColor: theme.bg.border
               }]}>
-                <Text style={[styles.tagText, { color: COLORS.primary }]}>
+                <Text style={[styles.tagText, { color: theme.colors.accentText }]}>
                   #{tag}
                 </Text>
               </View>
@@ -329,7 +329,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
             <MaterialCommunityIcons
               name="heart"
               size={normalizeIcon(20)}
-              color={COLORS.danger}
+              color={theme.text.secondary}
             />
             <Text style={[
               styles.socialInteractionText,
@@ -341,7 +341,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
             <MaterialCommunityIcons
               name="emoticon-happy-outline"
               size={normalizeIcon(20)}
-              color="#FF6347"
+              color={theme.text.secondary}
             />
             <Text style={[
               styles.socialInteractionText,
@@ -353,7 +353,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
             <MaterialCommunityIcons
               name="comment-text-outline"
               size={normalizeIcon(20)}
-              color={COLORS.primary}
+              color={theme.text.secondary}
             />
             <Text style={[
               styles.socialInteractionText,
@@ -389,13 +389,13 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
                 disabled={loadingMore}
               >
                 <LinearGradient
-                  colors={[COLORS.primary, COLORS.secondary]}
+                  colors={[theme.colors.primary, theme.colors.primary]}
                   style={styles.joinButtonGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <MaterialCommunityIcons name="plus" size={18} color="white" />
-                  <Text style={[styles.joinButtonText, { marginLeft: 4 }]}>
+                  <MaterialCommunityIcons name="plus" size={18} color={theme.colors.onAccent} />
+                  <Text style={[styles.joinButtonText, { marginLeft: 4, color: theme.colors.onAccent }]}>
                     {loadingMore ? '참여중...' : '참여하기'}
                   </Text>
                 </LinearGradient>

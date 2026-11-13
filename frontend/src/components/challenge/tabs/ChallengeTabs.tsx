@@ -30,19 +30,19 @@ export const ChallengeTabs = memo<ChallengeTabsProps>(({ activeTab, onTabChange,
         style={[
           styles.tab,
           activeTab === 'all' && styles.tabActive,
-          { backgroundColor: activeTab === 'all' ? COLORS.primary : 'transparent' }
+          { backgroundColor: activeTab === 'all' ? theme.colors.primary : 'transparent' }
         ]}
         onPress={() => onTabChange('all')}
       >
         <MaterialCommunityIcons
           name="view-grid-outline"
           size={normalizeIcon(16)}
-          color={activeTab === 'all' ? 'white' : theme.text.secondary}
+          color={activeTab === 'all' ? theme.colors.onAccent : theme.text.secondary}
         />
         <Text style={[
           styles.tabText,
           activeTab === 'all' && styles.tabTextActive,
-          { color: activeTab === 'all' ? 'white' : theme.text.secondary }
+          { color: activeTab === 'all' ? theme.colors.onAccent : theme.text.secondary }
         ]}>
           전체
         </Text>

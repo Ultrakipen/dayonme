@@ -61,8 +61,8 @@ const EmotionGrowthCard: React.FC<EmotionGrowthCardProps> = ({
     if (isDarkMode) {
       return ['#1a1a2e', '#16213e', '#0f3460'];
     }
-    return ['#667eea', '#764ba2', '#f093fb'];
-  }, [isDarkMode]);
+    return [theme.colors.primaryDark, theme.colors.primaryDark, theme.colors.primaryDark];
+  }, [isDarkMode, theme.colors.primaryDark]);
 
   // 데이터 로드
   React.useEffect(() => {

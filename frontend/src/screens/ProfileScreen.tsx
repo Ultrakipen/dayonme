@@ -77,7 +77,7 @@ const ProfileScreen: React.FC = () => {
 
   // 2025 트렌드 컬러 시스템 (다크모드 대응)
   const emotionColors = {
-    primary: isDark ? '#60a5fa' : '#0095F6',
+    primary: theme.colors.accentText,
     secondary: isDark ? '#9ca3af' : '#444444',
     text: theme.colors.text.primary,
     textSecondary: isDark ? theme.colors.text.secondary : '#555555',
@@ -782,7 +782,7 @@ const ProfileScreen: React.FC = () => {
                 accessibilityLabel="받은 격려 메시지"
                 accessibilityHint="받은 격려 메시지를 확인합니다"
               >
-                <Icon name="heart" size={24} color="#E91E63" />
+                <Icon name="heart" size={24} color={theme.colors.text.secondary} />
               </TouchableOpacity>
             </View>
             <View style={styles.subtitleContainer}>
@@ -840,7 +840,7 @@ const ProfileScreen: React.FC = () => {
 
           {/* 좋아하는 명언 */}
           {favoriteQuote && (
-            <TouchableOpacity style={[styles.quoteContainer, { backgroundColor: isDark ? theme.bg.secondary : '#E3F2FD' }]} onPress={() => {
+            <TouchableOpacity style={[styles.quoteContainer, { backgroundColor: theme.colors.tint }]} onPress={() => {
               setTempQuote(favoriteQuote);
               setShowQuoteEditor(true);
             }}>
@@ -866,7 +866,7 @@ const ProfileScreen: React.FC = () => {
               onPress={() => navigation.navigate('Encouragement')}
               activeOpacity={0.7}
             >
-              <Icon name="heart" size={20} color="#E91E63" />
+              <Icon name="heart" size={20} color={theme.colors.text.secondary} />
               <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.encouragement_received_count || 0)}
               </RNText>
@@ -882,7 +882,7 @@ const ProfileScreen: React.FC = () => {
               accessibilityLabel="내가 쓴 글 보기"
               onPress={() => (navigation as any).navigate('MyPosts')}
             >
-              <Icon name="happy-outline" size={20} color={emotionColors.primary} />
+              <Icon name="happy-outline" size={20} color={theme.colors.text.secondary} />
               <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_post_count)}
               </RNText>
@@ -892,7 +892,7 @@ const ProfileScreen: React.FC = () => {
             </TouchableOpacity>
 
             <View style={styles.statItem}>
-              <Icon name="heart-outline" size={20} color={emotionColors.error} />
+              <Icon name="heart-outline" size={20} color={theme.colors.text.secondary} />
               <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_like_received_count)}
               </RNText>
@@ -904,7 +904,7 @@ const ProfileScreen: React.FC = () => {
 
           <View style={[styles.statsContainer, { marginTop: 4, justifyContent: 'center' }]}>
             <View style={styles.statItem}>
-              <Icon name="chatbubble-outline" size={20} color={emotionColors.warning} />
+              <Icon name="chatbubble-outline" size={20} color={theme.colors.text.secondary} />
               <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_comment_received_count)}
               </RNText>
@@ -914,7 +914,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={styles.statItem}>
-              <Icon name="trophy-outline" size={20} color={emotionColors.gold} />
+              <Icon name="trophy-outline" size={20} color={theme.colors.text.secondary} />
               <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.challenge_count)}
               </RNText>
@@ -935,7 +935,7 @@ const ProfileScreen: React.FC = () => {
 
           <View style={styles.weeklyStats}>
             <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="create-outline" size={20} color="#4CAF50" />
+              <Icon name="create-outline" size={20} color={theme.colors.text.secondary} />
               <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>작성한 글</RNText>
               <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {weeklyStats.weeklyPosts}개
@@ -943,7 +943,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="heart-outline" size={20} color="#E91E63" />
+              <Icon name="heart-outline" size={20} color={theme.colors.text.secondary} />
               <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>받은 공감</RNText>
               <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {weeklyStats.weeklyLikes}개
@@ -951,7 +951,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="chatbubble-outline" size={20} color="#FF9800" />
+              <Icon name="chatbubble-outline" size={20} color={theme.colors.text.secondary} />
               <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>받은 댓글</RNText>
               <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {weeklyStats.weeklyComments}개
@@ -959,7 +959,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="flame" size={20} color="#FF5722" />
+              <Icon name="flame" size={20} color={theme.colors.text.secondary} />
               <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>연속 작성</RNText>
               <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {weeklyStats.consecutiveDays > 0 ? `${weeklyStats.consecutiveDays}일` : '오늘부터 시작!'}
@@ -977,7 +977,7 @@ const ProfileScreen: React.FC = () => {
 
           <View style={styles.recordsList}>
             <View style={[styles.recordItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="rocket" size={20} color={emotionColors.warning} />
+              <Icon name="rocket" size={20} color={theme.colors.text.secondary} />
               <View style={styles.recordInfo}>
                 <RNText style={[styles.recordTitle, { color: isDark ? theme.colors.text.primary : '#000000' }]}>여정 시작일</RNText>
                 <RNText style={[styles.recordValue, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
@@ -987,7 +987,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={[styles.recordItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="trophy" size={20} color={emotionColors.gold} />
+              <Icon name="trophy" size={20} color={theme.colors.text.secondary} />
               <View style={styles.recordInfo}>
                 <RNText style={[styles.recordTitle, { color: isDark ? theme.colors.text.primary : '#000000' }]}>최장 연속 작성</RNText>
                 <RNText style={[styles.recordValue, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
@@ -997,7 +997,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={[styles.recordItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="star" size={20} color={emotionColors.primary} />
+              <Icon name="star" size={20} color={theme.colors.text.secondary} />
               <View style={styles.recordInfo}>
                 <RNText style={[styles.recordTitle, { color: isDark ? theme.colors.text.primary : '#000000' }]}>인기 게시물</RNText>
                 <RNText style={[styles.recordValue, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
@@ -1007,7 +1007,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={[styles.recordItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="calendar" size={20} color={emotionColors.success} />
+              <Icon name="calendar" size={20} color={theme.colors.text.secondary} />
               <View style={styles.recordInfo}>
                 <RNText style={[styles.recordTitle, { color: isDark ? theme.colors.text.primary : '#000000' }]}>활동 최초 D+</RNText>
                 <RNText style={[styles.recordValue, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
@@ -1048,7 +1048,7 @@ const ProfileScreen: React.FC = () => {
           <View style={styles.challengeStats}>
             <View style={[styles.challengeStatItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
               <View style={styles.challengeIconContainer}>
-                <Icon name="add-circle-outline" size={25} color={emotionColors.success} />
+                <Icon name="add-circle-outline" size={25} color={theme.colors.text.secondary} />
               </View>
               <RNText style={[styles.challengeStatNumber, { color: isDark ? theme.colors.text.primary : '#000000' }]}>
                 {challengeStats.createdChallenges}
@@ -1058,7 +1058,7 @@ const ProfileScreen: React.FC = () => {
 
             <View style={[styles.challengeStatItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
               <View style={styles.challengeIconContainer}>
-                <Icon name="people-outline" size={25} color={emotionColors.primary} />
+                <Icon name="people-outline" size={25} color={theme.colors.text.secondary} />
               </View>
               <RNText style={[styles.challengeStatNumber, { color: isDark ? theme.colors.text.primary : '#000000' }]}>
                 {challengeStats.joinedChallenges}
@@ -1068,7 +1068,7 @@ const ProfileScreen: React.FC = () => {
 
             <View style={[styles.challengeStatItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
               <View style={styles.challengeIconContainer}>
-                <Icon name="checkmark-circle-outline" size={25} color={emotionColors.warning} />
+                <Icon name="checkmark-circle-outline" size={25} color={theme.colors.text.secondary} />
               </View>
               <RNText style={[styles.challengeStatNumber, { color: isDark ? theme.colors.text.primary : '#000000' }]}>
                 {challengeStats.completedChallenges}
@@ -1097,7 +1097,7 @@ const ProfileScreen: React.FC = () => {
                   style={[
                     styles.simpleEmotionTag,
                     index < 3 && styles.topSimpleTag,
-                    { backgroundColor: index < 3 ? (isDark ? theme.bg.secondary : '#E3F2FD') : (isDark ? theme.bg.secondary : '#F8F9FA') }
+                    { backgroundColor: index < 3 ? theme.colors.tint : (isDark ? theme.bg.secondary : '#F8F9FA') }
                   ]}
                 >
                   <View
@@ -1132,7 +1132,7 @@ const ProfileScreen: React.FC = () => {
               ))}
             </View>
 
-            <View style={[styles.emotionStats, { backgroundColor: isDark ? theme.bg.secondary : '#F0F8FF' }]}>
+            <View style={[styles.emotionStats, { backgroundColor: theme.colors.tint }]}>
               <View style={styles.statRow}>
                 <RNText style={[styles.emotionStatLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>가장 자주 사용한 감정</RNText>
                 <RNText style={[styles.statValue, { color: isDark ? theme.colors.text.primary : '#000000' }]}>
@@ -1169,7 +1169,7 @@ const ProfileScreen: React.FC = () => {
               activeOpacity={0.7}
               accessibilityLabel="전체 설정"
             >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(85, 102, 221, 0.1)' }]}>
+              <View style={[styles.settingIconContainer, { backgroundColor: theme.colors.tint }]}>
                 <Icon name="settings-outline" size={20} color={emotionColors.primary} />
               </View>
               <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>전체 설정</RNText>
@@ -1326,11 +1326,11 @@ const ProfileScreen: React.FC = () => {
                   <Icon
                     name="checkmark"
                     size={16}
-                    color={(!tempQuote || tempQuote.trim().length === 0) ? emotionColors.textLight : '#FFFFFF'}
+                    color={(!tempQuote || tempQuote.trim().length === 0) ? emotionColors.textLight : theme.colors.onAccent}
                   />
                   <RNText style={[
                     styles.modernCompleteButtonText,
-                    { color: (!tempQuote || tempQuote.trim().length === 0) ? emotionColors.textLight : '#FFFFFF' },
+                    { color: (!tempQuote || tempQuote.trim().length === 0) ? emotionColors.textLight : theme.colors.onAccent },
                     (!tempQuote || tempQuote.trim().length === 0) && styles.modernCompleteButtonTextDisabled
                   ]}>
                     완료
