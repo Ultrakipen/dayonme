@@ -17,6 +17,7 @@ import {
   ScrollView,
   Image,
   Pressable,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
@@ -870,7 +871,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                       </Text>
                     </View>
 
-                    <Text style={[styles.metaDivider, { color: isDark ? theme.colors.text.primarySecondary : COLORS.textSecondary }]}>•</Text>
+                    <Text style={[styles.metaDivider, { color: isDark ? theme.colors.text.secondary : COLORS.textSecondary }]}>•</Text>
 
                     {/* 날짜 */}
                     <Text style={[styles.compactDateText, { color: isDark ? 'rgba(255, 255, 255, 0.7)' : COLORS.textSecondary }]}>
@@ -1012,7 +1013,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
 
       {/* 컴팩트 통계 */}
       <View style={styles.compactStats}>
-        <Text style={[styles.compactStatText, { color: isDark ? theme.colors.text.primarySecondary : COLORS.textSecondary }]}>
+        <Text style={[styles.compactStatText, { color: isDark ? theme.colors.text.secondary : COLORS.textSecondary }]}>
           생성 {createdChallenges.length} · 참여 {participatingChallenges.length}
         </Text>
       </View>
@@ -1164,14 +1165,14 @@ const MyChallengesScreenFixed = ({ route }: any) => {
             <MaterialCommunityIcons
               name={activeTab === 'created' ? 'crown-outline' : 'heart-multiple-outline'}
               size={60}
-              color={isDark ? theme.colors.text.primarySecondary : COLORS.textTertiary}
+              color={isDark ? theme.colors.text.secondary : COLORS.textTertiary}
             />
             <Text style={[styles.emptyTitle, { color: isDark ? theme.colors.text.primary : COLORS.text }]}>
               {activeTab === 'created'
                 ? '아직 만든 챌린지가 없어요'
                 : '참여 중인 챌린지가 없어요'}
             </Text>
-            <Text style={[styles.emptySubtitle, { color: isDark ? theme.colors.text.primarySecondary : COLORS.textSecondary }]}>
+            <Text style={[styles.emptySubtitle, { color: isDark ? theme.colors.text.secondary : COLORS.textSecondary }]}>
               {activeTab === 'created'
                 ? '첫 번째 감정 챌린지를 만들어보세요'
                 : '흥미로운 챌린지에 참여해보세요'}
@@ -1241,7 +1242,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
               <MaterialCommunityIcons
                 name="magnify"
                 size={20}
-                color={isDark ? theme.colors.text.primarySecondary : COLORS.textSecondary}
+                color={isDark ? theme.colors.text.secondary : COLORS.textSecondary}
               />
               <TextInput
                 style={[
@@ -1259,7 +1260,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                   <MaterialCommunityIcons
                     name="close-circle"
                     size={20}
-                    color={isDark ? theme.colors.text.primarySecondary : COLORS.textSecondary}
+                    color={isDark ? theme.colors.text.secondary : COLORS.textSecondary}
                   />
                 </TouchableOpacity>
               )}
@@ -1345,7 +1346,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                         챌린지 제목과 설명을 변경합니다
                       </Text>
                     </View>
-                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.primarySecondary : COLORS.textTertiary} />
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.secondary : COLORS.textTertiary} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -1369,7 +1370,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                         챌린지 시작일과 종료일을 변경합니다
                       </Text>
                     </View>
-                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.primarySecondary : COLORS.textTertiary} />
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.secondary : COLORS.textTertiary} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -1393,7 +1394,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                         참여자 현황과 진행률을 확인합니다
                       </Text>
                     </View>
-                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.primarySecondary : COLORS.textTertiary} />
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.secondary : COLORS.textTertiary} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -1443,7 +1444,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                         챌린지 알림을 관리합니다
                       </Text>
                     </View>
-                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.primarySecondary : COLORS.textTertiary} />
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.secondary : COLORS.textTertiary} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -1467,7 +1468,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                         친구들과 챌린지를 공유합니다
                       </Text>
                     </View>
-                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.primarySecondary : COLORS.textTertiary} />
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.secondary : COLORS.textTertiary} />
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -1491,7 +1492,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                         부적절한 콘텐츠를 신고합니다
                       </Text>
                     </View>
-                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.primarySecondary : COLORS.textTertiary} />
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={isDark ? theme.colors.text.secondary : COLORS.textTertiary} />
                   </TouchableOpacity>
 
                   <TouchableOpacity

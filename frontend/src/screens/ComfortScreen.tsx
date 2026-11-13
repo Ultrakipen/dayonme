@@ -1154,7 +1154,7 @@ const ComfortScreen: React.FC = () => {
 
           const uniquePosts = deduplicatePosts(filteredPosts);
           setPosts(uniquePosts);
-          setHasMore(response.data.data.hasMore ?? allPosts.length >= API_CONSTANTS.PAGE_LIMIT);
+          setHasMore(postsResponse.value.data.data.hasMore ?? allPosts.length >= API_CONSTANTS.PAGE_LIMIT);
           console.log('✅ 전체 목록 로드 완료:', uniquePosts.length, '개 (차단 필터링 후)');
         }
       } catch (error) {

@@ -1,9 +1,7 @@
 // services/api/emotionFeatureService.ts
 // 감정 챌린지 3대 기능 API 서비스
 
-import apiClient from './client';
-
-const api = apiClient;
+import { apiClient as api } from './index';
 
 const BASE_URL = '/emotion-features';
 

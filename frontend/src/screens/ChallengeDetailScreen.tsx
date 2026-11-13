@@ -41,6 +41,7 @@ import { useModernTheme } from "../contexts/ModernThemeContext";
 import { EmotionIcon } from "../utils/emotionIconFix";
 import { sanitizeErrorMessage } from "../utils/sanitize";
 import { normalizeImageUrl, isValidImageUrl } from "../utils/imageUtils";
+import ImageViewerModal from "./PostDetail/components/ImageViewerModal";
 import ChallengeCommentSystem, {
   ChallengeComment,
 } from "../components/ChallengeCommentSystem";
@@ -57,7 +58,7 @@ import {
   RADIUS,
   SHADOWS,
 } from "../constants/designSystem";
-import { EMOTION_AVATARS, getTwemojiUrl } from "../constants/emotions";
+import { EMOTION_AVATARS, getTwemojiUrl, getEmotionById } from "../constants/emotions";
 import { showAlert } from "../contexts/AlertContext";
 
 // React Native 0.80 호환: 동적 화면 크기 계산
@@ -217,6 +218,7 @@ interface Reply {
 }
 
 const ChallengeDetailScreen = () => {
+  const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
   const navigation = useNavigation();
   const route = useRoute();
   const { user, isAuthenticated } = useAuth();
@@ -1018,9 +1020,9 @@ const ChallengeDetailScreen = () => {
     let baseName = emotionName;
 
     if (emotionId && (!emotionName || emotionName === "Unknown")) {
-      const emotionFromId = EMOTIONS.find(e => e.emotion_id === emotionId);
+      const emotionFromId = getEmotionById(Number(emotionId));
       if (emotionFromId) {
-        baseName = emotionFromId.name;
+        baseName = emotionFromId.shortName;
       }
     }
 
@@ -1111,7 +1113,7 @@ const ChallengeDetailScreen = () => {
         // emotion_id가 있으면 EMOTIONS에서 색상 가져오기
         let emotionColor = getEmotionColor(entry.emotion_name);
         if (entry.emotion_id && (!entry.emotion_name || entry.emotion_name === "Unknown")) {
-          const emotionFromId = EMOTIONS.find(e => e.emotion_id === entry.emotion_id);
+          const emotionFromId = getEmotionById(Number(entry.emotion_id));
           if (emotionFromId) {
             emotionColor = emotionFromId.color;
           }
@@ -1176,7 +1178,7 @@ const ChallengeDetailScreen = () => {
       // emotion_id가 있으면 EMOTIONS에서 색상 가져오기
       let emotionColor = getEmotionColor(entry.emotion_name);
       if (entry.emotion_id && (!entry.emotion_name || entry.emotion_name === "Unknown")) {
-        const emotionFromId = EMOTIONS.find(e => e.emotion_id === entry.emotion_id);
+        const emotionFromId = getEmotionById(Number(entry.emotion_id));
         if (emotionFromId) {
           emotionColor = emotionFromId.color;
         }
@@ -3072,16 +3074,27 @@ const ChallengeDetailScreen = () => {
                   {challenge.image_urls
                     .filter(isValidImageUrl)
                     .map((imageUrl, index) => (
-                      <View key={index} style={styles.imageWrapper}>
+                      <TouchableOpacity
+                        key={index}
+                        activeOpacity={0.9}
+                        style={styles.imageWrapper}
+                        onPress={() => setGalleryIndex(index)}
+                      >
                         <Image
                           source={{ uri: normalizeImageUrl(imageUrl) }}
                           style={styles.challengeImage}
                           resizeMode="cover"
                           progressiveRenderingEnabled={true}
                         />
-                      </View>
+                      </TouchableOpacity>
                     ))}
                 </ScrollView>
+                <ImageViewerModal
+                  visible={galleryIndex !== null}
+                  urls={(challenge.image_urls || []).filter(isValidImageUrl).map((u: string) => normalizeImageUrl(u))}
+                  initialIndex={galleryIndex ?? 0}
+                  onClose={() => setGalleryIndex(null)}
+                />
               </View>
             )}
 

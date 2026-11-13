@@ -310,65 +310,6 @@ const ReviewScreen: React.FC = () => {
     outputRange: [0, tabWidth, tabWidth * 2],
   });
 
-  // ===== 비로그인 사용자 UI =====
-  if (!isAuthenticated) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <View style={styles.guestHeader}>
-          <Text style={[styles.guestHeaderTitle, { color: colors.text }]}>일상 돌아보기</Text>
-        </View>
-
-        <View style={styles.guestContent}>
-          <View style={[styles.guestCard, { backgroundColor: colors.card, shadowColor: colors.text }]}>
-            <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}15` }]}>
-              <TwemojiImage emoji="📊" size={40 * scale} />
-            </View>
-
-            <Text style={[styles.guestTitle, { color: colors.text }]}>나만의 감정 통계</Text>
-
-            <Text style={[styles.guestDescription, { color: colors.textSecondary }]}>
-              감정 기록을 돌아보고{'\n'}AI 인사이트를 확인해보세요
-            </Text>
-
-            <View style={styles.featureList}>
-              {['AI 감정 분석', '주간 목표 설정', '나만의 최고 기록', '익명 Q&A'].map((feature, i) => (
-                <View key={i} style={styles.featureItem}>
-                  <Text style={[styles.featureDot, { color: colors.primary }]}>•</Text>
-                  <Text style={[styles.featureText, { color: colors.textSecondary }]}>{feature}</Text>
-                </View>
-              ))}
-            </View>
-
-            <TouchableOpacity
-              style={[styles.guestSignupButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
-              onPress={() => {
-                const rootNav = navigation.getParent();
-                if (rootNav) {
-                  rootNav.navigate('Auth' as never, { screen: 'Register' } as never);
-                }
-              }}
-            >
-              <Text style={[styles.guestSignupButtonText, { color: colors.background }]}>시작하기</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.guestLoginButton}
-              onPress={() => {
-                const rootNav = navigation.getParent();
-                if (rootNav) {
-                  rootNav.navigate('Auth' as never, { screen: 'Login' } as never);
-                }
-              }}
-            >
-              <Text style={[styles.guestLoginButtonText, { color: colors.textSecondary }]}>
-                이미 계정이 있으신가요? <Text style={{ color: colors.primary, fontWeight: '700' }}>로그인</Text>
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    );
-  }
 
   // ===== 헤더 컴포넌트 =====
   const ListHeader = useMemo(() => (
@@ -444,6 +385,66 @@ const ReviewScreen: React.FC = () => {
       </View>
     </View>
   ), [colors, isDark, activeTab, period, periodText, tabWidth, indicatorTranslateX, scale, styles]);
+
+  // ===== 비로그인 사용자 UI =====
+  if (!isAuthenticated) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={styles.guestHeader}>
+          <Text style={[styles.guestHeaderTitle, { color: colors.text }]}>일상 돌아보기</Text>
+        </View>
+
+        <View style={styles.guestContent}>
+          <View style={[styles.guestCard, { backgroundColor: colors.card, shadowColor: colors.text }]}>
+            <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}15` }]}>
+              <TwemojiImage emoji="📊" size={40 * scale} />
+            </View>
+
+            <Text style={[styles.guestTitle, { color: colors.text }]}>나만의 감정 통계</Text>
+
+            <Text style={[styles.guestDescription, { color: colors.textSecondary }]}>
+              감정 기록을 돌아보고{'\n'}AI 인사이트를 확인해보세요
+            </Text>
+
+            <View style={styles.featureList}>
+              {['AI 감정 분석', '주간 목표 설정', '나만의 최고 기록', '익명 Q&A'].map((feature, i) => (
+                <View key={i} style={styles.featureItem}>
+                  <Text style={[styles.featureDot, { color: colors.primary }]}>•</Text>
+                  <Text style={[styles.featureText, { color: colors.textSecondary }]}>{feature}</Text>
+                </View>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.guestSignupButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+              onPress={() => {
+                const rootNav = navigation.getParent();
+                if (rootNav) {
+                  rootNav.navigate('Auth' as never, { screen: 'Register' } as never);
+                }
+              }}
+            >
+              <Text style={[styles.guestSignupButtonText, { color: colors.background }]}>시작하기</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.guestLoginButton}
+              onPress={() => {
+                const rootNav = navigation.getParent();
+                if (rootNav) {
+                  rootNav.navigate('Auth' as never, { screen: 'Login' } as never);
+                }
+              }}
+            >
+              <Text style={[styles.guestLoginButtonText, { color: colors.textSecondary }]}>
+                이미 계정이 있으신가요? <Text style={{ color: colors.primary, fontWeight: '700' }}>로그인</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   // ===== 메인 렌더링 =====
   return (

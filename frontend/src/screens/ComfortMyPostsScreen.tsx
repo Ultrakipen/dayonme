@@ -31,9 +31,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import comfortWallService from '../services/api/comfortWallService';
 import postService from '../services/api/postService';
-import bookmarkService from '../services/api/bookmarkService';
 import { normalizeImageUrl } from '../utils/imageUtils';
-import { getThumbnailUrl } from '../utils/imageOptimizer';
 import { TYPOGRAPHY, ACCESSIBLE_COLORS } from '../utils/typography';
 import { FONT_SIZES } from '../constants';
 
@@ -51,6 +49,13 @@ interface ComfortPost {
   images?: string[];
   image_url?: string;
 }
+
+// renderPostCard 내부의 훅(useRef)이 카드별 컴포넌트에 귀속되도록 하는 슬롯 (목록 길이 변경 시 훅 순서 오류 방지)
+const PostCardSlot: React.FC<{
+  post: ComfortPost;
+  index: number;
+  render: (post: ComfortPost, index: number) => React.ReactElement | null;
+}> = ({ post, index, render }) => render(post, index);
 
 const ComfortMyPostsScreen: React.FC = React.memo(() => {
   const navigation = useNavigation();
@@ -76,7 +81,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
     navigation.setOptions({
       title: '나의 게시물',
       headerStyle: {
-        backgroundColor: theme.surface,
+        backgroundColor: theme.colors.surface,
         borderBottomWidth: 0,
         elevation: 0,
         shadowOpacity: 0,
@@ -84,13 +89,13 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
       headerTintColor: theme.text.primary.primary,
       headerTitleStyle: {
         fontSize: FONT_SIZES.h2,
-        fontFamily: 'Pretendard-Bold',
+        fontWeight: '700',
         color: theme.text.primary.primary,
       },
       headerLeft: () => (
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={[styles.headerButton, { backgroundColor: theme.card }]}
+          style={[styles.headerButton, { backgroundColor: theme.colors.card }]}
         >
           <MaterialCommunityIcons name="arrow-left" size={24} color={theme.text.primary.primary} />
         </TouchableOpacity>
@@ -111,19 +116,16 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
         setMyPosts(myPostsResponse.data.data);
       }
 
-      // 즐겨찾기 게시물 로드
-      const favoritesResponse = await bookmarkService.getBookmarks({ postType: 'comfort_wall' });
-      if (favoritesResponse.status === 'success' && favoritesResponse.data.bookmarks) {
-        const bookmarkedPosts = favoritesResponse.data.bookmarks
-          .map(bookmark => bookmark.post)
-          .filter((post): post is ComfortPost => post !== null) as ComfortPost[];
-        setFavoritesPosts(bookmarkedPosts);
-      }
+      // 즐겨찾기 게시물 로드 (TODO: API 구현 필요)
+      // const favoritesResponse = await comfortWallService.getFavoritePosts();
+      // if (favoritesResponse.data?.status === 'success' && favoritesResponse.data.data) {
+      //   setFavoritesPosts(favoritesResponse.data.data);
+      // }
       
     } catch (error) {
       // 운영 환경에서는 에러 로깅 서비스 사용 권장
       if (__DEV__) {
-        if (__DEV__) console.error('게시물 로드 오류:', error);
+        console.error('게시물 로드 오류:', error);
       }
       Alert.alert('오류', '게시물을 불러오는 중 오류가 발생했습니다.');
     } finally {
@@ -411,7 +413,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
           >
         <Card style={[
           styles.card,
-          { backgroundColor: theme.card, borderColor: theme.border },
+          { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
           isFirstPost && styles.featuredCard,
           isFirstPost && { borderColor: isDark ? 'rgba(167, 139, 250, 0.5)' : 'rgba(167, 139, 250, 0.3)' }
         ]}>
@@ -428,7 +430,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
                 <Text style={[styles.postTitle, { color: theme.text.primary }, isFirstPost && styles.featuredTitle]} numberOfLines={isFirstPost ? 3 : 2}>
                   {post.title}
                 </Text>
-                <Text style={[styles.postDate, { color: theme.text.primarySecondary }, isFirstPost && styles.featuredDate]}>
+                <Text style={[styles.postDate, { color: theme.text.secondary }, isFirstPost && styles.featuredDate]}>
                   {formatDate(post.created_at)}
                 </Text>
               </View>
@@ -449,7 +451,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
             </View>
 
             {/* 게시물 내용 미리보기 */}
-            <Text style={[styles.postContent, { color: theme.text.primarySecondary }, isFirstPost && styles.featuredContent]} numberOfLines={isFirstPost ? 4 : 3}>
+            <Text style={[styles.postContent, { color: theme.text.secondary }, isFirstPost && styles.featuredContent]} numberOfLines={isFirstPost ? 4 : 3}>
               {post.content}
             </Text>
 
@@ -458,19 +460,19 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
               <View style={styles.imageContainer}>
                 <Image
                   source={{
-                    uri: getThumbnailUrl(normalizeImageUrl(
+                    uri: normalizeImageUrl(
                       post.images?.[0] || post.image_url || ''
-                    ))
+                    )
                   }}
                   style={[
                     styles.postImage,
-                    { backgroundColor: theme.border },
+                    { backgroundColor: theme.colors.border },
                     isFirstPost && styles.featuredImage
                   ]}
                   resizeMode="cover"
                   loadingIndicatorSource={{ uri: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' }}
                   fadeDuration={300}
-                  onError={() => { if (__DEV__) console.log('Image load error'); }}
+                  onError={() => console.log('Image load error')}
                   defaultSource={{ uri: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' }}
                 />
                 {post.images && post.images.length > 1 && (
@@ -487,11 +489,11 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
             <View style={styles.postStats}>
               <View style={styles.statItem}>
                 <MaterialCommunityIcons name="heart" size={isFirstPost ? 14 : 12} color="#EF4444" />
-                <Text style={[styles.statText, { color: theme.text.primarySecondary }, isFirstPost && styles.featuredStatText]}>{post.like_count}</Text>
+                <Text style={[styles.statText, { color: theme.text.secondary }, isFirstPost && styles.featuredStatText]}>{post.like_count}</Text>
               </View>
               <View style={styles.statItem}>
-                <MaterialCommunityIcons name="comment" size={isFirstPost ? 14 : 12} color={theme.text.primarySecondary} />
-                <Text style={[styles.statText, { color: theme.text.primarySecondary }, isFirstPost && styles.featuredStatText]}>{post.comment_count}</Text>
+                <MaterialCommunityIcons name="comment" size={isFirstPost ? 14 : 12} color={theme.text.secondary} />
+                <Text style={[styles.statText, { color: theme.text.secondary }, isFirstPost && styles.featuredStatText]}>{post.comment_count}</Text>
               </View>
             </View>
           </Card.Content>
@@ -508,12 +510,12 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
       <MaterialCommunityIcons
         name={type === 'posts' ? 'post-outline' : 'heart-outline'}
         size={64}
-        color={theme.border}
+        color={theme.colors.border}
       />
       <Text style={[styles.emptyTitle, { color: theme.text.primary }]}>
         {type === 'posts' ? '작성한 게시물이 없습니다' : '즐겨찾기한 게시물이 없습니다'}
       </Text>
-      <Text style={[styles.emptyText, { color: theme.text.primarySecondary }]}>
+      <Text style={[styles.emptyText, { color: theme.text.secondary }]}>
         {type === 'posts'
           ? '첫 번째 고민을 나눠보세요!'
           : '마음에 드는 게시물을 즐겨찾기해보세요!'}
@@ -532,19 +534,19 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, { color: theme.text.primarySecondary }]}>게시물을 불러오는 중...</Text>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={[styles.loadingText, { color: theme.text.secondary }]}>게시물을 불러오는 중...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* 탭 버튼 */}
-      <View style={[styles.tabContainer, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+      <View style={[styles.tabContainer, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.border }]}>
         <SegmentedButtons
           value={currentTab}
           onValueChange={setCurrentTab}
@@ -560,22 +562,22 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
               icon: 'heart-outline'
             }
           ]}
-          style={[styles.segmentedButtons, { backgroundColor: theme.card }]}
+          style={[styles.segmentedButtons, { backgroundColor: theme.colors.card }]}
         />
       </View>
 
       {/* 검색 및 필터링 섹션 */}
-      <View style={[styles.searchContainer, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+      <View style={[styles.searchContainer, { backgroundColor: theme.colors.surface, borderBottomColor: theme.colors.border }]}>
         {/* 검색 바 */}
         <View style={styles.searchRow}>
           <Searchbar
             placeholder="제목, 내용, 태그로 검색..."
             onChangeText={setSearchQuery}
             value={searchQuery}
-            style={[styles.searchBar, { backgroundColor: theme.card }]}
+            style={[styles.searchBar, { backgroundColor: theme.colors.card }]}
             inputStyle={[styles.searchInput, { color: theme.text.primary }]}
-            iconColor={theme.primary}
-            placeholderTextColor={theme.text.primarySecondary}
+            iconColor={theme.colors.primary}
+            placeholderTextColor={theme.text.secondary}
           />
           <Menu
             visible={showFilterMenu}
@@ -584,7 +586,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
               <IconButton
                 icon="filter-variant"
                 size={24}
-                iconColor={theme.primary}
+                iconColor={theme.colors.primary}
                 style={[styles.filterButton, {
                   backgroundColor: isDark ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.1)',
                   borderColor: isDark ? 'rgba(139, 92, 246, 0.4)' : 'rgba(139, 92, 246, 0.2)'
@@ -592,7 +594,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
                 onPress={() => setShowFilterMenu(true)}
               />
             }
-            contentStyle={[styles.filterMenu, { backgroundColor: theme.surface }]}
+            contentStyle={[styles.filterMenu, { backgroundColor: theme.colors.surface }]}
           >
             <Menu.Item
               onPress={() => {
@@ -636,16 +638,16 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
                   onPress={() => toggleTag(tag)}
                   style={[
                     styles.tagChip,
-                    { backgroundColor: theme.card, borderColor: theme.border },
+                    { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
                     selectedTags.includes(tag) && {
                       backgroundColor: isDark ? 'rgba(139, 92, 246, 0.3)' : 'rgba(139, 92, 246, 0.2)',
-                      borderColor: theme.primary
+                      borderColor: theme.colors.primary
                     }
                   ]}
                   textStyle={[
                     styles.tagText,
-                    { color: theme.text.primarySecondary },
-                    selectedTags.includes(tag) && { color: theme.primary, fontFamily: 'Pretendard-SemiBold' }
+                    { color: theme.text.secondary },
+                    selectedTags.includes(tag) && { color: theme.colors.primary, fontWeight: '600' }
                   ]}
                   mode={selectedTags.includes(tag) ? 'flat' : 'outlined'}
                 >
@@ -658,8 +660,8 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
 
         {/* 활성 필터 표시 */}
         {(searchQuery.trim() || selectedTags.length > 0) && (
-          <View style={[styles.activeFilters, { borderTopColor: theme.border }]}>
-            <Text style={[styles.activeFiltersText, { color: theme.text.primarySecondary }]}>
+          <View style={[styles.activeFilters, { borderTopColor: theme.colors.border }]}>
+            <Text style={[styles.activeFiltersText, { color: theme.text.secondary }]}>
               {filteredData.length}개 결과
             </Text>
             {(searchQuery.trim() || selectedTags.length > 0) && (
@@ -673,8 +675,8 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
                   borderColor: isDark ? 'rgba(139, 92, 246, 0.4)' : 'rgba(139, 92, 246, 0.2)'
                 }]}
               >
-                <Text style={[styles.clearFiltersText, { color: theme.primary }]}>필터 초기화</Text>
-                <MaterialCommunityIcons name="close" size={16} color={theme.primary} />
+                <Text style={[styles.clearFiltersText, { color: theme.colors.primary }]}>필터 초기화</Text>
+                <MaterialCommunityIcons name="close" size={16} color={theme.colors.primary} />
               </TouchableOpacity>
             )}
           </View>
@@ -692,21 +694,21 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
         {filteredData.length > 0 ? (
           <View style={styles.postsContainer}>
             {/* 첫 번째 게시물 (큰 카드) */}
-            {filteredData.length > 0 && renderPostCard(filteredData[0], 0)}
+            {filteredData.length > 0 && <PostCardSlot key={filteredData[0].post_id} post={filteredData[0]} index={0} render={renderPostCard} />}
             
             {/* 나머지 게시물 (2열 그리드) */}
             {filteredData.length > 1 && (
               <View style={styles.cardGrid}>
-                {filteredData.slice(1).map((post, index) => renderPostCard(post, index + 1))}
+                {filteredData.slice(1).map((post, index) => <PostCardSlot key={post.post_id} post={post} index={index + 1} render={renderPostCard} />)}
               </View>
             )}
           </View>
         ) : (
           searchQuery.trim() || selectedTags.length > 0 ? (
             <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="magnify" size={64} color={theme.border} />
+              <MaterialCommunityIcons name="magnify" size={64} color={theme.colors.border} />
               <Text style={[styles.emptyTitle, { color: theme.text.primary }]}>검색 결과가 없습니다</Text>
-              <Text style={[styles.emptyText, { color: theme.text.primarySecondary }]}>다른 검색어나 필터를 사용해보세요</Text>
+              <Text style={[styles.emptyText, { color: theme.text.secondary }]}>다른 검색어나 필터를 사용해보세요</Text>
             </View>
           ) : (
             renderEmptyState(currentTab === 'my_posts' ? 'posts' : 'favorites')
@@ -803,13 +805,13 @@ const styles = StyleSheet.create({
   },
   postTitle: {
     fontSize: TYPOGRAPHY.body,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginBottom: 4,
     lineHeight: 18,
   },
   featuredTitle: {
     fontSize: TYPOGRAPHY.h2,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     lineHeight: 24,
   },
   postDate: {
@@ -817,7 +819,7 @@ const styles = StyleSheet.create({
   },
   featuredDate: {
     fontSize: TYPOGRAPHY.caption,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   featuredBadge: {
     flexDirection: 'row',
@@ -844,7 +846,7 @@ const styles = StyleSheet.create({
   },
   featuredText: {
     fontSize: TYPOGRAPHY.captionSmall,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     color: '#D97706',
     marginLeft: 2,
   },
@@ -907,7 +909,7 @@ const styles = StyleSheet.create({
   imageCountText: {
     color: '#ffffff',
     fontSize: TYPOGRAPHY.captionSmall,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   postStats: {
     flexDirection: 'row',
@@ -920,11 +922,11 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontSize: TYPOGRAPHY.captionSmall,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   featuredStatText: {
     fontSize: TYPOGRAPHY.caption,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   emptyContainer: {
     flex: 1,
@@ -935,7 +937,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: TYPOGRAPHY.h2,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginTop: 16,
     marginBottom: 8,
     textAlign: 'center',
@@ -991,10 +993,10 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: TYPOGRAPHY.caption,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   selectedTagText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   activeFilters: {
     flexDirection: 'row',
@@ -1006,7 +1008,7 @@ const styles = StyleSheet.create({
   },
   activeFiltersText: {
     fontSize: TYPOGRAPHY.caption,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   clearFiltersButton: {
     flexDirection: 'row',
@@ -1019,7 +1021,7 @@ const styles = StyleSheet.create({
   },
   clearFiltersText: {
     fontSize: TYPOGRAPHY.caption,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   // 스와이프 제스처 스타일
   swipeBackground: {
@@ -1050,7 +1052,7 @@ const styles = StyleSheet.create({
   },
   swipeText: {
     fontSize: TYPOGRAPHY.caption,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginTop: 4,
   },
   swipeableCard: {

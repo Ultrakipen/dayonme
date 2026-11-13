@@ -486,7 +486,7 @@ const HotChallengesScreen = () => {
     const opacity = shimmerAnim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 0.7] });
 
     return (
-      <View style={[styles.hotChallengeCard, { backgroundColor: theme.card }]}>
+      <View style={[styles.hotChallengeCard, { backgroundColor: theme.colors.card }]}>
         <View style={styles.hotChallengeCardContent}>
           <Animated.View style={[styles.skeletonBox, { width: '40%', height: 24, opacity }]} />
           <Animated.View style={[styles.skeletonBox, { width: '80%', height: 20, marginTop: 12, opacity }]} />
@@ -531,9 +531,9 @@ const hapticOptions = {
             width: cardWidth,
             maxWidth: 500,
             transform: [{ scale: scaleValue }],
-            backgroundColor: theme.card,
+            backgroundColor: theme.colors.card,
             borderWidth: isDark ? 1 : 0,
-            borderColor: theme.border,
+            borderColor: theme.colors.border,
             ...(isDark ? {} : {
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 4 },
@@ -626,7 +626,7 @@ const hapticOptions = {
                     ]}>
                       <Text style={[
                         styles.inlineTagText,
-                        { color: isDark ? '#6C5CE7' : theme.primary }
+                        { color: isDark ? '#6C5CE7' : theme.colors.primary }
                       ]}>#{tag}</Text>
                     </View>
                   ))}
@@ -650,7 +650,7 @@ const hapticOptions = {
             backgroundColor: isDark
               ? 'rgba(28, 28, 30, 0.6)'
               : 'rgba(255, 255, 255, 0.7)',
-            borderColor: theme.border,
+            borderColor: theme.colors.border,
           }]}>
             {/* 디데이 */}
             <View style={styles.metaItem}>
@@ -754,7 +754,7 @@ const hapticOptions = {
 
   if (loading && challenges.length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
         <StatusBar
           barStyle={isDark ? "light-content" : "dark-content"}
           backgroundColor="transparent"
@@ -771,7 +771,7 @@ const hapticOptions = {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <StatusBar
         barStyle={isDark ? "light-content" : "dark-content"}
         backgroundColor="transparent"
@@ -833,7 +833,7 @@ const hapticOptions = {
           </View>
 
           {/* 검색바 (제목/설명/태그 검색) */}
-          <View style={[styles.searchBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderColor: theme.border }]}>
+          <View style={[styles.searchBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderColor: theme.colors.border }]}>
             <MaterialCommunityIcons name="magnify" size={icons.md} color={theme.text.secondary} />
             <TextInput
               style={[styles.searchInput, { color: theme.text.primary }]}
@@ -862,8 +862,8 @@ const hapticOptions = {
                 style={[styles.sortButton, sortBy === key && { backgroundColor: isDark ? 'rgba(108,92,231,0.2)' : 'rgba(0,122,255,0.1)' }]}
                 onPress={() => setSortBy(key as any)}
               >
-                <MaterialCommunityIcons name={icon as any} size={icons.sm} color={sortBy === key ? (isDark ? '#6C5CE7' : theme.primary) : theme.text.secondary} />
-                <Text style={[styles.sortButtonText, { color: sortBy === key ? (isDark ? '#6C5CE7' : theme.primary) : theme.text.secondary }]}>{label}</Text>
+                <MaterialCommunityIcons name={icon as any} size={icons.sm} color={sortBy === key ? (isDark ? '#6C5CE7' : theme.colors.primary) : theme.text.secondary} />
+                <Text style={[styles.sortButtonText, { color: sortBy === key ? (isDark ? '#6C5CE7' : theme.colors.primary) : theme.text.secondary }]}>{label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -897,7 +897,7 @@ const hapticOptions = {
         ListFooterComponent={() => (
           loadingMore ? (
             <View style={styles.loadingMore}>
-              <ActivityIndicator size="small" color={theme.primary} />
+              <ActivityIndicator size="small" color={theme.colors.primary} />
               <Text style={[styles.loadingMoreText, { color: isDark ? 'rgba(255, 255, 255, 0.7)' : theme.subText }]}>
                 더 많은 HOT 챌린지 로드 중...
               </Text>

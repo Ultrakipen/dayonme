@@ -833,7 +833,7 @@ const ProfileScreen: React.FC = () => {
               
               <View style={styles.joinDateContainer}>
                 <Icon name="calendar" size={14} color={emotionColors.textLight} />
-                <RNText style={[styles.joinDate, { color: isDark ? theme.colors.text.secondary : emotionColors.textLight }]}>가입일: {user.created_at ? new Date(user.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' }) : '정보 없음'}</RNText>
+                <RNText style={[styles.joinDate, { color: isDark ? theme.colors.text.secondary : emotionColors.textLight }]}>가입일: {(firstActivity.signup_date || user.created_at) ? new Date((firstActivity.signup_date || user.created_at) as string).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' }) : '정보 없음'}</RNText>
               </View>
             </View>
           </View>
@@ -975,7 +975,7 @@ const ProfileScreen: React.FC = () => {
               <View style={styles.recordInfo}>
                 <RNText style={[styles.recordTitle, { color: isDark ? theme.colors.text.primary : '#000000' }]}>여정 시작일</RNText>
                 <RNText style={[styles.recordValue, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
-                  {user?.created_at ? new Date(user.created_at).toLocaleDateString('ko-KR') : '정보 없음'}
+                  {(firstActivity.signup_date || user?.created_at) ? new Date((firstActivity.signup_date || user?.created_at) as string).toLocaleDateString('ko-KR') : '정보 없음'}
                 </RNText>
               </View>
             </View>

@@ -5,15 +5,7 @@ import emotionService from '../services/api/emotionService';
 import { Box, Text, VStack, HStack, Center } from '../components/ui';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 
-// 배경색 밝기에 따라 텍스트 색상 자동 결정
-const getContrastTextColor = (backgroundColor: string): string => {
-  const hex = backgroundColor.replace('#', '');
-  const r = parseInt(hex.substring(0, 2), 16);
-  const g = parseInt(hex.substring(2, 4), 16);
-  const b = parseInt(hex.substring(4, 6), 16);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-  return luminance > 155 ? '#1a1a1a' : '#FFFFFF';
-};
+
 
 interface Emotion {
   emotion_id: number;
@@ -39,7 +31,7 @@ const EmotionLogScreen = ({ navigation }: any) => {
     background: theme.colors.background,
     cardBackground: theme.colors.card,
     text: theme.colors.text.primary,
-    textSecondary: theme.colors.text.primarySecondary,
+    textSecondary: theme.colors.text.secondary,
     border: theme.colors.border || '#e5e7eb',
     primary: isDark ? '#60a5fa' : '#3b82f6',
   };
@@ -58,7 +50,7 @@ const EmotionLogScreen = ({ navigation }: any) => {
       Alert.alert('오류', '감정 데이터를 불러오는 중 오류가 발생했습니다.');
       
       if (process.env.NODE_ENV !== 'test') {
-        if (__DEV__) console.error('감정 로드 오류:', error);
+        console.error('감정 로드 오류:', error);
       }
     } finally {
       setIsLoading(false);
@@ -92,7 +84,7 @@ const EmotionLogScreen = ({ navigation }: any) => {
         '오늘의 감정이 성공적으로 기록되었습니다.',
         [{ text: '확인', onPress: () => navigation.goBack() }]
       );
-    } catch (error: unknown) {
+    } catch (error: any) {
       Alert.alert(
         '오류',
         error.response?.data?.message || '감정 기록 중 오류가 발생했습니다.'
@@ -116,7 +108,7 @@ const EmotionLogScreen = ({ navigation }: any) => {
       <VStack className="space-y-6">
         <VStack className="space-y-2">
           <Text className="text-2xl font-bold" style={{ color: theme.colors.primary }}>오늘의 감정</Text>
-          <Text className="text-base" style={{ color: theme.colors.text.primarySecondary }}>현재 어떤 감정을 느끼고 계신가요?</Text>
+          <Text className="text-base" style={{ color: theme.colors.text.secondary }}>현재 어떤 감정을 느끼고 계신가요?</Text>
         </VStack>
 
         <Box className="flex-row flex-wrap">
@@ -129,7 +121,7 @@ const EmotionLogScreen = ({ navigation }: any) => {
                   selectedEmotions.includes(emotion.emotion_id) && { backgroundColor: emotion.color }
                 ]}
                 textStyle={{
-                  color: selectedEmotions.includes(emotion.emotion_id) ? getContrastTextColor(emotion.color) : emotion.color
+                  color: selectedEmotions.includes(emotion.emotion_id) ? '#FFFFFF' : emotion.color
                 }}
                 testID="emotion-chip"
               >
@@ -152,9 +144,9 @@ const EmotionLogScreen = ({ navigation }: any) => {
             colors: {
               primary: theme.colors.primary,
               text: theme.colors.text.primary,
-              placeholder: theme.colors.text.primarySecondary,
+              placeholder: theme.colors.text.secondary,
               background: theme.colors.surface,
-              onSurfaceVariant: theme.colors.text.primarySecondary,
+              onSurfaceVariant: theme.colors.text.secondary,
             },
           }}
           style={{ backgroundColor: theme.colors.surface }}
