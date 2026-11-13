@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import userService from '../services/api/userService';
@@ -31,6 +32,7 @@ interface ProfileEditScreenProps {
 }
 
 const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const { user, updateUser } = useAuth();
   const { theme, isDark } = useModernTheme();
 
@@ -184,7 +186,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={bgColor} />
 
       {/* 헤더 */}
-      <View style={[styles.header, { backgroundColor: bgColor, borderBottomColor: borderColor }]}>
+      <View style={[styles.header, { paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + 12, backgroundColor: bgColor, borderBottomColor: borderColor }]}>
         <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
           <Text style={[styles.headerButtonText, { color: primaryColor }]}>취소</Text>
         </TouchableOpacity>

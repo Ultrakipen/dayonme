@@ -12,6 +12,7 @@ import {
   Animated,
   useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
@@ -45,6 +46,7 @@ interface ReportFilters {
 }
 
 const MyReportsScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { isDarkMode } = useTheme();
   const { theme, isDark } = useModernTheme();
@@ -401,6 +403,7 @@ const MyReportsScreen: React.FC = () => {
         style={[
           styles.header,
           {
+            paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + SPACING.sm,
             backgroundColor: colors.headerBg,
             borderBottomWidth: 1,
             borderBottomColor: colors.border,

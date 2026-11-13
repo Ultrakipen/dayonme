@@ -1,11 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, useWindowDimensions, Platform, StatusBar } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useModernTheme } from '../hooks/useModernTheme';
 import { SendTab } from './EncouragementScreen/SendTab';
 import { ReceivedTab } from './EncouragementScreen/ReceivedTab';
 import { FONT_SIZES } from '../constants';
 
 const EncouragementScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const { colors } = useModernTheme();
   const { width: screenWidth } = useWindowDimensions();
 
@@ -20,7 +22,6 @@ const EncouragementScreen: React.FC = () => {
   const styles = useMemo(() => StyleSheet.create({
     container: {
       flex: 1,
-      paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
     },
     header: {
       paddingTop: 16 * scale,
@@ -56,7 +57,7 @@ const EncouragementScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.card }]}>
+      <View style={[styles.header, { paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + 16 * scale, backgroundColor: colors.card }]}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>익명 메시지</Text>
 
         <View style={styles.tabContainer}>

@@ -16,6 +16,7 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -85,6 +86,7 @@ interface Challenge {
 }
 
 const HotChallengesScreen = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { theme, isDark } = useModernTheme();
   const { isAuthenticated, user } = useAuth();
@@ -778,6 +780,7 @@ const hapticOptions = {
         style={[
           styles.header,
           {
+            paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + spacing.sm,
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }]
           }
