@@ -86,18 +86,18 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
         elevation: 0,
         shadowOpacity: 0,
       },
-      headerTintColor: theme.text.primary.primary,
+      headerTintColor: theme.text.primary,
       headerTitleStyle: {
         fontSize: FONT_SIZES.h2,
         fontWeight: '700',
-        color: theme.text.primary.primary,
+        color: theme.text.primary,
       },
       headerLeft: () => (
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={[styles.headerButton, { backgroundColor: theme.colors.card }]}
         >
-          <MaterialCommunityIcons name="arrow-left" size={24} color={theme.text.primary.primary} />
+          <MaterialCommunityIcons name="arrow-left" size={24} color={theme.text.primary} />
         </TouchableOpacity>
       ),
     });
@@ -381,12 +381,12 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
         {/* 스와이프 액션 배경 */}
         <View style={styles.swipeBackground}>
           <View style={styles.swipeEditArea}>
-            <MaterialCommunityIcons name="pencil" size={20} color="#3B82F6" />
-            <Text style={[styles.swipeText, { color: theme.text.primary.primary }]}>수정</Text>
+            <MaterialCommunityIcons name="pencil" size={20} color={theme.colors.accentText} />
+            <Text style={[styles.swipeText, { color: theme.text.primary }]}>수정</Text>
           </View>
           <View style={styles.swipeDeleteArea}>
             <MaterialCommunityIcons name="delete" size={20} color="#EF4444" />
-            <Text style={[styles.swipeText, { color: theme.text.primary.primary }]}>삭제</Text>
+            <Text style={[styles.swipeText, { color: theme.text.primary }]}>삭제</Text>
           </View>
         </View>
         
@@ -439,7 +439,7 @@ const ComfortMyPostsScreen: React.FC = React.memo(() => {
                   onPress={() => handleEditPost(post)}
                   style={[styles.editButton, isFirstPost && styles.featuredButton]}
                 >
-                  <MaterialCommunityIcons name="pencil" size={isFirstPost ? 16 : 14} color="#3B82F6" />
+                  <MaterialCommunityIcons name="pencil" size={isFirstPost ? 16 : 14} color={theme.colors.accentText} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleDeletePost(post.post_id)}

@@ -125,7 +125,12 @@ export const EmotionHeatmap: React.FC<Props> = React.memo(({ data, period = 'wee
           </View>
         )}
 
-        <View style={[styles.gridContainer, { gap: 6 * scale }]}>
+        <View style={[
+          styles.gridContainer,
+          period === 'week'
+            ? { flexWrap: 'nowrap', justifyContent: 'space-around' } // 요일 헤더(space-around)와 같은 배치로 7열 정렬
+            : { gap: 6 * scale }
+        ]}>
           {displayData.map((day, index) => (
             <View
               key={index}

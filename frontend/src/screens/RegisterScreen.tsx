@@ -14,7 +14,6 @@ import {
   Pressable
 } from 'react-native';
 import { TextInput, ActivityIndicator } from 'react-native-paper';
-import LinearGradient from 'react-native-linear-gradient';
 import { Text, VStack, HStack } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import authService from '../services/api/authService';
@@ -59,11 +58,6 @@ const BREAKPOINTS = {
 } as const;
 
 const COLORS = {
-  gradient: {
-    primary: ['#667eea', '#764ba2'] as const,
-    primaryDark: ['#1a1a1a', '#2d2d2d', '#1a1a1a'] as const,
-    primaryLight: ['#667eea', '#764ba2', '#f093fb'] as const,
-  },
   error: '#FF3040',
   success: '#00C851',
   white: '#ffffff',
@@ -420,7 +414,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       paddingVertical: spacing(16),
       minHeight: spacing(54),
       justifyContent: 'center' as const,
-      shadowColor: COLORS.gradient.primary[0],
+      shadowColor: theme.colors.primary,
       shadowOffset: { width: 0, height: spacing(6) },
       shadowOpacity: 0.25,
       shadowRadius: spacing(12),
@@ -527,7 +521,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           outlineStyle={{
             borderRadius: 16,
             borderWidth: 2,
-            borderColor: formData.email ? COLORS.gradient.primary[0] : 'transparent'
+            borderColor: formData.email ? theme.colors.primary : 'transparent'
           }}
           keyboardType="email-address"
           autoCapitalize="none"
@@ -536,7 +530,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           editable={!sendingCode}
           theme={{
             colors: {
-              primary: COLORS.gradient.primary[0],
+              primary: theme.colors.primary,
               onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
               outline: 'transparent'
             },
@@ -554,16 +548,17 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         accessibilityLabel="인증 코드 받기"
         accessibilityState={{ disabled: sendingCode }}
       >
-        <LinearGradient
-          colors={sendingCode ? ['#ccc', '#999'] : COLORS.gradient.primary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[styles.button, { marginTop: spacing(8), opacity: sendingCode ? 0.7 : 1 }]}
+        <View
+          style={[styles.button, {
+            marginTop: spacing(8),
+            opacity: sendingCode ? 0.7 : 1,
+            backgroundColor: sendingCode ? (isDark ? '#4B4B55' : '#767676') : theme.colors.primary
+          }]}
         >
           <HStack style={{ justifyContent: 'center', alignItems: 'center', gap: spacing(8) }}>
             {sendingCode && <ActivityIndicator size="small" color={COLORS.white} />}
             <Text style={{
-              color: COLORS.white,
+              color: sendingCode ? COLORS.white : theme.colors.onAccent,
               fontSize: normalizeFontSize(16),
               fontWeight: '700',
               letterSpacing: 0.3
@@ -571,7 +566,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               {sendingCode ? '전송 중...' : '인증 코드 받기'}
             </Text>
           </HStack>
-        </LinearGradient>
+        </View>
       </Pressable>
 
       {/* 간편 가입 */}
@@ -716,10 +711,10 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                 height: 40,
                 borderRadius: 8,
                 borderWidth: digit ? 2 : 1.5,
-                borderColor: digit ? COLORS.gradient.primary[0] : (isDark ? 'rgba(255,255,255,0.2)' : '#D1D5DB'),
+                borderColor: digit ? theme.colors.primary : (isDark ? 'rgba(255,255,255,0.2)' : '#D1D5DB'),
                 backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F9FAFB',
                 marginHorizontal: 4,
-                shadowColor: digit ? COLORS.gradient.primary[0] : '#000',
+                shadowColor: digit ? theme.colors.primary : '#000',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: digit ? 0.15 : 0.05,
                 shadowRadius: 4,
@@ -767,16 +762,16 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           accessibilityLabel="인증 코드 확인"
           accessibilityState={{ disabled: loading }}
         >
-          <LinearGradient
-            colors={loading ? ['#ccc', '#999'] : COLORS.gradient.primary}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.button, { opacity: loading ? 0.7 : 1 }]}
+          <View
+            style={[styles.button, {
+              opacity: loading ? 0.7 : 1,
+              backgroundColor: loading ? (isDark ? '#4B4B55' : '#767676') : theme.colors.primary
+            }]}
           >
             <HStack style={{ justifyContent: 'center', alignItems: 'center', gap: spacing(8) }}>
               {loading && <ActivityIndicator size="small" color={COLORS.white} />}
               <Text style={{
-                color: COLORS.white,
+                color: loading ? COLORS.white : theme.colors.onAccent,
                 fontSize: normalizeFontSize(16),
                 fontWeight: '700',
                 letterSpacing: 0.3
@@ -784,7 +779,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                 {loading ? '확인 중...' : '다음'}
               </Text>
             </HStack>
-          </LinearGradient>
+          </View>
         </Pressable>
 
         {resendTimer === 0 && (
@@ -842,13 +837,13 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           outlineStyle={{
             borderRadius: 16,
             borderWidth: 2,
-            borderColor: formData.username ? COLORS.gradient.primary[0] : 'transparent'
+            borderColor: formData.username ? theme.colors.primary : 'transparent'
           }}
           autoCapitalize="none"
           maxLength={20}
           theme={{
             colors: {
-              primary: COLORS.gradient.primary[0],
+              primary: theme.colors.primary,
               onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
               outline: 'transparent'
             },
@@ -869,12 +864,12 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           outlineStyle={{
             borderRadius: 16,
             borderWidth: 2,
-            borderColor: formData.password ? COLORS.gradient.primary[0] : 'transparent'
+            borderColor: formData.password ? theme.colors.primary : 'transparent'
           }}
           secureTextEntry={!showPassword}
           theme={{
             colors: {
-              primary: COLORS.gradient.primary[0],
+              primary: theme.colors.primary,
               onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
               outline: 'transparent'
             },
@@ -912,7 +907,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           secureTextEntry={!showConfirmPassword}
           theme={{
             colors: {
-              primary: COLORS.gradient.primary[0],
+              primary: theme.colors.primary,
               onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
               outline: 'transparent'
             },
@@ -942,14 +937,14 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
             height: 22,
             borderRadius: 6,
             borderWidth: 2,
-            borderColor: showPassword ? COLORS.gradient.primary[0] : (isDark ? '#555' : '#ccc'),
-            backgroundColor: showPassword ? COLORS.gradient.primary[0] : 'transparent',
+            borderColor: showPassword ? theme.colors.primary : (isDark ? '#555' : '#ccc'),
+            backgroundColor: showPassword ? theme.colors.primary : 'transparent',
             justifyContent: 'center',
             alignItems: 'center',
             marginRight: 10
           }}>
             {showPassword && (
-              <MaterialCommunityIcons name="check" size={14} color={COLORS.white} />
+              <MaterialCommunityIcons name="check" size={14} color={theme.colors.onAccent} />
             )}
           </View>
           <Text style={{
@@ -981,14 +976,11 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         accessibilityRole="button"
         accessibilityLabel="다음 단계로"
       >
-        <LinearGradient
-          colors={COLORS.gradient.primary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[styles.button, { marginTop: spacing(14) }]}
+        <View
+          style={[styles.button, { marginTop: spacing(14), backgroundColor: theme.colors.primary }]}
         >
           <Text style={{
-            color: COLORS.white,
+            color: theme.colors.onAccent,
             fontSize: normalizeFontSize(16),
             fontWeight: '700',
             textAlign: 'center',
@@ -996,7 +988,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           }}>
             다음
           </Text>
-        </LinearGradient>
+        </View>
       </Pressable>
     </VStack>
   ), [formData.username, formData.password, formData.confirmPassword, updateFormData, spacing, normalizeFontSize, isDark, theme, styles, showPassword, showConfirmPassword]);
@@ -1036,12 +1028,12 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         outlineStyle={{
           borderRadius: 16,
           borderWidth: 2,
-          borderColor: formData.nickname ? COLORS.gradient.primary[0] : 'transparent'
+          borderColor: formData.nickname ? theme.colors.primary : 'transparent'
         }}
         maxLength={20}
         theme={{
           colors: {
-            primary: COLORS.gradient.primary[0],
+            primary: theme.colors.primary,
             onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
             outline: 'transparent'
           },
@@ -1059,16 +1051,16 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           accessibilityLabel="가입 완료"
           accessibilityState={{ disabled: loading }}
         >
-          <LinearGradient
-            colors={loading ? ['#ccc', '#999'] : COLORS.gradient.primary}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.button, { opacity: loading ? 0.7 : 1 }]}
+          <View
+            style={[styles.button, {
+              opacity: loading ? 0.7 : 1,
+              backgroundColor: loading ? (isDark ? '#4B4B55' : '#767676') : theme.colors.primary
+            }]}
           >
             <HStack style={{ justifyContent: 'center', alignItems: 'center', gap: spacing(8) }}>
               {loading && <ActivityIndicator size="small" color={COLORS.white} />}
               <Text style={{
-                color: COLORS.white,
+                color: loading ? COLORS.white : theme.colors.onAccent,
                 fontSize: normalizeFontSize(16),
                 fontWeight: '700',
                 letterSpacing: 0.3
@@ -1076,7 +1068,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                 {loading ? '가입 중...' : '가입 완료'}
               </Text>
             </HStack>
-          </LinearGradient>
+          </View>
         </Pressable>
 
         <Pressable
@@ -1134,11 +1126,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
             />
           </Pressable>
 
-          <LinearGradient
-            colors={isDark ? COLORS.gradient.primaryDark : COLORS.gradient.primaryLight}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ flex: 1 }}
+          <View
+            style={{ flex: 1, backgroundColor: isDark ? COLORS.black : theme.colors.primary }}
           >
             <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -1193,7 +1182,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                 </View>
               </ScrollView>
             </KeyboardAvoidingView>
-          </LinearGradient>
+          </View>
         </View>
       </TouchableWithoutFeedback>
     </>

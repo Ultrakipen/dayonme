@@ -61,7 +61,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: theme.colors.accentText,
   }), [theme, isDark]);
 
   // 테마별 emotion colors
@@ -421,8 +421,8 @@ const UserProfileScreen: React.FC = React.memo(() => {
       borderWidth: 1.5,
     },
     myDayBadge: {
-      backgroundColor: isDark ? '#1E3A8A' : '#DBEAFE',
-      borderColor: isDark ? '#60A5FA' : '#3B82F6',
+      backgroundColor: theme.colors.tint,
+      borderColor: theme.colors.primary,
     },
     comfortBadge: {
       backgroundColor: isDark ? '#78350F' : '#FEF3C7',
@@ -434,7 +434,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       letterSpacing: -0.2,
     },
     myDayText: {
-      color: isDark ? '#93C5FD' : '#1E40AF',
+      color: theme.colors.accentText,
     },
     comfortText: {
       color: isDark ? '#FCD34D' : '#D97706',

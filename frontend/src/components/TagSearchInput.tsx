@@ -14,6 +14,7 @@ import {
 import { Text } from './ui';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useTheme } from '../contexts/ThemeContext';
+import { useModernTheme } from '../contexts/ModernThemeContext';
 import tagService from '../services/api/tagService';
 
 // 타입 정의
@@ -65,6 +66,7 @@ const TagSearchInput: React.FC<TagSearchInputProps> = ({
   onBlur
 }) => {
   const { isDarkMode } = useTheme();
+  const { theme: modernTheme } = useModernTheme();
   const [searchText, setSearchText] = useState<string>('');
   const [tags, setTags] = useState<Tag[]>([]);
   const [filteredTags, setFilteredTags] = useState<Tag[]>([]);
@@ -408,7 +410,7 @@ const handleCreateTag = async () => {
           <MaterialIcons 
             name={isPopular ? "trending-up" : "tag"} 
             size={16} 
-            color={isSelected ? '#9CA3AF' : (isDarkMode ? '#60A5FA' : '#0095F6')} 
+            color={isSelected ? '#9CA3AF' : modernTheme.colors.accentText} 
           />
           <Text style={[
             styles.dropdownItemText, 
@@ -426,7 +428,7 @@ const handleCreateTag = async () => {
         )}
       </TouchableOpacity>
     );
-  }, [selectedTagIds, isDarkMode, handleTagPress]);
+  }, [selectedTagIds, isDarkMode, handleTagPress, modernTheme.colors.accentText]);
   
   return (
     <View style={styles.container}>
@@ -546,7 +548,7 @@ const handleCreateTag = async () => {
                       filteredTags.map(tag => renderTagItem(tag))
                     ) : loading ? (
                       <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="small" color={isDarkMode ? '#60A5FA' : '#4A6572'} />
+                        <ActivityIndicator size="small" color={modernTheme.colors.accentText} />
                         <Text style={[styles.loadingText, isDarkMode && styles.loadingTextDark]}>검색 중...</Text>
                       </View>
                     ) : (
@@ -556,8 +558,8 @@ const handleCreateTag = async () => {
                             style={[styles.createTagButton, isDarkMode && styles.createTagButtonDark]}
                             onPress={handleCreateTag}
                           >
-                            <MaterialIcons name="add" size={18} color={isDarkMode ? '#60A5FA' : '#0095F6'} />
-                            <Text style={[styles.createTagText, isDarkMode && styles.createTagTextDark]}>
+                            <MaterialIcons name="add" size={18} color={modernTheme.colors.accentText} />
+                            <Text style={[styles.createTagText, isDarkMode && styles.createTagTextDark, { color: modernTheme.colors.accentText }]}>
                               "{searchText || ''}" 태그 만들기
                             </Text>
                           </TouchableOpacity>

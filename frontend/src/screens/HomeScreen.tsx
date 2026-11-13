@@ -83,7 +83,7 @@ import { useHomeScroll, useWeeklyEmotions, useNotifications } from '../hooks/Hom
 import { devLog } from '../utils/security';
 import FilterBar from '../components/HomeScreen/FilterBar';
 import EmptyState from '../components/HomeScreen/EmptyState';
-import { FONT_SIZES, SEMANTIC_COLORS, DARK_COLORS, LIGHT_COLORS, SHADOW_STYLES } from '../constants';
+import { FONT_SIZES, SEMANTIC_COLORS, SHADOW_STYLES } from '../constants';
 // 타입 정의
 export type LocalEmotion = {
     label: string;
@@ -1739,7 +1739,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 style={{
                                     width: normalizeSpace(4),
                                     height: normalizeSpace(16),
-                                    backgroundColor: '#2563eb',
+                                    backgroundColor: modernTheme.colors.primary,
                                     borderRadius: normalizeSpace(2),
                                     marginRight: normalizeSpace(6)
                                 }}
@@ -1904,10 +1904,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                         { width: '100%' },
                         highlightedPost?.id === post.post_id && highlightedPost?.content === post.content && {
                             borderWidth: 8,
-                            borderColor: isDark ? '#a78bfa' : '#8b5cf6',
-                            backgroundColor: isDark ? 'rgba(139, 92, 246, 0.15)' : '#f3e8ff',
+                            borderColor: modernTheme.colors.primary,
+                            backgroundColor: modernTheme.colors.tint,
                             transform: [{ scale: 1.01 }],
-                            shadowColor: isDark ? '#a78bfa' : '#7c3aed',
+                            shadowColor: modernTheme.colors.primary,
                             shadowOpacity: 0.5,
                             shadowRadius: 16,
                             borderRadius: 8
@@ -2715,7 +2715,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         width: normalizeIcon(32),
                                         height: normalizeIcon(32),
                                         borderRadius: normalizeSpace(14),
-                                        backgroundColor: '#f0f9ff',
+                                        backgroundColor: modernTheme.colors.tint,
                                         justifyContent: 'center',
                                         alignItems: 'center'
                                     }}
@@ -2723,7 +2723,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     <MaterialCommunityIcons
                                         name="pencil-outline"
                                         size={normalizeIcon(16)}
-                                        color="#2563eb"
+                                        color={modernTheme.colors.accentText}
                                     />
                                 </Box>
                                 <HStack className="items-center">
@@ -2732,7 +2732,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         style={{
                                             width: 4,
                                             height: 16,
-                                            backgroundColor: '#2563eb',
+                                            backgroundColor: modernTheme.colors.primary,
                                             borderRadius: 2
                                         }}
                                     />
@@ -3092,11 +3092,11 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 width: normalizeIcon(48),
                 height: normalizeIcon(48),
                 borderRadius: normalizeSpace(14),
-                backgroundColor: user?.profile_image_url ? 'transparent' : (isDark ? DARK_COLORS.purple : LIGHT_COLORS.purple),
+                backgroundColor: user?.profile_image_url ? 'transparent' : modernTheme.colors.tint,
                 justifyContent: 'center',
                 alignItems: 'center',
                 borderWidth: 2,
-                borderColor: isDark ? DARK_COLORS.purpleLight : LIGHT_COLORS.purpleLight,
+                borderColor: modernTheme.colors.border,
                 overflow: 'hidden'
             }}
         >
@@ -3367,10 +3367,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     {
                                         paddingHorizontal: 14,
                                         paddingVertical: 5,
-                                        backgroundColor: isDark ? 'rgba(139, 92, 246, 0.25)' : 'rgba(139, 92, 246, 0.1)',
+                                        backgroundColor: modernTheme.colors.tint,
                                         borderRadius: 12,
                                         borderWidth: 1,
-                                        borderColor: isDark ? 'rgba(139, 92, 246, 0.4)' : 'rgba(139, 92, 246, 0.2)',
+                                        borderColor: modernTheme.colors.border,
                                         flexDirection: 'row',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -3383,7 +3383,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             >
                                 <Text style={{
                                     fontSize: normalize(13, 12, 15),
-                                    color: '#8B5CF6',
+                                    color: modernTheme.colors.accentText,
                                     fontWeight: '500',
                                     marginRight: 6,
                                 }}>
@@ -3392,7 +3392,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 <Text
                                     style={{
                                         fontSize: normalize(13, 12, 15),
-                                        color: isDark ? '#E879F9' : '#8B5CF6',
+                                        color: modernTheme.colors.accentText,
                                         fontWeight: '600',
                                         letterSpacing: -0.1,
                                         lineHeight: 20,
@@ -3452,7 +3452,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     onPress={() => navigation.navigate('Auth' as never)}
                                     style={{
                                         borderRadius: normalizeSpace(14),
-                                        backgroundColor: isDark ? DARK_COLORS.purple : LIGHT_COLORS.purple,
+                                        backgroundColor: modernTheme.colors.tint,
                                         width: normalizeSpace(36),
                                         height: normalizeSpace(36),
                                         justifyContent: 'center',

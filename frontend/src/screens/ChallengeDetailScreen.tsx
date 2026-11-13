@@ -232,7 +232,7 @@ const ChallengeDetailScreen = () => {
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: theme.colors.accentText,
   };
 
   // 헤더 숨기기
@@ -2706,7 +2706,7 @@ const ChallengeDetailScreen = () => {
       case "upcoming":
         return COLORS.warning; // 예정 - 주황색
       case "completed":
-        return "#6366F1"; // 완료 - 보라색 (성취감을 주는 색상)
+        return theme.colors.primary; // 완료 - 앱 accent
       default:
         return COLORS.textSecondary;
     }
@@ -2979,7 +2979,7 @@ const ChallengeDetailScreen = () => {
                   {
                     backgroundColor: getStatusColor(challenge.status),
                     ...(challenge.status === "completed" && {
-                      shadowColor: "#6366F1",
+                      shadowColor: theme.colors.primary,
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: 0.15,
                       shadowRadius: 4,
@@ -2991,7 +2991,7 @@ const ChallengeDetailScreen = () => {
                 <Text
                   style={[
                     styles.statusText,
-                    challenge.status === "completed" && { fontWeight: "700" },
+                    challenge.status === "completed" && { fontWeight: "700", color: theme.colors.onAccent },
                   ]}
                 >
                   {challenge.status === "active"
@@ -3319,8 +3319,8 @@ const ChallengeDetailScreen = () => {
                   }]}>
                     응원댓글
                   </Text>
-                  <View style={[styles.commentBadgeCompact, { backgroundColor: colors.primary }]}>
-                    <Text style={[styles.commentBadgeText, { color: '#FFFFFF' }]}>{comments.length}</Text>
+                  <View style={[styles.commentBadgeCompact, { backgroundColor: theme.colors.primary }]}>
+                    <Text style={[styles.commentBadgeText, { color: theme.colors.onAccent }]}>{comments.length}</Text>
                   </View>
                 </TouchableOpacity>
               </View>

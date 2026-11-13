@@ -1170,7 +1170,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             padding: SPACING.lg
           }}>
             <Center className="items-center justify-center py-8">
-              <ActivityIndicator size="large" color={theme.colors?.primary || '#2563EB'} />
+              <ActivityIndicator size="large" color={theme.colors.primary} />
               <Text style={{
                 fontSize: FONT_SIZES.sm,
                 color: theme.text.tertiary,
@@ -1281,7 +1281,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             {!isEmotionSectionCollapsed && (
               isLoadingEmotions ? (
                 <Center className="items-center justify-center py-4">
-                  <ActivityIndicator size="large" color={theme.colors?.primary || '#2563EB'} />
+                  <ActivityIndicator size="large" color={theme.colors.primary} />
                   <Text style={{
                     fontSize: FONT_SIZES.sm,
                     color: theme.text.tertiary,
@@ -1463,7 +1463,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                   lineHeight: FONT_SIZES.base * 1.5,
                   includeFontPadding: false
                 }}
-                selectionColor={isDark ? '#60a5fa' : '#3B82F6'}
+                selectionColor={theme.colors.primary}
                 underlineColorAndroid="transparent"
                 keyboardAppearance={isDark ? 'dark' : 'light'}
                 maxLength={MAX_CONTENT_LENGTH}
@@ -1593,7 +1593,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                           height: normalize(70),
                           borderRadius: normalize(10),
                           borderWidth: 2,
-                          borderColor: theme.colors?.primary || '#2563EB'
+                          borderColor: theme.colors.primary
                         }}
                       />
                       <IconButton
@@ -1626,7 +1626,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                   minHeight: selectedImages.length > 0 ? normalize(60, false) : normalize(100, false),
                   borderWidth: 2,
                   borderStyle: 'dashed',
-                  borderColor: isUploadingImage ? theme.text.tertiary : (theme.colors?.primary || '#2563EB'),
+                  borderColor: isUploadingImage ? theme.text.tertiary : (theme.colors.primary),
                   borderRadius: normalize(12, false),
                   backgroundColor: theme.bg.secondary,
                   justifyContent: 'center',
@@ -1639,8 +1639,8 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
               >
                 {selectedImages.length === 0 ? (
                   <>
-                    <IconButton icon="camera-plus" size={normalize(30)} iconColor={isUploadingImage ? theme.text.tertiary : (theme.colors?.primary || '#2563EB')} />
-                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: isUploadingImage ? theme.text.tertiary : (theme.colors?.primary || '#2563EB'), marginTop: SPACING.xs, fontFamily: 'Pretendard-Bold' }}>
+                    <IconButton icon="camera-plus" size={normalize(30)} iconColor={isUploadingImage ? theme.text.tertiary : theme.colors.accentText} />
+                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: isUploadingImage ? theme.text.tertiary : theme.colors.accentText, marginTop: SPACING.xs, fontFamily: 'Pretendard-Bold' }}>
                       {isUploadingImage ? '업로드 중...' : '사진 추가하기 (최대 3개)'}
                     </Text>
                     <Text style={{ fontSize: FONT_SIZES.xs, color: theme.text.tertiary, marginTop: normalize(2), paddingBottom: normalize(5), textAlign: 'center', fontFamily: 'Pretendard-Medium' }}>
@@ -1649,8 +1649,8 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                   </>
                 ) : (
                   <HStack className="items-center">
-                    <MaterialCommunityIcons name="plus-circle" size={normalize(20)} color={theme.colors?.primary || '#2563EB'} />
-                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: theme.colors?.primary || '#2563EB', marginLeft: SPACING.xs, fontFamily: 'Pretendard-SemiBold' }}>
+                    <MaterialCommunityIcons name="plus-circle" size={normalize(20)} color={theme.colors.accentText} />
+                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: theme.colors.accentText, marginLeft: SPACING.xs, fontFamily: 'Pretendard-SemiBold' }}>
                       사진 추가 ({selectedImages.length}/3)
                     </Text>
                   </HStack>
@@ -1702,15 +1702,15 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                 onPress={() => setIsAnonymous(!isAnonymous)}
                 disabled={isLoading}
                 style={{
-                  backgroundColor: isAnonymous ? (theme.colors?.primary || '#2563EB') : 'transparent',
-                  borderColor: isAnonymous ? (theme.colors?.primary || '#2563EB') : theme.text.tertiary,
+                  backgroundColor: isAnonymous ? (theme.colors.primary) : 'transparent',
+                  borderColor: isAnonymous ? (theme.colors.primary) : theme.text.tertiary,
                   borderWidth: 2,
                   borderRadius: normalize(16, false),
                   minWidth: normalize(80, false),
                   elevation: isAnonymous ? 2 : 0
                 }}
                 labelStyle={{
-                  color: isAnonymous ? 'white' : theme.text.tertiary,
+                  color: isAnonymous ? theme.colors.onAccent : theme.text.tertiary,
                   fontWeight: '700',
                   fontSize: FONT_SIZES.xs,
                   fontFamily: 'Pretendard-Bold'
@@ -1800,7 +1800,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             <VStack style={{ gap: SPACING.md }}>
               <Pressable
                 style={{
-                  backgroundColor: theme.colors?.primary || '#2563EB',
+                  backgroundColor: theme.colors.primary,
                   paddingVertical: SPACING.md,
                   paddingHorizontal: SPACING.xl,
                   borderRadius: normalize(12, false),
@@ -1813,8 +1813,8 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                   selectImageFromGallery();
                 }}
               >
-                <MaterialCommunityIcons name="image" size={normalize(20, false)} color="white" style={{ marginRight: SPACING.sm }} />
-                <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '600', color: 'white', fontFamily: 'Pretendard-SemiBold' }}>
+                <MaterialCommunityIcons name="image" size={normalize(20, false)} color={theme.colors.onAccent} style={{ marginRight: SPACING.sm }} />
+                <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '600', color: theme.colors.onAccent, fontFamily: 'Pretendard-SemiBold' }}>
                   갤러리
                 </Text>
               </Pressable>

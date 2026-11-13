@@ -134,7 +134,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
     text: modernTheme.text.primary,
     textSecondary: modernTheme.text.secondary,
     border: modernTheme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: modernTheme.colors.accentText,
     // 기능별 색상 (하드코딩 제거)
     like: isDark ? '#f59e0b' : '#f59e0b', // 좋아요 (노란색)
     heart: isDark ? '#ef4444' : '#ef4444', // 하트 (빨간색)
@@ -2353,7 +2353,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 mode="contained"
                 onPress={handleSaveCommentEdit}
                 compact
-                style={{ borderRadius: normalizeSpace(6), backgroundColor: colors.primary }}
+                textColor={modernTheme.colors.onAccent}
+                style={{ borderRadius: normalizeSpace(6), backgroundColor: modernTheme.colors.primary }}
                 contentStyle={{ paddingHorizontal: normalizeSpace(6) }}
                 labelStyle={{ fontSize: normalize(13) }}
               >
@@ -3123,7 +3124,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   paddingVertical: 4,
                   paddingHorizontal: 8,
                   alignSelf: 'flex-start',
-                  backgroundColor: '#6366F1',
+                  backgroundColor: modernTheme.colors.primary,
                   borderRadius: 8,
                   zIndex: 1000,
                   elevation: 5,
@@ -3132,7 +3133,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 <RNText style={{
                   fontSize: normalize(12),
                   fontWeight: '600',
-                  color: '#FFFFFF',
+                  color: modernTheme.colors.onAccent,
                   letterSpacing: 0.1,
                 }}>
                   {isContentExpanded ? '접기' : '더보기'}
@@ -3167,15 +3168,15 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   <TouchableOpacity
                     key={`tag-${post.post_id}-${tagId}`}
                     style={{
-                      backgroundColor: isDark ? '#0a2a3d' : '#E3F2FD',
+                      backgroundColor: modernTheme.colors.tint,
                       paddingHorizontal: normalizeSpace(12),
                       paddingVertical: normalizeSpace(6),
                       borderRadius: 16,
                       marginRight: normalizeSpace(8),
                       marginBottom: normalizeSpace(8),
                       borderWidth: 1,
-                      borderColor: '#0095F6',
-                      shadowColor: '#0095F6',
+                      borderColor: modernTheme.colors.accentText,
+                      shadowColor: modernTheme.colors.accentText,
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: 0.1,
                       shadowRadius: 4,
@@ -3185,7 +3186,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     <RNText style={{
                       fontSize: normalize(12),
                       fontWeight: '500',
-                      color: '#0095F6',
+                      color: modernTheme.colors.accentText,
                     }}>
                       #{tagName}
                     </RNText>
@@ -3460,7 +3461,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                           width: normalizeIcon(28),
                           height: normalizeIcon(28),
                           borderRadius: 14,
-                          backgroundColor: '#8b5cf6',
+                          backgroundColor: modernTheme.colors.primary,
                           alignItems: 'center',
                           justifyContent: 'center',
                           marginRight: normalizeSpace(10),
@@ -3468,7 +3469,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                           <RNText style={{
                             fontSize: normalize(16),
                             fontWeight: '600',
-                            color: '#ffffff'
+                            color: modernTheme.colors.onAccent
                           }}>
                             {(bestComment.user?.nickname || '사용자')[0]}
                           </RNText>
@@ -3695,7 +3696,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             borderRadius: 8,
             marginBottom: normalizeSpace(12),
             borderLeftWidth: 4,
-            borderLeftColor: '#8B5CF6'
+            borderLeftColor: modernTheme.colors.primary
           }}>
             <HStack style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: normalizeSpace(4) }}>
               <RNText style={{ fontSize: normalize(12), color: colors.textSecondary, fontWeight: '600' }}>
@@ -3722,7 +3723,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           <Switch
             value={isAnonymous}
             onValueChange={setIsAnonymous}
-            color="#8B5CF6"
+            color={modernTheme.colors.primary}
           />
           <RNText style={{ marginLeft: normalizeSpace(8), fontSize: normalize(13), color: colors.text }}>
             익명 댓글 작성
@@ -3747,12 +3748,12 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             borderRadius: 12,
           }}
           outlineColor="rgba(0, 0, 0, 0.08)"
-          activeOutlineColor="#6366F1"
+          activeOutlineColor={modernTheme.colors.primary}
           theme={{
             colors: {
               onSurfaceVariant: isDark ? '#888888' : '#6B7280',
               outline: 'rgba(0, 0, 0, 0.08)',
-              primary: '#6366F1',
+              primary: modernTheme.colors.primary,
               text: isDark ? '#ffffff' : '#000000',
             }
           }}
@@ -3796,10 +3797,10 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             style={{
               flex: 2,
               borderRadius: 10,
-              backgroundColor: (!commentText.trim() || submitting) ? (isDark ? '#3f3f46' : '#d1d5db') : '#6366F1',
+              backgroundColor: (!commentText.trim() || submitting) ? (isDark ? '#3f3f46' : '#d1d5db') : modernTheme.colors.primary,
               borderWidth: 1,
-              borderColor: 'rgba(99, 102, 241, 0.2)',
-              shadowColor: '#6366F1',
+              borderColor: modernTheme.colors.border,
+              shadowColor: modernTheme.colors.primary,
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.1,
               shadowRadius: 3,
@@ -3813,7 +3814,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             <RNText style={{
               fontSize: normalize(14),
               fontWeight: '600',
-              color: 'white'
+              color: (!commentText.trim() || submitting) ? 'white' : modernTheme.colors.onAccent
             }}>
               {submitting ? '작성 중...' : (replyingTo ? '답글 작성' : '댓글 작성')}
             </RNText>

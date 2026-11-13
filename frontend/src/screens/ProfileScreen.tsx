@@ -689,8 +689,8 @@ const ProfileScreen: React.FC = () => {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
               {[
                 { emoji: '🎨', text: '나만의\n감정 기록장', gradient: ['#FF6B9D', '#FFA06B'] },
-                { emoji: '💫', text: '나를 표현하는\n특별한 공간', gradient: ['#A78BFA', '#EC4899'] },
-                { emoji: '🏆', text: '도전과\n성장의 기록', gradient: ['#60A5FA', '#34D399'] },
+                { emoji: '💫', text: '나를 표현하는\n특별한 공간', gradient: isDark ? [theme.colors.primary, theme.colors.primary] : [theme.colors.tint, theme.colors.tint] },
+                { emoji: '🏆', text: '도전과\n성장의 기록', gradient: isDark ? [theme.colors.primary, theme.colors.primary] : [theme.colors.tint, theme.colors.tint] },
                 { emoji: '💬', text: '따뜻한\n위로와 공감', gradient: ['#FBBF24', '#F59E0B'] }
               ].map((item, index) => (
                 <LinearGradient
@@ -1183,8 +1183,8 @@ const ProfileScreen: React.FC = () => {
               activeOpacity={0.7}
               accessibilityLabel="관심 글"
             >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(236, 72, 153, 0.15)' : 'rgba(236, 72, 153, 0.1)' }]}>
-                <Icon name="bookmark-outline" size={20} color="#EC4899" />
+              <View style={[styles.settingIconContainer, { backgroundColor: theme.colors.tint }]}>
+                <Icon name="bookmark-outline" size={20} color={theme.colors.accentText} />
               </View>
               <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>관심 글</RNText>
               <Icon name="chevron-forward" size={16} color={isDark ? emotionColors.textSecondary : '#999999'} />

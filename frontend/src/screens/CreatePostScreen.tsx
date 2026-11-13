@@ -70,7 +70,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: theme.colors.primary,
   };
 
   const [content, setContent] = useState('');
@@ -362,7 +362,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
               maxLength={1000}
               testID="post-content-input"
               outlineColor={theme.bg.border}
-              activeOutlineColor={isDark ? '#8b5cf6' : '#6b21a8'}
+              activeOutlineColor={theme.colors.primary}
             />
             <HStack style={{ justifyContent: 'flex-end', marginTop: 8 }}>
               <Text style={{ fontSize: FONT_SIZES.small, color: theme.text.secondary }}>
@@ -396,7 +396,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
 
             <HStack style={{ alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.bg.border }}>
               <Text style={{ fontSize: FONT_SIZES.bodySmall, color: theme.text.secondary, marginRight: 8 }}>게시자 표시:</Text>
-              <Text style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: isDark ? '#a78bfa' : '#6b21a8' }}>
+              <Text style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: theme.colors.accentText }}>
                 {isAnonymous ? '익명' : (user?.nickname || user?.username || '사용자')}
               </Text>
             </HStack>
@@ -413,7 +413,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
             />
             <Card.Content>
               <HStack style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <Text style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: isDark ? '#a78bfa' : '#6b21a8' }}>
+                <Text style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: theme.colors.accentText }}>
                   {isAnonymous ? '익명' : (user?.nickname || user?.username || '사용자')}
                 </Text>
                 <Text style={{ fontSize: FONT_SIZES.small, color: theme.text.secondary }}>

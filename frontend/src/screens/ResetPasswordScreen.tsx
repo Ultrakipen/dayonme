@@ -12,7 +12,6 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { TextInput, ActivityIndicator } from 'react-native-paper';
-import LinearGradient from 'react-native-linear-gradient';
 import { Box, Text, VStack } from '../components/ui';
 import { API_CONFIG } from '../config/api';
 import { useModernTheme } from '../contexts/ModernThemeContext';
@@ -160,17 +159,14 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
   if (isCheckingToken) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
-        <LinearGradient
-          colors={isDark ? ['#4a5568', '#2d3748', '#1a202c'] : ['#667eea', '#764ba2', '#f093fb']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' }}
+        <View
+          style={{ flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}
         >
           <ActivityIndicator size="large" color={colors.text} />
           <Text style={{ color: colors.text, fontSize: FONT_SIZES.h3, marginTop: 20, fontWeight: '600' }}>
             링크 확인 중...
           </Text>
-        </LinearGradient>
+        </View>
       </View>
     );
   }
@@ -184,11 +180,8 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
       <StatusBar barStyle={isDark ? 'light-content' : 'light-content'} backgroundColor="transparent" translucent />
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
-          <LinearGradient
-            colors={isDark ? ['#4a5568', '#2d3748', '#1a202c'] : ['#667eea', '#764ba2', '#f093fb']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ flex: 1 }}
+          <View
+            style={{ flex: 1, backgroundColor: isDark ? theme.colors.background : theme.colors.primary }}
           >
             <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -235,24 +228,24 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                         shadowRadius: 16,
                         elevation: 12
                       }}>
-                        <LinearGradient
-                          colors={isDark ? ['#4a5568', '#2d3748'] : ['#667eea', '#764ba2']}
+                        <View
                           style={{
                             width: 60,
                             height: 60,
                             borderRadius: 30,
                             justifyContent: 'center',
-                            alignItems: 'center'
+                            alignItems: 'center',
+                            backgroundColor: theme.colors.primary
                           }}
                         >
                           <Text style={{
                             fontSize: 28,
                             fontWeight: '900',
-                            color: theme.colors.text.primary
+                            color: theme.colors.onAccent
                           }}>
                             🔑
                           </Text>
-                        </LinearGradient>
+                        </View>
                       </View>
                       <View style={{ alignItems: 'center' }}>
                         <Text style={{
@@ -407,11 +400,9 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                     {/* 제출 버튼 섹션 */}
                     <VStack className="space-y-6">
                       <TouchableWithoutFeedback onPress={handleResetPassword}>
-                        <LinearGradient
-                          colors={isLoading ? ['#ccc', '#999'] : (isDark ? ['#4a5568', '#2d3748'] : ['#667eea', '#764ba2'])}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 0 }}
+                        <View
                           style={{
+                            backgroundColor: isLoading ? (isDark ? '#4B4B55' : '#767676') : theme.colors.primary,
                             borderRadius: 16,
                             paddingVertical: 18,
                             paddingHorizontal: 24,
@@ -431,12 +422,12 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                             {isLoading && (
                               <ActivityIndicator
                                 size="small"
-                                color={theme.colors.text.primary}
+                                color="#FFFFFF"
                                 style={{ marginRight: 12 }}
                               />
                             )}
                             <Text style={{
-                              color: theme.colors.text.primary,
+                              color: isLoading ? '#FFFFFF' : theme.colors.onAccent,
                               fontSize: FONT_SIZES.h3,
                               fontWeight: '800',
                               textAlign: 'center',
@@ -445,7 +436,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                               {isLoading ? '처리 중...' : '비밀번호 변경'}
                             </Text>
                           </View>
-                        </LinearGradient>
+                        </View>
                       </TouchableWithoutFeedback>
 
                       {/* 로그인으로 돌아가기 */}
@@ -477,7 +468,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
                 </View>
               </ScrollView>
             </KeyboardAvoidingView>
-          </LinearGradient>
+          </View>
         </View>
       </TouchableWithoutFeedback>
     </>

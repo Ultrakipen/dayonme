@@ -94,7 +94,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: theme.colors.primary,
   };
 
   // 반응형 크기 계산 (기준: 360dp - React Native 논리적 픽셀)
@@ -919,12 +919,12 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 position: 'absolute',
                 top: scale(8),
                 left: scale(8),
-                backgroundColor: (selectedImage || (uploadedImageUrl && uploadedImageUrl !== currentImageUrl)) ? '#3b82f6' : '#22c55e',
+                backgroundColor: (selectedImage || (uploadedImageUrl && uploadedImageUrl !== currentImageUrl)) ? theme.colors.primary : '#22c55e',
                 borderRadius: scale(12),
                 paddingHorizontal: scale(8),
                 paddingVertical: scale(4)
               }}>
-                <Text style={{ color: 'white', fontSize: scale(13), fontWeight: 'bold' }}>
+                <Text style={{ color: (selectedImage || (uploadedImageUrl && uploadedImageUrl !== currentImageUrl)) ? theme.colors.onAccent : 'white', fontSize: scale(13), fontWeight: 'bold' }}>
                   {(selectedImage || (uploadedImageUrl && uploadedImageUrl !== currentImageUrl)) ? '새 이미지' : '기존 이미지'}
                 </Text>
               </Box>
@@ -977,11 +977,11 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
             style={{
               marginTop: scale(12),
               borderRadius: scale(8),
-              backgroundColor: getDisplayImageUrl() ? '#f59e0b' : '#3b82f6'
+              backgroundColor: getDisplayImageUrl() ? '#f59e0b' : theme.colors.primary
             }}
             contentStyle={{ paddingVertical: scale(8) }}
             icon={getDisplayImageUrl() ? "image-edit" : "image-plus"}
-            labelStyle={{ fontSize: scale(14) }}
+            labelStyle={{ fontSize: scale(14), ...(getDisplayImageUrl() ? {} : { color: theme.colors.onAccent }) }}
             {...({} as any)}
           >
             {getDisplayImageUrl() ? '이미지 변경/제거' : '이미지 추가'}
@@ -1157,8 +1157,8 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               <Switch
                 value={isAnonymous}
                 onValueChange={setIsAnonymous}
-                thumbColor={isAnonymous ? '#8b5cf6' : '#f4f3f4'}
-                trackColor={{ false: '#d1d5db', true: '#c084fc' }}
+                thumbColor={isAnonymous ? theme.colors.onAccent : '#f4f3f4'}
+                trackColor={{ false: '#d1d5db', true: theme.colors.primary }}
                 style={{ transform: [{ scaleX: 1.1 }, { scaleY: 1.1 }] }}
               />
             </Box>
@@ -1176,7 +1176,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
             marginBottom: scale(16),
             borderWidth: 1,
             borderColor: theme.bg.border,
-            shadowColor: isDark ? '#fff' : '#8b5cf6',
+            shadowColor: isDark ? '#fff' : '#000000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: isDark ? 0.1 : 0.2,
             shadowRadius: 8,
@@ -1202,7 +1202,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 style={{
                   width: scale(8),
                   height: scale(8),
-                  backgroundColor: '#8b5cf6',
+                  backgroundColor: theme.colors.primary,
                   borderRadius: scale(4),
                   marginRight: scale(12),
                   marginTop: 2
@@ -1226,7 +1226,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 style={{
                   width: scale(8),
                   height: scale(8),
-                  backgroundColor: '#8b5cf6',
+                  backgroundColor: theme.colors.primary,
                   borderRadius: scale(4),
                   marginRight: scale(12),
                   marginTop: 2
@@ -1250,7 +1250,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 style={{
                   width: scale(8),
                   height: scale(8),
-                  backgroundColor: '#8b5cf6',
+                  backgroundColor: theme.colors.primary,
                   borderRadius: scale(4),
                   marginRight: scale(12),
                   marginTop: 2
@@ -1274,7 +1274,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 style={{
                   width: scale(8),
                   height: scale(8),
-                  backgroundColor: '#8b5cf6',
+                  backgroundColor: theme.colors.primary,
                   borderRadius: scale(4),
                   marginRight: scale(12),
                   marginTop: 2

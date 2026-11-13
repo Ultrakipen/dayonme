@@ -97,7 +97,7 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
     border: theme.colors.border,
     searchIcon: theme.colors.primary,
     likeColor: isDark ? '#FF8A8A' : '#EF4444',
-    commentColor: isDark ? '#60A5FA' : '#3B82F6',
+    commentColor: theme.colors.accentText,
   }), [isDark, theme]);
 
 
@@ -597,7 +597,7 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
               paddingVertical: scaleSpacing(6),
               paddingHorizontal: scaleSpacing(4),
               backgroundColor: selectedTab === tab ? theme.colors.card : 'transparent',
-              shadowColor: isDark ? '#000' : '#8B5CF6',
+              shadowColor: isDark ? '#000' : theme.colors.primary,
               shadowOffset: selectedTab === tab ? { width: 0, height: 1 } : undefined,
               shadowOpacity: selectedTab === tab ? (isDark ? 0.3 : 0.06) : undefined,
               shadowRadius: selectedTab === tab ? 3 : undefined,
@@ -686,7 +686,7 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
       style={{
         backgroundColor: theme.colors.card,
         borderRadius: scaleSpacing(14),
-        shadowColor: isDark ? '#000' : '#8B5CF6',
+        shadowColor: isDark ? '#000' : theme.colors.primary,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: isDark ? 0.4 : 0.08,
         shadowRadius: 8,
@@ -723,7 +723,7 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
                   fontSize: scaleFontSize(TYPOGRAPHY.body - 1),
                   fontWeight: '700',
                   color: post.type === 'myDay'
-                    ? (isDark ? '#A78BFA' : '#7C3AED')
+                    ? theme.colors.accentText
                     : (isDark ? '#F9A8D4' : '#EC4899')
                 }}>
                   {post.type === 'myDay' ? '나의 하루' : '위로와 공감'}
@@ -891,17 +891,17 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
                   <View
                     key={i}
                     style={{
-                      backgroundColor: isDark ? 'rgba(233, 121, 249, 0.2)' : '#FEF7FF',
+                      backgroundColor: theme.colors.tint,
                       paddingHorizontal: scaleSpacing(10),
                       paddingVertical: scaleSpacing(5),
                       borderRadius: scaleSpacing(12),
                       marginRight: scaleSpacing(6),
                       marginBottom: scaleSpacing(6),
                       borderWidth: 1,
-                      borderColor: isDark ? 'rgba(233, 121, 249, 0.5)' : '#E879F9'
+                      borderColor: theme.colors.border
                     }}
                   >
-                    <Text style={{ fontSize: scaleFontSize(TYPOGRAPHY.body - 1), fontWeight: '600', color: isDark ? '#F0ABFC' : '#A855F7' }}>
+                    <Text style={{ fontSize: scaleFontSize(TYPOGRAPHY.body - 1), fontWeight: '600', color: theme.colors.accentText }}>
                       {getEmotionIcon(emotion.name)} {emotion.name}
                     </Text>
                   </View>

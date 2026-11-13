@@ -13,7 +13,6 @@ import {
   Pressable
 } from 'react-native';
 import { TextInput, ActivityIndicator, Checkbox } from 'react-native-paper';
-import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
@@ -51,11 +50,6 @@ const BREAKPOINTS = {
 
 // 색상 상수
 const COLORS = {
-  gradient: {
-    primary: ['#667eea', '#764ba2'] as const,
-    primaryDark: ['#1a1a1a', '#2d2d2d', '#1a1a1a'] as const,
-    primaryLight: ['#667eea', '#764ba2', '#f093fb'] as const,
-  },
   error: '#FF3040',
   white: '#ffffff',
   black: '#000000',
@@ -355,7 +349,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const styles = useMemo(() => ({
     container: {
       flex: 1,
-      backgroundColor: isDark ? COLORS.black : COLORS.gradient.primary[0]
+      backgroundColor: isDark ? COLORS.black : theme.colors.primary
     },
     scrollContent: {
       flexGrow: 1,
@@ -409,7 +403,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       paddingVertical: spacing(13),
       minHeight: spacing(50),
       justifyContent: 'center' as const,
-      shadowColor: COLORS.gradient.primary[0],
+      shadowColor: theme.colors.primary,
       shadowOffset: { width: 0, height: spacing(5) },
       shadowOpacity: 0.25,
       shadowRadius: spacing(10),
@@ -455,11 +449,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               />
             </Pressable>
 
-            <LinearGradient
-              colors={isDark ? COLORS.gradient.primaryDark : COLORS.gradient.primaryLight}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ flex: 1 }}
+            <View
+              style={{ flex: 1, backgroundColor: isDark ? COLORS.black : theme.colors.primary }}
             >
               <KeyboardAvoidingView
                 behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -483,30 +474,30 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                         backgroundColor: isDark ? '#2d2d2d' : COLORS.white,
                         justifyContent: 'center',
                         alignItems: 'center',
-                        shadowColor: isDark ? COLORS.white : COLORS.gradient.primary[0],
+                        shadowColor: isDark ? COLORS.white : theme.colors.primary,
                         shadowOffset: { width: 0, height: spacing(4) },
                         shadowOpacity: isDark ? 0.1 : 0.25,
                         shadowRadius: spacing(10),
                         elevation: 10
                       }}>
-                        <LinearGradient
-                          colors={COLORS.gradient.primary}
+                        <View
                           style={{
                             width: spacing(38),
                             height: spacing(38),
                             borderRadius: spacing(19),
                             justifyContent: 'center',
-                            alignItems: 'center'
+                            alignItems: 'center',
+                            backgroundColor: theme.colors.primary
                           }}
                         >
                           <Text style={{
                             fontSize: normalizeFontSize(18),
                             fontWeight: '900',
-                            color: COLORS.white
+                            color: theme.colors.onAccent
                           }}>
                             💙
                           </Text>
-                        </LinearGradient>
+                        </View>
                       </View>
                       <View style={{ alignItems: 'center' }}>
                         <Text style={{
@@ -551,7 +542,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           outlineStyle={{
                             borderRadius: spacing(12),
                             borderWidth: isDark ? 0 : (errors.email ? 1.5 : email ? 1 : 0),
-                            borderColor: errors.email ? COLORS.error : email ? COLORS.gradient.primary[0] : 'transparent'
+                            borderColor: errors.email ? COLORS.error : email ? theme.colors.primary : 'transparent'
                           }}
                           keyboardType="email-address"
                           autoCapitalize="none"
@@ -565,7 +556,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           onSubmitEditing={() => passwordRef.current?.focus()}
                           theme={{
                             colors: {
-                              primary: COLORS.gradient.primary[0],
+                              primary: theme.colors.primary,
                               onSurfaceVariant: isDark ? COLORS.placeholder.dark : '#666',
                               outline: 'transparent',
                               text: isDark ? COLORS.text.dark : COLORS.text.light,
@@ -600,7 +591,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           outlineStyle={{
                             borderRadius: spacing(12),
                             borderWidth: isDark ? 0 : (errors.password ? 1.5 : password ? 1 : 0),
-                            borderColor: errors.password ? COLORS.error : password ? COLORS.gradient.primary[0] : 'transparent'
+                            borderColor: errors.password ? COLORS.error : password ? theme.colors.primary : 'transparent'
                           }}
                           secureTextEntry={!showPassword}
                           autoComplete="password"
@@ -615,13 +606,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                               icon={showPassword ? 'eye-off' : 'eye'}
                               onPress={togglePasswordVisibility}
                               size={spacing(22)}
-                              color={password ? COLORS.gradient.primary[0] : (isDark ? '#888' : COLORS.placeholder.light)}
+                              color={password ? theme.colors.accentText : (isDark ? '#888' : COLORS.placeholder.light)}
                               disabled={isLoading}
                             />
                           }
                           theme={{
                             colors: {
-                              primary: COLORS.gradient.primary[0],
+                              primary: theme.colors.primary,
                               onSurfaceVariant: isDark ? COLORS.placeholder.dark : '#666',
                               outline: 'transparent',
                               text: isDark ? COLORS.text.dark : COLORS.text.light,
@@ -656,7 +647,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           <Checkbox
                             status={rememberEmail ? 'checked' : 'unchecked'}
                             onPress={toggleRememberEmail}
-                            color={COLORS.gradient.primary[0]}
+                            color={theme.colors.primary}
                           />
                           <Text style={{
                             fontSize: normalizeFontSize(13),
@@ -681,7 +672,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           <Checkbox
                             status={rememberMe ? 'checked' : 'unchecked'}
                             onPress={toggleRememberMe}
-                            color={COLORS.gradient.primary[0]}
+                            color={theme.colors.primary}
                           />
                           <Text style={{
                             fontSize: normalizeFontSize(13),
@@ -706,13 +697,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                         accessibilityHint="이메일과 비밀번호로 로그인합니다"
                         accessibilityState={{ disabled: isLoading }}
                       >
-                        <LinearGradient
-                          colors={isLoading ? ['#ccc', '#999'] : COLORS.gradient.primary}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 0 }}
+                        <View
                           style={[
                             styles.loginButton,
-                            { opacity: isLoading ? 0.7 : 1 }
+                            {
+                              backgroundColor: isLoading ? (isDark ? '#4B4B55' : '#767676') : theme.colors.primary,
+                              opacity: isLoading ? 0.7 : 1
+                            }
                           ]}
                         >
                           <View style={{
@@ -728,7 +719,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                               />
                             )}
                             <Text style={{
-                              color: COLORS.white,
+                              color: isLoading ? COLORS.white : theme.colors.onAccent,
                               fontSize: normalizeFontSize(15.5),
                               fontWeight: '700',
                               textAlign: 'center',
@@ -737,7 +728,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                               {isLoading ? '로그인 중...' : '로그인'}
                             </Text>
                           </View>
-                        </LinearGradient>
+                        </View>
                       </Pressable>
 
                       {/* 비밀번호 찾기 */}
@@ -752,7 +743,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                         }}
                       >
                         <Text style={{
-                          color: COLORS.gradient.primary[0],
+                          color: theme.colors.accentText,
                           fontSize: normalizeFontSize(13.5),
                           fontWeight: '600'
                         }}>
@@ -897,7 +888,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           }}
                         >
                           <Text style={{
-                            color: COLORS.gradient.primary[0],
+                            color: theme.colors.accentText,
                             fontSize: normalizeFontSize(13.5),
                             fontWeight: '700'
                           }}>
@@ -910,7 +901,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                 </View>
               </ScrollView>
             </KeyboardAvoidingView>
-          </LinearGradient>
+          </View>
         </View>
       </TouchableWithoutFeedback>
     </SafeAreaView>
