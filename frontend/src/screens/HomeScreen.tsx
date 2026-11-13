@@ -2758,27 +2758,12 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 </HStack>
                             </HStack>
                             
-                            {/* 접기/펼치기 버튼 */}
-                            <Pressable
-                                onPress={() => setIsMyRecentPostsCollapsed(!isMyRecentPostsCollapsed)}
-                                className="p-2"
-                                style={{
-                                    borderRadius: 14,
-                                    backgroundColor: colors.cardBackgroundVariant,
-                                }}
-                            >
-                                <MaterialCommunityIcons
-                                    name={isMyRecentPostsCollapsed ? "chevron-down" : "chevron-up"}
-                                    size={16}
-                                    color={colors.text} 
-                                />
-                            </Pressable>
                         </HStack>
                     </Box>
-                    
-                    {/* 빈 상태 콘텐츠 - 접기/펼치기 조건부 렌더링 */}
-                    {!isMyRecentPostsCollapsed && (
-                        <Box className="px-4 py-6">
+
+                    {/* 빈 상태 콘텐츠 - 글이 없을 때는 접지 않고 항상 보여 첫 글 작성으로 안내 */}
+                    {(
+                        <Box className="px-4 py-3">
                             <Center>
                                 <Pressable
                                     onPress={navigateToWriteMyDay}

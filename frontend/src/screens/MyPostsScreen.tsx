@@ -325,6 +325,7 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
 
   useEffect(() => {
     navigation.setOptions({
+      headerShown: true,
       title: '나의 게시글',
       headerStyle: {
         backgroundColor: theme.colors.background,
@@ -1017,7 +1018,7 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <SafeAreaView edges={['left', 'right', 'bottom']} style={{ flex: 1, backgroundColor: theme.colors.background }}>
         <VStack style={{
           paddingTop: scaleSpacing(12),
           paddingHorizontal: scaleSpacing(12),
@@ -1065,7 +1066,7 @@ const MyPostsScreen: React.FC<MyPostsScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+    <SafeAreaView edges={['left', 'right', 'bottom']} style={{ flex: 1, backgroundColor: theme.colors.background }}>
       {SearchSection}
       {TabAndSortSection}
 
