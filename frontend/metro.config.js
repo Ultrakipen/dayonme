@@ -1,4 +1,5 @@
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const path = require('path');
 
 /**
  * Metro configuration
@@ -15,6 +16,12 @@ const config = {
       /android\/build\/.*/,
       /node_modules\/.*\/android\/build\/.*/,
     ],
+    // 명시적으로 node_modules 경로 지정
+    nodeModulesPaths: [path.resolve(__dirname, 'node_modules')],
+    // @babel/runtime을 명시적으로 매핑
+    extraNodeModules: {
+      '@babel/runtime': path.resolve(__dirname, 'node_modules/@babel/runtime'),
+    },
   },
 };
 
