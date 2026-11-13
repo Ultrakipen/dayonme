@@ -334,6 +334,7 @@ const styles = StyleSheet.create({
   },
   emotionsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
   },
   emotionBubble: {

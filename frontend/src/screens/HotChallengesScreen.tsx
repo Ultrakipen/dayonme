@@ -604,7 +604,7 @@ const hapticOptions = {
                 }
               ]}>
                 <View style={[styles.statusDot, { backgroundColor: getStatusColor(challenge.status) }]} />
-                <Text style={[
+                <Text numberOfLines={1} style={[
                   styles.statusText,
                   { color: getStatusTextColor(challenge.status) }
                 ]}>
@@ -624,7 +624,7 @@ const hapticOptions = {
                         borderColor: isDark ? 'rgba(108, 92, 231, 0.3)' : 'rgba(108, 92, 231, 0.25)'
                       }
                     ]}>
-                      <Text style={[
+                      <Text numberOfLines={1} style={[
                         styles.inlineTagText,
                         { color: isDark ? '#6C5CE7' : theme.colors.primary }
                       ]}>#{tag}</Text>
@@ -1258,9 +1258,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
   },
   // 인라인 태그 (초소형)
   inlineTag: {
+    flexShrink: 1,
     paddingHorizontal: spacing.xs,
     paddingVertical: 3,
     borderRadius: 10,

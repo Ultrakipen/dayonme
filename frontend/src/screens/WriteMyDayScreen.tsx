@@ -1623,7 +1623,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             {selectedImages.length < 3 && (
               <Pressable
                 style={{
-                  height: selectedImages.length > 0 ? normalize(60, false) : normalize(100, false),
+                  minHeight: selectedImages.length > 0 ? normalize(60, false) : normalize(100, false),
                   borderWidth: 2,
                   borderStyle: 'dashed',
                   borderColor: isUploadingImage ? theme.text.tertiary : (theme.colors?.primary || '#2563EB'),
