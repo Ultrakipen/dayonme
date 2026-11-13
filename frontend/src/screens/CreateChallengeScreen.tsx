@@ -505,7 +505,7 @@ const CreateChallengeScreen = () => {
           {/* Title */}
           <View style={styles.section}>
             <View style={styles.labelWithIcon}>
-              <MaterialCommunityIcons name="trophy" size={scaleFontSize(22)} color="#E1306C" />
+              <MaterialCommunityIcons name="trophy" size={scaleFontSize(22)} color={theme.text.secondary} />
               <Text style={[styles.label, { color: isDark ? '#ffffff' : '#262626' }]}>챌린지 제목 *</Text>
             </View>
             <TextInput
@@ -531,7 +531,7 @@ const CreateChallengeScreen = () => {
           {/* Description */}
           <View style={styles.section}>
             <View style={styles.labelWithIcon}>
-              <MaterialCommunityIcons name="text-box" size={scaleFontSize(22)} color="#007AFF" />
+              <MaterialCommunityIcons name="text-box" size={scaleFontSize(22)} color={theme.text.secondary} />
               <Text style={[styles.label, { color: isDark ? '#ffffff' : '#262626' }]}>챌린지 설명 *</Text>
             </View>
             <TextInput
@@ -563,7 +563,7 @@ const CreateChallengeScreen = () => {
           {/* Dates */}
           <View style={styles.section}>
             <View style={styles.sectionTitleWithIcon}>
-              <MaterialCommunityIcons name="calendar-range" size={scaleFontSize(22)} color="#FF9500" />
+              <MaterialCommunityIcons name="calendar-range" size={scaleFontSize(22)} color={theme.text.secondary} />
               <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#262626' }]}>챌린지 기간</Text>
             </View>
 
@@ -571,10 +571,10 @@ const CreateChallengeScreen = () => {
               <View style={styles.dateItem}>
                 <Text style={[styles.dateLabel, { color: isDark ? '#ffffff' : '#262626' }]}>시작일 *</Text>
                 <TouchableOpacity
-                  style={[styles.dateButton, { backgroundColor: theme.colors.card, borderColor: '#007AFF' }, errors.start_date && styles.inputError]}
+                  style={[styles.dateButton, { backgroundColor: theme.colors.card, borderColor: theme.colors.primary }, errors.start_date && styles.inputError]}
                   onPress={() => setShowStartDatePicker(true)}
                 >
-                  <MaterialCommunityIcons name="calendar" size={scaleFontSize(18)} color="#007AFF" />
+                  <MaterialCommunityIcons name="calendar" size={scaleFontSize(18)} color={theme.colors.accentText} />
                   <Text style={[styles.dateText, { color: isDark ? '#ffffff' : '#262626' }]}>{formatDate(formData.start_date)}</Text>
                 </TouchableOpacity>
                 {errors.start_date && <Text style={styles.errorText}>{errors.start_date}</Text>}
@@ -583,10 +583,10 @@ const CreateChallengeScreen = () => {
               <View style={styles.dateItem}>
                 <Text style={[styles.dateLabel, { color: isDark ? '#ffffff' : '#262626' }]}>종료일 *</Text>
                 <TouchableOpacity
-                  style={[styles.dateButton, { backgroundColor: theme.colors.card, borderColor: '#007AFF' }, errors.end_date && styles.inputError]}
+                  style={[styles.dateButton, { backgroundColor: theme.colors.card, borderColor: theme.colors.primary }, errors.end_date && styles.inputError]}
                   onPress={() => setShowEndDatePicker(true)}
                 >
-                  <MaterialCommunityIcons name="calendar" size={scaleFontSize(18)} color="#007AFF" />
+                  <MaterialCommunityIcons name="calendar" size={scaleFontSize(18)} color={theme.colors.accentText} />
                   <Text style={[styles.dateText, { color: isDark ? '#ffffff' : '#262626' }]}>{formatDate(formData.end_date)}</Text>
                 </TouchableOpacity>
                 {errors.end_date && <Text style={styles.errorText}>{errors.end_date}</Text>}
@@ -597,7 +597,7 @@ const CreateChallengeScreen = () => {
           {/* Tags */}
           <View style={styles.section}>
             <View style={styles.sectionTitleWithIcon}>
-              <MaterialCommunityIcons name="tag-multiple" size={scaleFontSize(22)} color="#E1306C" />
+              <MaterialCommunityIcons name="tag-multiple" size={scaleFontSize(22)} color={theme.text.secondary} />
               <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#262626' }]}>태그 (최대 5개)</Text>
             </View>
 
@@ -619,14 +619,14 @@ const CreateChallengeScreen = () => {
                 onSubmitEditing={addTag}
               />
               <TouchableOpacity
-                style={[styles.addTagButton, !currentTag.trim() && styles.addTagButtonDisabled]}
+                style={[styles.addTagButton, { backgroundColor: theme.colors.primary }, !currentTag.trim() && styles.addTagButtonDisabled]}
                 onPress={addTag}
                 disabled={!currentTag.trim() || (formData.tags?.length || 0) >= 5}
               >
                 <MaterialCommunityIcons
                   name="plus"
                   size={scaleFontSize(20)}
-                  color={currentTag.trim() ? "#ffffff" : "#ccc"}
+                  color={currentTag.trim() ? theme.colors.onAccent : theme.text.tertiary}
                 />
               </TouchableOpacity>
             </View>
@@ -634,13 +634,13 @@ const CreateChallengeScreen = () => {
             {formData.tags && formData.tags.length > 0 && (
               <View style={styles.tagsContainer}>
                 {formData.tags.map((tag, index) => (
-                  <View key={index} style={styles.tag}>
-                    <Text style={styles.tagText}>#{tag}</Text>
+                  <View key={index} style={[styles.tag, { backgroundColor: theme.colors.primary }]}>
+                    <Text style={[styles.tagText, { color: theme.colors.onAccent }]}>#{tag}</Text>
                     <TouchableOpacity
                       style={styles.removeTagButton}
                       onPress={() => removeTag(tag)}
                     >
-                      <MaterialCommunityIcons name="close" size={scaleFontSize(16)} color="#ffffff" />
+                      <MaterialCommunityIcons name="close" size={scaleFontSize(16)} color={theme.colors.onAccent} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -651,7 +651,7 @@ const CreateChallengeScreen = () => {
           {/* Image Upload Section */}
           <View style={styles.section}>
             <View style={styles.sectionTitleWithIcon}>
-              <MaterialCommunityIcons name="image-multiple" size={scaleFontSize(22)} color="#FF9500" />
+              <MaterialCommunityIcons name="image-multiple" size={scaleFontSize(22)} color={theme.text.secondary} />
               <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#262626' }]}>이미지 (최대 3장)</Text>
             </View>
             <Text style={[styles.helperText, { color: isDark ? '#b3b3b3' : '#8e8e8e' }]}>최대 5MB, JPG/PNG/WebP 형식</Text>
@@ -678,10 +678,10 @@ const CreateChallengeScreen = () => {
               {/* 이미지 추가 버튼 */}
               {imageUris.length < 3 && (
                 <TouchableOpacity
-                  style={[styles.addImageButton, { backgroundColor: isDark ? theme.colors.card : '#f0f7ff', borderColor: '#007AFF' }]}
+                  style={[styles.addImageButton, { backgroundColor: theme.colors.tint, borderColor: theme.colors.primary }]}
                   onPress={handleSelectImages}
                 >
-                  <MaterialCommunityIcons name="plus" size={scaleFontSize(28)} color="#007AFF" />
+                  <MaterialCommunityIcons name="plus" size={scaleFontSize(28)} color={theme.colors.accentText} />
                   <Text style={[styles.addImageText, { color: isDark ? '#ffffff' : '#262626' }]}>
                     {imageUris.length === 0 ? '이미지 추가' : `${imageUris.length}/3`}
                   </Text>
@@ -693,7 +693,7 @@ const CreateChallengeScreen = () => {
           {/* Max Participants */}
           <View style={styles.section}>
             <View style={styles.sectionTitleWithIcon}>
-              <MaterialCommunityIcons name="account-group" size={scaleFontSize(22)} color="#34C759" />
+              <MaterialCommunityIcons name="account-group" size={scaleFontSize(22)} color={theme.text.secondary} />
               <Text style={[styles.sectionTitle, { color: isDark ? '#ffffff' : '#262626' }]}>참가자 설정</Text>
             </View>
             <Text style={[styles.label, { color: isDark ? '#ffffff' : '#262626' }]}>최대 참가자 수 (선택사항)</Text>
@@ -737,11 +737,11 @@ const CreateChallengeScreen = () => {
           <Text style={[styles.cancelButtonText, { color: isDark ? '#b3b3b3' : '#8e8e8e' }]}>취소</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.createButton, loading && styles.createButtonDisabled]}
+          style={[styles.createButton, { backgroundColor: theme.colors.primary }, loading && styles.createButtonDisabled]}
           onPress={handleSubmit}
           disabled={loading}
         >
-          <Text style={styles.createButtonText}>
+          <Text style={[styles.createButtonText, { color: theme.colors.onAccent }]}>
             {loading ? '생성 중...' : '챌린지 만들기'}
           </Text>
         </TouchableOpacity>
