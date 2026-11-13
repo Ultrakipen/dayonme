@@ -212,8 +212,6 @@ const truncateToSevenLines = (text: string) => {
 const FILTER_OPTIONS = [
   { key: 'all', label: '전체', icon: 'view-grid-outline', description: '모든 게시물' },
   { key: 'tag', label: '태그', icon: 'tag-outline', description: '태그만 검색' },
-  { key: 'latest', label: '최신순', icon: 'clock-outline', description: '최신 게시물' },
-  { key: 'best', label: '인기순', icon: 'heart', description: '좋아요 많은 글' },
 ] as const;
 
 // 필터 상태 관리를 위한 reducer (단순화)
@@ -588,6 +586,7 @@ const ComfortScreen: React.FC = () => {
   const hasMoreRef = useRef(hasMore);
   const loadingMoreRef = useRef(loadingMore);
   const selectedFilterRef = useRef(selectedFilter);
+  const postsSortOrderRef = useRef(postsSortOrder);
   const selectedTagRef = useRef(selectedTag);
   const blockedUsersRef = useRef(blockedUsers);
   const blockedContentsRef = useRef(blockedContents);
@@ -673,7 +672,7 @@ const ComfortScreen: React.FC = () => {
         comfortWallService.getPosts({                           // 1: 일반 게시물
           page: 1,
           limit: API_CONSTANTS.PAGE_LIMIT,
-          sort_by: selectedFilter === 'latest' ? 'latest' : selectedFilter === 'best' ? 'popular' : 'latest',
+          sort_by: postsSortOrderRef.current,
           search: searchQuery || undefined,
           tag: selectedTag || undefined,
         }),
@@ -859,7 +858,7 @@ const ComfortScreen: React.FC = () => {
       const response = await comfortWallService.getPosts({
         page: currentPage + 1,
         limit: API_CONSTANTS.PAGE_LIMIT,
-        sort_by: currentSelectedFilter === 'latest' ? 'latest' : currentSelectedFilter === 'best' ? 'popular' : 'latest',
+        sort_by: postsSortOrderRef.current,
         search: currentSearchQuery || undefined, // 텍스트 검색 (제목, 내용)
         tag: currentSelectedTag || undefined,    // 태그 검색 (독립적으로 동작)
       });
@@ -1024,7 +1023,7 @@ const ComfortScreen: React.FC = () => {
       const response = await comfortWallService.getPosts({
         page: 1,
         limit: API_CONSTANTS.PAGE_LIMIT,
-        sort_by: 'latest',
+        sort_by: postsSortOrderRef.current,
         search: query || undefined,
       });
 
@@ -1057,7 +1056,7 @@ const ComfortScreen: React.FC = () => {
       const response = await comfortWallService.getPosts({
         page: 1,
         limit: API_CONSTANTS.PAGE_LIMIT,
-        sort_by: 'latest',
+        sort_by: postsSortOrderRef.current,
         tag: query, // 태그만 검색
         // search 파라미터는 의도적으로 제외
       });
@@ -1120,7 +1119,7 @@ const ComfortScreen: React.FC = () => {
           comfortWallService.getPosts({
             page: 1,
             limit: API_CONSTANTS.PAGE_LIMIT,
-            sort_by: 'latest',
+            sort_by: postsSortOrderRef.current,
             // search와 tag 파라미터를 명시적으로 제외
           }),
         ]);
@@ -1193,7 +1192,7 @@ const ComfortScreen: React.FC = () => {
       let apiParams: any = {
         page: 1,
         limit: API_CONSTANTS.PAGE_LIMIT,
-        sort_by: filter === 'latest' ? 'latest' : filter === 'best' ? 'popular' : 'latest'
+        sort_by: postsSortOrderRef.current
       };
 
       // 베스트/최근 게시물 데이터 (all 필터에서만 업데이트)
@@ -1206,7 +1205,7 @@ const ComfortScreen: React.FC = () => {
         apiParams = {
           page: 1,
           limit: API_CONSTANTS.PAGE_LIMIT,
-          sort_by: 'latest'
+          sort_by: postsSortOrderRef.current
           // search와 tag 파라미터를 명시적으로 제외
         };
 
@@ -1348,7 +1347,7 @@ const ComfortScreen: React.FC = () => {
           page: 1,
           limit: API_CONSTANTS.PAGE_LIMIT,
           search: trimmedQuery,
-          sort_by: selectedFilter === 'best' ? 'popular' : 'latest'
+          sort_by: postsSortOrderRef.current
         });
 
         console.log('🔍 [executeSearch] API 응답:', response.data?.status, '게시물 수:', response.data?.data?.posts?.length);
@@ -1418,7 +1417,7 @@ const ComfortScreen: React.FC = () => {
       let apiParams: any = {
         page: 1,
         limit: API_CONSTANTS.PAGE_LIMIT,
-        sort_by: 'latest'
+        sort_by: postsSortOrderRef.current
       };
       
       let newFilter: FilterType = 'all';
@@ -1922,6 +1921,7 @@ const ComfortScreen: React.FC = () => {
     
     try {
       setLoading(true);
+      postsSortOrderRef.current = sortOrder;
       setPostsSortOrder(sortOrder);
       
       const response = await comfortWallService.getPosts({
@@ -3112,7 +3112,7 @@ const ComfortScreen: React.FC = () => {
                 {/* 게시물 목록 헤더 */}
                 <View style={styles.postsListHeader}>
                   <View style={styles.postsListTitleSection}>
-                    <Text style={styles.postsListTitle}>💝 마음을 나누는 이야기</Text>
+                    <Text style={styles.postsListTitle} numberOfLines={1}>💝 마음을 나누는 이야기</Text>
                     <Text style={styles.postsListCount}>{posts.length}개</Text>
                   </View>
                   <View style={styles.postsSortSection}>
@@ -3759,7 +3759,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   // 게시물 목록 헤더 (95% 너비, 중앙정렬)
   postsListHeader: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
     width: CONTAINER_WIDTH,
     alignSelf: 'center',
@@ -3773,16 +3773,21 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   postsListTitle: {
     fontSize: 16, // 게시물 목록 제목 (15→16)
     fontWeight: '700',
     color: COLORS.onSurface,
+    flexShrink: 1,
   },
   postsListCount: {
     fontSize: normalize(12, 11, 13), // 게시물 개수
     color: COLORS.onSurfaceVariant,
     fontWeight: '500',
+    flexShrink: 0,
     backgroundColor: COLORS.primary + '15',
     paddingHorizontal: 6,
     paddingVertical: 3,
@@ -3791,6 +3796,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   postsSortSection: {
     flexDirection: 'row',
     gap: 8,
+    flexShrink: 0,
   },
   sortButton: {
     flexDirection: 'row',

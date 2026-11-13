@@ -141,7 +141,7 @@ export const WeeklyGoal: React.FC = React.memo(() => {
   const getProgressColor = () => {
     if (!goalData) return colors.primary;
     const progress = goalData.currentCount / goalData.targetCount;
-    if (progress >= 1) return '#4CAF50';
+    if (progress >= 1) return colors.success;
     if (progress >= 0.7) return '#8BC34A';
     if (progress >= 0.3) return '#FFC107';
     return '#FF9800';
@@ -291,7 +291,7 @@ export const WeeklyGoal: React.FC = React.memo(() => {
       {/* 목표 텍스트 */}
       <View style={[styles.goalBox, {
         backgroundColor: isCompleted
-          ? (isDark ? 'rgba(76, 175, 80, 0.15)' : '#E8F5E9')
+          ? colors.tint
           : (isDark ? colors.surface : '#F8F9FA')
       }]}>
         <TwemojiImage emoji={isCompleted ? '🎉' : '📌'} size={FONT_SIZES.h1 * scale} style={{ marginRight: 12 * scale }} />
@@ -300,7 +300,7 @@ export const WeeklyGoal: React.FC = React.memo(() => {
             {goalData!.goal}
           </Text>
           {isCompleted && (
-            <Text style={[styles.completedText, { color: '#4CAF50', fontSize: FONT_SIZES.caption }]}>
+            <Text style={[styles.completedText, { color: colors.success, fontSize: FONT_SIZES.caption }]}>
               목표 달성! 축하해요! 🎊
             </Text>
           )}

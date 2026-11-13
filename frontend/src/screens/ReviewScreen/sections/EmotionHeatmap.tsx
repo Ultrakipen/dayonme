@@ -47,14 +47,27 @@ export const EmotionHeatmap: React.FC<Props> = React.memo(({ data, period = 'wee
   // 주간 모드일 때 정확히 7일만 표시
   const displayData = period === 'week' ? daysData.slice(-7) : daysData;
 
+  // 셀 숫자 글자색: 셀 배경(투명도 단계를 카드 위에 합성한 색)과의 대비가 더 큰 쪽(흰색/진한 색)을 고른다
+  const cellTextColor = (level: number) => {
+    const toRgb = (h: string) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+    const lum = (c: number[]) => {
+      const f = (v: number) => { const x = v / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+      return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+    };
+    const alphas = [0, 0.25, 0.5, 0.75, 1];
+    const fg = toRgb(colors.primary);
+    const bg = toRgb(colors.card);
+    const a = alphas[level];
+    const mixed = fg.map((v, i) => v * a + bg[i] * (1 - a));
+    const L = lum(mixed);
+    const contrastWhite = 1.05 / (L + 0.05);
+    const contrastDark = (L + 0.05) / (lum([18, 18, 18]) + 0.05);
+    return contrastWhite >= contrastDark ? '#FFFFFF' : '#121212';
+  };
+
   const getLevelColor = (level: number) => {
-    if (isDark) {
-      const colors = ['#1e293b', '#3b82f6', '#2563eb', '#1e40af', '#1e3a8a'];
-      return colors[level];
-    } else {
-      const colors = ['#f1f5f9', '#93c5fd', '#60a5fa', '#3b82f6', '#2563eb'];
-      return colors[level];
-    }
+    const levels = [colors.border, colors.primary + '40', colors.primary + '80', colors.primary + 'BF', colors.primary];
+    return levels[level];
   };
 
   const getWeekDay = (dateStr: string) => {
@@ -129,7 +142,7 @@ export const EmotionHeatmap: React.FC<Props> = React.memo(({ data, period = 'wee
               ]}
             >
               {period === 'week' && day.count > 0 && (
-                <Text style={[styles.cellText, { fontSize: FONT_SIZES.small }]}>{day.count}</Text>
+                <Text style={[styles.cellText, { fontSize: FONT_SIZES.small, color: cellTextColor(day.level) }]}>{day.count}</Text>
               )}
             </View>
           ))}

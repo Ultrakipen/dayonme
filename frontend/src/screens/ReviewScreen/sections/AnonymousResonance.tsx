@@ -145,13 +145,13 @@ export const AnonymousResonance: React.FC = React.memo(() => {
 
       {/* 희망 메시지 */}
       <View
-        style={[styles.hopeContainer, { backgroundColor: isDark ? '#1a3d1a' : '#e8f5e9' }]}
+        style={[styles.hopeContainer, { backgroundColor: colors.tint }]}
         accessible={true}
         accessibilityLabel={`이들 중 ${data.positiveTransitionRate}%는 평균 ${data.avgDaysToPositive}일 내에 긍정으로 전환`}
       >
         <TwemojiImage emoji="💚" size={20 * scale} style={{ marginRight: 12 * scale }} />
         <View style={styles.hopeTextContainer}>
-          <Text style={[styles.hopeText, { color: '#4caf50', fontSize: FONT_SIZES.body }]}>
+          <Text style={[styles.hopeText, { color: colors.success, fontSize: FONT_SIZES.body }]}>
             이들 중 <Text style={{ fontWeight: '800' }}>{data.positiveTransitionRate}%</Text>는
           </Text>
           <Text style={[styles.hopeSubtext, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall }]}>

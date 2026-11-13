@@ -136,9 +136,9 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
 
   const getTrendColor = (trend: string) => {
     switch (trend) {
-      case 'improving': return '#4CAF50';
-      case 'stable': return '#2196F3';
-      case 'declining': return '#FF9800';
+      case 'improving': return colors.success;
+      case 'stable': return colors.accentText;
+      case 'declining': return colors.warningText;
       default: return colors.textSecondary;
     }
   };
@@ -184,7 +184,7 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
               AI 감정 분석
             </Text>
           </View>
-          <View style={[styles.trendBadge, { backgroundColor: getTrendColor(analysis.emotionTrend) + '20' }]}>
+          <View style={[styles.trendBadge, { backgroundColor: analysis.emotionTrend === 'stable' ? colors.tint : getTrendColor(analysis.emotionTrend) + '20' }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TwemojiImage emoji={getTrendIcon(analysis.emotionTrend)} size={FONT_SIZES.caption * scale} style={{ marginRight: 4 * scale }} />
               <Text style={{ fontSize: FONT_SIZES.caption, color: getTrendColor(analysis.emotionTrend) }}>
@@ -216,9 +216,9 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
             {analysis.keywords.slice(0, 5).map((keyword, index) => (
               <View
                 key={index}
-                style={[styles.keywordTag, { backgroundColor: colors.primary + '15' }]}
+                style={[styles.keywordTag, { backgroundColor: colors.tint }]}
               >
-                <Text style={[styles.keywordText, { color: colors.primary, fontSize: FONT_SIZES.caption }]}>
+                <Text style={[styles.keywordText, { color: colors.accentText, fontSize: FONT_SIZES.caption }]}>
                   #{keyword}
                 </Text>
               </View>
@@ -230,7 +230,7 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
       {/* AI 제안 */}
       {analysis.suggestion && (
         <View style={[styles.suggestionBox, {
-          backgroundColor: isDark ? 'rgba(76, 175, 80, 0.1)' : '#E8F5E9'
+          backgroundColor: colors.tint
         }]}>
           <TwemojiImage emoji="💡" size={FONT_SIZES.bodyLarge * scale} style={{ marginRight: 8 * scale }} />
           <Text style={[styles.suggestionText, { color: colors.text, fontSize: FONT_SIZES.bodySmall, lineHeight: 20 * scale }]}>

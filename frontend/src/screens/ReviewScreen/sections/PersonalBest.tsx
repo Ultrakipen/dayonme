@@ -226,7 +226,7 @@ export const PersonalBest: React.FC<Props> = React.memo(({ period = 'week' }) =>
                 key={index}
                 style={[styles.achievementItem, {
                   backgroundColor: achievement.isNew
-                    ? (isDark ? 'rgba(76, 175, 80, 0.15)' : '#E8F5E9')
+                    ? colors.tint
                     : (isDark ? colors.surface : '#F5F5F5')
                 }]}
               >

@@ -52,19 +52,19 @@ export const ChallengeTabs = memo<ChallengeTabsProps>(({ activeTab, onTabChange,
         style={[
           styles.tab,
           activeTab === 'hot' && styles.tabActive,
-          { backgroundColor: activeTab === 'hot' ? COLORS.danger : 'transparent' }
+          { backgroundColor: activeTab === 'hot' ? theme.colors.primary : 'transparent' }
         ]}
         onPress={() => onTabChange('hot')}
       >
         <MaterialCommunityIcons
           name="fire"
           size={normalizeIcon(16)}
-          color={activeTab === 'hot' ? 'white' : theme.text.secondary}
+          color={activeTab === 'hot' ? theme.colors.onAccent : theme.text.secondary}
         />
         <Text style={[
           styles.tabText,
           activeTab === 'hot' && styles.tabTextActive,
-          { color: activeTab === 'hot' ? 'white' : theme.text.secondary }
+          { color: activeTab === 'hot' ? theme.colors.onAccent : theme.text.secondary }
         ]}>
           HOT
         </Text>

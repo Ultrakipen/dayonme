@@ -7,12 +7,19 @@ import { getScale } from '../../../utils/responsive';
 import reviewService from '../../../services/api/reviewService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TwemojiImage } from '../../../components/common/TwemojiImage';
+import { EmotionIcon } from '../../../components/common/EmotionIcon';
 
 interface MoodOption {
   emoji: string;
   label: string;
   color: string;
 }
+
+// 표시 전용 매핑: 퀵무드 라벨 -> 서버 감정 아이콘 id
+const MOOD_ICON_ID: Record<string, number> = {
+  '좋음': 1, '평온': 13, '보통': 16, '우울': 4, '불안': 5,
+  '설렘': 15, '감사': 9, '슬픔': 3, '화남': 7, '피곤': 19,
+};
 
 const STORAGE_KEY = '@mood_pulse_today';
 
@@ -157,12 +164,12 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
                   isSelected && { transform: [{ scale: scaleAnim }] }
                 ]}
               >
-                <TwemojiImage emoji={mood.emoji} size={40 * scale} />
+                <EmotionIcon emotionId={MOOD_ICON_ID[mood.label]} size={40 * scale} />
               </Animated.View>
               <Text style={[
                 styles.moodLabel,
                 {
-                  color: isSelected ? mood.color : colors.textSecondary,
+                  color: isSelected ? colors.text : colors.textSecondary,
                   fontSize: FONT_SIZES.caption,
                   fontWeight: isSelected ? '700' : '500'
                 }
@@ -176,14 +183,14 @@ export const QuickMoodPulse: React.FC = React.memo(() => {
 
       {selectedMood !== null && globalStats > 0 && (
         <View
-          style={[styles.statsContainer, { backgroundColor: isDark ? colors.border : '#e3f2fd' }]}
+          style={[styles.statsContainer, { backgroundColor: colors.tint }]}
           accessible={true}
           accessibilityLabel={`전 세계 ${globalStats}명이 지금 활동 중`}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
             <TwemojiImage emoji="💬" size={FONT_SIZES.body * scale} style={{ marginRight: 6 * scale }} />
             <Text style={[styles.statsText, { color: colors.text, fontSize: FONT_SIZES.body }]}>
-              지금 전 세계 <Text style={{ color: '#2196f3', fontWeight: '700' }}>{globalStats.toLocaleString()}명</Text>이
+              지금 전 세계 <Text style={{ color: colors.accentText, fontWeight: '700' }}>{globalStats.toLocaleString()}명</Text>이
             </Text>
           </View>
           <Text style={[styles.statsText, { color: colors.text, fontSize: FONT_SIZES.body }]}>

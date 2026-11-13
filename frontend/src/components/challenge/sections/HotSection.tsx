@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { CHALLENGE_COLORS as COLORS } from '../../../constants/challenge';
 import { CleanHotCard } from '../cards/CleanHotCard';
@@ -45,25 +44,15 @@ export const HotSection = memo<HotSectionProps>(({
   const { theme } = useModernTheme();
 
   return (
-    <LinearGradient
-      colors={['rgba(255,100,100,0.08)', 'rgba(255,150,50,0.04)', 'transparent']}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-      style={styles.bestSectionGradient}
-    >
+    <View style={styles.bestSectionGradient}>
       <View style={styles.bestSection}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
-            <LinearGradient
-              colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-              style={styles.sectionIcon}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-            >
+            <View style={[styles.sectionIcon, { backgroundColor: theme.colors.tint }]}>
               <Animated.View style={{ transform: [{ scale: fireAnimation }] }}>
-                <MaterialCommunityIcons name="fire" size={20} color="white" />
+                <MaterialCommunityIcons name="fire" size={20} color={theme.colors.accentText} />
               </Animated.View>
-            </LinearGradient>
+            </View>
             <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>
               이번주 HOT챌린지
             </Text>
@@ -108,7 +97,7 @@ export const HotSection = memo<HotSectionProps>(({
           <EmptyHotSection isDarkMode={isDarkMode} />
         )}
       </View>
-    </LinearGradient>
+    </View>
   );
 });
 
@@ -140,11 +129,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-    shadowColor: COLORS.shadowColor,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
   },
   sectionTitle: {
     fontSize: 15,

@@ -60,7 +60,7 @@ export const StreakBadge: React.FC = React.memo(() => {
     );
   }
 
-  if (!streak) return null;
+  if (!streak || streak.currentStreak <= 0) return null;
 
   const scale1 = animValue.interpolate({
     inputRange: [0, 1],
@@ -104,9 +104,9 @@ export const StreakBadge: React.FC = React.memo(() => {
 
       {streak.currentStreak >= 3 && (
         <View style={[styles.encouragement, {
-          backgroundColor: isDark ? 'rgba(139, 92, 246, 0.12)' : 'rgba(139, 92, 246, 0.08)',
+          backgroundColor: colors.tint,
           borderWidth: isDark ? 1 : 0,
-          borderColor: 'rgba(139, 92, 246, 0.2)',
+          borderColor: colors.border,
           marginTop: 10 * scale,
           padding: 10 * scale,
           borderRadius: 10 * scale
