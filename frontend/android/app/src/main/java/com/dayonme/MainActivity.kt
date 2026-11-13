@@ -14,7 +14,9 @@ import java.security.MessageDigest
 class MainActivity : ReactActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
+    // react-native-screens: 시스템 글자 크기/다크모드 변경, 메모리 부족 후 복원 시
+    // 저장된 Fragment 복원으로 "Screen fragments should never be restored" 크래시가 나므로 null 전달
+    super.onCreate(null)
     printKeyHash()
   }
 
