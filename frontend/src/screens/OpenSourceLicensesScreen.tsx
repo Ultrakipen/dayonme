@@ -16,6 +16,7 @@ const licenses = [
   { name: 'Async Storage', version: '1.x', license: 'MIT', url: 'https://github.com/react-native-async-storage/async-storage' },
   { name: 'React Native Image Picker', version: '7.x', license: 'MIT', url: 'https://github.com/react-native-image-picker/react-native-image-picker' },
   { name: 'React Native Image Resizer', version: '3.x', license: 'MIT', url: 'https://github.com/bamlab/react-native-image-resizer' },
+  { name: 'Twemoji (감정 이모지 그래픽)', version: '14.0.3', license: 'CC-BY 4.0 — Copyright 2020 Twitter, Inc and other contributors', url: 'https://github.com/twitter/twemoji' },
 ];
 
 const OpenSourceLicensesScreen: React.FC = () => {

@@ -1,7 +1,10 @@
 import React from 'react';
+import { Image } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
 import { EMOTION_ICONS, getEmotionIconIdByLabel, lighten, darken } from '../../constants/emotionIcons';
 import { EMOTION_AVATARS } from '../../constants/emotions';
+import { EMOTION_TWEMOJI } from '../../constants/emotionTwemoji';
+import { EMOTION_ICON_STYLE } from '../../constants/emotionIconStyle';
 
 interface EmotionIconProps {
   emotionId?: number;
@@ -31,6 +34,17 @@ const resolveId = (emotionId?: number, label?: string, emojiCode?: string): numb
 const EmotionIconBase: React.FC<EmotionIconProps> = ({ emotionId, label, emojiCode, size = 32, variant = 'b5' }) => {
   const id = resolveId(emotionId, label, emojiCode);
   if (!id) return null;
+  if (EMOTION_ICON_STYLE === 'twemoji' && EMOTION_TWEMOJI[id]) {
+    return (
+      <Image
+        source={EMOTION_TWEMOJI[id]}
+        style={{ width: size, height: size }}
+        resizeMode="contain"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      />
+    );
+  }
   const def = EMOTION_ICONS[id];
   const gid = `eg${id}`; // react-native-svg는 Svg 루트별로 정의를 보관하므로 감정 id 고정 id 사용
   return (
