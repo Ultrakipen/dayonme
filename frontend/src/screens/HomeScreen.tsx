@@ -3747,11 +3747,12 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     onPress={scrollToTop}
                     style={{
                         position: 'absolute',
-                        bottom: 90,
-                        right: normalizeSpace(16),
-                        width: normalizeSpace(32),
-                        height: normalizeSpace(32),
-                        borderRadius: normalizeSpace(12),
+                        // '나의 하루' 버튼(bottom 40, 높이 44) 바로 위에 간격 16을 두고 쌓는다(글자 크기를 키워도 겹치지 않게 넉넉히)
+                        bottom: normalizeSpace(40) + normalizeSpace(44) + 16,
+                        right: normalizeSpace(8),
+                        width: normalizeSpace(44),
+                        height: normalizeSpace(44),
+                        borderRadius: normalizeSpace(22),
                         padding: normalizeSpace(6),
                         justifyContent: 'center',
                         alignItems: 'center',
