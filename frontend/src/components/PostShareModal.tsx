@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import EmotionIcon from './common/EmotionIcon';
 import { useModernTheme } from '../hooks/useModernTheme';
 
-const STORE_URL = 'https://play.google.com/store/apps/details?id=com.dayonme';
 const MAX_CHARS = 140;
 
 interface Props {
@@ -35,7 +34,7 @@ const PostShareModal: React.FC<Props> = ({ visible, content, emotionId, onClose 
       await Share.open({
         url: uri,
         type: 'image/png',
-        message: `Dayonme - 마음을 나누는 공간\n${STORE_URL}`,
+        message: 'Dayonme - 마음을 나누는 공간',
         failOnCancel: false,
       });
       onClose();
