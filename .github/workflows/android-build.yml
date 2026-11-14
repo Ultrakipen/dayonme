@@ -37,8 +37,9 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend
-          rm -rf node_modules package-lock.json
-          npm install --legacy-peer-deps
+          # 잠금 파일(package-lock.json) 기준으로 설치해 로컬 빌드와 같은 버전을 쓴다.
+          # (예전에는 잠금 파일을 지우고 최신 버전을 받아 react-native-screens 4.30.x의 codegen 오류가 났음)
+          npm ci --legacy-peer-deps
 
       - name: Cache Gradle
         uses: actions/cache@v4
