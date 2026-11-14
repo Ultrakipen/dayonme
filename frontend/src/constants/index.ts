@@ -74,7 +74,7 @@ export {
 
 // 앱 버전 정보
 // 설정 화면 표시용. android/app/build.gradle 의 versionName 과 같은 값으로 릴리스마다 함께 올린다.
-export const APP_VERSION = '1.2.5';
+export const APP_VERSION = '1.3.0';
 export const APP_BUILD = '1';
 
 // API 엔드포인트
