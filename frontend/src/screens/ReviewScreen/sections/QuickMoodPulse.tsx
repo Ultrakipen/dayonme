@@ -222,7 +222,9 @@ const styles = StyleSheet.create({
   },
   moodButton: {
     width: '18%',
-    aspectRatio: 0.85,
+    // aspectRatio 0.85는 칸을 내용(이모지+라벨)보다 작게 고정해 내용이 상자 밖으로 삐져나왔고, 글자가 커지면 카드가 그만큼 짧아 마지막 줄이 잘렸다.
+    // 높이를 내용에 맞추고(필요 높이는 기본 크기에서 약 212px) 아래 값은 최소 하한으로만 둔다.
+    minHeight: 77,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
