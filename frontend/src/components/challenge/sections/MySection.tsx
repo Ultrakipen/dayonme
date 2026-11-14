@@ -71,24 +71,6 @@ export const MySection = memo<MySectionProps>(({
    setSearchQuery('');
  }, [myStatusFilter]);
 
-    // 비로그인 사용자 체크 - 로그인 유도 UI 표시
-    if (!isAuthenticated || !user) {
-      return (
-        <View style={styles.guestContainer}>
-          <MaterialCommunityIcons
-            name="account-lock"
-            size={80}
-            color={theme.text.secondary}
-          />
-          <Text style={[styles.guestTitle, { color: theme.text.primary }]}>
-            로그인이 필요해요
-          </Text>
-          <Text style={[styles.guestMessage, { color: theme.text.secondary }]}>
-            내 챌린지를 관리하려면{'\n'}로그인이 필요합니다
-          </Text>
-        </View>
-      );
-    }
 
     // 만든 챌린지 필터링
     const createdChallenges = useMemo(() => {
@@ -161,6 +143,25 @@ export const MySection = memo<MySectionProps>(({
     const maxStreak = Math.max(...filteredChallenges.map(c => c.current_streak || 0), 0);
     return { total, completedCount, avgProgress: Math.round(avgProgress), maxStreak };
   }, [filteredChallenges, smartSections.completed.length]);
+
+    // 비로그인 사용자 체크 - 로그인 유도 UI 표시
+    if (!isAuthenticated || !user) {
+      return (
+        <View style={styles.guestContainer}>
+          <MaterialCommunityIcons
+            name="account-lock"
+            size={80}
+            color={theme.text.secondary}
+          />
+          <Text style={[styles.guestTitle, { color: theme.text.primary }]}>
+            로그인이 필요해요
+          </Text>
+          <Text style={[styles.guestMessage, { color: theme.text.secondary }]}>
+            내 챌린지를 관리하려면{'\n'}로그인이 필요합니다
+          </Text>
+        </View>
+      );
+    }
 
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
   },
   guestTitle: {
     fontSize: 22,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginTop: 24,
     marginBottom: 12,
     textAlign: 'center',
@@ -366,7 +367,7 @@ const styles = StyleSheet.create({
   },
   myStatusFilterText: {
     fontSize: 12,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   myChallengesSection: {
@@ -386,12 +387,12 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 15,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   sectionCount: {
     fontSize: 12,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   twoColumnCard: {
     width: '47%',
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
   },
   miniStatText: {
     fontSize: 13,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   miniStatDivider: {
     width: 1,
@@ -447,12 +448,12 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 20,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 11,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   controlBar: {
     flexDirection: 'row',

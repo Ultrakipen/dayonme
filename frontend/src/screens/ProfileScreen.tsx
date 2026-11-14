@@ -13,7 +13,6 @@ import {
   useWindowDimensions,
   StatusBar,
   ActivityIndicator,
-  Pressable,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
@@ -22,7 +21,6 @@ import ImagePicker from '../components/common/ImagePicker';
 import Button from '../components/Button';
 import userService from '../services/api/userService';
 import myDayService, { type UserEmotionStats } from '../services/api/myDayService';
-import postService from '../services/api/postService';
 import reviewService from '../services/api/reviewService';
  import uploadService from '../services/api/uploadService';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -31,13 +29,11 @@ import LinearGradient from 'react-native-linear-gradient';
 import ActivityChart from '../components/common/ActivityChart';
 import BottomSheetAlert from '../components/common/BottomSheetAlert';
 import Toast from '../components/common/Toast';
-import ProfileSkeleton from '../components/common/ProfileSkeleton';
 import { sanitizeText, escapeHtml } from '../utils/sanitize';
 import { performanceMonitor } from '../utils/performanceMonitor';
 import { normalizeSpace, normalizeIcon, normalizeTouchable } from '../utils/responsive';
 import { FONT_SIZES, APP_VERSION } from '../constants';
 import { CACHE_CONFIG, PERFORMANCE } from '../utils/constants';
-import { localEmotions } from '../constants/homeEmotions';
 
 interface UserStats {
   user_id?: number;
@@ -63,29 +59,9 @@ interface EmotionTag {
   icon?: string;
 }
 
-interface DisplayPost {
-  post_id: number;
-  postType?: 'myDay' | 'comfort'; // 게시물 타입 (key 중복 방지)
-  authorName: string;
-  content: string;
-  emotions: Array<{
-    emotion_id: number;
-    name: string;
-    icon: string;
-    color: string;
-  }>;
-  image_url?: string;
-  images?: string[];
-  like_count: number;
-  comment_count: number;
-  created_at: string;
-  updated_at: string;
-  is_anonymous: boolean;
-  user_id: number;
-  isLiked: boolean;
-}
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const ProfileScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const { user, logout, updateUser, isAuthenticated } = useAuth();
   const { theme, isDark, toggleTheme } = useModernTheme();
   const navigation = useNavigation();
@@ -97,26 +73,6 @@ const ProfileScreen: React.FC = () => {
     const [name, domain] = email.split('@');
     if (name.length <= 2) return `${name[0]}***@${domain}`;
     return `${name.slice(0, 2)}***@${domain}`;
-  }, []);
-
-  // 상대적 시간 계산 (2026 트렌드) - 시간 부분을 제거하고 정확한 날짜 차이 계산
-  const getRelativeTime = useCallback((dateString: string): string => {
-    const date = new Date(dateString);
-    const now = new Date();
-
-    // 시간 부분을 0으로 설정하여 날짜만 비교
-    date.setHours(0, 0, 0, 0);
-    now.setHours(0, 0, 0, 0);
-
-    const diffTime = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const diffMonths = Math.floor(diffDays / 30);
-    const diffYears = Math.floor(diffDays / 365);
-
-    if (diffYears > 0) return `${diffYears}년 전`;
-    if (diffMonths > 0) return `${diffMonths}개월 전`;
-    if (diffDays > 0) return `${diffDays}일 전`;
-    return '오늘';
   }, []);
 
   // 2025 트렌드 컬러 시스템 (다크모드 대응)
@@ -156,32 +112,32 @@ const ProfileScreen: React.FC = () => {
     settingText: {
       flex: 1,
       fontSize: getFontSize(16), // 15 → 16 (가독성 향상)
-      fontFamily: 'Pretendard-SemiBold',
+      fontWeight: '600' as const,
       letterSpacing: -0.3,
       lineHeight: getFontSize(16) * 1.4, // 22.4px
       textAlignVertical: 'center' as const,
     },
     sectionHeader: {
       fontSize: getFontSize(16),
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700' as const,
       letterSpacing: -0.3,
       lineHeight: getFontSize(16) * 1.3,
     },
     userName: {
       fontSize: getFontSize(18), // 17 → 18
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700' as const,
       letterSpacing: -0.3,
       lineHeight: getFontSize(18) * 1.3,
     },
     statNumber: {
       fontSize: getFontSize(20), // 18 → 20
-      fontFamily: 'Pretendard-Bold',
+      fontWeight: '700' as const,
       letterSpacing: -0.4,
       lineHeight: getFontSize(20) * 1.2,
     },
     statLabel: {
       fontSize: getFontSize(14),
-      fontFamily: 'Pretendard-Medium',
+      fontWeight: '500' as const,
       letterSpacing: -0.2,
       lineHeight: getFontSize(14) * 1.4,
     },
@@ -219,8 +175,6 @@ const ProfileScreen: React.FC = () => {
   const [showQuoteEditor, setShowQuoteEditor] = useState(false);
   const [tempQuote, setTempQuote] = useState(favoriteQuote);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [myRecentPosts, setMyRecentPosts] = useState<DisplayPost[]>([]);
-  const [isMyRecentPostsCollapsed, setIsMyRecentPostsCollapsed] = useState(false);
 
   const totalEmotionCount = useMemo(
     () => emotionTags.reduce((sum, tag) => sum + tag.count, 0),
@@ -277,19 +231,40 @@ const ProfileScreen: React.FC = () => {
     return consecutive;
   }, []);
 
-  // 🔥 주간 통계 로드 (최적화: 백엔드 API 사용)
+  // 🔥 주간 통계 로드
   const loadWeeklyStats = useCallback(async () => {
     try {
-      const response = await userService.getWeeklyStats();
+      const now = new Date();
+      const today = now.getDay();
+      const mondayOffset = today === 0 ? -6 : 1 - today;
+      const monday = new Date(now);
+      monday.setDate(now.getDate() + mondayOffset);
+      monday.setHours(0, 0, 0, 0);
 
-      if (response.status === 'success' && response.data) {
-        setWeeklyStats({
-          weeklyPosts: response.data.weeklyPosts,
-          weeklyLikes: response.data.weeklyLikes,
-          weeklyComments: response.data.weeklyComments,
-          consecutiveDays: response.data.consecutiveDays
+      const myPostsResponse = await myDayService.getMyPosts({ page: 1, limit: 50 });
+
+      if (myPostsResponse.status === 'success' && myPostsResponse.data) {
+        const posts = Array.isArray(myPostsResponse.data)
+          ? myPostsResponse.data
+          : myPostsResponse.data.posts || [];
+
+        const thisWeekPosts = posts.filter((post: any) => {
+          const postDate = new Date(post.createdAt || post.created_at);
+          return postDate >= monday;
         });
-        setBestPostLikes(response.data.bestPostLikes);
+
+        const weeklyPosts = thisWeekPosts.length;
+        const weeklyLikes = thisWeekPosts.reduce((sum: number, post: any) => sum + (post.like_count || 0), 0);
+        const weeklyComments = thisWeekPosts.reduce((sum: number, post: any) => sum + (post.comment_count || 0), 0);
+        const consecutiveDays = calculateConsecutiveDays(posts);
+
+        const bestPost = posts.reduce((best: any, current: any) => {
+          return (current.like_count || 0) > (best.like_count || 0) ? current : best;
+        }, { like_count: 0 } as any);
+
+        setBestPostLikes(bestPost.like_count || 0);
+        setWeeklyStats({ weeklyPosts, weeklyLikes, weeklyComments, consecutiveDays });
+
       } else {
         setWeeklyStats({ weeklyPosts: 0, weeklyLikes: 0, weeklyComments: 0, consecutiveDays: 0 });
         setBestPostLikes(0);
@@ -299,90 +274,7 @@ const ProfileScreen: React.FC = () => {
       setWeeklyStats({ weeklyPosts: 0, weeklyLikes: 0, weeklyComments: 0, consecutiveDays: 0 });
       setBestPostLikes(0);
     }
-  }, []);
-
-  // 🔥 나의 최근 글 로드 (나의 하루 + 위로와 공감)
-  const loadMyRecentPosts = useCallback(async () => {
-    try {
-      // 병렬 호출로 성능 개선
-      const [myDayResponse, postResponse] = await Promise.all([
-        myDayService.getMyPosts({ page: 1, limit: 10, sort_by: 'latest' }),
-        postService.getMyPosts({ page: 1, limit: 10, sort_by: 'latest' })
-      ]);
-
-      let myDayPosts: any[] = [];
-      let comfortPosts: any[] = [];
-
-      // 나의 하루 데이터 추출 (타입 추가)
-      if (myDayResponse.status === 'success' && myDayResponse.data) {
-        if (myDayResponse.data.posts) {
-          myDayPosts = myDayResponse.data.posts.map((p: any) => ({ ...p, postType: 'myDay' }));
-        } else if (Array.isArray(myDayResponse.data)) {
-          myDayPosts = myDayResponse.data.map((p: any) => ({ ...p, postType: 'myDay' }));
-        }
-      }
-
-      // 위로와 공감 데이터 추출 (타입 추가)
-      if (postResponse.status === 'success' && postResponse.data) {
-        if (postResponse.data.posts) {
-          comfortPosts = postResponse.data.posts.map((p: any) => ({ ...p, postType: 'comfort' }));
-        } else if (Array.isArray(postResponse.data)) {
-          comfortPosts = postResponse.data.map((p: any) => ({ ...p, postType: 'comfort' }));
-        }
-      }
-
-      // 두 배열 합치기
-      const allPosts = [...myDayPosts, ...comfortPosts];
-
-      // 🔥 post_id 기준 중복 제거
-      const uniquePosts = allPosts.filter((post, index, self) =>
-        index === self.findIndex(p => p.post_id === post.post_id)
-      );
-
-      // created_at 기준으로 정렬 (최신순)
-      uniquePosts.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      // 최대 3개만 선택
-      const recentPosts = uniquePosts.slice(0, 3);
-
-      const myDisplayPosts: DisplayPost[] = recentPosts.map(apiPost => ({
-        post_id: apiPost.post_id,
-        postType: apiPost.postType, // 'myDay' 또는 'comfort'
-        authorName: apiPost.is_anonymous ? '익명' : (apiPost.user?.nickname || '나'),
-        content: apiPost.content,
-        emotions: apiPost.emotions?.map((emotion: any) => {
-          const localEmotion = localEmotions.find(local => local.label === emotion.name);
-          return {
-            emotion_id: emotion.emotion_id,
-            name: emotion.name,
-            icon: emotion.icon || localEmotion?.icon || '😊',
-            color: emotion.color || localEmotion?.color || '#6366f1'
-          };
-        }) || [],
-        image_url: apiPost.image_url,
-        like_count: apiPost.like_count || 0,
-        comment_count: apiPost.comment_count || 0,
-        created_at: apiPost.created_at || new Date().toISOString(),
-        updated_at: apiPost.updated_at || apiPost.created_at || new Date().toISOString(),
-        is_anonymous: apiPost.is_anonymous || false,
-        user_id: apiPost.user_id,
-        isLiked: apiPost.is_liked || false
-      }));
-
-      setMyRecentPosts(myDisplayPosts);
-      if (__DEV__) {
-        console.log('=== 최근 글 로드 ===');
-        console.log('나의 하루 게시물:', myDayPosts.length);
-        console.log('위로와 공감 게시물:', comfortPosts.length);
-        console.log('전체 게시물:', allPosts.length);
-        console.log('중복 제거 후 게시물:', uniquePosts.length);
-        console.log('화면 표시 게시물 수:', myDisplayPosts.length);
-      }
-    } catch (error: any) {
-      setMyRecentPosts([]);
-      if (__DEV__) console.error('내 최근 게시물 로딩 오류:', error);
-    }
-  }, []);
+  }, [calculateConsecutiveDays]);
 
   // Toast helper (loadAllData보다 먼저 정의)
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info') => {
@@ -411,13 +303,12 @@ const ProfileScreen: React.FC = () => {
     try {
       performanceMonitor.start('ProfileScreen_loadAllData');
 
-      const [statsRes, emotionsRes, activityRes, challengeRes, badgesRes, weeklyRes] = await Promise.all([
+      const [statsRes, emotionsRes, activityRes, challengeRes, badgesRes] = await Promise.all([
         performanceMonitor.measureAsync('API_getUserStats', () => userService.getUserStats()),
         performanceMonitor.measureAsync('API_getEmotionStats', () => myDayService.getUserEmotionStats()),
         performanceMonitor.measureAsync('API_getFirstActivity', () => userService.getFirstActivity()),
         performanceMonitor.measureAsync('API_getChallengeStats', () => userService.getChallengeStats()),
         performanceMonitor.measureAsync('API_getBadges', () => reviewService.getUserBadges().catch(() => ({ status: 'error', data: { badges: [] } }))),
-        performanceMonitor.measureAsync('API_getWeeklyStats', () => userService.getWeeklyStats().catch(() => ({ status: 'error', data: null }))),
       ]);
 
       performanceMonitor.end('ProfileScreen_loadAllData');
@@ -467,19 +358,7 @@ const ProfileScreen: React.FC = () => {
         })));
       }
 
-      // 주간 통계 처리
-      if (weeklyRes.status === 'success' && weeklyRes.data) {
-        setWeeklyStats({
-          weeklyPosts: weeklyRes.data.weeklyPosts,
-          weeklyLikes: weeklyRes.data.weeklyLikes,
-          weeklyComments: weeklyRes.data.weeklyComments,
-          consecutiveDays: weeklyRes.data.consecutiveDays
-        });
-        setBestPostLikes(weeklyRes.data.bestPostLikes);
-      } else {
-        setWeeklyStats({ weeklyPosts: 0, weeklyLikes: 0, weeklyComments: 0, consecutiveDays: 0 });
-        setBestPostLikes(0);
-      }
+      await loadWeeklyStats();
 
       // 💾 캐시 저장 (성공적으로 로드한 경우에만)
       setDataCache({
@@ -496,7 +375,7 @@ const ProfileScreen: React.FC = () => {
       });
       setCacheTimestamp(Date.now());
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (__DEV__) console.error('데이터 로드 오류:', error);
 
       if (error?.response?.status === 401) {
@@ -524,22 +403,16 @@ const ProfileScreen: React.FC = () => {
   useEffect(() => {
     if (isFocused && initialLoad) {
       loadAllData();
-      loadWeeklyStats();
-      loadMyRecentPosts();
       setInitialLoad(false);
     }
-  }, [isFocused, initialLoad, loadAllData, loadWeeklyStats, loadMyRecentPosts]);
+  }, [isFocused, initialLoad, loadAllData]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
     // 💾 새로고침 시 캐시 무시하고 강제 로드
-    await Promise.all([
-      loadAllData(true),
-      loadWeeklyStats(),
-      loadMyRecentPosts()
-    ]);
+    await loadAllData(true);
     setRefreshing(false);
-  }, [loadAllData, loadWeeklyStats, loadMyRecentPosts]);
+  }, [loadAllData]);
 
   const handleLogout = useCallback(() => {
     setBottomSheetAlert({
@@ -559,7 +432,7 @@ const ProfileScreen: React.FC = () => {
                 routes: [{ name: 'Welcome' }],
               });
             } catch (error) {
-              if (__DEV__) console.error('로그아웃 오류:', error);
+              console.error('로그아웃 오류:', error);
             }
           }
         },
@@ -602,7 +475,7 @@ const ProfileScreen: React.FC = () => {
                 setTimeout(() => {
                   showToast('프로필 이미지가 삭제되었습니다.', 'success');
                 }, 300);
-              } catch (error: unknown) {
+              } catch (error: any) {
                 showToast(error?.message || '프로필 이미지 삭제 중 오류가 발생했습니다.', 'error');
               }
             }
@@ -654,9 +527,18 @@ const ProfileScreen: React.FC = () => {
     return num.toString();
   }, []);
 
-  // 로딩 화면 (Skeleton UI)
+  // 로딩 화면
   if (loading && initialLoad) {
-    return <ProfileSkeleton />;
+    return (
+      <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={emotionColors.primary} />
+          <RNText style={[styles.loadingText, { color: theme.colors.text.secondary, marginTop: 16 }]}>
+            프로필 로드 중...
+          </RNText>
+        </View>
+      </View>
+    );
   }
 
   // 비로그인 사용자 로그인 유도 화면
@@ -715,7 +597,7 @@ const ProfileScreen: React.FC = () => {
           {/* 환영 메시지 */}
           <RNText style={{
             fontSize: getFontSize(20),
-            fontFamily: 'Pretendard-Bold',
+            fontWeight: '700',
             color: isDark ? theme.colors.text.primary : '#1F2937',
             marginBottom: 12,
             textAlign: 'center',
@@ -757,7 +639,7 @@ const ProfileScreen: React.FC = () => {
             <RNText style={{
               color: '#FFFFFF',
               fontSize: getFontSize(15),
-              fontFamily: 'Pretendard-Bold',
+              fontWeight: '700',
               letterSpacing: -0.3,
             }}>
               로그인하기
@@ -784,7 +666,7 @@ const ProfileScreen: React.FC = () => {
             <RNText style={{
               color: '#667eea',
               fontSize: getFontSize(15),
-              fontFamily: 'Pretendard-Bold',
+              fontWeight: '700',
               letterSpacing: -0.3,
             }}>
               회원가입하기
@@ -795,7 +677,7 @@ const ProfileScreen: React.FC = () => {
           <View style={{ marginTop: 28, width: '100%', maxWidth: 320, paddingHorizontal: 8 }}>
             <RNText style={{
               fontSize: getFontSize(15),
-              fontFamily: 'Pretendard-Bold',
+              fontWeight: '700',
               color: isDark ? theme.colors.text.primary : '#374151',
               marginBottom: 16,
               textAlign: 'center',
@@ -845,7 +727,7 @@ const ProfileScreen: React.FC = () => {
                   <RNText
                     style={{
                       fontSize: getFontSize(13),
-                      fontFamily: 'Pretendard-SemiBold',
+                      fontWeight: '600',
                       color: isDark ? theme.colors.text.primary : '#1A1A1A',
                       lineHeight: 18,
                     }}
@@ -882,7 +764,7 @@ const ProfileScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* 향상된 모던 헤더 */}
-        <View style={[styles.enhancedHeader, { backgroundColor: theme.colors.background }]}>
+        <View style={[styles.enhancedHeader, { backgroundColor: theme.colors.background, paddingTop: insets.top + 8 }]}>
           <TouchableOpacity
             style={styles.profileBackButton}
             onPress={() => navigation.goBack()}
@@ -946,19 +828,12 @@ const ProfileScreen: React.FC = () => {
               )}
 
               <RNText style={[styles.userEmail, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
-                {user.email}
+                {maskEmail(user.email)}
               </RNText>
               
               <View style={styles.joinDateContainer}>
-                <Icon name="calendar-outline" size={normalizeIcon(14)} color={emotionColors.textLight} />
-                <RNText style={[styles.joinDate, { color: isDark ? theme.colors.text.secondary : emotionColors.textLight }]}>
-                  {user.created_at ? (
-                    <>
-                      {new Date(user.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' })} 가입
-                      <RNText style={{ color: emotionColors.primary, fontFamily: 'Pretendard-SemiBold' }}>  •  {getRelativeTime(user.created_at)}</RNText>
-                    </>
-                  ) : '정보 없음'}
-                </RNText>
+                <Icon name="calendar" size={14} color={emotionColors.textLight} />
+                <RNText style={[styles.joinDate, { color: isDark ? theme.colors.text.secondary : emotionColors.textLight }]}>가입일: {(firstActivity.signup_date || user.created_at) ? new Date((firstActivity.signup_date || user.created_at) as string).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' }) : '정보 없음'}</RNText>
               </View>
             </View>
           </View>
@@ -979,332 +854,72 @@ const ProfileScreen: React.FC = () => {
           )}
         </View>
 
-        {/* 나의 최근 글 */}
-        <View style={[styles.statsCard, { backgroundColor: theme.colors.card, marginBottom: normalizeSpace(16) }]}>
-          <View style={[styles.cardHeader, { marginBottom: normalizeSpace(8) }]}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: normalizeSpace(8) }}>
-              <RNText style={[styles.cardTitle, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
-                ✍️ 나의 최근 글
-              </RNText>
-              <View style={{
-                backgroundColor: emotionColors.surfaceSecondary,
-                paddingHorizontal: normalizeSpace(8),
-                paddingVertical: normalizeSpace(3),
-                borderRadius: normalizeSpace(12)
-              }}>
-                <RNText style={{
-                  color: emotionColors.textSecondary,
-                  fontSize: getFontSize(12),
-                  fontFamily: 'Pretendard-SemiBold'
-                }}>
-                  {myRecentPosts.length}
-                </RNText>
-              </View>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: normalizeSpace(6) }}>
-              <Pressable
-                onPress={() => navigation.navigate('MyPosts' as never)}
-                style={{
-                  paddingHorizontal: normalizeSpace(10),
-                  paddingVertical: normalizeSpace(6),
-                  borderRadius: normalizeSpace(10),
-                  backgroundColor: isDark ? 'rgba(167, 139, 250, 0.15)' : '#eef2ff',
-                  borderWidth: 1,
-                  borderColor: isDark ? 'rgba(167, 139, 250, 0.3)' : '#c7d2fe'
-                }}
-              >
-                <RNText style={{
-                  fontSize: getFontSize(11),
-                  fontFamily: 'Pretendard-Bold',
-                  color: isDark ? '#A78BFA' : '#667eea',
-                  letterSpacing: -0.2
-                }}>
-                  전체보기
-                </RNText>
-              </Pressable>
-              <Pressable
-                onPress={() => setIsMyRecentPostsCollapsed(!isMyRecentPostsCollapsed)}
-                style={{
-                  padding: normalizeSpace(6),
-                  borderRadius: normalizeSpace(12),
-                  backgroundColor: isDark ? '#404040' : '#f3f4f6'
-                }}
-              >
-                <MaterialCommunityIcons
-                  name={isMyRecentPostsCollapsed ? "chevron-down" : "chevron-up"}
-                  size={normalizeIcon(14)}
-                  color={isDark ? '#ffffff' : '#6b7280'}
-                />
-              </Pressable>
-            </View>
-          </View>
-
-          {!isMyRecentPostsCollapsed && (
-            <>
-              {myRecentPosts.length > 0 ? (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    gap: normalizeSpace(6),
-                    paddingHorizontal: normalizeSpace(4)
-                  }}
-                >
-                  {(() => {
-                    const postsToShow = myRecentPosts.slice(0, 3);
-                    if (__DEV__) {
-                      console.log('=== 최근 글 렌더링 ===');
-                      console.log('myRecentPosts.length:', myRecentPosts.length);
-                      console.log('렌더링할 게시물 수:', postsToShow.length);
-                    }
-                    return postsToShow;
-                  })().map((post) => {
-                    // 카드 배치 가능 영역: 전체 - margin(32) - padding(24) - containerPadding(8)
-                    const availableWidth = screenWidth - 56 - normalizeSpace(8);
-                    // gap 공간 제외 후 3등분 (gap 6으로 줄여서 폭 증가)
-                    const cardWidth = (availableWidth - normalizeSpace(12)) / 3 - 1;
-                    return (
-                      <Pressable
-                        key={`${post.postType || 'post'}_${post.post_id}`}
-                        onPress={() => {
-                          // MyPosts 화면으로 이동
-                          navigation.navigate('MyPosts' as never, { highlightPostId: post.post_id } as never);
-                        }}
-                        style={{
-                          width: cardWidth,
-                          backgroundColor: isDark ? theme.bg.secondary : '#f9fafb',
-                          borderRadius: normalizeSpace(10),
-                          borderWidth: 1,
-                          borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
-                          padding: normalizeSpace(8),
-                          gap: normalizeSpace(4),
-                          minHeight: normalizeSpace(100)
-                        }}
-                      >
-                        {post.emotions.length > 0 && (
-                          <View style={{ alignItems: 'center', gap: normalizeSpace(1) }}>
-                            <RNText style={{ fontSize: normalizeIcon(20) }}>
-                              {post.emotions[0]?.icon || '😊'}
-                            </RNText>
-                            <RNText
-                              numberOfLines={1}
-                              style={{
-                                fontSize: getFontSize(10),
-                                color: emotionColors.text,
-                                fontFamily: 'Pretendard-SemiBold',
-                                textAlign: 'center'
-                              }}
-                            >
-                              {post.emotions[0]?.name || '감정'}
-                            </RNText>
-                          </View>
-                        )}
-
-                        <RNText
-                          numberOfLines={2}
-                          ellipsizeMode="tail"
-                          style={{
-                            fontSize: getFontSize(11),
-                            color: emotionColors.textSecondary,
-                            lineHeight: getFontSize(11) * 1.5,
-                            flex: 1,
-                            textAlign: 'center',
-                            paddingHorizontal: normalizeSpace(2)
-                          }}
-                        >
-                          {post.content || '내용 없음'}
-                        </RNText>
-
-                        <View style={{ flexDirection: 'row', gap: normalizeSpace(8), alignItems: 'center', justifyContent: 'center' }}>
-                          <RNText style={{ fontSize: getFontSize(10), color: emotionColors.textLight }}>
-                            ❤️ {post.like_count}
-                          </RNText>
-                          <RNText style={{ fontSize: getFontSize(10), color: emotionColors.textLight }}>
-                            💬 {post.comment_count}
-                          </RNText>
-                        </View>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              ) : (
-                <View style={{ paddingVertical: normalizeSpace(24), alignItems: 'center' }}>
-                  <RNText style={{
-                    fontSize: getFontSize(14),
-                    color: emotionColors.textSecondary,
-                    textAlign: 'center'
-                  }}>
-                    아직 작성한 글이 없습니다{'\n'}
-                    첫 번째 글을 작성해보세요! ✨
-                  </RNText>
-                </View>
-              )}
-            </>
-          )}
-        </View>
-
-        {/* 통계 정보 - 작은 칩 방식 */}
+        {/* 통계 정보 */}
         <View style={[styles.statsCard, { backgroundColor: theme.colors.card }]}>
           <RNText style={[styles.cardTitle, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
             활동 통계
           </RNText>
 
-          {/* 작은 칩 그리드 (9개, 3x3) - 배경 제거 & 더 작게 */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: normalizeSpace(3) }}>
-            {/* 받은 응원 */}
+          <View style={styles.statsContainer}>
             <TouchableOpacity
+              style={styles.statItem}
               onPress={() => navigation.navigate('Encouragement')}
               activeOpacity={0.7}
-              style={{
-                width: (screenWidth - normalizeSpace(80)) / 3,
-                paddingVertical: normalizeSpace(4),
-                paddingHorizontal: normalizeSpace(6),
-                alignItems: 'center',
-                gap: normalizeSpace(1),
-              }}
             >
               <Icon name="heart" size={20} color="#E91E63" />
-              <RNText style={{ fontSize: getFontSize(17), color: isDark ? theme.colors.text.primary : theme.colors.text.primary, fontFamily: 'Pretendard-Bold' }}>
+              <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.encouragement_received_count || 0)}
               </RNText>
-              <RNText style={{ fontSize: getFontSize(11), color: isDark ? theme.colors.text.secondary : theme.colors.text.secondary, fontFamily: 'Pretendard-Medium', textAlign: 'center' }}>
-                받은 응원
+              <RNText style={[styles.statLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
+                받은 격려
               </RNText>
             </TouchableOpacity>
 
-            {/* 나의 하루 */}
-            <View style={{
-              width: (screenWidth - normalizeSpace(80)) / 3,
-              paddingVertical: normalizeSpace(4),
-              paddingHorizontal: normalizeSpace(6),
-              alignItems: 'center',
-              gap: normalizeSpace(1),
-            }}>
+            <TouchableOpacity
+              style={styles.statItem}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="내가 쓴 글 보기"
+              onPress={() => (navigation as any).navigate('MyPosts')}
+            >
               <Icon name="happy-outline" size={20} color={emotionColors.primary} />
-              <RNText style={{ fontSize: getFontSize(17), color: isDark ? theme.colors.text.primary : theme.colors.text.primary, fontFamily: 'Pretendard-Bold' }}>
+              <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_post_count)}
               </RNText>
-              <RNText style={{ fontSize: getFontSize(11), color: isDark ? theme.colors.text.secondary : theme.colors.text.secondary, fontFamily: 'Pretendard-Medium', textAlign: 'center' }}>
+              <RNText style={[styles.statLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
                 나의 하루
               </RNText>
-            </View>
+            </TouchableOpacity>
 
-            {/* 위로와 공감 */}
-            <View style={{
-              width: (screenWidth - normalizeSpace(80)) / 3,
-              paddingVertical: normalizeSpace(4),
-              paddingHorizontal: normalizeSpace(6),
-              alignItems: 'center',
-              gap: normalizeSpace(1),
-            }}>
-              <Icon name="time-outline" size={20} color="#9C27B0" />
-              <RNText style={{ fontSize: getFontSize(17), color: isDark ? theme.colors.text.primary : theme.colors.text.primary, fontFamily: 'Pretendard-Bold' }}>
-                {formatNumber(stats.someone_day_post_count || 0)}
-              </RNText>
-              <RNText style={{ fontSize: getFontSize(11), color: isDark ? theme.colors.text.secondary : theme.colors.text.secondary, fontFamily: 'Pretendard-Medium', textAlign: 'center' }}>
-                위로와 공감
-              </RNText>
-            </View>
-
-            {/* 하루 좋아요 */}
-            <View style={{
-              width: (screenWidth - normalizeSpace(80)) / 3,
-              paddingVertical: normalizeSpace(4),
-              paddingHorizontal: normalizeSpace(6),
-              alignItems: 'center',
-              gap: normalizeSpace(1),
-            }}>
+            <View style={styles.statItem}>
               <Icon name="heart-outline" size={20} color={emotionColors.error} />
-              <RNText style={{ fontSize: getFontSize(17), color: isDark ? theme.colors.text.primary : theme.colors.text.primary, fontFamily: 'Pretendard-Bold' }}>
+              <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_like_received_count)}
               </RNText>
-              <RNText style={{ fontSize: getFontSize(11), color: isDark ? theme.colors.text.secondary : theme.colors.text.secondary, fontFamily: 'Pretendard-Medium', textAlign: 'center' }}>
-                하루 좋아요
+              <RNText style={[styles.statLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
+                좋아요
               </RNText>
             </View>
+          </View>
 
-            {/* 위로 좋아요 */}
-            <View style={{
-              width: (screenWidth - normalizeSpace(80)) / 3,
-              paddingVertical: normalizeSpace(4),
-              paddingHorizontal: normalizeSpace(6),
-              alignItems: 'center',
-              gap: normalizeSpace(1),
-            }}>
-              <Icon name="heart-circle-outline" size={20} color="#FFC107" />
-              <RNText style={{ fontSize: getFontSize(17), color: isDark ? theme.colors.text.primary : theme.colors.text.primary, fontFamily: 'Pretendard-Bold' }}>
-                {formatNumber(stats.someone_day_like_received_count || 0)}
-              </RNText>
-              <RNText style={{ fontSize: getFontSize(11), color: isDark ? theme.colors.text.secondary : theme.colors.text.secondary, fontFamily: 'Pretendard-Medium', textAlign: 'center' }}>
-                위로 좋아요
-              </RNText>
-            </View>
-
-            {/* 하루 댓글 */}
-            <View style={{
-              width: (screenWidth - normalizeSpace(80)) / 3,
-              paddingVertical: normalizeSpace(4),
-              paddingHorizontal: normalizeSpace(6),
-              alignItems: 'center',
-              gap: normalizeSpace(1),
-            }}>
+          <View style={[styles.statsContainer, { marginTop: 4, justifyContent: 'center' }]}>
+            <View style={styles.statItem}>
               <Icon name="chatbubble-outline" size={20} color={emotionColors.warning} />
-              <RNText style={{ fontSize: getFontSize(17), color: isDark ? theme.colors.text.primary : theme.colors.text.primary, fontFamily: 'Pretendard-Bold' }}>
+              <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_comment_received_count)}
               </RNText>
-              <RNText style={{ fontSize: getFontSize(11), color: isDark ? theme.colors.text.secondary : theme.colors.text.secondary, fontFamily: 'Pretendard-Medium', textAlign: 'center' }}>
-                하루 댓글
+              <RNText style={[styles.statLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
+                댓글
               </RNText>
             </View>
 
-            {/* 위로 댓글 */}
-            <View style={{
-              width: (screenWidth - normalizeSpace(80)) / 3,
-              paddingVertical: normalizeSpace(4),
-              paddingHorizontal: normalizeSpace(6),
-              alignItems: 'center',
-              gap: normalizeSpace(1),
-            }}>
-              <Icon name="chatbubbles-outline" size={20} color="#009688" />
-              <RNText style={{ fontSize: getFontSize(17), color: isDark ? theme.colors.text.primary : theme.colors.text.primary, fontFamily: 'Pretendard-Bold' }}>
-                {formatNumber(stats.someone_day_comment_received_count || 0)}
-              </RNText>
-              <RNText style={{ fontSize: getFontSize(11), color: isDark ? theme.colors.text.secondary : theme.colors.text.secondary, fontFamily: 'Pretendard-Medium', textAlign: 'center' }}>
-                위로 댓글
-              </RNText>
-            </View>
-
-            {/* 챌린지 */}
-            <View style={{
-              width: (screenWidth - normalizeSpace(80)) / 3,
-              paddingVertical: normalizeSpace(4),
-              paddingHorizontal: normalizeSpace(6),
-              alignItems: 'center',
-              gap: normalizeSpace(1),
-            }}>
+            <View style={styles.statItem}>
               <Icon name="trophy-outline" size={20} color={emotionColors.gold} />
-              <RNText style={{ fontSize: getFontSize(17), color: isDark ? theme.colors.text.primary : theme.colors.text.primary, fontFamily: 'Pretendard-Bold' }}>
+              <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.challenge_count)}
               </RNText>
-              <RNText style={{ fontSize: getFontSize(11), color: isDark ? theme.colors.text.secondary : theme.colors.text.secondary, fontFamily: 'Pretendard-Medium', textAlign: 'center' }}>
+              <RNText style={[styles.statLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
                 챌린지
-              </RNText>
-            </View>
-
-            {/* 감정 기록 */}
-            <View style={{
-              width: (screenWidth - normalizeSpace(80)) / 3,
-              paddingVertical: normalizeSpace(4),
-              paddingHorizontal: normalizeSpace(6),
-              alignItems: 'center',
-              gap: normalizeSpace(1),
-            }}>
-              <Icon name="color-palette-outline" size={20} color="#E91E63" />
-              <RNText style={{ fontSize: getFontSize(17), color: isDark ? theme.colors.text.primary : theme.colors.text.primary, fontFamily: 'Pretendard-Bold' }}>
-                {formatNumber(totalEmotionCount)}
-              </RNText>
-              <RNText style={{ fontSize: getFontSize(11), color: isDark ? theme.colors.text.secondary : theme.colors.text.secondary, fontFamily: 'Pretendard-Medium', textAlign: 'center' }}>
-                감정 기록
               </RNText>
             </View>
           </View>
@@ -1313,89 +928,42 @@ const ProfileScreen: React.FC = () => {
         {/* 이번 주 활동 현황 */}
         <View style={[styles.weeklyActivityCard, { backgroundColor: theme.colors.card }]}>
           <View style={styles.cardHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: normalizeSpace(8) }}>
-              <Icon name="bar-chart" size={22} color={emotionColors.primary} />
-              <RNText style={[styles.cardTitle, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>이번 주 활동</RNText>
-            </View>
-            <RNText style={[styles.cardSubtitle, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
-              {new Date().getMonth() + 1}월 {Math.ceil(new Date().getDate() / 7)}주차
-            </RNText>
+            <Icon name="calendar" size={22} color={emotionColors.primary} />
+            <RNText style={[styles.cardTitle, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>이번 주 활동</RNText>
+            <RNText style={[styles.cardSubtitle, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>{new Date().getMonth() + 1}월 {Math.ceil(new Date().getDate() / 7)}주차</RNText>
           </View>
 
-          {/* 동기부여 메시지 */}
-          {weeklyStats.weeklyPosts > 0 && (
-            <View style={{
-              backgroundColor: isDark ? 'rgba(96, 165, 250, 0.1)' : '#E3F2FD',
-              padding: normalizeSpace(12),
-              borderRadius: normalizeSpace(10),
-              marginBottom: normalizeSpace(16),
-              borderLeftWidth: 3,
-              borderLeftColor: emotionColors.primary
-            }}>
-              <RNText style={{
-                fontSize: getFontSize(12),
-                color: isDark ? '#60a5fa' : '#1976D2',
-                fontFamily: 'Pretendard-SemiBold',
-                lineHeight: getFontSize(12) * 1.5
-              }}>
-                {weeklyStats.weeklyPosts >= 7 ? '🎉 매일 꾸준히 작성하셨네요!' :
-                 weeklyStats.weeklyPosts >= 5 ? '👏 이번 주도 열심히 활동하셨어요!' :
-                 weeklyStats.weeklyPosts >= 3 ? '💪 좋은 습관을 만들어가고 있어요!' :
-                 '🌱 하루하루 기록해보세요!'}
-              </RNText>
-            </View>
-          )}
-
-          {/* 활동 그래프 */}
-          <View style={{ marginBottom: normalizeSpace(12) }}>
-            <ActivityChart
-              data={[
-                { label: '작성', value: weeklyStats.weeklyPosts, color: '#4CAF50' },
-                { label: '공감', value: weeklyStats.weeklyLikes, color: '#E91E63' },
-                { label: '댓글', value: weeklyStats.weeklyComments, color: '#FF9800' },
-                { label: '연속', value: weeklyStats.consecutiveDays, color: '#FF5722' },
-              ]}
-              type="bar"
-              height={normalizeSpace(180)}
-              textColor={isDark ? theme.colors.text.primary : '#000000'}
-            />
-          </View>
-
-          {/* 통계 요약 */}
-          <View style={{
-            flexDirection: 'row',
-            justifyContent: 'space-around',
-            paddingTop: normalizeSpace(12),
-            borderTopWidth: 1,
-            borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#f0f0f0'
-          }}>
-            <View style={{ alignItems: 'center' }}>
-              <Icon name="create-outline" size={16} color="#4CAF50" />
-              <RNText style={{ fontSize: getFontSize(12), fontFamily: 'Pretendard-SemiBold', color: isDark ? theme.colors.text.primary : '#000000', marginTop: normalizeSpace(4) }}>
+          <View style={styles.weeklyStats}>
+            <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
+              <Icon name="create-outline" size={20} color="#4CAF50" />
+              <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>작성한 글</RNText>
+              <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {weeklyStats.weeklyPosts}개
               </RNText>
-              <RNText style={{ fontSize: getFontSize(10), color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }}>작성</RNText>
             </View>
-            <View style={{ alignItems: 'center' }}>
-              <Icon name="heart-outline" size={16} color="#E91E63" />
-              <RNText style={{ fontSize: getFontSize(12), fontFamily: 'Pretendard-SemiBold', color: isDark ? theme.colors.text.primary : '#000000', marginTop: normalizeSpace(4) }}>
+
+            <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
+              <Icon name="heart-outline" size={20} color="#E91E63" />
+              <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>받은 공감</RNText>
+              <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {weeklyStats.weeklyLikes}개
               </RNText>
-              <RNText style={{ fontSize: getFontSize(10), color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }}>공감</RNText>
             </View>
-            <View style={{ alignItems: 'center' }}>
-              <Icon name="chatbubble-outline" size={16} color="#FF9800" />
-              <RNText style={{ fontSize: getFontSize(12), fontFamily: 'Pretendard-SemiBold', color: isDark ? theme.colors.text.primary : '#000000', marginTop: normalizeSpace(4) }}>
+
+            <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
+              <Icon name="chatbubble-outline" size={20} color="#FF9800" />
+              <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>받은 댓글</RNText>
+              <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {weeklyStats.weeklyComments}개
               </RNText>
-              <RNText style={{ fontSize: getFontSize(10), color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }}>댓글</RNText>
             </View>
-            <View style={{ alignItems: 'center' }}>
-              <Icon name="flame" size={16} color="#FF5722" />
-              <RNText style={{ fontSize: getFontSize(12), fontFamily: 'Pretendard-SemiBold', color: isDark ? theme.colors.text.primary : '#000000', marginTop: normalizeSpace(4) }}>
-                {weeklyStats.consecutiveDays > 0 ? `${weeklyStats.consecutiveDays}일` : '-'}
+
+            <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
+              <Icon name="flame" size={20} color="#FF5722" />
+              <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>연속 작성</RNText>
+              <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
+                {weeklyStats.consecutiveDays > 0 ? `${weeklyStats.consecutiveDays}일` : '오늘부터 시작!'}
               </RNText>
-              <RNText style={{ fontSize: getFontSize(10), color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }}>연속</RNText>
             </View>
           </View>
         </View>
@@ -1404,7 +972,7 @@ const ProfileScreen: React.FC = () => {
         <View style={[styles.recordsCard, { backgroundColor: theme.colors.card }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <Icon name="ribbon" size={20} color={emotionColors.primary} style={{ marginRight: 8 }} />
-            <RNText style={{ fontSize: FONT_SIZES.h4, fontFamily: 'Pretendard-Bold', color: isDark ? theme.colors.text.primary : emotionColors.text }}>나만의 특별한 기록</RNText>
+            <RNText style={{ fontSize: FONT_SIZES.h4, fontWeight: '700', color: isDark ? theme.colors.text.primary : emotionColors.text }}>나만의 특별한 기록</RNText>
           </View>
 
           <View style={styles.recordsList}>
@@ -1413,7 +981,7 @@ const ProfileScreen: React.FC = () => {
               <View style={styles.recordInfo}>
                 <RNText style={[styles.recordTitle, { color: isDark ? theme.colors.text.primary : '#000000' }]}>여정 시작일</RNText>
                 <RNText style={[styles.recordValue, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
-                  {user?.created_at ? new Date(user.created_at).toLocaleDateString('ko-KR') : '정보 없음'}
+                  {(firstActivity.signup_date || user?.created_at) ? new Date((firstActivity.signup_date || user?.created_at) as string).toLocaleDateString('ko-KR') : '정보 없음'}
                 </RNText>
               </View>
             </View>
@@ -1455,9 +1023,9 @@ const ProfileScreen: React.FC = () => {
           <View style={[styles.badgeCard, { backgroundColor: theme.colors.card }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
               <Icon name="medal-outline" size={20} color={emotionColors.gold} style={{ marginRight: 8 }} />
-              <RNText style={{ fontSize: FONT_SIZES.h4, fontFamily: 'Pretendard-Bold', color: isDark ? theme.colors.text.primary : emotionColors.text }}>나의 배지</RNText>
+              <RNText style={{ fontSize: FONT_SIZES.h4, fontWeight: '700', color: isDark ? theme.colors.text.primary : emotionColors.text }}>나의 배지</RNText>
               <View style={{ flex: 1 }} />
-              <RNText style={{ fontSize: FONT_SIZES.bodySmall, fontFamily: 'Pretendard-Medium', color: emotionColors.textSecondary }}>{badges.length}개 획득</RNText>
+              <RNText style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: emotionColors.textSecondary }}>{badges.length}개 획득</RNText>
             </View>
             <View style={styles.badgeGrid}>
               {badges.map((badge) => (
@@ -1564,31 +1132,6 @@ const ProfileScreen: React.FC = () => {
               ))}
             </View>
 
-            {/* 📊 감정 분포 차트 */}
-            {emotionTags.length >= 3 && (
-              <View style={{ marginTop: 20, marginBottom: 20 }}>
-                <RNText style={[
-                  styles.emotionSubtitle,
-                  {
-                    color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary,
-                    marginBottom: 12,
-                    textAlign: 'center'
-                  }
-                ]}>
-                  감정 분포
-                </RNText>
-                <ActivityChart
-                  data={emotionTags.slice(0, 5).map(tag => ({
-                    label: tag.name,
-                    value: tag.count,
-                    color: tag.color
-                  }))}
-                  type="pie"
-                  height={200}
-                />
-              </View>
-            )}
-
             <View style={[styles.emotionStats, { backgroundColor: isDark ? theme.bg.secondary : '#F0F8FF' }]}>
               <View style={styles.statRow}>
                 <RNText style={[styles.emotionStatLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>가장 자주 사용한 감정</RNText>
@@ -1672,7 +1215,7 @@ const ProfileScreen: React.FC = () => {
                 <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(102, 126, 234, 0.2)' : 'rgba(102, 126, 234, 0.12)' }]}>
                   <Icon name="shield-checkmark" size={20} color="#667EEA" />
                 </View>
-                <RNText style={[styles.settingText, { color: '#667EEA', fontFamily: 'Pretendard-Bold' }]}>관리자</RNText>
+                <RNText style={[styles.settingText, { color: '#667EEA', fontWeight: '700' }]}>관리자</RNText>
                 <Icon name="chevron-forward" size={16} color="#667EEA" />
               </TouchableOpacity>
             )}
@@ -1835,7 +1378,7 @@ const styles = StyleSheet.create({
   },
   loginRequiredText: {
     fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
@@ -1880,7 +1423,7 @@ const styles = StyleSheet.create({
   },
   mainTitle: {
     fontSize: 24,
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     letterSpacing: -0.4,
     lineHeight: 30,
     textAlign: 'left',
@@ -1924,7 +1467,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: FONT_SIZES.bodyLarge, // 15 → 16 (가독성 향상)
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: -0.2,
     lineHeight: 22,
   },
@@ -1976,37 +1519,36 @@ const styles = StyleSheet.create({
   joinDateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 8,
-    paddingVertical: 4,
+    gap: 4,
+    marginTop: 6,
   },
   joinDate: {
     fontSize: FONT_SIZES.small,
-    fontFamily: 'Pretendard-Medium',
-    letterSpacing: 0.3,
-    lineHeight: FONT_SIZES.small * 1.4,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
   userName: {
     fontSize: FONT_SIZES.h3, // 17 → 18 (사용자명 강조)
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 6,
     letterSpacing: -0.2,
+    fontFamily: 'System',
     lineHeight: 26,
   },
   userHandle: {
     fontSize: FONT_SIZES.body, // 14 → 15 (핸들명 가독성)
     marginBottom: 3,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     lineHeight: 21,
   },
   userEmail: {
     fontSize: FONT_SIZES.body, // 14 → 15 (이메일 가독성)
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     lineHeight: 21,
   },
   loadingText: {
     fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   editButton: {
     paddingHorizontal: 16,
@@ -2016,13 +1558,13 @@ const styles = StyleSheet.create({
   },
   editButtonText: {
     fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   statsCard: {
     borderRadius: 16,
-    padding: 12,
+    padding: 10,
     marginHorizontal: 16,
-    marginTop: 12,
+    marginTop: 6,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -2032,7 +1574,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: FONT_SIZES.h4,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 6,
     textAlign: 'left',
     letterSpacing: -0.2,
@@ -2052,7 +1594,7 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: FONT_SIZES.h3,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginTop: 2,
     marginBottom: 1,
     textAlign: 'center',
@@ -2060,16 +1602,16 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: FONT_SIZES.caption,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0,
     lineHeight: 16,
   },
   settingsCard: {
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     marginHorizontal: 16,
-    marginTop: 14,
+    marginTop: 6,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -2083,12 +1625,12 @@ const styles = StyleSheet.create({
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    gap: 10,
-    marginBottom: 6,
-    minHeight: 48,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    gap: 8,
+    marginBottom: 3,
+    minHeight: 40,
     elevation: 0.5,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -2098,7 +1640,7 @@ const styles = StyleSheet.create({
   settingText: {
     flex: 1,
     fontSize: FONT_SIZES.bodyLarge, // 15 → 16 (설정 항목 가독성)
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: -0.2,
     lineHeight: 22,
     textAlignVertical: 'center',
@@ -2118,7 +1660,7 @@ const styles = StyleSheet.create({
   logoutText: {
     flex: 1,
     fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     lineHeight: 22,
   },
   modalContainer: {
@@ -2152,7 +1694,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: FONT_SIZES.h2, // 18 → 20 (모달 제목 강조)
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.2,
     flex: 1,
     lineHeight: 28,
@@ -2186,7 +1728,7 @@ const styles = StyleSheet.create({
   },
   quoteLabel: {
     fontSize: FONT_SIZES.bodySmall, // 13 → 14 (라벨 가독성)
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     flex: 1,
     lineHeight: 20,
   },
@@ -2194,15 +1736,15 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.bodyLarge, // 15 → 16 (명언 강조)
     fontStyle: 'italic',
     lineHeight: 26,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     textAlign: 'left',
     letterSpacing: 0.1,
   },
   emotionTagsCard: {
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     marginHorizontal: 16,
-    marginTop: 12,
+    marginTop: 6,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -2226,7 +1768,7 @@ const styles = StyleSheet.create({
   },
   emotionSubtitle: {
     fontSize: FONT_SIZES.body, // 14 → 15 (서브타이틀 가독성)
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     marginLeft: 'auto',
     lineHeight: 21,
   },
@@ -2269,23 +1811,23 @@ const styles = StyleSheet.create({
   },
   simpleEmotionName: {
     fontSize: FONT_SIZES.body, // 14 → 15 (감정명 가독성)
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: 0,
     lineHeight: 21,
   },
   topEmotionName: {
     fontSize: FONT_SIZES.bodyLarge, // 15 → 16 (상위 감정명 강조)
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     lineHeight: 22,
   },
   simpleEmotionCount: {
     fontSize: FONT_SIZES.bodySmall, // 13 → 14 (횟수 가독성)
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     lineHeight: 20,
   },
   topEmotionCount: {
     fontSize: FONT_SIZES.bodyLarge, // 15 → 16 (상위 횟수 강조)
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     lineHeight: 22,
   },
   rankBadge: {
@@ -2303,7 +1845,7 @@ const styles = StyleSheet.create({
   },
   rankText: {
     fontSize: FONT_SIZES.body, // 14 → 15 (순위 텍스트 강조)
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     color: '#FFFFFF',
     lineHeight: 21,
   },
@@ -2323,12 +1865,12 @@ const styles = StyleSheet.create({
   },
   emotionStatLabel: {
     fontSize: FONT_SIZES.bodySmall, // 13 → 14 (라벨 가독성)
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     lineHeight: 20,
   },
   statValue: {
     fontSize: FONT_SIZES.body, // 14 → 15 (값 강조)
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     lineHeight: 21,
   },
   chartCard: {
@@ -2346,7 +1888,7 @@ const styles = StyleSheet.create({
   chartDescription: {
     fontSize: FONT_SIZES.bodyLarge,
     textAlign: 'center',
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
@@ -2363,7 +1905,7 @@ const styles = StyleSheet.create({
   },
   privacyTitle: {
     fontSize: FONT_SIZES.h4,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginBottom: 12,
   },
   privacyOptions: {
@@ -2385,10 +1927,10 @@ const styles = StyleSheet.create({
   },
   privacyOptionText: {
     fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   selectedPrivacyText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   privacyToggleContainer: {
     gap: 12,
@@ -2401,7 +1943,7 @@ const styles = StyleSheet.create({
   },
   privacyToggleLabel: {
     fontSize: FONT_SIZES.h4,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   privacyToggle: {
     width: 44,
@@ -2431,9 +1973,9 @@ const styles = StyleSheet.create({
   // 이번 주 활동 카드 스타일
   weeklyActivityCard: {
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     marginHorizontal: 16,
-    marginTop: 12,
+    marginTop: 6,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -2450,7 +1992,7 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     marginLeft: 'auto',
   },
   weeklyStats: {
@@ -2459,11 +2001,11 @@ const styles = StyleSheet.create({
   weeklyItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
     borderWidth: 0,
-    marginBottom: 6,
+    marginBottom: 3,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -2472,14 +2014,13 @@ const styles = StyleSheet.create({
   },
   weeklyLabel: {
     flex: 1,
-    fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-Medium',
+    fontSize: FONT_SIZES.bodySmall,
+    fontWeight: '500',
     marginLeft: 10,
-    lineHeight: 20,
   },
   weeklyNumber: {
-    fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-Bold',
+    fontSize: FONT_SIZES.body,
+    fontWeight: '700',
   },
   // 나만의 기록 카드 스타일
   recordsCard: {
@@ -2519,20 +2060,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   recordTitle: {
-    fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-Medium',
-    lineHeight: 20,
+    fontSize: FONT_SIZES.bodySmall,
+    fontWeight: '500',
   },
   recordValue: {
-    fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-SemiBold',
+    fontSize: FONT_SIZES.bodySmall,
+    fontWeight: '600',
   },
   // 배지 스타일
   badgeCard: {
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     marginHorizontal: 16,
-    marginTop: 12,
+    marginTop: 6,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -2541,7 +2081,7 @@ const styles = StyleSheet.create({
   },
   badgeCount: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     marginLeft: 'auto',
   },
   badgeGrid: {
@@ -2564,15 +2104,15 @@ const styles = StyleSheet.create({
   },
   badgeName: {
     fontSize: FONT_SIZES.tiny,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     textAlign: 'center',
   },
   // 챌린지 현황 스타일
   challengeCard: {
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     marginHorizontal: 16,
-    marginTop: 12,
+    marginTop: 6,
     elevation: 1,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -2602,12 +2142,12 @@ const styles = StyleSheet.create({
   },
   challengeStatNumber: {
     fontSize: FONT_SIZES.h3,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 2,
   },
   challengeStatLabel: {
     fontSize: FONT_SIZES.small,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     textAlign: 'center',
     lineHeight: 16,
   },
@@ -2629,7 +2169,7 @@ const styles = StyleSheet.create({
   },
   quoteInputLabel: {
     fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: 0.2,
   },
   quoteInput: {
@@ -2639,7 +2179,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.bodyLarge,
     minHeight: 120,
     textAlignVertical: 'top',
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     lineHeight: 24,
     letterSpacing: 0.2,
   },
@@ -2650,7 +2190,7 @@ const styles = StyleSheet.create({
   },
   quoteCounterText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   quoteTips: {
     flexDirection: 'row',
@@ -2663,7 +2203,7 @@ const styles = StyleSheet.create({
   },
   quoteTipsText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     flex: 1,
     lineHeight: 20,
   },
@@ -2680,7 +2220,7 @@ const styles = StyleSheet.create({
   },
   quoteCancelButtonText: {
     fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   quoteSaveButton: {
     flex: 1,
@@ -2695,7 +2235,7 @@ const styles = StyleSheet.create({
   },
   quoteSaveButtonText: {
     fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: 0.3,
   },
@@ -2733,7 +2273,7 @@ const styles = StyleSheet.create({
   },
   modernModalTitle: {
     fontSize: FONT_SIZES.h3,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     color: '#000000',
     letterSpacing: 0.1,
   },
@@ -2753,7 +2293,7 @@ const styles = StyleSheet.create({
     minHeight: 100,
     maxHeight: 120,
     textAlignVertical: 'top',
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     lineHeight: 24,
     letterSpacing: 0.1,
   },
@@ -2765,7 +2305,7 @@ const styles = StyleSheet.create({
   },
   modernQuoteCounter: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   modernCompleteButton: {
     flexDirection: 'row',
@@ -2786,7 +2326,7 @@ const styles = StyleSheet.create({
   },
   modernCompleteButtonText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     color: '#FFFFFF',
     letterSpacing: 0.2,
   },

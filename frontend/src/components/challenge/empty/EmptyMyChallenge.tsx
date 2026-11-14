@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginTop: 20,
     marginBottom: 8,
     textAlign: 'center',
@@ -93,6 +93,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 16,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
 });

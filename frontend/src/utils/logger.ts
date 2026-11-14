@@ -11,7 +11,7 @@ export const logger = {
    */
   log: (...args: any[]) => {
     if (isDev) {
-      if (__DEV__) console.log(...args);
+      console.log(...args);
     }
   },
 
@@ -21,7 +21,7 @@ export const logger = {
   error: (...args: any[]) => {
     if (isDev) {
       // 개발 환경: 전체 정보 출력
-      if (__DEV__) console.error(...args);
+      console.error(...args);
     } else {
       // 프로덕션: 민감 정보 필터링
       const safeArgs = args.map(arg => {
@@ -32,7 +32,7 @@ export const logger = {
         }
         return arg;
       });
-      if (__DEV__) console.error(...safeArgs);
+      console.error(...safeArgs);
     }
   },
 
@@ -41,7 +41,7 @@ export const logger = {
    */
   warn: (...args: any[]) => {
     if (isDev) {
-      if (__DEV__) console.warn(...args);
+      console.warn(...args);
     }
   },
 

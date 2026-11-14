@@ -1,6 +1,6 @@
-// 최적화된 이미지 컴포넌트 (2026 모바일 트렌드 + Lazy Loading)
-import React, { useState, useEffect, useRef } from 'react';
-import { View, ActivityIndicator, StyleSheet, Text, findNodeHandle } from 'react-native';
+// 최적화된 이미지 컴포넌트 (2026 모바일 트렌드)
+import React, { useState } from 'react';
+import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
 import FastImage, { FastImageProps, Priority, ResizeMode } from 'react-native-fast-image';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { normalize } from '../utils/responsive';
@@ -41,9 +41,8 @@ interface OptimizedImageProps extends Omit<FastImageProps, 'source'> {
  * - 자동 리사이징 및 품질 조정
  * - 로딩 상태 표시
  * - 에러 처리
- * - React.memo로 재렌더링 방지
  */
-export const OptimizedImage = React.memo<OptimizedImageProps>(({
+export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   uri,
   width = '100%',
   height = 200,
@@ -59,21 +58,6 @@ export const OptimizedImage = React.memo<OptimizedImageProps>(({
   const { theme, isDark } = useModernTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [shouldLoad, setShouldLoad] = useState(priority === 'high'); // Lazy loading
-
-  const viewRef = useRef<View>(null);
-
-  // Lazy Loading: 화면에 보일 때만 로드
-  useEffect(() => {
-    if (priority === 'high' || shouldLoad) return;
-
-    // 간단한 타이머로 Lazy Loading 구현 (React Native에서 IntersectionObserver 대안)
-    const timer = setTimeout(() => {
-      setShouldLoad(true);
-    }, 100); // 100ms 후 로드
-
-    return () => clearTimeout(timer);
-  }, [priority, shouldLoad]);
 
   const priorityMap = {
     low: FastImage.priority.low,
@@ -81,8 +65,8 @@ export const OptimizedImage = React.memo<OptimizedImageProps>(({
     high: FastImage.priority.high,
   };
 
-  // 이미지 URL 최적화 (메모이제이션으로 재생성 방지 - 깜빡임 방지)
-  const optimizedUri = React.useMemo(() => {
+  // 이미지 URL 최적화 (서버 리사이징 지원 시)
+  const getOptimizedUri = () => {
     if (!uri) return '';
     if (uri.includes('?w=') || uri.includes('&w=')) return uri;
 
@@ -91,14 +75,9 @@ export const OptimizedImage = React.memo<OptimizedImageProps>(({
     const separator = uri.includes('?') ? '&' : '?';
 
     return `${uri}${separator}w=${targetSize}&q=${targetQuality}`;
-  }, [uri, size, quality]);
+  };
 
-  // FastImage source 객체 메모이제이션 (재생성 방지 - 깜빡임 방지)
-  const imageSource = React.useMemo(() => ({
-    uri: shouldLoad ? optimizedUri : '', // Lazy loading: shouldLoad일 때만 URI 설정
-    priority: priorityMap[priority],
-    cache: FastImage.cacheControl.immutable,
-  }), [optimizedUri, priority, shouldLoad]);
+  const optimizedUri = getOptimizedUri();
 
   if (!uri || error) {
     return (
@@ -115,44 +94,32 @@ export const OptimizedImage = React.memo<OptimizedImageProps>(({
   }
 
   return (
-    <View ref={viewRef} style={[styles.container, { width, height }]}>
-      {shouldLoad ? (
-        <>
-          <FastImage
-            {...props}
-            source={imageSource}
-            style={[styles.image, style]}
-            resizeMode={FastImage.resizeMode.cover}
-            onLoadStart={() => {
-              if (showLoader) {
-                setLoading(true);
-                setError(false);
-              }
-            }}
-            onLoadEnd={() => showLoader && setLoading(false)}
-            onError={() => {
-              setLoading(false);
-              setError(true);
-            }}
-            accessibilityLabel={accessibilityLabel || fallbackText}
-            accessible={true}
-          />
-          {loading && !error && showLoader && (
-            <View style={[
-              styles.loading,
-              { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)' }
-            ]}>
-              <ActivityIndicator
-                size="small"
-                color={isDark ? '#a78bfa' : '#667eea'}
-              />
-            </View>
-          )}
-        </>
-      ) : (
+    <View style={[styles.container, { width, height }]}>
+      <FastImage
+        {...props}
+        source={{
+          uri: optimizedUri,
+          priority: priorityMap[priority],
+          cache: FastImage.cacheControl.immutable,
+        }}
+        style={[styles.image, style]}
+        resizeMode={FastImage.resizeMode.cover}
+        onLoadStart={() => {
+          setLoading(true);
+          setError(false);
+        }}
+        onLoadEnd={() => setLoading(false)}
+        onError={() => {
+          setLoading(false);
+          setError(true);
+        }}
+        accessibilityLabel={accessibilityLabel || fallbackText}
+        accessible={true}
+      />
+      {loading && !error && showLoader && (
         <View style={[
           styles.loading,
-          { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.05)' }
+          { backgroundColor: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.8)' }
         ]}>
           <ActivityIndicator
             size="small"
@@ -162,7 +129,7 @@ export const OptimizedImage = React.memo<OptimizedImageProps>(({
       )}
     </View>
   );
-});
+};
 
 // 프로필 이미지 전용 컴포넌트
 interface ProfileImageProps extends Omit<OptimizedImageProps, 'size' | 'width' | 'height'> {

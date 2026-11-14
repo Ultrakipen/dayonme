@@ -429,11 +429,11 @@ const styles = StyleSheet.create({
   },
   characterLabel: {
     fontSize: 12,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   title: {
     fontSize: 24,
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     textAlign: 'center',
     marginTop: 8,
   },
@@ -441,7 +441,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     textAlign: 'center',
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   statsContainer: {
     paddingVertical: 12,
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
   },
   statsText: {
     fontSize: 14,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   buttonContainer: {
     gap: 12,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: '#ffffff',
     fontSize: 17,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   secondaryButton: {
     paddingVertical: 16,
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     fontSize: 16,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   tertiaryButton: {
     paddingVertical: 12,
@@ -492,7 +492,7 @@ const styles = StyleSheet.create({
   },
   tertiaryButtonText: {
     fontSize: 15,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
 });
 

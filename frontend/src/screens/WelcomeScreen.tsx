@@ -7,6 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { normalize, normalizeSpace, normalizeIcon, normalizeTouchable } from '../utils/responsive';
 
 type WelcomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -16,6 +17,7 @@ const WelcomeScreen: React.FC = () => {
   const { isDarkMode } = useTheme();
   const { theme, isDark, toggleTheme } = useModernTheme();
   const { isAuthenticated, isLoading } = useAuth();
+  const insets = useSafeAreaInsets();
 
   const colors = useMemo(() => ({
     background: theme.colors.background,
@@ -34,7 +36,7 @@ const WelcomeScreen: React.FC = () => {
   }, [isLoading, isAuthenticated, navigation]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingBottom: insets.bottom }]}>
       <StatusBar
         backgroundColor={colors.background}
         barStyle={isDark ? 'light-content' : 'dark-content'}
@@ -43,7 +45,7 @@ const WelcomeScreen: React.FC = () => {
       {/* 다크모드 토글 버튼 (우측 상단) */}
       <TouchableOpacity
         style={[styles.themeToggle, {
-          top: normalizeSpace(40),
+          top: insets.top + normalizeSpace(8),
           right: normalizeSpace(20),
           minHeight: normalizeTouchable(44),
           minWidth: normalizeTouchable(44),
@@ -63,7 +65,7 @@ const WelcomeScreen: React.FC = () => {
 
       <View style={[styles.content, {
         paddingHorizontal: normalizeSpace(32),
-        paddingTop: normalizeSpace(100),
+        paddingTop: insets.top + normalizeSpace(80),
       }]}>
         <Text
           style={[styles.logo, {
@@ -81,12 +83,23 @@ const WelcomeScreen: React.FC = () => {
             color: colors.textSecondary,
             fontSize: normalize(14),
             lineHeight: normalize(22),
-            marginBottom: normalizeSpace(120),
+            marginBottom: normalizeSpace(28),
           }]}
           accessible={true}
         >
           작은 공감들의 큰 이야기{'\n'}
           오늘도 나의 마음에{'\n'}따뜻함이 켜집니다
+        </Text>
+        <Text
+          style={[styles.valueLine, {
+            color: colors.text,
+            fontSize: normalize(15),
+            lineHeight: normalize(22),
+            marginBottom: normalizeSpace(84),
+          }]}
+          accessible={true}
+        >
+          익명으로 털어놓고, 따뜻한 답을 받는 곳
         </Text>
 
         <TouchableOpacity
@@ -144,11 +157,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.5,
   },
   subtitle: {
     textAlign: 'center',
+  },
+  valueLine: {
+    textAlign: 'center',
+    fontWeight: '600',
   },
   primaryButton: {
     width: '100%',
@@ -156,13 +173,13 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   secondaryButton: {
     // paddingVertical는 인라인으로 처리
   },
   secondaryButtonText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
 });
 

@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     fontSize: normalize(14),
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     lineHeight: 18,
     textAlignVertical: 'center',
     includeFontPadding: false,
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   filterChipText: {
     fontSize: normalize(13),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginLeft: 4,
     letterSpacing: -0.2,
     textAlignVertical: 'center',

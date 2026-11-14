@@ -121,3 +121,11 @@ backend/*.sqlite
 # Admin 페이지
 admin/node_modules/
 admin/dist/
+
+# 빌드 산출물 / 로컬 설정 (매 빌드마다 바뀌거나 개인 환경에만 필요한 파일)
+*.apk
+*.aab
+*.tar.gz
+**/src/main/assets/index.android.bundle
+**/link-assets-manifest.json
+.claude/settings.local.json

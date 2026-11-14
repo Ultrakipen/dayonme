@@ -1,7 +1,6 @@
 // utils/analytics.ts
 // 애널리틱스 이벤트 추적
 import logger from './logger';
-import * as Sentry from '@sentry/react-native';
 
 interface AnalyticsEvent {
   name: string;
@@ -17,8 +16,6 @@ class Analytics {
    * 이벤트 로깅
    */
   logEvent(name: string, properties?: Record<string, any>): void {
-    if (!this.enabled) return;
-
     const event: AnalyticsEvent = {
       name,
       properties,
@@ -31,15 +28,12 @@ class Analytics {
       logger.log(`📊 [Analytics] ${name}`, properties);
     }
 
-    // Sentry로 이벤트 전송 (프로덕션)
-    if (!__DEV__) {
-      Sentry.addBreadcrumb({
-        category: 'analytics',
-        message: name,
-        data: properties,
-        level: 'info',
-      });
-    }
+    // TODO: 실제 애널리틱스 서비스에 전송
+    // - Firebase Analytics
+    // - Amplitude
+    // - Mixpanel
+    // - Google Analytics
+    // this.sendToAnalyticsService(event);
   }
 
   /**
@@ -56,32 +50,24 @@ class Analytics {
    * 사용자 속성 설정
    */
   setUserProperties(properties: Record<string, any>): void {
-    if (!this.enabled) return;
-
     if (__DEV__) {
       logger.log('👤 [Analytics] User Properties', properties);
     }
 
-    // Sentry 사용자 컨텍스트 설정
-    if (!__DEV__) {
-      Sentry.setContext('user_properties', properties);
-    }
+    // TODO: 실제 애널리틱스 서비스에 사용자 속성 설정
+    // firebase.analytics().setUserProperties(properties);
   }
 
   /**
    * 사용자 ID 설정
    */
   setUserId(userId: string): void {
-    if (!this.enabled) return;
-
     if (__DEV__) {
       logger.log('👤 [Analytics] User ID', userId);
     }
 
-    // Sentry 사용자 설정
-    if (!__DEV__) {
-      Sentry.setUser({ id: userId });
-    }
+    // TODO: 실제 애널리틱스 서비스에 사용자 ID 설정
+    // firebase.analytics().setUserId(userId);
   }
 
   /**

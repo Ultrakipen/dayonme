@@ -74,8 +74,8 @@ export const EmotionInsights: React.FC<Props> = React.memo(({ data }) => {
 
   return (
     <Card accessible={true} accessibilityLabel="감정 인사이트 섹션">
-      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, marginBottom: 4 * scale }]}>✨ 감정 인사이트</Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale, marginBottom: 16 * scale }]}>
+      <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3, marginBottom: 4 * scale }]}>✨ 감정 인사이트</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.caption, marginBottom: 16 * scale }]}>
         데이터로 보는 나의 감정 패턴
       </Text>
 
@@ -94,9 +94,9 @@ export const EmotionInsights: React.FC<Props> = React.memo(({ data }) => {
               style={[styles.insightCard, { borderRadius: 20 * scale, padding: 16 * scale, minHeight: 140 * scale }]}
             >
               <Text style={{ fontSize: 32 * scale, marginBottom: 8 * scale }}>{insight.icon}</Text>
-              <Text style={[styles.insightTitle, { fontSize: FONT_SIZES.tiny * scale, marginBottom: 4 * scale }]}>{insight.title}</Text>
-              <Text style={[styles.insightValue, { fontSize: FONT_SIZES.h2 * scale, marginBottom: 2 * scale }]}>{insight.value}</Text>
-              <Text style={[styles.insightSubtitle, { fontSize: FONT_SIZES.tiny * scale }]}>{insight.subtitle}</Text>
+              <Text style={[styles.insightTitle, { fontSize: FONT_SIZES.tiny, marginBottom: 4 * scale }]}>{insight.title}</Text>
+              <Text style={[styles.insightValue, { fontSize: FONT_SIZES.h2, marginBottom: 2 * scale }]}>{insight.value}</Text>
+              <Text style={[styles.insightSubtitle, { fontSize: FONT_SIZES.tiny }]}>{insight.subtitle}</Text>
             </LinearGradient>
           </View>
         ))}
@@ -107,7 +107,7 @@ export const EmotionInsights: React.FC<Props> = React.memo(({ data }) => {
 
 const styles = StyleSheet.create({
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   subtitle: {
   },
@@ -129,15 +129,15 @@ const styles = StyleSheet.create({
   insightTitle: {
     color: '#FFFFFF',
     opacity: 0.9,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   insightValue: {
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
   },
   insightSubtitle: {
     color: '#FFFFFF',
     opacity: 0.8,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
 });

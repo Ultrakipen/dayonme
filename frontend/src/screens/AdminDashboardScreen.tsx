@@ -112,8 +112,8 @@ const AdminDashboardScreen: React.FC<Props> = ({ navigation }) => {
         duration: 300,
         useNativeDriver: true,
       }).start();
-    } catch (err: unknown) {
-      if (__DEV__) console.error('통계 로드 오류:', err?.message || '알 수 없는 오류');
+    } catch (err: any) {
+      console.error('통계 로드 오류:', err?.message || '알 수 없는 오류');
       setError(err?.message || '통계를 불러올 수 없습니다');
     } finally {
       setLoading(false);
@@ -697,7 +697,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: SPACING.md,
     fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   header: {
     flexDirection: 'row',
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: FONT_SIZES.h4,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   refreshButton: {
@@ -762,13 +762,13 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: moderateScale(2),
   },
   totalCount: {
     fontSize: FONT_SIZES.h2,
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: -0.5,
   },
@@ -786,13 +786,13 @@ const styles = StyleSheet.create({
   },
   totalSubStatValue: {
     fontSize: FONT_SIZES.h4,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     color: '#FFFFFF',
     letterSpacing: -0.3,
   },
   totalSubStatLabel: {
     fontSize: FONT_SIZES.small,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     color: 'rgba(255, 255, 255, 0.7)',
     marginTop: moderateScale(2),
   },
@@ -810,7 +810,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: FONT_SIZES.h5,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
   statsGrid: {
@@ -841,13 +841,13 @@ const styles = StyleSheet.create({
   },
   statCount: {
     fontSize: FONT_SIZES.h2,
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     marginBottom: moderateScale(2),
     letterSpacing: -0.5,
   },
   statLabel: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: -0.1,
   },
   typeCard: {
@@ -874,13 +874,13 @@ const styles = StyleSheet.create({
   },
   typeTitle: {
     fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: moderateScale(2),
     letterSpacing: -0.2,
   },
   typeCount: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   typeArrowContainer: {
     width: moderateScale(32),
@@ -906,12 +906,12 @@ const styles = StyleSheet.create({
   },
   typeStatLabel: {
     fontSize: FONT_SIZES.small,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     marginTop: moderateScale(2),
   },
   typeStatValue: {
     fontSize: FONT_SIZES.h5,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   actionButton: {
@@ -939,7 +939,7 @@ const styles = StyleSheet.create({
   actionButtonText: {
     flex: 1,
     fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: -0.1,
   },
   errorContainer: {
@@ -950,7 +950,7 @@ const styles = StyleSheet.create({
   },
   errorTitle: {
     fontSize: FONT_SIZES.h3,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginTop: SPACING.md,
     marginBottom: SPACING.xs,
     textAlign: 'center',
@@ -970,7 +970,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginLeft: SPACING.xs,
   },
   skeletonLine: {
@@ -993,7 +993,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: FONT_SIZES.h3,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginTop: SPACING.lg,
     marginBottom: SPACING.xs,
     textAlign: 'center',

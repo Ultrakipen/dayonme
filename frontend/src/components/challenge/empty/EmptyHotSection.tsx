@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginTop: 12,
     textAlign: 'center',
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     lineHeight: 22,
     letterSpacing: -0.2,
     textAlignVertical: 'center',

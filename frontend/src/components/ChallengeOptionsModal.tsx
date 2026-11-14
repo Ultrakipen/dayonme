@@ -229,14 +229,14 @@ const customAlertStyles = StyleSheet.create({
   },
   alertTitle: {
     fontSize: 18,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: 10,
     letterSpacing: -0.3,
   },
   alertMessage: {
     fontSize: 14,
-    fontFamily: 'Pretendard-Regular',
+    fontWeight: '400',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 22,
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   },
   bottomSheetOptionText: {
     ...TYPOGRAPHY.body1,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginLeft: SPACING.md,
     flex: 1,
     letterSpacing: -0.4,
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cancelText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     textAlign: 'center',
   },
 });

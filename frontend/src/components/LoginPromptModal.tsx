@@ -205,14 +205,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 20,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.5,
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     letterSpacing: -0.2,
     textAlign: 'center',
     marginBottom: 24,
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   cancelButton: {
@@ -246,12 +246,12 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: 14,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     letterSpacing: -0.2,
   },
   bottomText: {
     fontSize: 12,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     textAlign: 'center',
     marginTop: 16,
     letterSpacing: -0.1,

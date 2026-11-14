@@ -75,11 +75,7 @@ export const parseTaggedText = (text: string): Array<{ type: 'text' | 'tag'; con
 // 시간 포맷팅 (인스타그램 스타일)
 export const formatInstagramTime = (dateString: string): string => {
   try {
-    if (!dateString) return '방금';
-
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '방금';
-
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffSec = Math.floor(diffMs / 1000);
@@ -164,30 +160,13 @@ export const optimizeCommentTree = <T extends { comment_id: number; parent_comme
   const commentMap = new Map<number, T>();
   const rootComments: T[] = [];
 
-  // 0단계: 백엔드에서 이미 트리 구조로 반환된 경우 평탄화
-  const flattenComments = (items: T[]): T[] => {
-    const result: T[] = [];
-    items.forEach(item => {
-      // 현재 댓글 추가 (replies 제외)
-      const { replies, ...commentWithoutReplies } = item as any;
-      result.push(commentWithoutReplies as T);
-      // 답글이 있으면 재귀적으로 평탄화
-      if (replies && Array.isArray(replies) && replies.length > 0) {
-        result.push(...flattenComments(replies));
-      }
-    });
-    return result;
-  };
-
-  const flatComments = flattenComments(comments);
-
   // 1단계: 모든 댓글을 맵에 저장하고 replies 초기화
-  flatComments.forEach(comment => {
+  comments.forEach(comment => {
     commentMap.set(comment.comment_id, { ...comment, replies: [] });
   });
 
   // 2단계: 부모-자식 관계 설정
-  flatComments.forEach(comment => {
+  comments.forEach(comment => {
     const commentData = commentMap.get(comment.comment_id);
     if (!commentData) return;
 
@@ -202,7 +181,7 @@ export const optimizeCommentTree = <T extends { comment_id: number; parent_comme
       rootComments.push(commentData);
     } else {
       // parent_comment_id는 있지만 해당 부모가 존재하지 않는 경우 (고아 답글)
-      if (__DEV__) console.log('🌳 고아 답글 발견 - 숨김 처리:', {
+      console.log('🌳 고아 답글 발견 - 숨김 처리:', {
         commentId: comment.comment_id,
         missingParentId: comment.parent_comment_id,
         content: ((comment as any).content?.substring(0, 30) || '') + '...'

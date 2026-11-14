@@ -4,7 +4,7 @@ import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { CHALLENGE_COLORS as COLORS, getGradientColors } from '../../../constants/challenge';
-import { getImageProps } from '../../../utils/imageOptimization';
+import { getImageProps, IMAGE_SIZES } from '../../../utils/imageOptimization';
 import { useModernTheme } from '../../../contexts/ModernThemeContext';
 
 interface Challenge {
@@ -33,7 +33,6 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
   const cardAnim = useRef(new Animated.Value(0)).current;
   const ddayPulse = useRef(new Animated.Value(1)).current;
   const [imageLoading, setImageLoading] = useState(false);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     Animated.timing(cardAnim, {
@@ -44,54 +43,10 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
     }).start();
   }, [cardAnim, index]);
 
-  // 챌린지 변경 시 로딩 상태 리셋 및 이미지 프리로드
+  // 챌린지 변경 시 로딩 상태 리셋
   useEffect(() => {
-    // 타이머 정리
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-
     setImageLoading(false);
-
-    // 이미지가 있으면 프리로드
-    if (challenge.image_urls && challenge.image_urls.length > 0) {
-      const imageUri = getImageProps(challenge.image_urls[0], 'card').uri;
-      if (imageUri && imageUri.trim()) {
-        FastImage.preload([{
-          uri: imageUri,
-          priority: FastImage.priority.high
-        }]);
-      }
-    }
-
-    // cleanup: 컴포넌트 언마운트 시 타이머 정리
-    return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
-      setImageLoading(false);
-    };
-  }, [challenge.challenge_id, challenge.image_urls]);
-
-  // 이미지 URL 유효성 검증
-  const hasValidImage = (() => {
-    if (!challenge.image_urls || challenge.image_urls.length === 0) {
-      return false;
-    }
-    const url = challenge.image_urls[0];
-    if (!url || url.trim() === '') {
-      return false;
-    }
-    // getImageProps 호출하여 최종 URL 확인
-    const finalUri = getImageProps(url, 'card').uri;
-    if (!finalUri || finalUri.trim() === '') {
-      if (__DEV__) console.warn('[CleanHotCard] 유효하지 않은 이미지 URL:', url);
-      return false;
-    }
-    return true;
-  })();
+  }, [challenge.challenge_id]);
 
   const getDdayInfo = () => {
     if (!challenge.end_date) return { text: '상시', color: '#6B7280' };
@@ -153,43 +108,21 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
         onPress={() => onPress(challenge)}
         activeOpacity={0.9}
         style={styles.touchable}
-        accessibilityLabel={`HOT 챌린지 ${index + 1}번, ${challenge.title}`}
-        accessibilityHint={`참여자 ${challenge.participant_count}명, 상세 정보를 보려면 두 번 탭하세요`}
-        accessibilityRole="button"
       >
         <View style={styles.imageContainer}>
-          {hasValidImage ? (
+          {challenge.image_urls && challenge.image_urls.length > 0 ? (
             <>
               <FastImage
                 source={{
-                  ...getImageProps(challenge.image_urls[0], 'card', index),
-                  priority: FastImage.priority.high, // HOT 카드는 높은 우선순위
+                  uri: challenge.image_urls[0],
+                  priority: FastImage.priority.normal,
+                  cache: FastImage.cacheControl.immutable,
                 }}
                 style={styles.image}
                 resizeMode={FastImage.resizeMode.cover}
-                onLoadStart={() => {
-                  setImageLoading(true);
-                  // 타임아웃 설정: 2초 후에도 로딩 중이면 강제 종료 (캐시된 이미지는 즉시 표시됨)
-                  loadingTimeoutRef.current = setTimeout(() => {
-                    setImageLoading(false);
-                    loadingTimeoutRef.current = null;
-                  }, 2000);
-                }}
-                onLoadEnd={() => {
-                  if (loadingTimeoutRef.current) {
-                    clearTimeout(loadingTimeoutRef.current);
-                    loadingTimeoutRef.current = null;
-                  }
-                  setImageLoading(false);
-                }}
-                onError={() => {
-                  if (__DEV__) console.warn('[CleanHotCard] 이미지 로드 실패:', challenge.image_urls[0]);
-                  if (loadingTimeoutRef.current) {
-                    clearTimeout(loadingTimeoutRef.current);
-                    loadingTimeoutRef.current = null;
-                  }
-                  setImageLoading(false);
-                }}
+                onLoadStart={() => setImageLoading(true)}
+                onLoadEnd={() => setImageLoading(false)}
+                onError={() => setImageLoading(false)}
               />
               {imageLoading && (
                 <View style={styles.loadingOverlay}>
@@ -365,7 +298,7 @@ const styles = StyleSheet.create({
   hotRankText: {
     color: 'white',
     fontSize: 12,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginLeft: 3,
   },
   ddayBadge: {
@@ -379,7 +312,7 @@ const styles = StyleSheet.create({
   ddayText: {
     color: 'white',
     fontSize: 13,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   statusBadge: {
     position: 'absolute',
@@ -395,14 +328,14 @@ const styles = StyleSheet.create({
   statusText: {
     color: 'white',
     fontSize: 11,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   content: {
     padding: 12,
   },
   title: {
     fontSize: 15,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 8,
     lineHeight: 20,
   },
@@ -420,7 +353,7 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     color: COLORS.primary,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   footer: {
     marginTop: 6,
@@ -441,6 +374,6 @@ const styles = StyleSheet.create({
   },
   socialText: {
     fontSize: 13,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
 });

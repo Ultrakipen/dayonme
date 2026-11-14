@@ -428,10 +428,10 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   backText: {
-    fontFamily: 'Pretendard-Light',
+    fontWeight: '300',
   },
   headerTitle: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   monthSelector: {},
   monthButton: {
@@ -450,7 +450,7 @@ const styles = StyleSheet.create({
     }),
   },
   monthButtonText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   newBadge: {
     paddingHorizontal: 4,
@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   trendLabel: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   topEmotionsContainer: {
     alignItems: 'center',
@@ -513,12 +513,12 @@ const styles = StyleSheet.create({
     }),
   },
   statValue: {
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
   },
   statLabel: {},
   section: {},
   sectionTitle: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   sectionCard: {
     ...Platform.select({
@@ -541,7 +541,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   emotionName: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   barContainer: {
     flexDirection: 'row',
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
   barText: {
     position: 'absolute',
     right: 8,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   emptyChart: {
     alignItems: 'center',
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
   },
   dayLabel: {},
   dayCount: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   insightCard: {},
   insightText: {},

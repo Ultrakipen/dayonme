@@ -48,7 +48,7 @@ export const BadgePreview: React.FC = React.memo(() => {
       }
     } catch (err) {
       setError('배지 정보를 불러오는데 실패했습니다');
-      if (__DEV__) console.error('배지 로드 실패:', err);
+      console.error('배지 로드 실패:', err);
     }
   }, []);
 
@@ -66,14 +66,14 @@ export const BadgePreview: React.FC = React.memo(() => {
     return (
       <Card accessible={true} accessibilityLabel="나의 배지 섹션">
         <View style={styles.errorContainer}>
-          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }}>{error}</Text>
+          <Text style={{ color: colors.textSecondary, fontSize: FONT_SIZES.body }}>{error}</Text>
           <TouchableOpacity
             onPress={loadBadges}
             style={[styles.retryButton, { marginTop: 12 * scale }]}
             accessibilityRole="button"
             accessibilityLabel="다시 시도"
           >
-            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>다시 시도</Text>
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       </Card>
@@ -84,8 +84,8 @@ export const BadgePreview: React.FC = React.memo(() => {
     <Card accessible={true} accessibilityLabel="나의 배지 섹션">
       <View style={[styles.header, { marginBottom: 16 * scale }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TwemojiImage emoji="🏆" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>나의 배지</Text>
+          <TwemojiImage emoji="🏆" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>나의 배지</Text>
         </View>
         <TouchableOpacity
           onPress={handleViewAll}
@@ -94,7 +94,7 @@ export const BadgePreview: React.FC = React.memo(() => {
           accessibilityLabel="모든 배지 보기"
           accessibilityHint="전체 배지 목록을 확인합니다"
         >
-          <Text style={[styles.moreButton, { color: colors.primary, fontSize: FONT_SIZES.bodySmall * scale }]}>모두 보기 →</Text>
+          <Text style={[styles.moreButton, { color: colors.primary, fontSize: FONT_SIZES.bodySmall }]}>모두 보기 →</Text>
         </TouchableOpacity>
       </View>
 
@@ -121,7 +121,7 @@ export const BadgePreview: React.FC = React.memo(() => {
                 size={badge.unlocked ? 32 * scale : FONT_SIZES.h1 * scale}
               />
             </View>
-            <Text style={[styles.badgeName, { color: colors.text, fontSize: FONT_SIZES.small * scale }]} numberOfLines={1}>
+            <Text style={[styles.badgeName, { color: colors.text, fontSize: FONT_SIZES.small }]} numberOfLines={1}>
               {badge.name}
             </Text>
             {!badge.unlocked && badge.progress && (
@@ -149,7 +149,7 @@ export const BadgePreview: React.FC = React.memo(() => {
         padding: 12 * scale,
         borderRadius: 12 * scale
       }]}>
-        <Text style={[styles.summaryText, { color: colors.text, fontSize: FONT_SIZES.caption * scale }]}>
+        <Text style={[styles.summaryText, { color: colors.text, fontSize: FONT_SIZES.caption }]}>
           {badges.filter(b => b.unlocked).length}개 달성 · {badges.length - badges.filter(b => b.unlocked).length}개 도전 중
         </Text>
       </View>
@@ -173,10 +173,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   moreButton: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   badgesContainer: {
     flexDirection: 'row',
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   badgeName: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     textAlign: 'center',
   },
   progressBar: {
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   summary: {
   },
   summaryText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     textAlign: 'center',
   },
   errorContainer: {

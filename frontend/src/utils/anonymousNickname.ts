@@ -57,10 +57,10 @@ class AnonymousNicknameManager {
       const storedData = await AsyncStorage.getItem(STORAGE_KEY);
       if (storedData) {
         this.mappings = JSON.parse(storedData);
-        if (__DEV__) console.log('🎭 익명 매핑 정보 로드 완료:', Object.keys(this.mappings).length, '개 게시물');
+        console.log('🎭 익명 매핑 정보 로드 완료:', Object.keys(this.mappings).length, '개 게시물');
       }
     } catch (error) {
-      if (__DEV__) console.error('❌ 익명 매핑 정보 로드 실패:', error);
+      console.error('❌ 익명 매핑 정보 로드 실패:', error);
       this.mappings = {};
     }
     
@@ -71,9 +71,9 @@ class AnonymousNicknameManager {
   private async saveMappings(): Promise<void> {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(this.mappings));
-      if (__DEV__) console.log('💾 익명 매핑 정보 저장 완료');
+      console.log('💾 익명 매핑 정보 저장 완료');
     } catch (error) {
-      if (__DEV__) console.error('❌ 익명 매핑 정보 저장 실패:', error);
+      console.error('❌ 익명 매핑 정보 저장 실패:', error);
     }
   }
 
@@ -86,24 +86,24 @@ class AnonymousNicknameManager {
       const uniqueKey = `${userId}_${commentId}`;
       if (this.mappings[postId]?.[uniqueKey]) {
         const existing = this.mappings[postId][uniqueKey];
-        if (__DEV__) console.log(`🎭 기존 익명 사용자 조회: ${existing.anonymousNickname} (게시물 ${postId}, 댓글 ${commentId})`);
+        console.log(`🎭 기존 익명 사용자 조회: ${existing.anonymousNickname} (게시물 ${postId}, 댓글 ${commentId})`);
         return existing;
       }
 
       const anonymousUser = await this.createAnonymousUser(postId, uniqueKey);
-      if (__DEV__) console.log(`🎭 새 익명 사용자 생성: ${anonymousUser.anonymousNickname} (게시물 ${postId}, 댓글 ${commentId})`);
+      console.log(`🎭 새 익명 사용자 생성: ${anonymousUser.anonymousNickname} (게시물 ${postId}, 댓글 ${commentId})`);
       return anonymousUser;
     }
 
     // 기존 로직 유지 (commentId 없으면 사용자당 하나의 익명 정보)
     if (this.mappings[postId]?.[userId]) {
       const existing = this.mappings[postId][userId];
-      if (__DEV__) console.log(`🎭 기존 익명 사용자 조회: ${existing.anonymousNickname} (게시물 ${postId})`);
+      console.log(`🎭 기존 익명 사용자 조회: ${existing.anonymousNickname} (게시물 ${postId})`);
       return existing;
     }
 
     const anonymousUser = await this.createAnonymousUser(postId, String(userId));
-    if (__DEV__) console.log(`🎭 새 익명 사용자 생성: ${anonymousUser.anonymousNickname} (게시물 ${postId})`);
+    console.log(`🎭 새 익명 사용자 생성: ${anonymousUser.anonymousNickname} (게시물 ${postId})`);
 
     return anonymousUser;
   }
@@ -176,7 +176,7 @@ class AnonymousNicknameManager {
   async clearAllMappings(): Promise<void> {
     this.mappings = {};
     await AsyncStorage.removeItem(STORAGE_KEY);
-    if (__DEV__) console.log('🗑️ 모든 익명 매핑 정보 삭제 완료');
+    console.log('🗑️ 모든 익명 매핑 정보 삭제 완료');
   }
 
   // 특정 게시물의 매핑 정보 삭제
@@ -184,7 +184,7 @@ class AnonymousNicknameManager {
     await this.initialize();
     delete this.mappings[postId];
     await this.saveMappings();
-    if (__DEV__) console.log(`🗑️ 게시물 ${postId}의 익명 매핑 정보 삭제 완료`);
+    console.log(`🗑️ 게시물 ${postId}의 익명 매핑 정보 삭제 완료`);
   }
 
   // 통계 정보 조회

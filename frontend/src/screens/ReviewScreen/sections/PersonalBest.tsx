@@ -103,130 +103,51 @@ export const PersonalBest: React.FC<Props> = React.memo(({ period = 'week' }) =>
     loadData();
   }, [loadData]);
 
-  // period에 따라 다른 항목 표시 (early return 이전에 호출)
-  const stats = useMemo(() => {
-    if (!data) return [];
-    switch (period) {
-      case 'week':
-        return [
-          {
-            icon: '🔥',
-            label: '연속 기록',
-            current: data.currentStreak,
-            best: data.bestStreak,
-            unit: '일',
-            isRecord: data.currentStreak >= data.bestStreak && data.currentStreak > 0,
-          },
-          {
-            icon: '📝',
-            label: '주간 게시글',
-            current: data.currentWeekPosts,
-            best: data.bestWeekPosts,
-            unit: '개',
-            isRecord: data.currentWeekPosts >= data.bestWeekPosts && data.currentWeekPosts > 0,
-          },
-          {
-            icon: '💕',
-            label: '주간 공감',
-            current: data.currentMonthLikes,
-            best: data.bestMonthLikes,
-            unit: '개',
-            isRecord: data.currentMonthLikes >= data.bestMonthLikes && data.currentMonthLikes > 0,
-          },
-          {
-            icon: '😊',
-            label: '긍정 비율',
-            current: data.currentPositiveRatio,
-            best: data.bestPositiveRatio,
-            unit: '%',
-            isRecord: data.currentPositiveRatio >= data.bestPositiveRatio && data.currentPositiveRatio > 0,
-          },
-        ];
-      case 'month':
-        return [
-          {
-            icon: '🔥',
-            label: '연속 기록',
-            current: data.currentStreak,
-            best: data.bestStreak,
-            unit: '일',
-            isRecord: data.currentStreak >= data.bestStreak && data.currentStreak > 0,
-          },
-          {
-            icon: '📝',
-            label: '월간 게시글',
-            current: data.currentWeekPosts,
-            best: data.bestWeekPosts,
-            unit: '개',
-            isRecord: data.currentWeekPosts >= data.bestWeekPosts && data.currentWeekPosts > 0,
-          },
-          {
-            icon: '💕',
-            label: '월간 공감',
-            current: data.currentMonthLikes,
-            best: data.bestMonthLikes,
-            unit: '개',
-            isRecord: data.currentMonthLikes >= data.bestMonthLikes && data.currentMonthLikes > 0,
-          },
-          {
-            icon: '🎯',
-            label: '월간 참여율',
-            current: Math.round((data.currentWeekPosts / 30) * 100),
-            best: Math.round((data.bestWeekPosts / 30) * 100),
-            unit: '%',
-            isRecord: data.currentWeekPosts >= data.bestWeekPosts && data.currentWeekPosts > 0,
-          },
-        ];
-      case 'year':
-        return [
-          {
-            icon: '🏆',
-            label: '최고 연속',
-            current: data.bestStreak,
-            best: data.bestStreak,
-            unit: '일',
-            isRecord: data.currentStreak >= data.bestStreak && data.currentStreak > 0,
-          },
-          {
-            icon: '📝',
-            label: '연간 게시글',
-            current: data.currentWeekPosts,
-            best: data.bestWeekPosts,
-            unit: '개',
-            isRecord: data.currentWeekPosts >= data.bestWeekPosts && data.currentWeekPosts > 0,
-          },
-          {
-            icon: '💕',
-            label: '연간 공감',
-            current: data.currentMonthLikes,
-            best: data.bestMonthLikes,
-            unit: '개',
-            isRecord: data.currentMonthLikes >= data.bestMonthLikes && data.currentMonthLikes > 0,
-          },
-          {
-            icon: '📊',
-            label: '평균 긍정도',
-            current: data.currentPositiveRatio,
-            best: data.bestPositiveRatio,
-            unit: '%',
-            isRecord: data.currentPositiveRatio >= data.bestPositiveRatio && data.currentPositiveRatio > 0,
-          },
-        ];
-      default:
-        return [];
-    }
-  }, [data, period]);
+  if (loading || !data) return null;
+
+  const stats = [
+    {
+      icon: '🔥',
+      label: '연속 기록',
+      current: data.currentStreak,
+      best: data.bestStreak,
+      unit: '일',
+      isRecord: data.currentStreak >= data.bestStreak && data.currentStreak > 0,
+    },
+    {
+      icon: '📝',
+      label: '주간 기록',
+      current: data.currentWeekPosts,
+      best: data.bestWeekPosts,
+      unit: '개',
+      isRecord: data.currentWeekPosts >= data.bestWeekPosts && data.currentWeekPosts > 0,
+    },
+    {
+      icon: '💕',
+      label: '월간 공감',
+      current: data.currentMonthLikes,
+      best: data.bestMonthLikes,
+      unit: '개',
+      isRecord: data.currentMonthLikes >= data.bestMonthLikes && data.currentMonthLikes > 0,
+    },
+    {
+      icon: '😊',
+      label: '긍정 비율',
+      current: data.currentPositiveRatio,
+      best: data.bestPositiveRatio,
+      unit: '%',
+      isRecord: data.currentPositiveRatio >= data.bestPositiveRatio && data.currentPositiveRatio > 0,
+    },
+  ];
 
   const hasNewRecord = stats.some(s => s.isRecord);
-
-  if (loading || !data || stats.length === 0) return null;
 
   return (
     <Card accessible={true} accessibilityLabel="나의 최고 기록">
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TwemojiImage emoji="🏆" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
+          <TwemojiImage emoji="🏆" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>
             나의 최고 기록
           </Text>
         </View>
@@ -237,7 +158,7 @@ export const PersonalBest: React.FC<Props> = React.memo(({ period = 'week' }) =>
           }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TwemojiImage emoji="🎉" size={FONT_SIZES.caption * scale} style={{ marginRight: 4 * scale }} />
-              <Text style={[styles.newRecordText, { fontSize: FONT_SIZES.caption * scale }]}>
+              <Text style={[styles.newRecordText, { fontSize: FONT_SIZES.caption }]}>
                 NEW!
               </Text>
             </View>
@@ -245,7 +166,7 @@ export const PersonalBest: React.FC<Props> = React.memo(({ period = 'week' }) =>
         )}
       </View>
 
-      <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale }]}>
+      <Text style={[styles.subtitle, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall }]}>
         과거의 나와 비교해보세요
       </Text>
 
@@ -263,28 +184,28 @@ export const PersonalBest: React.FC<Props> = React.memo(({ period = 'week' }) =>
             accessibilityLabel={`${stat.label}: 현재 ${stat.current}${stat.unit}, 최고 ${stat.best}${stat.unit}`}
           >
             <TwemojiImage emoji={stat.icon} size={FONT_SIZES.h1 * scale} style={{ marginBottom: 8 * scale }} />
-            <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+            <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
               {stat.label}
             </Text>
             <View style={styles.statValues}>
               <Text style={[styles.currentValue, {
                 color: stat.isRecord ? '#FFD700' : colors.primary,
-                fontSize: FONT_SIZES.h2 * scale
+                fontSize: FONT_SIZES.h2
               }]}>
                 {stat.current}{stat.unit}
               </Text>
               <View style={styles.bestValue}>
-                <Text style={[styles.bestLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny * scale }]}>
+                <Text style={[styles.bestLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny }]}>
                   최고
                 </Text>
-                <Text style={[styles.bestNumber, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale }]}>
+                <Text style={[styles.bestNumber, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall }]}>
                   {stat.best}{stat.unit}
                 </Text>
               </View>
             </View>
             {stat.isRecord && (
               <View style={[styles.recordBadge, { backgroundColor: '#FFD700' }]}>
-                <Text style={[styles.recordText, { fontSize: FONT_SIZES.tiny * scale }]}>
+                <Text style={[styles.recordText, { fontSize: FONT_SIZES.tiny }]}>
                   최고기록!
                 </Text>
               </View>
@@ -296,7 +217,7 @@ export const PersonalBest: React.FC<Props> = React.memo(({ period = 'week' }) =>
       {/* 최근 달성 */}
       {data.achievements && data.achievements.length > 0 && (
         <View style={styles.achievementsContainer}>
-          <Text style={[styles.achievementsTitle, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}>
+          <Text style={[styles.achievementsTitle, { color: colors.text, fontSize: FONT_SIZES.bodySmall }]}>
             최근 달성
           </Text>
           <View style={styles.achievementsList}>
@@ -309,7 +230,7 @@ export const PersonalBest: React.FC<Props> = React.memo(({ period = 'week' }) =>
                     : (isDark ? colors.surface : '#F5F5F5')
                 }]}
               >
-                <Text style={[styles.achievementText, { color: colors.text, fontSize: FONT_SIZES.caption * scale }]}>
+                <Text style={[styles.achievementText, { color: colors.text, fontSize: FONT_SIZES.caption }]}>
                   {achievement.title}
                 </Text>
                 {achievement.isNew && (
@@ -327,7 +248,7 @@ export const PersonalBest: React.FC<Props> = React.memo(({ period = 'week' }) =>
       }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           <TwemojiImage emoji={hasNewRecord ? '🎊' : '💪'} size={FONT_SIZES.bodySmall * scale} style={{ marginRight: 6 * scale }} />
-          <Text style={[styles.encouragementText, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}>
+          <Text style={[styles.encouragementText, { color: colors.text, fontSize: FONT_SIZES.bodySmall }]}>
             {hasNewRecord
               ? '새로운 기록을 세웠어요! 정말 대단해요!'
               : '꾸준히 하다 보면 새 기록을 세울 수 있어요!'}
@@ -346,7 +267,7 @@ const createStyles = (scale: number) => StyleSheet.create({
     marginBottom: 4 * scale,
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   newRecordBadge: {
     paddingHorizontal: 10 * scale,
@@ -354,7 +275,7 @@ const createStyles = (scale: number) => StyleSheet.create({
     borderRadius: 12 * scale,
   },
   newRecordText: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   subtitle: {
     marginBottom: 16 * scale,
@@ -373,14 +294,14 @@ const createStyles = (scale: number) => StyleSheet.create({
     position: 'relative',
   },
   statLabel: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     marginBottom: 8 * scale,
   },
   statValues: {
     alignItems: 'center',
   },
   currentValue: {
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
   },
   bestValue: {
     flexDirection: 'row',
@@ -389,10 +310,10 @@ const createStyles = (scale: number) => StyleSheet.create({
     marginTop: 4 * scale,
   },
   bestLabel: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   bestNumber: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   recordBadge: {
     position: 'absolute',
@@ -404,13 +325,13 @@ const createStyles = (scale: number) => StyleSheet.create({
   },
   recordText: {
     color: '#000000',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   achievementsContainer: {
     marginBottom: 16 * scale,
   },
   achievementsTitle: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginBottom: 8 * scale,
   },
   achievementsList: {
@@ -427,7 +348,7 @@ const createStyles = (scale: number) => StyleSheet.create({
     gap: 4 * scale,
   },
   achievementText: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   encouragement: {
     padding: 12 * scale,
@@ -435,7 +356,7 @@ const createStyles = (scale: number) => StyleSheet.create({
     alignItems: 'center',
   },
   encouragementText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     textAlign: 'center',
   },
 });

@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo, useLayoutEffect, useRef } from 'react';
+import { showCrisisSupportIfNeeded } from '../utils/crisisSupport';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -19,7 +20,6 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { HomeStackParamList } from '../types/navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import EncryptedStorage from 'react-native-encrypted-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {
   Button,
@@ -92,7 +92,7 @@ const getSpacing = () => ({
 // 안전한 Alert 헬퍼 함수
 const safeAlert = (title: string, message?: string, buttons?: any[]) => {
   if (__DEV__) {
-    if (__DEV__) console.log('🚨 safeAlert 호출:', { title, message });
+    console.log('🚨 safeAlert 호출:', { title, message });
   }
   InteractionManager.runAfterInteractions(() => {
     setTimeout(() => {
@@ -145,18 +145,18 @@ const getEmotionColor = (emotionName: string): string => {
 
 // 감정 아이콘 매핑 (백엔드 아이콘이 Material Icons인 경우 이모지로 변환)
 const getEmotionIcon = (emotion: Emotion): string => {
-  if (__DEV__) console.log('🔍 감정 아이콘 매핑:', { name: emotion.name, originalIcon: emotion.icon });
+  console.log('🔍 감정 아이콘 매핑:', { name: emotion.name, originalIcon: emotion.icon });
   
   // 백엔드 icon이 이미 이모지인 경우 그대로 사용
   if (emotion.icon && emotion.icon.length <= 4 && /[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F900}-\u{1F9FF}]/u.test(emotion.icon)) {
-    if (__DEV__) console.log('✅ 백엔드 이모지 사용:', emotion.icon);
+    console.log('✅ 백엔드 이모지 사용:', emotion.icon);
     return emotion.icon;
   }
   
   // 로컬 매핑에서 찾기
   const localEmotion = localEmotions.find(local => local.label === emotion.name);
   if (localEmotion) {
-    if (__DEV__) console.log('✅ 로컬 매핑 사용:', localEmotion.emoji);
+    console.log('✅ 로컬 매핑 사용:', localEmotion.emoji);
     return localEmotion.emoji;
   }
   
@@ -241,12 +241,12 @@ const getEmotionIcon = (emotion: Emotion): string => {
   
   const mappedIcon = emotionNameMappings[emotion.name.toLowerCase()];
   if (mappedIcon) {
-    if (__DEV__) console.log('✅ 이름 기반 매핑 사용:', mappedIcon);
+    console.log('✅ 이름 기반 매핑 사용:', mappedIcon);
     return mappedIcon;
   }
   
   // 기본 아이콘
-  if (__DEV__) console.log('⚠️ 기본 아이콘 사용');
+  console.log('⚠️ 기본 아이콘 사용');
   return '😊';
 };
 
@@ -283,7 +283,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
   // const isEditMode = true;
   // const editPostId = 367; // 테스트용 게시물 ID
   
-  if (__DEV__) console.log('🎯 WriteMyDayScreen 로드 - 파라미터 상세:', { 
+  console.log('🎯 WriteMyDayScreen 로드 - 파라미터 상세:', { 
     isEditMode, 
     editPostId, 
     mode,
@@ -297,12 +297,12 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
   });
 
   // 화면 실제 로드 확인을 위한 추가 로그
-  if (__DEV__) console.log('🏠 WriteMyDayScreen 컴포넌트가 렌더링되었습니다');
+  console.log('🏠 WriteMyDayScreen 컴포넌트가 렌더링되었습니다');
   
   if (isEditMode) {
-    if (__DEV__) console.log('✏️ 편집 모드로 진입:', editPostId);
+    console.log('✏️ 편집 모드로 진입:', editPostId);
   } else {
-    if (__DEV__) console.log('✨ 새 게시물 작성 모드로 진입');
+    console.log('✨ 새 게시물 작성 모드로 진입');
   }
 
   
@@ -337,21 +337,21 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         setIsLoadingEmotions(true);
         const response = await emotionService.getAllEmotions();
         
-        if (__DEV__) console.log('🔍 백엔드 감정 API 응답:', JSON.stringify(response.data, null, 2));
+        console.log('🔍 백엔드 감정 API 응답:', JSON.stringify(response.data, null, 2));
         
         if (response.data?.status === 'success' && response.data.data && response.data.data.length > 0) {
-          if (__DEV__) console.log('✅ 백엔드에서 받은 감정 데이터:', response.data.data);
+          console.log('✅ 백엔드에서 받은 감정 데이터:', response.data.data);
           
           // 백엔드 감정 목록을 기준으로 로컬 감정에서 매핑
           const backendEmotionNames = new Set(response.data.data.map(e => e.name));
-          if (__DEV__) console.log('🔍 백엔드 감정 이름들:', Array.from(backendEmotionNames));
+          console.log('🔍 백엔드 감정 이름들:', Array.from(backendEmotionNames));
           
           // 백엔드에 존재하는 감정들만 로컬에서 선택하여 사용
           const validEmotions = localEmotions
             .filter(localEmotion => {
               const exists = backendEmotionNames.has(localEmotion.label);
               if (!exists) {
-                if (__DEV__) console.warn(`⚠️ 백엔드에 없는 감정: ${localEmotion.label}`);
+                console.warn(`⚠️ 백엔드에 없는 감정: ${localEmotion.label}`);
               }
               return exists;
             })
@@ -378,7 +378,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           
           const mergedEmotions = [...validEmotions, ...remainingBackendEmotions];
           
-          if (__DEV__) console.log('🎨 감정 데이터 처리 완료 (로컬 이모지 + 백엔드 ID):', mergedEmotions.map(e => ({
+          console.log('🎨 감정 데이터 처리 완료 (로컬 이모지 + 백엔드 ID):', mergedEmotions.map(e => ({
             name: e.name, 
             originalIcon: e.icon, 
             displayIcon: e.displayIcon,
@@ -391,12 +391,12 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           
           // 편집 모드가 아닐 때만 첫 번째 감정을 자동 선택
           if (!isEditMode && mergedEmotions.length > 0) {
-            if (__DEV__) console.log('🎯 첫 번째 감정 자동 선택:', mergedEmotions[0]);
+            console.log('🎯 첫 번째 감정 자동 선택:', mergedEmotions[0]);
             setSelectedEmotion(mergedEmotions[0]);
           }
         } else {
           // 백엔드 데이터가 없으면 로컬 폴백 사용
-          if (__DEV__) console.warn('⚠️ 백엔드 감정 데이터가 없어 로컬 폴백 사용');
+          console.warn('⚠️ 백엔드 감정 데이터가 없어 로컬 폴백 사용');
           const fallbackEmotions = localEmotions.map((emotion, index) => ({
             emotion_id: index + 1,
             name: emotion.label,
@@ -408,14 +408,14 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           
           // 편집 모드가 아닐 때만 첫 번째 감정을 자동 선택
           if (!isEditMode && fallbackEmotions.length > 0) {
-            if (__DEV__) console.log('🎯 폴백 첫 번째 감정 자동 선택:', fallbackEmotions[0]);
+            console.log('🎯 폴백 첫 번째 감정 자동 선택:', fallbackEmotions[0]);
             setSelectedEmotion(fallbackEmotions[0]);
           }
         }
       } catch (error) {
-        if (__DEV__) console.error('❌ 감정 데이터 로드 오류:', error);
+        console.error('❌ 감정 데이터 로드 오류:', error);
         // 에러 발생 시에도 로컬 폴백 사용
-        if (__DEV__) console.warn('⚠️ 네트워크 오류로 로컬 폴백 사용');
+        console.warn('⚠️ 네트워크 오류로 로컬 폴백 사용');
         const fallbackEmotions = localEmotions.map((emotion, index) => ({
           emotion_id: index + 1,
           name: emotion.label,
@@ -427,7 +427,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         
         // 편집 모드가 아닐 때만 첫 번째 감정을 자동 선택
         if (!isEditMode && fallbackEmotions.length > 0) {
-          if (__DEV__) console.log('🎯 에러 폴백 첫 번째 감정 자동 선택:', fallbackEmotions[0]);
+          console.log('🎯 에러 폴백 첫 번째 감정 자동 선택:', fallbackEmotions[0]);
           setSelectedEmotion(fallbackEmotions[0]);
         }
       } finally {
@@ -470,10 +470,10 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
   // 편집 모드일 때 기존 게시물 데이터 로드
   useEffect(() => {
     const loadEditData = async () => {
-      if (__DEV__) console.log('🔍 loadEditData 호출:', { isEditMode, editPostId, hasExistingPost: !!existingPost });
+      console.log('🔍 loadEditData 호출:', { isEditMode, editPostId, hasExistingPost: !!existingPost });
       
       if (!isEditMode) {
-        if (__DEV__) console.log('❌ 편집 모드가 아니어서 로드 건너뜀', { 
+        console.log('❌ 편집 모드가 아니어서 로드 건너뜀', { 
           isEditMode, 
           editPostId, 
           hasExistingPost: !!existingPost 
@@ -482,7 +482,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
       }
       
       if (!editPostId && !existingPost) {
-        if (__DEV__) console.log('❌ 편집할 게시물 ID나 데이터가 없어서 로드 건너뜀', { 
+        console.log('❌ 편집할 게시물 ID나 데이터가 없어서 로드 건너뜀', { 
           editPostId, 
           hasExistingPost: !!existingPost 
         });
@@ -491,10 +491,10 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
 
       try {
         setIsLoading(true);
-        if (__DEV__) console.log('🔄 기존 게시물 데이터로 폼 채우기:', existingPost);
+        console.log('🔄 기존 게시물 데이터로 폼 채우기:', existingPost);
         
         // 기존 데이터로 폼 필드 채우기
-        if (__DEV__) console.log('📝 콘텐츠 설정:', existingPost.content);
+        console.log('📝 콘텐츠 설정:', existingPost.content);
         setContent(existingPost.content || '');
         
         // 이미지 URL 파싱 (JSON 배열 또는 단일 URL 지원)
@@ -514,7 +514,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         }
 
         if (imageUrls.length > 0) {
-          if (__DEV__) console.log('🖼️ 이미지 URL 설정:', imageUrls);
+          console.log('🖼️ 이미지 URL 설정:', imageUrls);
 
           // 상대 경로를 절대 경로로 변환
           const normalizedUrls = imageUrls.map(url => {
@@ -525,20 +525,20 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             return url;
           });
 
-          if (__DEV__) console.log('🖼️ 최종 이미지 URLs:', normalizedUrls);
+          console.log('🖼️ 최종 이미지 URLs:', normalizedUrls);
           setSelectedImages(normalizedUrls);
           setUploadedImageUrls(normalizedUrls);
         }
         
         // 익명 설정 확인
         if (existingPost.is_anonymous !== undefined) {
-          if (__DEV__) console.log('🔐 익명 설정:', existingPost.is_anonymous);
+          console.log('🔐 익명 설정:', existingPost.is_anonymous);
           setIsAnonymous(existingPost.is_anonymous);
         }
         
         // 감정 데이터 설정 - emotions 배열에서 또는 직접 emotion_id에서
         let emotionSet = false;
-        if (__DEV__) console.log('😊 감정 데이터 확인:', {
+        console.log('😊 감정 데이터 확인:', {
           hasEmotions: !!existingPost.emotions,
           emotionsLength: existingPost.emotions?.length,
           hasEmotion: !!existingPost.emotion,
@@ -548,7 +548,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         // emotion (단수) 객체 확인
         if (!emotionSet && existingPost.emotion && existingPost.emotion.emotion_id) {
           const existingEmotion = existingPost.emotion;
-          if (__DEV__) console.log('😊 감정 데이터 (emotion 객체):', existingEmotion);
+          console.log('😊 감정 데이터 (emotion 객체):', existingEmotion);
           const matchedEmotion = emotions.find(e => e.emotion_id === existingEmotion.emotion_id);
           if (matchedEmotion) {
             setSelectedEmotion(matchedEmotion);
@@ -561,18 +561,18 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
 
         if (!emotionSet && existingPost.emotions && existingPost.emotions.length > 0) {
           const existingEmotion = existingPost.emotions[0];
-          if (__DEV__) console.log('😊 감정 데이터 (emotions 배열):', existingEmotion);
+          console.log('😊 감정 데이터 (emotions 배열):', existingEmotion);
 
           // emotions 배열에서 매칭되는 감정 찾기 (더 완전한 데이터를 위해)
           if (existingEmotion.emotion_id) {
             const matchedEmotion = emotions.find(e => e.emotion_id === existingEmotion.emotion_id);
             if (matchedEmotion) {
-              if (__DEV__) console.log('😊 매칭된 감정 설정:', matchedEmotion);
+              console.log('😊 매칭된 감정 설정:', matchedEmotion);
               setSelectedEmotion(matchedEmotion);
               emotionSet = true;
             } else {
               // 매칭되지 않으면 기존 데이터 그대로 사용
-              if (__DEV__) console.log('😊 기존 감정 데이터 그대로 사용:', existingEmotion);
+              console.log('😊 기존 감정 데이터 그대로 사용:', existingEmotion);
               setSelectedEmotion(existingEmotion as ExtendedEmotion);
               emotionSet = true;
             }
@@ -580,11 +580,11 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         }
 
         if (!emotionSet && existingPost.emotion_id) {
-          if (__DEV__) console.log('😊 감정 ID로 감정 찾기:', existingPost.emotion_id);
+          console.log('😊 감정 ID로 감정 찾기:', existingPost.emotion_id);
           // 로드된 감정 목록에서 해당 ID 찾기
           const matchedEmotion = emotions.find(e => e.emotion_id === existingPost.emotion_id);
           if (matchedEmotion) {
-            if (__DEV__) console.log('😊 매칭된 감정:', matchedEmotion);
+            console.log('😊 매칭된 감정:', matchedEmotion);
             setSelectedEmotion(matchedEmotion);
             emotionSet = true;
           } else {
@@ -592,7 +592,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             const mappedId = ((existingPost.emotion_id - 1) % emotions.length) + 1;
             const mappedEmotion = emotions.find(e => e.emotion_id === mappedId) || emotions[0];
             if (mappedEmotion) {
-              if (__DEV__) console.log('😊 매핑된 감정:', mappedEmotion);
+              console.log('😊 매핑된 감정:', mappedEmotion);
               setSelectedEmotion(mappedEmotion);
               emotionSet = true;
             }
@@ -601,14 +601,14 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
 
         // 그래도 설정되지 않았으면 첫 번째 감정 사용
         if (!emotionSet && emotions.length > 0) {
-          if (__DEV__) console.log('😊 기본 감정 설정:', emotions[0]);
+          console.log('😊 기본 감정 설정:', emotions[0]);
           setSelectedEmotion(emotions[0]);
         }
         
-        if (__DEV__) console.log('✅ 게시물 수정 데이터 로드 완료');
+        console.log('✅ 게시물 수정 데이터 로드 완료');
         
       } catch (error) {
-        if (__DEV__) console.error('❌ 게시물 수정 데이터 설정 실패:', error);
+        console.error('❌ 게시물 수정 데이터 설정 실패:', error);
         safeAlert('오류', '게시물 데이터를 설정하는 중 오류가 발생했습니다.');
       } finally {
         setIsLoading(false);
@@ -644,7 +644,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
   }, [validateContent]);
 
   const handleEmotionSelect = useCallback((emotion: ExtendedEmotion) => {
-    if (__DEV__) console.log('🎯 감정 선택:', {
+    console.log('🎯 감정 선택:', {
       emotionId: emotion.emotion_id,
       name: emotion.name,
       color: emotion.color,
@@ -656,7 +656,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
 
   const selectImageFromGallery = useCallback(async () => {
     if (isUploadingImage) {
-      if (__DEV__) console.log('❌ 이미 업로드 중입니다.');
+      console.log('❌ 이미 업로드 중입니다.');
       return;
     }
 
@@ -687,7 +687,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
 
   const selectImageFromCamera = useCallback(async () => {
     if (isUploadingImage) {
-      if (__DEV__) console.log('❌ 이미 업로드 중입니다.');
+      console.log('❌ 이미 업로드 중입니다.');
       return;
     }
 
@@ -715,7 +715,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
   }, [isUploadingImage]);
 
   const handleImagePicker = useCallback(() => {
-    if (__DEV__) console.log('📸 이미지 선택 버튼 클릭됨', {
+    console.log('📸 이미지 선택 버튼 클릭됨', {
       isUploadingImage,
       isLoading,
       selectedImagesCount: selectedImages.length,
@@ -723,12 +723,12 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
     });
 
     if (isUploadingImage || isLoading) {
-      if (__DEV__) console.log('⚠️ 업로드 중이거나 로딩 중이므로 이미지 선택 불가');
+      console.log('⚠️ 업로드 중이거나 로딩 중이므로 이미지 선택 불가');
       return;
     }
 
     // 이미지 선택 모달 열기
-    if (__DEV__) console.log('🚀 이미지 선택 모달 열기');
+    console.log('🚀 이미지 선택 모달 열기');
     setShowImagePickerModal(true);
   }, [isUploadingImage, isLoading, selectedImages.length, uploadedImageUrls.length]);
 
@@ -749,10 +749,10 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         result === PermissionsAndroid.RESULTS.GRANTED
       );
 
-      if (__DEV__) console.log('📱 저장소 권한 요청 결과:', results);
+      console.log('📱 저장소 권한 요청 결과:', results);
       return granted;
     } catch (err) {
-      if (__DEV__) console.warn('❌ 저장소 권한 요청 오류:', err);
+      console.warn('❌ 저장소 권한 요청 오류:', err);
       return false;
     }
   };
@@ -767,10 +767,10 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         PermissionsAndroid.PERMISSIONS.CAMERA
       );
 
-      if (__DEV__) console.log('📱 카메라 권한 요청 결과:', result);
+      console.log('📱 카메라 권한 요청 결과:', result);
       return result === PermissionsAndroid.RESULTS.GRANTED;
     } catch (err) {
-      if (__DEV__) console.warn('❌ 카메라 권한 요청 오류:', err);
+      console.warn('❌ 카메라 권한 요청 오류:', err);
       return false;
     }
   };
@@ -825,7 +825,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
 
           newUploadedUrls.push(imageUrl || asset.uri);
         } catch (uploadError) {
-          if (__DEV__) console.error('❌ 업로드 실패:', uploadError);
+          console.error('❌ 업로드 실패:', uploadError);
           newUploadedUrls.push(asset.uri);
         }
       }
@@ -845,6 +845,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
       safeAlert('알림', '내용을 입력해주세요.');
       return;
     }
+    showCrisisSupportIfNeeded(content);
 
     // 수정 모드에서는 기존 감정 사용 가능
     let emotionToUse = selectedEmotion;
@@ -863,13 +864,13 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
     }
 
     if (!emotionToUse.emotion_id || typeof emotionToUse.emotion_id !== 'number') {
-      if (__DEV__) console.error('❌ 유효하지 않은 감정 ID 타입:', emotionToUse);
+      console.error('❌ 유효하지 않은 감정 ID 타입:', emotionToUse);
       safeAlert('오류', '선택된 감정이 유효하지 않습니다. 다른 감정을 선택해주세요.');
       return;
     }
 
     if (emotionToUse.emotion_id < 1 || emotionToUse.emotion_id > 20) {
-      if (__DEV__) console.error('❌ 감정 ID 범위 초과:', emotionToUse.emotion_id);
+      console.error('❌ 감정 ID 범위 초과:', emotionToUse.emotion_id);
       safeAlert('오류', '선택된 감정 ID가 유효 범위를 벗어났습니다. 다른 감정을 선택해주세요.');
       return;
     }
@@ -877,12 +878,12 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
     // 백엔드에 20개 감정이 모두 있으므로 ID 그대로 사용
     const backendEmotionId = emotionToUse.emotion_id;
 
-    if (__DEV__) console.log('📤 감정 ID 전송:', {
+    console.log('📤 감정 ID 전송:', {
       emotionId: backendEmotionId,
       emotionName: emotionToUse.name
     });
 
-    if (__DEV__) console.log('✅ 감정 선택 유효성 검사 통과:', {
+    console.log('✅ 감정 선택 유효성 검사 통과:', {
       emotionId: emotionToUse.emotion_id,
       emotionName: emotionToUse.name,
       isAnonymous: isAnonymous
@@ -899,9 +900,9 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
     setIsSubmitting(true);
 
     try {
-      const token = await EncryptedStorage.getItem('authToken');
+      const token = await AsyncStorage.getItem('authToken');
       if (__DEV__) {
-        if (__DEV__) console.log('🔐 토큰 확인:', {
+        console.log('🔐 토큰 확인:', {
           hasToken: !!token,
           tokenLength: token?.length
         });
@@ -919,7 +920,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         is_anonymous: isAnonymous
       };
 
-      if (__DEV__) console.log('📤 제출할 게시물 데이터 상세:', {
+      console.log('📤 제출할 게시물 데이터 상세:', {
         contentLength: content.trim().length,
         localEmotionId: emotionToUse.emotion_id,
         backendEmotionId: backendEmotionId,
@@ -935,7 +936,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
       
       if (isEditMode && editPostId) {
         // 수정 모드: PUT 요청
-        if (__DEV__) console.log('📤 MyDay 게시물 수정 요청:', {
+        console.log('📤 MyDay 게시물 수정 요청:', {
           postId: editPostId,
           content: content.substring(0, 50) + '...',
           emotion_id: emotionToUse.emotion_id,
@@ -955,7 +956,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         successMessage = '게시물이 수정되었습니다.';
       } else {
         // 작성 모드: POST 요청
-        if (__DEV__) console.log('📤 MyDay 게시물 작성 요청:', {
+        console.log('📤 MyDay 게시물 작성 요청:', {
           content: content.substring(0, 50) + '...',
           emotion_id: emotionToUse.emotion_id,
           images: uploadedImageUrls,
@@ -975,22 +976,22 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
       }
 
       const result = await response.json();
-      if (__DEV__) console.log(`📥 MyDay 게시물 ${isEditMode ? '수정' : '작성'} 응답:`, result);
+      console.log(`📥 MyDay 게시물 ${isEditMode ? '수정' : '작성'} 응답:`, result);
 
       if (response.ok && result.status === 'success') {
         // 새 글 작성 모드일 때만 감정 기록 추가 (수정 모드에서는 감정을 중복 기록하지 않음)
         if (!isEditMode) {
           try {
-            if (__DEV__) console.log('📊 감정 통계에 기록 추가:', {
+            console.log('📊 감정 통계에 기록 추가:', {
               emotionId: backendEmotionId,
               emotionName: emotionToUse.name
             });
             
             // 감정 기록 API 호출
             await emotionService.logEmotion(backendEmotionId, `나의 하루: ${content.substring(0, 50)}...`);
-            if (__DEV__) console.log('✅ 감정 기록 추가 성공');
+            console.log('✅ 감정 기록 추가 성공');
           } catch (emotionError) {
-            if (__DEV__) console.warn('⚠️ 감정 기록 추가 실패 (게시물 작성은 성공):', emotionError);
+            console.warn('⚠️ 감정 기록 추가 실패 (게시물 작성은 성공):', emotionError);
             // 감정 기록 실패는 게시물 작성 성공에 영향을 주지 않음
           }
         }
@@ -1009,7 +1010,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         throw new Error(result.message || `게시물 ${isEditMode ? '수정' : '작성'}에 실패했습니다.`);
       }
     } catch (error) {
-      if (__DEV__) console.error(`❌ 게시물 ${isEditMode ? '수정' : '작성'} 실패:`, error);
+      console.error(`❌ 게시물 ${isEditMode ? '수정' : '작성'} 실패:`, error);
       safeAlert('오류', error instanceof Error ? error.message : `게시물 ${isEditMode ? '수정' : '작성'} 중 오류가 발생했습니다.`);
     } finally {
       setIsSubmitting(false);
@@ -1017,7 +1018,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
   }, [content, selectedEmotion, contentError, emotions, isEditMode, editPostId, uploadedImageUrls, isAnonymous, navigation, existingPost]);
 
   const handleRemoveImage = useCallback((index: number) => {
-    if (__DEV__) console.log('🗑️ 이미지 제거됨:', index);
+    console.log('🗑️ 이미지 제거됨:', index);
     setSelectedImages(prev => prev.filter((_, i) => i !== index));
     setUploadedImageUrls(prev => prev.filter((_, i) => i !== index));
   }, []);
@@ -1050,16 +1051,16 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         await AsyncStorage.setItem('hasPostedToday', 'true');
         await AsyncStorage.setItem('todayPostDate', today);
         await AsyncStorage.setItem('todayPostId', editPostId.toString());
-        if (__DEV__) console.log('✅ AsyncStorage에 오늘의 글 상태 저장 완료:', { today, postId: editPostId });
+        console.log('✅ AsyncStorage에 오늘의 글 상태 저장 완료:', { today, postId: editPostId });
       } catch (storageError) {
-        if (__DEV__) console.warn('⚠️ AsyncStorage 저장 실패:', storageError);
+        console.warn('⚠️ AsyncStorage 저장 실패:', storageError);
       }
     }
 
     // ref에 저장된 실제 전송된 감정 데이터 사용
     const updatedEmotionData = submittedEmotionRef.current;
 
-    if (__DEV__) console.log('📡 homeScreenRefresh 이벤트 발행:', {
+    console.log('📡 homeScreenRefresh 이벤트 발행:', {
       postId: editPostId,
       updatedEmotion: updatedEmotionData,
       isEditMode
@@ -1086,7 +1087,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
     // 수정 모드에서는 기존 감정이 있으면 새로 선택하지 않아도 됨
     const hasEmotion = selectedEmotion || (isEditMode && existingPost?.emotions?.length > 0) || (isEditMode && existingPost?.emotion_id);
     const isValid = hasValidContent && hasEmotion;
-    if (__DEV__) console.log('🔍 isFormValid 계산:', { isValid, contentLength: content.trim().length, hasEmotion: !!hasEmotion, selectedEmotion: !!selectedEmotion, isEditMode, contentError });
+    console.log('🔍 isFormValid 계산:', { isValid, contentLength: content.trim().length, hasEmotion: !!hasEmotion, selectedEmotion: !!selectedEmotion, isEditMode, contentError });
     return isValid;
   }, [content, selectedEmotion, contentError, isEditMode, existingPost]);
 
@@ -1113,7 +1114,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
       },
       headerTintColor: '#667eea',
       headerTitleStyle: {
-        fontFamily: 'Pretendard-Bold',
+        fontWeight: 'bold',
         fontFamily: 'Pretendard-Bold',
         fontSize: FONT_SIZES.base,
         color: headerTextColor
@@ -1142,7 +1143,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         >
           <Text style={{
             fontSize: FONT_SIZES.sm,
-            fontFamily: 'Pretendard-Bold',
+            fontWeight: '700',
             color: '#FFFFFF',
             fontFamily: 'Pretendard-Bold',
           }}>
@@ -1232,7 +1233,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                 <Text style={{ fontSize: FONT_SIZES.emoji }}>😊</Text>
                 <Text style={{
                   fontSize: FONT_SIZES.lg,
-                  fontFamily: 'Pretendard-Bold',
+                  fontWeight: '700',
                   color: theme.text.primary,
                   marginLeft: SPACING.sm,
                   fontFamily: 'Pretendard-Bold',
@@ -1269,7 +1270,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                   })()}
                   <Text style={{
                     fontSize: FONT_SIZES.sm,
-                    fontFamily: 'Pretendard-SemiBold',
+                    fontWeight: '600',
                     color: selectedEmotion.color,
                     fontFamily: 'Pretendard-SemiBold'
                   }} numberOfLines={1}>
@@ -1407,7 +1408,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                         {emotion && (
                           <Text style={{
                             fontSize: FONT_SIZES.sm,
-                            fontFamily: 'Pretendard-Bold',
+                            fontWeight: '700',
                             color: selectedEmotion?.emotion_id === emotion.emotion_id
                               ? 'white'
                               : isDark ? '#FFFFFF' : '#111827',
@@ -1446,7 +1447,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
               <Text style={{ fontSize: FONT_SIZES.emoji }}>✍️</Text>
               <Text style={{
                 fontSize: FONT_SIZES.lg,
-                fontFamily: 'Pretendard-Bold',
+                fontWeight: '700',
                 color: theme.text.primary,
                 marginLeft: SPACING.sm,
                 fontFamily: 'Pretendard-Bold',
@@ -1537,7 +1538,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
               <Text style={{ fontSize: FONT_SIZES.emoji }}>📷</Text>
               <Text style={{
                 fontSize: FONT_SIZES.lg,
-                fontFamily: 'Pretendard-Bold',
+                fontWeight: '700',
                 color: theme.text.primary,
                 marginLeft: SPACING.sm,
                 fontFamily: 'Pretendard-Bold',
@@ -1591,7 +1592,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                       color: '#ffffff',
                       fontSize: FONT_SIZES.sm,
                       marginTop: SPACING.sm,
-                      fontFamily: 'Pretendard-SemiBold',
+                      fontWeight: '600',
                       fontFamily: 'Pretendard-SemiBold'
                     }}>
                       업로드 중...
@@ -1666,7 +1667,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                 {selectedImages.length === 0 ? (
                   <>
                     <IconButton icon="camera-plus" size={normalize(30)} iconColor={isUploadingImage ? theme.text.tertiary : (theme.colors?.primary || '#2563EB')} />
-                    <Text style={{ fontSize: FONT_SIZES.sm, fontFamily: 'Pretendard-Bold', color: isUploadingImage ? theme.text.tertiary : (theme.colors?.primary || '#2563EB'), marginTop: SPACING.xs, fontFamily: 'Pretendard-Bold' }}>
+                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: isUploadingImage ? theme.text.tertiary : (theme.colors?.primary || '#2563EB'), marginTop: SPACING.xs, fontFamily: 'Pretendard-Bold' }}>
                       {isUploadingImage ? '업로드 중...' : '사진 추가하기 (최대 3개)'}
                     </Text>
                     <Text style={{ fontSize: FONT_SIZES.xs, color: theme.text.tertiary, marginTop: normalize(2), paddingBottom: normalize(5), textAlign: 'center', fontFamily: 'Pretendard-Medium' }}>
@@ -1676,7 +1677,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                 ) : (
                   <HStack className="items-center">
                     <MaterialCommunityIcons name="plus-circle" size={normalize(20)} color={theme.colors?.primary || '#2563EB'} />
-                    <Text style={{ fontSize: FONT_SIZES.sm, fontFamily: 'Pretendard-SemiBold', color: theme.colors?.primary || '#2563EB', marginLeft: SPACING.xs, fontFamily: 'Pretendard-SemiBold' }}>
+                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: theme.colors?.primary || '#2563EB', marginLeft: SPACING.xs, fontFamily: 'Pretendard-SemiBold' }}>
                       사진 추가 ({selectedImages.length}/3)
                     </Text>
                   </HStack>
@@ -1706,7 +1707,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                 <Box className="flex-1">
                   <Text style={{
                     fontSize: FONT_SIZES.base,
-                    fontFamily: 'Pretendard-Bold',
+                    fontWeight: '700',
                     color: theme.text.primary,
                     fontFamily: 'Pretendard-Bold',
                     lineHeight: FONT_SIZES.base * 1.4
@@ -1737,7 +1738,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                 }}
                 labelStyle={{
                   color: isAnonymous ? 'white' : theme.text.tertiary,
-                  fontFamily: 'Pretendard-Bold',
+                  fontWeight: '700',
                   fontSize: FONT_SIZES.xs,
                   fontFamily: 'Pretendard-Bold'
                 }}
@@ -1803,7 +1804,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           >
             <Text style={{
               fontSize: FONT_SIZES.lg,
-              fontFamily: 'Pretendard-Bold',
+              fontWeight: '700',
               color: theme.text.primary,
               textAlign: 'center',
               marginBottom: SPACING.sm,
@@ -1840,7 +1841,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                 }}
               >
                 <MaterialCommunityIcons name="image" size={normalize(20, false)} color="white" style={{ marginRight: SPACING.sm }} />
-                <Text style={{ fontSize: FONT_SIZES.base, fontFamily: 'Pretendard-SemiBold', color: 'white', fontFamily: 'Pretendard-SemiBold' }}>
+                <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '600', color: 'white', fontFamily: 'Pretendard-SemiBold' }}>
                   갤러리
                 </Text>
               </Pressable>
@@ -1861,7 +1862,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                 }}
               >
                 <MaterialCommunityIcons name="camera" size={normalize(20, false)} color="white" style={{ marginRight: SPACING.sm }} />
-                <Text style={{ fontSize: FONT_SIZES.base, fontFamily: 'Pretendard-SemiBold', color: 'white', fontFamily: 'Pretendard-SemiBold' }}>
+                <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '600', color: 'white', fontFamily: 'Pretendard-SemiBold' }}>
                   카메라
                 </Text>
               </Pressable>
@@ -1878,7 +1879,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                 }}
                 onPress={() => setShowImagePickerModal(false)}
               >
-                <Text style={{ fontSize: FONT_SIZES.base, fontFamily: 'Pretendard-SemiBold', color: theme.text.secondary, fontFamily: 'Pretendard-SemiBold' }}>
+                <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '600', color: theme.text.secondary, fontFamily: 'Pretendard-SemiBold' }}>
                   취소
                 </Text>
               </Pressable>

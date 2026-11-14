@@ -6,27 +6,22 @@ import { Platform } from 'react-native';
  * 환경별 URL 직접 설정
  */
 
-// API URL (환경별 분리)
+// 실제 서버 API URL (HTTPS)
 const PRODUCTION_API_URL = 'https://dayonme.com/api';
-// 백엔드는 실제 서버에서 실행 중이므로 개발 환경에서도 프로덕션 URL 사용
-const DEVELOPMENT_API_URL = 'https://dayonme.com/api';
 
-// 개발/프로덕션 환경별 Base URL
+// 개발/프로덕션 환경별 Base URL - 모두 실제 서버 사용
 const getBaseURL = (): string => {
-  return __DEV__ ? DEVELOPMENT_API_URL : PRODUCTION_API_URL;
+  return PRODUCTION_API_URL;
 };
 
 // 프로덕션 설정 검증
 export const validateApiConfig = (): boolean => {
   if (!PRODUCTION_API_URL) {
-    if (__DEV__) console.error('🚨 API URL이 설정되지 않았습니다');
+    console.error('🚨 API URL이 설정되지 않았습니다');
     return false;
   }
   return true;
 };
-
-// Base URL export (이미지 URL 변환용)
-export const API_BASE_URL = getBaseURL().replace('/api', '');
 
 export const API_CONFIG = {
   BASE_URL: getBaseURL(),

@@ -50,7 +50,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     },
     title: {
       fontSize: normalize(15),
-      fontFamily: 'Pretendard-Bold' as const,
+      fontWeight: '700' as const,
       color: '#000000',
       marginBottom: normalize(12),
       textAlign: 'center' as const,
@@ -75,17 +75,17 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     },
     cancelButtonText: {
       fontSize: normalize(13),
-      fontFamily: 'Pretendard-SemiBold' as const,
+      fontWeight: '600' as const,
       color: '#666666',
     },
     defaultButtonText: {
       fontSize: normalize(13),
-      fontFamily: 'Pretendard-SemiBold' as const,
+      fontWeight: '600' as const,
       color: '#FFFFFF',
     },
     destructiveButtonText: {
       fontSize: normalize(13),
-      fontFamily: 'Pretendard-SemiBold' as const,
+      fontWeight: '600' as const,
       color: '#FFFFFF',
     },
   }), []);

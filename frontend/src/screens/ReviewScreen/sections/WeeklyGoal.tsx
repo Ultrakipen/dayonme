@@ -1,13 +1,14 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Animated, KeyboardAvoidingView, ScrollView, Platform, Keyboard } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Animated } from 'react-native';
 import { Card } from '../../../components/common/Card';
 import { useModernTheme } from '../../../hooks/useModernTheme';
 import { FONT_SIZES } from '../../../constants';
-import { getScale, normalize, normalizeSpace, normalizeTouchable } from '../../../utils/responsive';
+import { getScale } from '../../../utils/responsive';
 import apiClient from '../../../services/api/client';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TwemojiImage } from '../../../components/common/TwemojiImage';
-import { useReviewData } from '../ReviewDataContext';
+
+const CACHE_KEY = '@weekly_goal_cache';
 
 interface WeeklyGoalData {
   id?: number;
@@ -29,48 +30,50 @@ const GOAL_PRESETS = [
 
 export const WeeklyGoal: React.FC = React.memo(() => {
   const { colors, isDark } = useModernTheme();
-  const insets = useSafeAreaInsets();
   const scale = getScale(360, 0.9, 1.3);
-  const styles = useMemo(() => createStyles(scale, insets), [scale, insets]);
+  const styles = useMemo(() => createStyles(scale), [scale]);
 
-  // Context에서 데이터 가져오기 (이미 로드됨)
-  const { data, updateWeeklyGoal, refresh, loading } = useReviewData();
-  const goalData = data.weeklyGoal;
-
+  const [goalData, setGoalData] = useState<WeeklyGoalData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [customGoal, setCustomGoal] = useState('');
   const [customTarget, setCustomTarget] = useState('5');
-  const [selectedPresets, setSelectedPresets] = useState<number[]>([]);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const progressAnim = useState(new Animated.Value(goalData ? goalData.currentCount / goalData.targetCount : 0))[0];
+  const progressAnim = useState(new Animated.Value(0))[0];
 
-  // 프리셋 토글
-  const togglePreset = useCallback((index: number) => {
-    setSelectedPresets(prev =>
-      prev.includes(index)
-        ? prev.filter(i => i !== index)
-        : [...prev, index]
-    );
-  }, []);
+  // 데이터 로드
+  const loadGoal = useCallback(async () => {
+    try {
+      setLoading(true);
 
-  // 선택된 프리셋으로 목표 설정
-  const submitSelectedGoals = useCallback(() => {
-    if (selectedPresets.length === 0) return;
+      // 로컬 캐시 먼저 확인
+      const cached = await AsyncStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const data = JSON.parse(cached);
+        // 이번 주 목표인지 확인
+        const now = new Date();
+        const endDate = new Date(data.endDate);
+        if (endDate > now) {
+          setGoalData(data);
+          animateProgress(data.currentCount / data.targetCount);
+          setLoading(false);
+          return;
+        }
+      }
 
-    const selectedGoals = selectedPresets.map(i => GOAL_PRESETS[i]);
-    const combinedGoal = selectedGoals.map(g => g.text).join('\n');
-    const targetValue = parseInt(customTarget) || 5;
+      // API 호출
+      const response = await apiClient.get('/review/weekly-goal');
 
-    setGoal(combinedGoal, targetValue);
-    setSelectedPresets([]);
-  }, [selectedPresets, customTarget]);
-
-  // 모달 열기 시 선택 초기화
-  const openModal = useCallback(() => {
-    setSelectedPresets([]);
-    setCustomGoal('');
-    setCustomTarget('5');
-    setShowModal(true);
+      if (response.data.status === 'success' && response.data.data) {
+        const data = response.data.data;
+        setGoalData(data);
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
+        animateProgress(data.currentCount / data.targetCount);
+      }
+    } catch (err) {
+      if (__DEV__) console.error('주간 목표 로드 실패:', err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // 목표 설정
@@ -94,9 +97,9 @@ export const WeeklyGoal: React.FC = React.memo(() => {
       const response = await apiClient.post('/review/weekly-goal', newGoal);
 
       if (response.data.status === 'success') {
-        const savedData = response.data.data || newGoal;
-        // Context 업데이트 (캐시도 자동 업데이트됨)
-        updateWeeklyGoal(savedData);
+        const data = response.data.data || newGoal;
+        setGoalData(data);
+        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(data));
         animateProgress(0);
       }
 
@@ -106,42 +109,7 @@ export const WeeklyGoal: React.FC = React.memo(() => {
     } catch (err) {
       if (__DEV__) console.error('주간 목표 설정 실패:', err);
     }
-  }, [updateWeeklyGoal]);
-
-  // 목표 삭제
-  const deleteGoal = useCallback(async () => {
-    try {
-      console.log('[deleteGoal] 시작, goalData:', goalData);
-
-      if (!goalData?.id) {
-        console.log('[deleteGoal] goalData.id가 없음. 종료.');
-        return;
-      }
-
-      console.log('[deleteGoal] API 호출 시작, ID:', goalData.id);
-
-      // API 호출
-      const response = await apiClient.delete(`/review/weekly-goal/${goalData.id}`);
-
-      console.log('[deleteGoal] API 응답:', response.data);
-
-      if (response.data.status === 'success') {
-        console.log('[deleteGoal] 삭제 성공, Context 업데이트 및 새로고침');
-        // Context 업데이트 (null로 설정)
-        updateWeeklyGoal(null);
-        animateProgress(0);
-
-        // 강제 새로고침하여 서버에서 최신 데이터 가져오기
-        await refresh(true);
-      }
-
-      setShowDeleteConfirm(false);
-      setShowModal(false);
-    } catch (err) {
-      console.error('[deleteGoal] 에러:', err);
-      if (__DEV__) console.error('주간 목표 삭제 실패:', err);
-    }
-  }, [goalData, updateWeeklyGoal, refresh]);
+  }, []);
 
   // 진행률 애니메이션
   const animateProgress = useCallback((progress: number) => {
@@ -153,17 +121,19 @@ export const WeeklyGoal: React.FC = React.memo(() => {
     }).start();
   }, [progressAnim]);
 
+  useEffect(() => {
+    loadGoal();
+  }, [loadGoal]);
+
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
   });
 
   const getRemainingDays = () => {
-    if (!goalData?.endDate) return 7;
+    if (!goalData) return 0;
     const now = new Date();
     const end = new Date(goalData.endDate);
-    // 유효하지 않은 날짜 체크
-    if (isNaN(end.getTime())) return 7;
     const diff = end.getTime() - now.getTime();
     return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
   };
@@ -183,188 +153,112 @@ export const WeeklyGoal: React.FC = React.memo(() => {
       <Card accessible={true} accessibilityLabel="주간 목표 설정">
         <View style={styles.emptyContainer}>
           <TwemojiImage emoji="🎯" size={48 * scale} style={{ marginBottom: 12 * scale }} />
-          <Text style={[styles.emptyTitle, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
+          <Text style={[styles.emptyTitle, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>
             이번 주 목표를 설정해보세요
           </Text>
-          <Text style={[styles.emptyDesc, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale }]}>
+          <Text style={[styles.emptyDesc, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall }]}>
             작은 목표가 큰 변화를 만들어요
           </Text>
           <TouchableOpacity
             style={[styles.setGoalButton, { backgroundColor: colors.primary }]}
-            onPress={openModal}
+            onPress={() => setShowModal(true)}
             accessibilityRole="button"
             accessibilityLabel="목표 설정하기"
           >
-            <Text style={[styles.setGoalButtonText, { fontSize: FONT_SIZES.body * scale }]}>
+            <Text style={[styles.setGoalButtonText, { fontSize: FONT_SIZES.body }]}>
               목표 설정하기
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* 목표 설정 모달 */}
-        <Modal visible={showModal} transparent animationType="fade" onRequestClose={() => setShowModal(false)}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-          >
-            <View style={[styles.modalOverlay, { paddingTop: insets.top || 40 * scale }]}>
-              <ScrollView
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) * scale }}
-              >
-                <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-                  {/* X 닫기 버튼 */}
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={() => setShowModal(false)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Text style={[styles.closeButtonText, { color: colors.textSecondary }]}>✕</Text>
-                  </TouchableOpacity>
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 * scale, marginTop: 8 * scale }}>
-                    <TwemojiImage emoji="🎯" size={FONT_SIZES.h4 * scale} style={{ marginRight: 6 * scale }} />
-                    <Text style={[styles.modalTitle, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, marginBottom: 0 }]}>
-                      주간 목표 설정
-                    </Text>
-                  </View>
-
-              {/* 추천 목표 안내 */}
-              <Text style={[styles.sectionLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
-                추천 목표 선택 (다중 선택 가능)
-              </Text>
-
-              <View style={styles.presetsContainer}>
-                {GOAL_PRESETS.map((preset, index) => {
-                  const isSelected = selectedPresets.includes(index);
-                  return (
-                    <TouchableOpacity
-                      key={index}
-                      style={[styles.presetItem, {
-                        backgroundColor: isSelected
-                          ? (isDark ? colors.primary + '30' : colors.primary + '15')
-                          : (isDark ? colors.surface : '#F5F5F5'),
-                        borderColor: isSelected ? colors.primary : colors.border,
-                        borderWidth: isSelected ? 2 : 1,
-                      }]}
-                      onPress={() => togglePreset(index)}
-                    >
-                      <TwemojiImage emoji={preset.emoji} size={FONT_SIZES.h2 * scale} />
-                      <Text style={[styles.presetText, {
-                        color: isSelected ? colors.primary : colors.text,
-                        fontSize: FONT_SIZES.bodySmall * scale,
-                        fontWeight: isSelected ? '700' : '500'
-                      }]}>
-                        {preset.text}
-                      </Text>
-                      {isSelected && (
-                        <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>✓</Text>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
+        <Modal visible={showModal} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20 * scale }}>
+                <TwemojiImage emoji="🎯" size={FONT_SIZES.h2 * scale} style={{ marginRight: 8 * scale }} />
+                <Text style={[styles.modalTitle, { color: colors.text, fontSize: FONT_SIZES.h2, marginBottom: 0 }]}>
+                  주간 목표 설정
+                </Text>
               </View>
 
-              {/* 선택 완료 영역 */}
-              {selectedPresets.length > 0 && (
-                <View style={[styles.selectedGoalBox, { backgroundColor: isDark ? colors.surface : '#F0F7FF' }]}>
-                  <Text style={[styles.selectedLabel, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}>
-                    선택한 목표 {selectedPresets.length}개
-                  </Text>
-                  <View style={styles.targetRow}>
-                    <Text numberOfLines={1} style={[styles.targetLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, flexShrink: 0 }]}>
-                      총 목표 횟수:
-                    </Text>
-                    <TextInput
-                      style={[styles.targetInput, {
-                        backgroundColor: isDark ? colors.card : '#FFFFFF',
-                        color: colors.text,
-                        fontSize: FONT_SIZES.body * scale
-                      }]}
-                      value={customTarget}
-                      onChangeText={setCustomTarget}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                    />
-                    <Text numberOfLines={1} style={[styles.targetUnit, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, flexShrink: 0 }]}>
-                      회
-                    </Text>
-                  </View>
+              {/* 프리셋 목표 */}
+              <View style={styles.presetsContainer}>
+                {GOAL_PRESETS.map((preset, index) => (
                   <TouchableOpacity
-                    style={[styles.submitButton, { backgroundColor: colors.primary }]}
-                    onPress={submitSelectedGoals}
+                    key={index}
+                    style={[styles.presetItem, {
+                      backgroundColor: isDark ? colors.surface : '#F5F5F5',
+                      borderColor: colors.border
+                    }]}
+                    onPress={() => setGoal(preset.text, preset.target)}
                   >
-                    <Text style={[styles.submitButtonText, { fontSize: FONT_SIZES.body * scale }]}>
-                      목표 설정하기
+                    <TwemojiImage emoji={preset.emoji} size={FONT_SIZES.h2 * scale} />
+                    <Text style={[styles.presetText, { color: colors.text, fontSize: FONT_SIZES.bodySmall }]}>
+                      {preset.text}
                     </Text>
                   </TouchableOpacity>
-                </View>
-              )}
+                ))}
+              </View>
 
-              {/* 커스텀 목표 - 프리셋 미선택 시에만 표시 */}
-              {selectedPresets.length === 0 && (
-                <View style={styles.customGoalContainer}>
-                  <Text style={[styles.customLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
-                    직접 입력
+              {/* 커스텀 목표 */}
+              <View style={styles.customGoalContainer}>
+                <Text style={[styles.customLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
+                  직접 입력
+                </Text>
+                <TextInput
+                  style={[styles.customInput, {
+                    backgroundColor: isDark ? colors.surface : '#F5F5F5',
+                    color: colors.text,
+                    fontSize: FONT_SIZES.body
+                  }]}
+                  placeholder="나만의 목표를 입력하세요"
+                  placeholderTextColor={colors.textSecondary}
+                  value={customGoal}
+                  onChangeText={setCustomGoal}
+                  maxLength={50}
+                />
+                <View style={styles.targetRow}>
+                  <Text style={[styles.targetLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall }]}>
+                    목표 횟수:
                   </Text>
                   <TextInput
-                    style={[styles.customInput, {
+                    style={[styles.targetInput, {
                       backgroundColor: isDark ? colors.surface : '#F5F5F5',
                       color: colors.text,
-                      fontSize: FONT_SIZES.body * scale
+                      fontSize: FONT_SIZES.body
                     }]}
-                    placeholder="나만의 목표를 입력하세요"
-                    placeholderTextColor={colors.textSecondary}
-                    value={customGoal}
-                    onChangeText={setCustomGoal}
-                    maxLength={50}
+                    value={customTarget}
+                    onChangeText={setCustomTarget}
+                    keyboardType="number-pad"
+                    maxLength={2}
                   />
-                  <View style={styles.targetRow}>
-                    <Text numberOfLines={1} style={[styles.targetLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, flexShrink: 0 }]}>
-                      목표 횟수:
-                    </Text>
-                    <TextInput
-                      style={[styles.targetInput, {
-                        backgroundColor: isDark ? colors.surface : '#F5F5F5',
-                        color: colors.text,
-                        fontSize: FONT_SIZES.body * scale
-                      }]}
-                      value={customTarget}
-                      onChangeText={setCustomTarget}
-                      keyboardType="number-pad"
-                      maxLength={2}
-                    />
-                    <Text numberOfLines={1} style={[styles.targetUnit, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, flexShrink: 0 }]}>
-                      회
-                    </Text>
-                  </View>
-                  {customGoal.trim() && (
-                    <TouchableOpacity
-                      style={[styles.customSubmitButton, { backgroundColor: colors.primary }]}
-                      onPress={() => setGoal(customGoal, parseInt(customTarget) || 5)}
-                    >
-                      <Text style={[styles.customSubmitText, { fontSize: FONT_SIZES.body * scale }]}>
-                        이 목표로 설정
-                      </Text>
-                    </TouchableOpacity>
-                  )}
+                  <Text style={[styles.targetUnit, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall }]}>
+                    회
+                  </Text>
                 </View>
-              )}
-
+                {customGoal.trim() && (
                   <TouchableOpacity
-                    style={styles.modalCloseButton}
-                    onPress={() => setShowModal(false)}
+                    style={[styles.customSubmitButton, { backgroundColor: colors.primary }]}
+                    onPress={() => setGoal(customGoal, parseInt(customTarget) || 5)}
                   >
-                    <Text style={[styles.modalCloseText, { color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }]}>
-                      닫기
+                    <Text style={[styles.customSubmitText, { fontSize: FONT_SIZES.body }]}>
+                      이 목표로 설정
                     </Text>
                   </TouchableOpacity>
-                </View>
-              </ScrollView>
+                )}
+              </View>
+
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowModal(false)}
+              >
+                <Text style={[styles.modalCloseText, { color: colors.textSecondary, fontSize: FONT_SIZES.body }]}>
+                  닫기
+                </Text>
+              </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
+          </View>
         </Modal>
       </Card>
     );
@@ -379,15 +273,15 @@ export const WeeklyGoal: React.FC = React.memo(() => {
     <Card accessible={true} accessibilityLabel="이번 주 목표">
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TwemojiImage emoji="🎯" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
-          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
+          <TwemojiImage emoji="🎯" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+          <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>
             이번 주 목표
           </Text>
         </View>
         <View style={[styles.daysLeftBadge, { backgroundColor: remainingDays <= 2 ? '#FF9800' + '20' : colors.primary + '20' }]}>
           <Text style={[styles.daysLeftText, {
             color: remainingDays <= 2 ? '#FF9800' : colors.primary,
-            fontSize: FONT_SIZES.caption * scale
+            fontSize: FONT_SIZES.caption
           }]}>
             D-{remainingDays}
           </Text>
@@ -400,18 +294,13 @@ export const WeeklyGoal: React.FC = React.memo(() => {
           ? (isDark ? 'rgba(76, 175, 80, 0.15)' : '#E8F5E9')
           : (isDark ? colors.surface : '#F8F9FA')
       }]}>
-        <TwemojiImage emoji={isCompleted ? '🎉' : '📌'} size={FONT_SIZES.h2 * scale} style={{ marginRight: 10 * scale, alignSelf: 'flex-start', marginTop: 2 * scale }} />
+        <TwemojiImage emoji={isCompleted ? '🎉' : '📌'} size={FONT_SIZES.h1 * scale} style={{ marginRight: 12 * scale }} />
         <View style={{ flex: 1 }}>
-          {goalData!.goal.split('\n').map((goalLine, index) => (
-            <View key={index} style={styles.goalLineContainer}>
-              <Text style={[styles.goalBullet, { color: colors.primary, fontSize: FONT_SIZES.body * scale }]}>•</Text>
-              <Text style={[styles.goalText, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>
-                {goalLine}
-              </Text>
-            </View>
-          ))}
+          <Text style={[styles.goalText, { color: colors.text, fontSize: FONT_SIZES.body }]}>
+            {goalData!.goal}
+          </Text>
           {isCompleted && (
-            <Text style={[styles.completedText, { color: '#4CAF50', fontSize: FONT_SIZES.caption * scale }]}>
+            <Text style={[styles.completedText, { color: '#4CAF50', fontSize: FONT_SIZES.caption }]}>
               목표 달성! 축하해요! 🎊
             </Text>
           )}
@@ -421,11 +310,11 @@ export const WeeklyGoal: React.FC = React.memo(() => {
       {/* 진행률 */}
       <View style={styles.progressContainer}>
         <View style={styles.progressHeader}>
-          <Text style={[styles.progressLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={[styles.progressLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
             진행률
           </Text>
-          <Text style={[styles.progressCount, { color: colors.text, fontSize: FONT_SIZES.bodyLarge * scale }]}>
-            <Text style={{ color: getProgressColor(), fontFamily: 'Pretendard-ExtraBold' }}>{goalData!.currentCount}</Text>
+          <Text style={[styles.progressCount, { color: colors.text, fontSize: FONT_SIZES.bodyLarge }]}>
+            <Text style={{ color: getProgressColor(), fontWeight: '800' }}>{goalData!.currentCount}</Text>
             <Text style={{ color: colors.textSecondary }}> / {goalData!.targetCount}</Text>
           </Text>
         </View>
@@ -439,232 +328,55 @@ export const WeeklyGoal: React.FC = React.memo(() => {
         </View>
       </View>
 
-      {/* 안내 문구 */}
-      {!isCompleted && (
-        <Text style={[styles.guideText, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
-          매일 조금씩 실천하면 목표를 달성할 수 있어요!
-        </Text>
+      {/* 새 목표 설정 버튼 (완료 시) */}
+      {isCompleted && (
+        <TouchableOpacity
+          style={[styles.newGoalButton, { borderColor: colors.primary }]}
+          onPress={() => setShowModal(true)}
+        >
+          <Text style={[styles.newGoalText, { color: colors.primary, fontSize: FONT_SIZES.bodySmall }]}>
+            새로운 목표 설정하기 →
+          </Text>
+        </TouchableOpacity>
       )}
 
-      {/* 목표 수정/새 목표 설정 버튼 */}
-      <TouchableOpacity
-        style={[styles.newGoalButton, { borderColor: isCompleted ? colors.primary : colors.border }]}
-        onPress={openModal}
-      >
-        <Text style={[styles.newGoalText, {
-          color: isCompleted ? colors.primary : colors.textSecondary,
-          fontSize: FONT_SIZES.bodySmall * scale
-        }]}>
-          {isCompleted ? '새로운 목표 설정하기 →' : '목표 수정하기'}
-        </Text>
-      </TouchableOpacity>
-
       {/* 목표 설정 모달 */}
-      <Modal visible={showModal} transparent animationType="fade" onRequestClose={() => setShowModal(false)}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        >
-          <View style={[styles.modalOverlay, { paddingTop: insets.top || 40 * scale }]}>
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 20) * scale }}
-            >
-              <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-                  {/* X 닫기 버튼 */}
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={() => setShowModal(false)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Text style={[styles.closeButtonText, { color: colors.textSecondary }]}>✕</Text>
-                  </TouchableOpacity>
-
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 * scale, marginTop: 8 * scale }}>
-                  <TwemojiImage emoji="🎯" size={FONT_SIZES.h4 * scale} style={{ marginRight: 6 * scale }} />
-                  <Text style={[styles.modalTitle, { color: colors.text, fontSize: FONT_SIZES.h4 * scale, marginBottom: 0 }]}>
-                    주간 목표 설정
-                  </Text>
-                </View>
-
-            {/* 추천 목표 안내 */}
-            <Text style={[styles.sectionLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
-              추천 목표 선택 (다중 선택 가능)
-            </Text>
+      <Modal visible={showModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20 * scale }}>
+              <TwemojiImage emoji="🎯" size={FONT_SIZES.h2 * scale} style={{ marginRight: 8 * scale }} />
+              <Text style={[styles.modalTitle, { color: colors.text, fontSize: FONT_SIZES.h2, marginBottom: 0 }]}>
+                주간 목표 설정
+              </Text>
+            </View>
 
             <View style={styles.presetsContainer}>
-              {GOAL_PRESETS.map((preset, index) => {
-                const isSelected = selectedPresets.includes(index);
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    style={[styles.presetItem, {
-                      backgroundColor: isSelected
-                        ? (isDark ? colors.primary + '30' : colors.primary + '15')
-                        : (isDark ? colors.surface : '#F5F5F5'),
-                      borderColor: isSelected ? colors.primary : colors.border,
-                      borderWidth: isSelected ? 2 : 1,
-                    }]}
-                    onPress={() => togglePreset(index)}
-                  >
-                    <TwemojiImage emoji={preset.emoji} size={FONT_SIZES.h2 * scale} />
-                    <Text style={[styles.presetText, {
-                      color: isSelected ? colors.primary : colors.text,
-                      fontSize: FONT_SIZES.bodySmall * scale,
-                      fontWeight: isSelected ? '700' : '500'
-                    }]}>
-                      {preset.text}
-                    </Text>
-                    {isSelected && (
-                      <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body * scale }}>✓</Text>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {/* 선택 완료 영역 */}
-            {selectedPresets.length > 0 && (
-              <View style={[styles.selectedGoalBox, { backgroundColor: isDark ? colors.surface : '#F0F7FF' }]}>
-                <Text style={[styles.selectedLabel, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale }]}>
-                  선택한 목표 {selectedPresets.length}개
-                </Text>
-                <View style={styles.targetRow}>
-                  <Text numberOfLines={1} style={[styles.targetLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, flexShrink: 0 }]}>
-                    총 목표 횟수:
-                  </Text>
-                  <TextInput
-                    style={[styles.targetInput, {
-                      backgroundColor: isDark ? colors.card : '#FFFFFF',
-                      color: colors.text,
-                      fontSize: FONT_SIZES.body * scale
-                    }]}
-                    value={customTarget}
-                    onChangeText={setCustomTarget}
-                    keyboardType="number-pad"
-                    maxLength={2}
-                  />
-                  <Text numberOfLines={1} style={[styles.targetUnit, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, flexShrink: 0 }]}>
-                    회
-                  </Text>
-                </View>
+              {GOAL_PRESETS.map((preset, index) => (
                 <TouchableOpacity
-                  style={[styles.submitButton, { backgroundColor: colors.primary }]}
-                  onPress={submitSelectedGoals}
-                >
-                  <Text style={[styles.submitButtonText, { fontSize: FONT_SIZES.body * scale }]}>
-                    목표 설정하기
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* 커스텀 목표 - 프리셋 미선택 시에만 표시 */}
-            {selectedPresets.length === 0 && (
-              <View style={styles.customGoalContainer}>
-                <Text style={[styles.customLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
-                  직접 입력
-                </Text>
-                <TextInput
-                  style={[styles.customInput, {
+                  key={index}
+                  style={[styles.presetItem, {
                     backgroundColor: isDark ? colors.surface : '#F5F5F5',
-                    color: colors.text,
-                    fontSize: FONT_SIZES.body * scale
+                    borderColor: colors.border
                   }]}
-                  placeholder="나만의 목표를 입력하세요"
-                  placeholderTextColor={colors.textSecondary}
-                  value={customGoal}
-                  onChangeText={setCustomGoal}
-                  maxLength={50}
-                />
-                <View style={styles.targetRow}>
-                  <Text numberOfLines={1} style={[styles.targetLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, flexShrink: 0 }]}>
-                    목표 횟수:
-                  </Text>
-                  <TextInput
-                    style={[styles.targetInput, {
-                      backgroundColor: isDark ? colors.surface : '#F5F5F5',
-                      color: colors.text,
-                      fontSize: FONT_SIZES.body * scale
-                    }]}
-                    value={customTarget}
-                    onChangeText={setCustomTarget}
-                    keyboardType="number-pad"
-                    maxLength={2}
-                  />
-                  <Text numberOfLines={1} style={[styles.targetUnit, { color: colors.textSecondary, fontSize: FONT_SIZES.bodySmall * scale, flexShrink: 0 }]}>
-                    회
-                  </Text>
-                </View>
-                {customGoal.trim() && (
-                  <TouchableOpacity
-                    style={[styles.customSubmitButton, { backgroundColor: colors.primary }]}
-                    onPress={() => setGoal(customGoal, parseInt(customTarget) || 5)}
-                  >
-                    <Text style={[styles.customSubmitText, { fontSize: FONT_SIZES.body * scale }]}>
-                      이 목표로 설정
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
-
-                {/* 목표 삭제 버튼 - 목표가 있을 때만 표시 */}
-                {goalData && (
-                  <TouchableOpacity
-                    style={[styles.deleteButton, { borderColor: '#FF5252' }]}
-                    onPress={() => setShowDeleteConfirm(true)}
-                  >
-                    <Text style={[styles.deleteButtonText, { color: '#FF5252', fontSize: FONT_SIZES.bodySmall * scale }]}>
-                      목표 삭제
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                <TouchableOpacity
-                  style={styles.modalCloseButton}
-                  onPress={() => setShowModal(false)}
+                  onPress={() => setGoal(preset.text, preset.target)}
                 >
-                  <Text style={[styles.modalCloseText, { color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }]}>
-                    닫기
+                  <TwemojiImage emoji={preset.emoji} size={FONT_SIZES.h2 * scale} />
+                  <Text style={[styles.presetText, { color: colors.text, fontSize: FONT_SIZES.bodySmall }]}>
+                    {preset.text}
                   </Text>
                 </TouchableOpacity>
-              </View>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* 삭제 확인 다이얼로그 */}
-      <Modal visible={showDeleteConfirm} transparent animationType="fade" onRequestClose={() => setShowDeleteConfirm(false)}>
-        <View style={styles.confirmOverlay}>
-          <View style={[styles.confirmBox, { backgroundColor: colors.card }]}>
-            <Text style={[styles.confirmTitle, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
-              목표를 삭제하시겠습니까?
-            </Text>
-            <Text style={[styles.confirmMessage, { color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }]}>
-              삭제된 목표는 복구할 수 없습니다.
-            </Text>
-            <View style={styles.confirmButtons}>
-              <TouchableOpacity
-                style={[styles.confirmButton, { backgroundColor: colors.border }]}
-                onPress={() => setShowDeleteConfirm(false)}
-              >
-                <Text style={[styles.confirmButtonText, { color: colors.text, fontSize: FONT_SIZES.body * scale }]}>
-                  취소
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.confirmButton, { backgroundColor: '#FF5252' }]}
-                onPress={deleteGoal}
-              >
-                <Text style={[styles.confirmButtonText, { color: '#FFFFFF', fontSize: FONT_SIZES.body * scale }]}>
-                  삭제
-                </Text>
-              </TouchableOpacity>
+              ))}
             </View>
+
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowModal(false)}
+            >
+              <Text style={[styles.modalCloseText, { color: colors.textSecondary, fontSize: FONT_SIZES.body }]}>
+                닫기
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -672,7 +384,7 @@ export const WeeklyGoal: React.FC = React.memo(() => {
   );
 });
 
-const createStyles = (scale: number, insets: any) => StyleSheet.create({
+const createStyles = (scale: number) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -680,7 +392,7 @@ const createStyles = (scale: number, insets: any) => StyleSheet.create({
     marginBottom: 16 * scale,
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   daysLeftBadge: {
     paddingHorizontal: 10 * scale,
@@ -688,32 +400,21 @@ const createStyles = (scale: number, insets: any) => StyleSheet.create({
     borderRadius: 12 * scale,
   },
   daysLeftText: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   goalBox: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     padding: 16 * scale,
     borderRadius: 16 * scale,
     marginBottom: 16 * scale,
   },
-  goalLineContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 6 * scale,
-  },
-  goalBullet: {
-    fontFamily: 'Pretendard-Bold',
-    marginRight: 8 * scale,
-    marginTop: 1 * scale,
-  },
   goalText: {
-    flex: 1,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     lineHeight: 22 * scale,
   },
   completedText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginTop: 4 * scale,
   },
   progressContainer: {
@@ -726,10 +427,10 @@ const createStyles = (scale: number, insets: any) => StyleSheet.create({
     marginBottom: 8 * scale,
   },
   progressLabel: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   progressCount: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   progressBar: {
     height: 10 * scale,
@@ -740,218 +441,117 @@ const createStyles = (scale: number, insets: any) => StyleSheet.create({
     height: '100%',
     borderRadius: 5 * scale,
   },
-  guideText: {
-    marginTop: 12 * scale,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  sectionLabel: {
-    fontFamily: 'Pretendard-SemiBold',
-    marginBottom: 8 * scale,
-  },
   newGoalButton: {
     marginTop: 12 * scale,
     padding: 12 * scale,
     borderRadius: 12 * scale,
     borderWidth: 1,
     alignItems: 'center',
-    minHeight: 44 * scale,
-    justifyContent: 'center',
   },
   newGoalText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   emptyContainer: {
     alignItems: 'center',
     padding: 24 * scale,
   },
   emptyTitle: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 8 * scale,
   },
   emptyDesc: {
-    marginBottom: 10 * scale,
+    marginBottom: 20 * scale,
     textAlign: 'center',
   },
   setGoalButton: {
     paddingHorizontal: 32 * scale,
     paddingVertical: 14 * scale,
     borderRadius: 24 * scale,
-    minHeight: 48 * scale,
-    justifyContent: 'center',
   },
   setGoalButtonText: {
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-Bold',
-  },
-  submitButton: {
-    marginTop: 8 * scale,
-    padding: 14 * scale,
-    borderRadius: 12 * scale,
-    alignItems: 'center',
-    minHeight: 48 * scale,
-    justifyContent: 'center',
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontFamily: 'Pretendard-Bold',
-  },
-  selectedGoalBox: {
-    marginTop: 12 * scale,
-    padding: 16 * scale,
-    borderRadius: 12 * scale,
-  },
-  selectedLabel: {
-    fontFamily: 'Pretendard-SemiBold',
-    marginBottom: 12 * scale,
+    fontWeight: '700',
   },
   modalOverlay: {
-    justifyContent: 'flex-start',
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 16 * scale,
+    justifyContent: 'center',
+    padding: 20 * scale,
   },
   modalContent: {
-    borderRadius: 20 * scale,
-    padding: 16 * scale,
-    paddingBottom: 12 * scale,
-    marginTop: 10 * scale,
-    marginBottom: 10 * scale,
+    borderRadius: 24 * scale,
+    padding: 24 * scale,
+    maxHeight: '80%',
   },
   modalTitle: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: 20 * scale,
     textAlign: 'center',
   },
   presetsContainer: {
-    gap: 8 * scale,
-    marginBottom: 12 * scale,
+    gap: 12 * scale,
+    marginBottom: 20 * scale,
   },
   presetItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12 * scale,
-    borderRadius: 12 * scale,
+    padding: 16 * scale,
+    borderRadius: 16 * scale,
     borderWidth: 1,
-    gap: 10 * scale,
-    minHeight: 56 * scale,
+    gap: 12 * scale,
   },
   presetText: {
     flex: 1,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   customGoalContainer: {
-    marginTop: 4 * scale,
-    paddingTop: 12 * scale,
+    marginTop: 8 * scale,
+    paddingTop: 16 * scale,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.1)',
   },
   customLabel: {
-    fontFamily: 'Pretendard-SemiBold',
-    marginBottom: 6 * scale,
+    fontWeight: '600',
+    marginBottom: 8 * scale,
   },
   customInput: {
-    padding: 12 * scale,
-    borderRadius: 10 * scale,
-    marginBottom: 4 * scale,
-    minHeight: 44 * scale,
+    padding: 14 * scale,
+    borderRadius: 12 * scale,
+    marginBottom: 12 * scale,
   },
   targetRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2 * scale,
-    width: '100%',
-    flexWrap: 'nowrap',
+    marginBottom: 12 * scale,
   },
   targetLabel: {
-    fontFamily: 'Pretendard-Medium',
-    minWidth: 70 * scale,
+    fontWeight: '500',
     marginRight: 8 * scale,
-    flexShrink: 0,
   },
   targetInput: {
-    width: 50 * scale,
+    width: 60 * scale,
     padding: 10 * scale,
     borderRadius: 8 * scale,
     textAlign: 'center',
-    minHeight: 40 * scale,
   },
   targetUnit: {
     marginLeft: 8 * scale,
-    fontFamily: 'Pretendard-Medium',
-    flexShrink: 0,
+    fontWeight: '500',
   },
   customSubmitButton: {
-    padding: 12 * scale,
-    borderRadius: 10 * scale,
+    padding: 14 * scale,
+    borderRadius: 12 * scale,
     alignItems: 'center',
-    marginTop: 4 * scale,
-    minHeight: 48 * scale,
-    justifyContent: 'center',
   },
   customSubmitText: {
     color: '#FFFFFF',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   modalCloseButton: {
-    paddingVertical: 10 * scale,
+    padding: 12 * scale,
     alignItems: 'center',
-    marginTop: 2 * scale,
   },
   modalCloseText: {
-    fontFamily: 'Pretendard-Medium',
-  },
-closeButton: {    position: 'absolute',    top: 12 * scale,    right: 12 * scale,    width: 32 * scale,    height: 32 * scale,    borderRadius: 16 * scale,    alignItems: 'center',    justifyContent: 'center',    zIndex: 10,  },  closeButtonText: {    fontSize: 24 * scale,    fontFamily: 'Pretendard-Medium',    lineHeight: 24 * scale,  },
-  deleteButton: {
-    marginTop: 8 * scale,
-    paddingVertical: 10 * scale,
-    borderRadius: 10 * scale,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    minHeight: 44 * scale,
-    justifyContent: 'center',
-  },
-  deleteButtonText: {
-    fontFamily: 'Pretendard-SemiBold',
-  },
-  confirmOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 24 * scale,
-  },
-  confirmBox: {
-    width: '100%',
-    maxWidth: 320 * scale,
-    borderRadius: 16 * scale,
-    padding: 24 * scale,
-    alignItems: 'center',
-  },
-  confirmTitle: {
-    fontFamily: 'Pretendard-Bold',
-    marginBottom: 8 * scale,
-    textAlign: 'center',
-  },
-  confirmMessage: {
-    fontFamily: 'Pretendard-Regular',
-    marginBottom: 20 * scale,
-    textAlign: 'center',
-  },
-  confirmButtons: {
-    flexDirection: 'row',
-    gap: 12 * scale,
-    width: '100%',
-  },
-  confirmButton: {
-    flex: 1,
-    paddingVertical: 12 * scale,
-    borderRadius: 10 * scale,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 44 * scale,
-  },
-  confirmButtonText: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '500',
   },
 });

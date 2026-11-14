@@ -2,10 +2,9 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import EncryptedStorage from 'react-native-encrypted-storage';
 import authService from '../services/api/authService';
 import userService from '../services/api/userService';
-import { setOneSignalUserId } from '../services/pushNotification';
+import { initFCM, clearFcmToken } from '../services/pushNotification';
 import { LoginCredentials, RegisterData } from '../services/api/types';
 import { authEvents, AUTH_EVENTS } from '../utils/authEvents';
 
@@ -77,7 +76,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const checkAuthStatus = async () => {
     // 이미 인증 확인 중이면 스킵 (무한 루프 방지)
     if (isCheckingAuth) {
-      if (__DEV__) console.log('⚠️ 이미 인증 확인 중... 스킵');
+      console.log('⚠️ 이미 인증 확인 중... 스킵');
       return;
     }
 
@@ -85,11 +84,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setIsCheckingAuth(true);
       setIsLoading(true);
 
-      // 저장된 토큰과 사용자 정보 확인 (토큰은 암호화 저장소, 사용자 정보는 일반 저장소)
-      const token = await EncryptedStorage.getItem('authToken');
+      // 저장된 토큰과 사용자 정보 확인
+      const token = await AsyncStorage.getItem('authToken');
       const userJson = await AsyncStorage.getItem('user');
 
-      if (__DEV__) console.log('🔍 인증 상태 확인:', {
+      console.log('🔍 인증 상태 확인:', {
         hasToken: !!token,
         hasUser: !!userJson
       });
@@ -120,21 +119,21 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           };
 
           setUser(extendedUser);
-          if (__DEV__) console.log('✅ 로컬 인증 완료:', extendedUser.email);
+          console.log('✅ 로컬 인증 완료:', extendedUser.email);
           return;
         } catch (parseError) {
-          if (__DEV__) console.error('❌ 사용자 정보 파싱 오류:', parseError);
+          console.error('❌ 사용자 정보 파싱 오류:', parseError);
           // 파싱 오류 시에만 인증 데이터 클리어
           await clearAuthData();
         }
       } else {
-        if (__DEV__) console.log('❌ 인증 정보 없음 - 로그아웃 상태');
+        console.log('❌ 인증 정보 없음 - 로그아웃 상태');
         setUser(null);
       }
 
     } catch (error) {
-      if (__DEV__) console.error('❌ 인증 상태 확인 중 오류:', error);
-      if (__DEV__) console.log('⚠️ 에러로 인해 기존 로그인 상태 유지');
+      console.error('❌ 인증 상태 확인 중 오류:', error);
+      console.log('⚠️ 에러로 인해 기존 로그인 상태 유지');
     } finally {
       setIsLoading(false);
       setIsCheckingAuth(false);
@@ -144,7 +143,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const login = async (credentials: LoginCredentials) => {
     try {
       setIsLoading(true);
-      if (__DEV__) console.log('🔄 로그인 시도:', credentials.email);
+      console.log('🔄 로그인 시도:', credentials.email);
 
       const response = await authService.login(credentials);
 
@@ -162,7 +161,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           favorite_quote: undefined,
           theme_preference: 'system',
           is_active: true,
-          created_at: apiUser.created_at,
+          created_at: (apiUser as { created_at?: string }).created_at || undefined, // 서버 값이 없으면 비워 둠 (현재 시각으로 채우면 가입일이 로그인 날짜로 잘못 표시됨)
           is_admin: apiUser.is_admin || false, // 관리자 권한
           role: apiUser.role || 'user', // 사용자 역할
           // 익명 설정 기본값
@@ -175,28 +174,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const { rememberMe = true } = credentials; // 기본값 true (기존 동작 유지)
 
         // Fast Refresh 대응: rememberMe와 관계없이 항상 user 정보 저장
-        // 보안: 토큰은 암호화 저장소, 사용자 정보는 일반 저장소
-        await Promise.all([
-          EncryptedStorage.setItem('authToken', token),
-          EncryptedStorage.setItem('refresh_token', refresh_token),
-          AsyncStorage.multiSet([
-            ['user', JSON.stringify(extendedUser)],
-            ['rememberMe', rememberMe ? 'true' : 'false']
-          ])
+        // (앱 재시작/새로고침 시에도 로그인 상태 유지)
+        await AsyncStorage.multiSet([
+          ['authToken', token],
+          ['refresh_token', refresh_token],
+          ['user', JSON.stringify(extendedUser)],
+          ['rememberMe', rememberMe ? 'true' : 'false']
         ]);
 
         if (rememberMe) {
-          if (__DEV__) console.log('✅ 로그인 정보 저장 (자동 로그인 활성화 - 앱 종료 후에도 유지)');
+          console.log('✅ 로그인 정보 저장 (자동 로그인 활성화 - 앱 종료 후에도 유지)');
         } else {
-          if (__DEV__) console.log('✅ 세션 로그인 (앱 사용 중에는 유지, 앱 종료 시 자동 로그아웃)');
+          console.log('✅ 세션 로그인 (앱 사용 중에는 유지, 앱 종료 시 자동 로그아웃)');
         }
 
         setUser(extendedUser);
-        if (__DEV__) console.log('✅ 로그인 성공 (기본 정보):', extendedUser.email);
+        console.log('✅ 로그인 성공 (기본 정보):', extendedUser.email);
 
-        // OneSignal 사용자 ID 연결 (비동기로 처리하되 대기하지 않음)
-        setOneSignalUserId(extendedUser.user_id).catch(err => {
-          if (__DEV__) console.warn('⚠️ OneSignal 사용자 연결 실패 (로그인은 성공):', err);
+        // FCM 토큰 등록 (비동기로 처리하되 대기하지 않음)
+        initFCM().catch(err => {
+          console.warn('⚠️ FCM 초기화 실패 (로그인은 성공):', err);
         });
 
         // 추가 프로필 정보 가져오기 (비동기로 백그라운드에서 실행)
@@ -214,58 +211,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
               // 전체 사용자 정보로 업데이트
               setUser(fullUserData);
               await AsyncStorage.setItem('user', JSON.stringify(fullUserData));
-              if (__DEV__) console.log('✅ 프로필 정보 동기화 완료:', fullUserData.favorite_quote ? '명언 있음' : '명언 없음');
+              console.log('✅ 프로필 정보 동기화 완료:', fullUserData.favorite_quote ? '명언 있음' : '명언 없음');
             }
           } catch (profileError) {
-            if (__DEV__) console.log('⚠️ 프로필 정보 로드 실패 (기본 정보로 계속):', profileError);
+            console.log('⚠️ 프로필 정보 로드 실패 (기본 정보로 계속):', profileError);
           }
         }
       } else {
         const errorMessage = response.message || '로그인에 실패했습니다.';
-        if (__DEV__) console.error('❌ 로그인 실패:', errorMessage);
-        // 전체 응답 객체를 throw하여 status, data 유지 (계정 복구 등에 필요)
-        throw { message: errorMessage, status: response.status, data: response.data };
+        console.error('❌ 로그인 실패:', errorMessage);
+        throw { message: errorMessage };
       }
     } catch (error) {
-      // 에러 로깅 (프로덕션에서는 민감 정보 제외)
-      if (__DEV__) {
-        if (__DEV__) console.log('🔍 로그인 에러 발생');
+      if (error instanceof Error) {
+        console.error('❌ 로그인 중 오류:', error.message);
+      } else {
+        console.error('❌ 로그인 중 알 수 없는 오류:', error);
       }
 
       let errorMessage = '로그인 중 오류가 발생했습니다.';
-      let httpStatus: number | undefined;
-      let responseStatus: string | undefined;
-      let responseData: any;
-
       if (error && typeof error === 'object') {
-        const err = error as {
-          response?: { status?: number; data?: { message?: string; status?: string; data?: any } };
-          message?: string;
-          status?: string;
-          data?: any;
-        };
-
-        // HTTP status 추출
-        httpStatus = err.response?.status;
-
-        // authService에서 throw한 에러는 이미 response.data 형태
-        // 따라서 err.status, err.data에서 직접 추출
-        responseStatus = err.status || err.response?.data?.status;
-        responseData = err.data || err.response?.data?.data;
-
-        // HTTP status 기반으로 적절한 에러 메시지 설정
-        if (httpStatus === 401 || httpStatus === 400) {
-          errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
-        } else if (httpStatus === 429) {
-          errorMessage = '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
-        } else if (err.response?.data?.message) {
+        const err = error as { response?: { data?: { message?: string } }; message?: string };
+        if (err.response?.data?.message) {
           errorMessage = err.response.data.message;
         } else if (err.message) {
           errorMessage = err.message;
         }
       }
 
-      throw { message: errorMessage, httpStatus, status: responseStatus, data: responseData };
+      throw { message: errorMessage };
     } finally {
       setIsLoading(false);
     }
@@ -274,7 +248,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const register = async (data: RegisterData) => {
     try {
       setIsLoading(true);
-      if (__DEV__) console.log('🔄 회원가입 시도:', data.email);
+      console.log('🔄 회원가입 시도:', data.email);
 
       const response = await authService.register(data);
 
@@ -292,7 +266,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           favorite_quote: undefined,
           theme_preference: 'system',
           is_active: true,
-          created_at: apiUser.created_at,
+          created_at: new Date().toISOString(),
           is_admin: apiUser.is_admin || false, // 관리자 권한
           role: apiUser.role || 'user', // 사용자 역할
           // 익명 설정 기본값
@@ -302,16 +276,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         };
 
         // 회원가입 후 기본적으로 로그인 상태 유지 (rememberMe=true)
-        // 보안: 토큰은 암호화 저장소, 사용자 정보는 일반 저장소
-        await Promise.all([
-          EncryptedStorage.setItem('authToken', token),
-          AsyncStorage.setItem('user', JSON.stringify(extendedUser)),
-          AsyncStorage.setItem('rememberMe', 'true')
-        ]);
-        if (__DEV__) console.log('✅ 회원가입 성공 - 로그인 상태 유지 활성화');
+        await AsyncStorage.setItem('authToken', token);
+        await AsyncStorage.setItem('user', JSON.stringify(extendedUser));
+        await AsyncStorage.setItem('rememberMe', 'true');
+        console.log('✅ 회원가입 성공 - 로그인 상태 유지 활성화');
 
         setUser(extendedUser);
-        if (__DEV__) console.log('✅ 회원가입 성공 (기본 정보):', extendedUser.email);
+        console.log('✅ 회원가입 성공 (기본 정보):', extendedUser.email);
 
         // 추가 프로필 정보 가져오기 (비동기로 백그라운드에서 실행)
         try {
@@ -327,18 +298,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             // 전체 사용자 정보로 업데이트
             setUser(fullUserData);
             await AsyncStorage.setItem('user', JSON.stringify(fullUserData));
-            if (__DEV__) console.log('✅ 프로필 정보 동기화 완료 (회원가입):', fullUserData.favorite_quote ? '명언 있음' : '명언 없음');
+            console.log('✅ 프로필 정보 동기화 완료 (회원가입):', fullUserData.favorite_quote ? '명언 있음' : '명언 없음');
           }
         } catch (profileError) {
-          if (__DEV__) console.log('⚠️ 프로필 정보 로드 실패 (기본 정보로 계속):', profileError);
+          console.log('⚠️ 프로필 정보 로드 실패 (기본 정보로 계속):', profileError);
         }
       } else {
         const errorMessage = response.message || '회원가입에 실패했습니다.';
-        if (__DEV__) console.error('❌ 회원가입 실패:', errorMessage);
+        console.error('❌ 회원가입 실패:', errorMessage);
         throw { message: errorMessage };
       }
     } catch (error: any) {
-      if (__DEV__) console.error('❌ 회원가입 중 오류:', error);
+      console.error('❌ 회원가입 중 오류:', error);
       
       let errorMessage = '회원가입 중 오류가 발생했습니다.';
       if (error?.response?.data?.message) {
@@ -356,24 +327,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = async (skipServerLogout = false) => {
     setIsLoading(true);
     try {
-      if (__DEV__) console.log('🔄 로그아웃 시작');
+      console.log('🔄 로그아웃 시작');
       
+      // FCM 토큰 삭제
+      clearFcmToken().catch(() => {});
+
       // 서버에 로그아웃 요청 (토큰 만료로 인한 자동 로그아웃일 때는 스킵)
       if (!skipServerLogout) {
         try {
           await authService.logout();
         } catch (logoutError) {
           // 로그아웃 API 실패해도 로컬에서는 처리
-          if (__DEV__) console.log('⚠️ 서버 로그아웃 실패하지만 로컬에서 처리');
+          console.log('⚠️ 서버 로그아웃 실패하지만 로컬에서 처리');
         }
       }
       
       // 로컬 상태 초기화
       await clearAuthData();
-      if (__DEV__) console.log('✅ 로그아웃 완료');
+      console.log('✅ 로그아웃 완료');
       
     } catch (error) {
-      if (__DEV__) console.error('❌ 로그아웃 중 오류:', error);
+      console.error('❌ 로그아웃 중 오류:', error);
       
       // 오류가 발생해도 로컬에서는 로그아웃 처리
       await clearAuthData();
@@ -388,7 +362,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     setUser(updatedUser);
     AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-    if (__DEV__) console.log('✅ 사용자 정보 업데이트:', updatedUser.email);
+    console.log('✅ 사용자 정보 업데이트:', updatedUser.email);
 
     // 프로필 이미지가 변경되었을 때 전역 플래그 설정
     // TODO: React Native 0.80 호환성 - global 객체 할당 문제로 임시 비활성화
@@ -409,7 +383,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
 
     try {
-      if (__DEV__) console.log('🔄 사용자 설정 업데이트 시작:', settings);
+      console.log('🔄 사용자 설정 업데이트 시작:', settings);
 
       // 백엔드에 먼저 업데이트 요청
       await userService.updateProfile(settings);
@@ -419,9 +393,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(updatedUser);
       await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
 
-      if (__DEV__) console.log('✅ 사용자 설정 업데이트 완료 (백엔드 + 로컬)');
+      console.log('✅ 사용자 설정 업데이트 완료 (백엔드 + 로컬)');
     } catch (error) {
-      if (__DEV__) console.error('❌ 사용자 설정 업데이트 실패:', error);
+      console.error('❌ 사용자 설정 업데이트 실패:', error);
       throw error;
     }
   };
@@ -431,14 +405,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     try {
       // 토큰이 존재하는지 먼저 확인
       if (!token || token.trim() === '') {
-        if (__DEV__) console.log('❌ 토큰이 없거나 빈 문자열');
+        console.log('❌ 토큰이 없거나 빈 문자열');
         return false;
       }
 
       // 토큰의 기본적인 JWT 형식 검증 (3개 부분으로 나뉘어져 있는지)
       const parts = token.split('.');
       if (parts.length !== 3) {
-        if (__DEV__) console.log('❌ 잘못된 JWT 토큰 형식');
+        console.log('❌ 잘못된 JWT 토큰 형식');
         return false;
       }
 
@@ -448,7 +422,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const currentTime = Math.floor(Date.now() / 1000);
 
         if (payload.exp && payload.exp < currentTime) {
-          if (__DEV__) console.log('❌ 토큰이 만료됨 (로컬 검증) - 갱신 시도');
+          console.log('❌ 토큰이 만료됨 (로컬 검증) - 갱신 시도');
 
           try {
             // 토큰이 만료된 경우 갱신 시도
@@ -462,11 +436,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 ...updatedUser
               };
               setUser(extendedUser);
-              if (__DEV__) console.log('✅ 토큰 자동 갱신 성공:', updatedUser.email);
+              console.log('✅ 토큰 자동 갱신 성공:', updatedUser.email);
               return true;
             }
           } catch (refreshError) {
-            if (__DEV__) console.log('❌ 토큰 자동 갱신 실패:', refreshError);
+            console.log('❌ 토큰 자동 갱신 실패:', refreshError);
             return false;
           }
         }
@@ -474,7 +448,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // 만료 5분 전이면 미리 갱신
         const fiveMinutesBeforeExpiry = payload.exp - (5 * 60);
         if (currentTime >= fiveMinutesBeforeExpiry) {
-          if (__DEV__) console.log('⏰ 토큰이 곧 만료됨 - 사전 갱신 시도');
+          console.log('⏰ 토큰이 곧 만료됨 - 사전 갱신 시도');
 
           try {
             const refreshResponse = await authService.refreshToken();
@@ -487,14 +461,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 ...updatedUser
               };
               setUser(extendedUser);
-              if (__DEV__) console.log('✅ 토큰 사전 갱신 성공:', updatedUser.email);
+              console.log('✅ 토큰 사전 갱신 성공:', updatedUser.email);
             }
           } catch (refreshError) {
-            if (__DEV__) console.log('⚠️ 토큰 사전 갱신 실패 (기존 토큰으로 계속):', refreshError);
+            console.log('⚠️ 토큰 사전 갱신 실패 (기존 토큰으로 계속):', refreshError);
           }
         }
       } catch (decodeError) {
-        if (__DEV__) console.log('⚠️ 토큰 디코딩 실패, 서버 검증으로 진행');
+        console.log('⚠️ 토큰 디코딩 실패, 서버 검증으로 진행');
       }
 
       // 백엔드 서버에서 토큰 검증 (네트워크 오류 시 무한 루프 방지)
@@ -503,11 +477,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error: any) {
       // 401 또는 403 에러면 토큰이 무효함
       if (error?.response?.status === 401 || error?.response?.status === 403) {
-        if (__DEV__) console.log('❌ 서버 토큰 검증 실패: 401/403');
+        console.log('❌ 서버 토큰 검증 실패: 401/403');
         return false;
       }
       // 네트워크 오류 등의 경우 일단 유효하다고 가정 (너무 자주 로그아웃되는 것을 방지)
-      if (__DEV__) console.warn('⚠️ 토큰 검증 중 네트워크 오류, 유효하다고 가정:', error.message);
+      console.warn('⚠️ 토큰 검증 중 네트워크 오류, 유효하다고 가정:', error.message);
       return true;
     }
   };
@@ -515,8 +489,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // 인증 데이터 클리어 함수
   const clearAuthData = async (): Promise<void> => {
     try {
-      // AsyncStorage에서 제거할 키
-      const asyncStorageKeys = [
+      const keysToRemove = [
+        'authToken',
+        'refresh_token',
         'user',
         'rememberMe',
         'lastLoginTime',
@@ -525,24 +500,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         'anonymousNicknames'
       ];
 
-      // 암호화 저장소와 일반 저장소 모두 클리어
-      await Promise.all([
-        EncryptedStorage.removeItem('authToken'),
-        EncryptedStorage.removeItem('refresh_token'),
-        AsyncStorage.multiRemove(asyncStorageKeys)
-      ]);
-
+      await AsyncStorage.multiRemove(keysToRemove);
       setUser(null);
-      if (__DEV__) console.log('✅ 인증 데이터 클리어 완료');
+      console.log('✅ 인증 데이터 클리어 완료');
     } catch (error) {
-      if (__DEV__) console.error('❌ 인증 데이터 클리어 오류:', error);
+      console.error('❌ 인증 데이터 클리어 오류:', error);
       setUser(null); // 오류가 발생해도 상태는 클리어
     }
   };
   
   // 전역 로그아웃 함수 (토큰 만료 시 API 클라이언트에서 호출)
   const globalLogout = async () => {
-    if (__DEV__) console.log('🔴 JWT 토큰 만료으로 인한 자동 로그아웃');
+    console.log('🔴 JWT 토큰 만료으로 인한 자동 로그아웃');
     await logout(true); // 서버 로그아웃 API 호출 스킵
   };
 
@@ -564,11 +533,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // 10분마다 토큰 만료 시간 확인 및 필요시 갱신
       tokenRefreshInterval = setInterval(async () => {
         try {
-          const token = await EncryptedStorage.getItem('authToken');
+          const token = await AsyncStorage.getItem('authToken');
           if (token) {
             const isNearExpiry = await authService.isTokenNearExpiry();
             if (isNearExpiry) {
-              if (__DEV__) console.log('⏰ 주기적 검사 - 토큰 갱신 필요');
+              console.log('⏰ 주기적 검사 - 토큰 갱신 필요');
               try {
                 const refreshResponse = await authService.refreshToken();
                 if (refreshResponse.status === 'success' && refreshResponse.data) {
@@ -579,16 +548,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                   };
                   setUser(extendedUser);
                   await AsyncStorage.setItem('user', JSON.stringify(extendedUser));
-                  if (__DEV__) console.log('✅ 주기적 토큰 갱신 성공');
+                  console.log('✅ 주기적 토큰 갱신 성공');
                 }
               } catch (refreshError) {
-                if (__DEV__) console.warn('⚠️ 주기적 토큰 갱신 실패 (기존 상태 유지):', refreshError);
+                console.warn('⚠️ 주기적 토큰 갱신 실패 (기존 상태 유지):', refreshError);
                 // 토큰 갱신 실패해도 로그아웃하지 않음
               }
             }
           }
         } catch (error) {
-          if (__DEV__) console.warn('⚠️ 주기적 토큰 확인 오류 (기존 상태 유지):', error);
+          console.warn('⚠️ 주기적 토큰 확인 오류 (기존 상태 유지):', error);
           // 에러 발생해도 로그아웃하지 않음
         }
       }, 10 * 60 * 1000); // 10분마다
@@ -613,11 +582,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           try {
             const rememberMe = await AsyncStorage.getItem('rememberMe');
             if (rememberMe === 'false') {
-              if (__DEV__) console.log('🚫 앱 백그라운드 진입 - 로그인 상태 유지 안함으로 인증 정보 삭제');
+              console.log('🚫 앱 백그라운드 진입 - 로그인 상태 유지 안함으로 인증 정보 삭제');
               await clearAuthData();
             }
           } catch (error) {
-            if (__DEV__) console.warn('⚠️ 앱 백그라운드 진입 시 오류 (기존 상태 유지):', error);
+            console.warn('⚠️ 앱 백그라운드 진입 시 오류 (기존 상태 유지):', error);
             // 에러 발생해도 로그아웃하지 않음
           }
         }, 3000); // 3초 후에만 로그아웃 처리
@@ -626,20 +595,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (backgroundTimer) {
           clearTimeout(backgroundTimer);
           backgroundTimer = null;
-          if (__DEV__) console.log('✅ 앱 복귀 - 백그라운드 로그아웃 타이머 취소');
+          console.log('✅ 앱 복귀 - 백그라운드 로그아웃 타이머 취소');
         }
       }
 
       // 앱이 포그라운드로 복귀 시: 토큰 갱신 확인
       if (nextAppState === 'active' && user) {
-        if (__DEV__) console.log('📱 앱이 포그라운드로 복귀 - 토큰 상태 확인');
+        console.log('📱 앱이 포그라운드로 복귀 - 토큰 상태 확인');
 
         try {
-          const token = await EncryptedStorage.getItem('authToken');
+          const token = await AsyncStorage.getItem('authToken');
           if (token) {
             const isNearExpiry = await authService.isTokenNearExpiry();
             if (isNearExpiry) {
-              if (__DEV__) console.log('⏰ 앱 복귀 시 토큰 갱신 필요 감지');
+              console.log('⏰ 앱 복귀 시 토큰 갱신 필요 감지');
               try {
                 const refreshResponse = await authService.refreshToken();
                 if (refreshResponse.status === 'success' && refreshResponse.data) {
@@ -650,28 +619,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                   };
                   setUser(extendedUser);
                   await AsyncStorage.setItem('user', JSON.stringify(extendedUser));
-                  if (__DEV__) console.log('✅ 앱 복귀 시 토큰 갱신 성공');
+                  console.log('✅ 앱 복귀 시 토큰 갱신 성공');
                 }
               } catch (refreshError) {
-                if (__DEV__) console.warn('⚠️ 앱 복귀 시 토큰 갱신 실패 (기존 상태 유지):', refreshError);
+                console.warn('⚠️ 앱 복귀 시 토큰 갱신 실패 (기존 상태 유지):', refreshError);
                 // 토큰 갱신 실패해도 로그아웃하지 않음
               }
             } else {
-              if (__DEV__) console.log('✅ 토큰이 여전히 유효함');
+              console.log('✅ 토큰이 여전히 유효함');
             }
           } else if (user) {
-            // 토큰은 없지만 user 상태는 있는 경우 - 저장소 재확인
-            if (__DEV__) console.log('⚠️ 토큰이 없지만 user 상태 존재 - 저장소 재확인');
-            const storedToken = await EncryptedStorage.getItem('authToken');
+            // 토큰은 없지만 user 상태는 있는 경우 - AsyncStorage 확인
+            console.log('⚠️ 토큰이 없지만 user 상태 존재 - AsyncStorage 재확인');
+            const storedToken = await AsyncStorage.getItem('authToken');
             const storedUser = await AsyncStorage.getItem('user');
 
             if (!storedToken || !storedUser) {
-              if (__DEV__) console.log('❌ AsyncStorage에서도 인증 정보 없음 - 로그아웃 처리');
+              console.log('❌ AsyncStorage에서도 인증 정보 없음 - 로그아웃 처리');
               await clearAuthData();
             }
           }
         } catch (error) {
-          if (__DEV__) console.warn('⚠️ 앱 복귀 시 토큰 확인 오류 (기존 상태 유지):', error);
+          console.warn('⚠️ 앱 복귀 시 토큰 확인 오류 (기존 상태 유지):', error);
           // 에러 발생해도 로그아웃하지 않음
         }
       }
@@ -690,14 +659,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // 토큰 만료 이벤트 리스너
   useEffect(() => {
     const handleTokenExpired = async () => {
-      if (__DEV__) console.log('🔴 토큰 만료 이벤트 수신 - 로그아웃 처리');
+      console.log('🔴 토큰 만료 이벤트 수신 - 로그아웃 처리');
 
       // AsyncStorage 클리어
       try {
         await clearAuthData();
-        if (__DEV__) console.log('✅ 토큰 만료로 인한 로그아웃 완료');
+        console.log('✅ 토큰 만료로 인한 로그아웃 완료');
       } catch (error) {
-        if (__DEV__) console.error('❌ 토큰 만료 처리 중 오류:', error);
+        console.error('❌ 토큰 만료 처리 중 오류:', error);
         // 오류가 발생해도 상태는 클리어
         setUser(null);
       }
@@ -715,7 +684,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // 로그인 이벤트 리스너 (소셜 로그인 성공 후 호출됨)
   useEffect(() => {
     const handleLogin = async () => {
-      if (__DEV__) console.log('✅ 로그인 이벤트 수신 - 인증 상태 업데이트');
+      console.log('✅ 로그인 이벤트 수신 - 인증 상태 업데이트');
       await checkAuthStatus();
     };
 
@@ -737,7 +706,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           await checkAuthStatus();
         }
       } catch (error) {
-        if (__DEV__) console.error('❌ 인증 초기화 오류:', error);
+        console.error('❌ 인증 초기화 오류:', error);
         if (isMounted) {
           setIsLoading(false);
         }

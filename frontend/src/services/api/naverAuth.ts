@@ -6,7 +6,7 @@ import apiClient from './apiClient';
 // 네이버 OAuth 설정
 const NAVER_CLIENT_ID = 'lX6cDQ4s3ZncTBOWQZzu';
 const NAVER_CLIENT_SECRET = 'TpnwOsEK61';
-const NAVER_REDIRECT_URI = 'https://dayonme.com/auth/callback';
+const NAVER_REDIRECT_URI = 'http://localhost:3001/auth/callback';
 
 export interface NaverAuthResponse {
   status: 'success' | 'error';
@@ -56,12 +56,12 @@ export const naverLogin = async (accessToken: string): Promise<NaverAuthResponse
         ['user', JSON.stringify(user)],
       ]);
 
-      if (__DEV__) console.log('✅ 네이버 로그인 성공:', user.email);
+      console.log('✅ 네이버 로그인 성공:', user.email);
     }
 
     return response.data;
-  } catch (error: unknown) {
-    if (__DEV__) console.error('❌ 네이버 로그인 실패:', error);
+  } catch (error: any) {
+    console.error('❌ 네이버 로그인 실패:', error);
     throw error;
   }
 };
@@ -71,13 +71,13 @@ export const naverLogin = async (accessToken: string): Promise<NaverAuthResponse
  */
 export const startNaverLogin = async (navigation?: any): Promise<void> => {
   try {
-    if (__DEV__) console.log('🔐 네이버 네이티브 로그인 시작...');
+    console.log('🔐 네이버 네이티브 로그인 시작...');
 
     // 네이티브 SDK를 동적으로 import
     const { naverNativeLogin } = await import('./naverNativeLogin');
     await naverNativeLogin();
-  } catch (error: unknown) {
-    if (__DEV__) console.error('❌ 네이버 로그인 시작 실패:', error.message);
+  } catch (error: any) {
+    console.error('❌ 네이버 로그인 시작 실패:', error.message);
   }
 };
 

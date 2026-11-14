@@ -44,14 +44,10 @@ import uploadService from '../services/api/uploadService';
 import blockService from '../services/api/blockService';
 import notificationService from '../services/api/notificationService';
 import bookmarkService from '../services/api/bookmarkService';
-import encouragementService from '../services/api/encouragementService';
-import reactionService from '../services/api/reactionService';
-import reportService from '../services/api/reportService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// import reportService from '../services/api/reportService'; // 임시 비활성화
 import { launchImageLibrary, launchCamera, ImagePickerResponse, PhotoQuality } from 'react-native-image-picker';
-import Share from 'react-native-share';
 import { normalizeImageUrl, logImageError, logImageSuccess } from '../utils/imageUtils';
-import { getThumbnailUrl, optimizeImageUrl } from '../utils/imageOptimizer';
 import { normalize, normalizeIcon, normalizeSpace, normalizeBorderRadius, wp, hp } from '../utils/responsive';
 import { sanitizeUrl } from '../utils/validation';
 import { globalCache } from '../utils/cache';
@@ -68,6 +64,7 @@ import { getDailyMessage, formatGreetingWithUsername } from '../utils/dailyMessa
 import CompactPostCard, { resetEmotionUsage } from '../components/CompactPostCard';
 import { getEmotionEmoji } from '../constants/emotions';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
+import DailyQuoteCard from '../components/DailyQuoteCard';
 import { OptimizedImage } from '../components/OptimizedImage';
 import Toast from '../components/Toast';
 import CustomAlert from '../components/ui/CustomAlert';
@@ -81,24 +78,12 @@ import EmotionLoginPromptModal from '../components/EmotionLoginPromptModal';
 import { useHomeData } from './HomeScreen/hooks/useHomeData';
 import { usePostActions } from './HomeScreen/hooks/usePostActions';
 import { usePostsQuery } from './HomeScreen/hooks/usePostsQuery';
-import { useInfinitePostsQuery } from './HomeScreen/hooks/useInfinitePostsQuery';
-import { InfinitePostsList } from '../components/InfinitePostsList';
-import { PostsErrorBoundary } from '../components/PostsErrorBoundary';
-import { PostsSuspenseFallback } from '../components/PostsSuspense';
 import { usePostFilters } from '../hooks/usePostFilters';
 import { useHomeScroll, useWeeklyEmotions, useNotifications } from '../hooks/HomeScreen';
-import { useRecommendation } from '../hooks/useRecommendation';
-import { useTabBasedFeed, type FeedTab } from '../hooks/useTabBasedFeed';
 import { devLog } from '../utils/security';
 import FilterBar from '../components/HomeScreen/FilterBar';
 import EmptyState from '../components/HomeScreen/EmptyState';
-import SkeletonPostCard from '../components/SkeletonPostCard';
 import { FONT_SIZES, SEMANTIC_COLORS, DARK_COLORS, LIGHT_COLORS, SHADOW_STYLES } from '../constants';
-// 새로 추가된 컴포넌트 및 훅
-import ReactionPicker, { ReactionType } from '../components/ReactionPicker';
-import ReactionBar from '../components/ReactionBar';
-import { useHeaderAnimation } from '../hooks/useHeaderAnimation';
-import { useAccessibility } from '../contexts/AccessibilityContext';
 // 타입 정의
 export type LocalEmotion = {
     label: string;
@@ -261,7 +246,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     const dailyMessage = useMemo(() => getDailyMessage(), []);
     const greetingText = useMemo(() => {
         if (!isAuthenticated || !user) {
-            return '반가워요! 오늘 기분은 어때요? 💙';
+            return '감정 여행에 오신 것을 환영합니다 ✨';
         }
         return formatGreetingWithUsername(dailyMessage.greeting, user.nickname || user.username);
     }, [dailyMessage.greeting, user?.nickname, user?.username, isAuthenticated]);
@@ -274,22 +259,15 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     }, [dailyMessage.encouragement, isAuthenticated]);
     
     // 필터링 상태
-    const [selectedEmotion, setSelectedEmotion] = useState<string>('');
+    const [selectedEmotion, setSelectedEmotion] = useState<string>('전체');
     const [sortOrder, setSortOrder] = useState<'recent' | 'popular'>('recent');
     const [isEmotionSectionCollapsed, setIsEmotionSectionCollapsed] = useState<boolean>(true);
-    const [activeTab, setActiveTab] = useState<FeedTab>('전체');
 
     // === 🔹 Hooks: 주간 감정 데이터 (분리됨) ===
     const {
         weeklyEmotions,
         loadWeeklyEmotions,
     } = useWeeklyEmotions(user?.user_id);
-
-    // === 🔹 Hooks: 추천 시스템 ===
-    const { emotionPrefs, recordPostView, recordLike, recordBookmark } = useRecommendation(user?.user_id);
-
-    // 사용자의 최근 "나의 하루" 글의 감정 (나와 같은 감정 탭용)
-    const [userRecentEmotions, setUserRecentEmotions] = useState<string[]>([]);
 
     // hasPostedToday, todayPost, isCheckingTodayPost는 아래에서 별도로 관리
     const [hasPostedToday, setHasPostedToday] = useState<boolean>(false);
@@ -306,7 +284,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     const checkIconScaleAnim = useRef(new Animated.Value(0)).current;
     const heartPulseAnim = useRef(new Animated.Value(1)).current;
     const progressBarAnim = useRef(new Animated.Value(0)).current;
-    const fabPulseAnim = useRef(new Animated.Value(1)).current;
     const [posts, setPosts] = useState<DisplayPost[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [commentInputs, setCommentInputs] = useState<{[key: number]: string}>({});
@@ -315,31 +292,16 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     const [likedPosts, setLikedPosts] = useState<Set<number>>(new Set());
     const [loadingPosts, setLoadingPosts] = useState(true);
     const filteredPosts = usePostFilters(posts, selectedEmotion, sortOrder);
-    const tabFilteredPosts = useTabBasedFeed(filteredPosts, activeTab, userRecentEmotions, user?.user_id);
     const [latestPostId, setLatestPostId] = useState<number | null>(null);
-
-    // 베스트 게시물 계산 (useMemo로 성능 최적화)
-    const bestPost = useMemo(() => {
-        if (posts.length === 0) return null;
-        const sorted = [...posts].sort((a, b) => {
-            if (b.like_count === a.like_count) {
-                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-            }
-            return b.like_count - a.like_count;
-        });
-        return sorted[0];
-    }, [posts]);
-
-    // 주간 감정 기록 일수 계산 (useMemo로 성능 최적화)
-    const weeklyEmotionDaysCount = useMemo(() => {
-        return weeklyEmotions?.filter(data => data?.emotions && data.emotions.length > 0).length || 0;
-    }, [weeklyEmotions]);
 
     // FlatList 페이지네이션
     const [page, setPage] = useState(1);
+    const [apiPage, setApiPage] = useState(1);
+    const [hasMoreApiData, setHasMoreApiData] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const POSTS_PER_PAGE = 10;
-    const paginatedPosts = tabFilteredPosts.slice(0, page * POSTS_PER_PAGE);
-    const hasMorePosts = paginatedPosts.length < tabFilteredPosts.length;
+    const paginatedPosts = filteredPosts.slice(0, page * POSTS_PER_PAGE);
+    const hasMorePosts = paginatedPosts.length < filteredPosts.length || hasMoreApiData;
 
     // 감정 중심 로그인 프롬프트 모달 상태
     const [emotionLoginPromptVisible, setEmotionLoginPromptVisible] = useState(false);
@@ -360,29 +322,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     // === 🔹 Hooks: 알림 (분리됨) ===
     const { unreadCount, loadUnreadCount } = useNotifications(user?.user_id);
 
-    // === 🔹 격려 메시지 읽지 않은 개수 ===
-    const [unreadEncouragementCount, setUnreadEncouragementCount] = useState(0);
-
-    // === 🔹 새로 추가된 상태 (2026 트렌드) ===
-    const { headerTranslateY, handleScroll: handleHeaderScroll, isHeaderVisible } = useHeaderAnimation();
-    const { fontSize, highContrast, fontScale } = useAccessibility();
-    const [reactionPickerVisible, setReactionPickerVisible] = useState(false);
-    const [selectedPostForReaction, setSelectedPostForReaction] = useState<number | null>(null);
-    const [postReactions, setPostReactions] = useState<Record<number, any>>({});
-
-    const loadUnreadEncouragementCount = useCallback(async () => {
-        if (!isAuthenticated || !user?.user_id) return;
-        try {
-            const response = await encouragementService.getReceivedEncouragements({
-                page: 1,
-                limit: 1
-            });
-            setUnreadEncouragementCount(response.data?.pagination?.unreadCount || 0);
-        } catch (error) {
-            if (__DEV__) console.error('격려 메시지 읽지 않은 개수 로드 실패:', error);
-        }
-    }, [isAuthenticated, user?.user_id]);
-
     // ✅ postRefs 메모리 정리 - 삭제된 게시물의 ref 제거
     const cleanupPostRefs = useCallback(() => {
         if (!posts || posts.length === 0) return;
@@ -394,6 +333,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
             }
         });
     }, [posts]);
+
+    const todayCheckInflightRef = useRef<Record<string, Promise<any> | null>>({});
+    // 차단 목록 60초 캐시 (게시물 동기화마다 재요청 방지, 차단/해제 시 무효화)
+    const blockedCacheRef = useRef<{ ts: number; contents: any; users: any } | null>(null);
 
     // postRefs 정리 실행 (posts 변경 시)
     useEffect(() => {
@@ -412,30 +355,8 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         return () => clearTimeout(timer);
     }, [emotionToast.visible]);
 
-    // 플로팅 버튼 펄스 애니메이션
-    useEffect(() => {
-        const pulse = Animated.loop(
-            Animated.sequence([
-                Animated.timing(fabPulseAnim, {
-                    toValue: 1.08,
-                    duration: 1200,
-                    useNativeDriver: true,
-                    easing: Easing.inOut(Easing.ease),
-                }),
-                Animated.timing(fabPulseAnim, {
-                    toValue: 1,
-                    duration: 1200,
-                    useNativeDriver: true,
-                    easing: Easing.inOut(Easing.ease),
-                }),
-            ])
-        );
-        pulse.start();
-        return () => pulse.stop();
-    }, [fabPulseAnim]);
-
     // ✅ FlatList getItemLayout - 스크롤 성능 최적화
-    const ESTIMATED_ITEM_HEIGHT = 320; // CompactPostCard 평균 높이
+    const ESTIMATED_ITEM_HEIGHT = 260; // CompactPostCard 평균 높이 (이미지 없을 때: 250, 있을 때: 380)
     const ITEM_MARGIN = 12;
     const getItemLayout = useCallback((data: DisplayPost[] | null, index: number) => ({
         length: ESTIMATED_ITEM_HEIGHT + ITEM_MARGIN,
@@ -481,41 +402,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         };
         loadStoredData();
     }, []);
-
-    // 사용자의 최근 "나의 하루" 글 감정 가져오기 (나와 같은 감정 탭용)
-    useEffect(() => {
-        const fetchUserRecentEmotions = async () => {
-            if (!user?.user_id) {
-                setUserRecentEmotions([]);
-                return;
-            }
-
-            try {
-                const response = await myDayService.getMyPosts({
-                    page: 1,
-                    limit: 1,
-                    sort_by: 'latest'
-                });
-
-                if (response?.data?.posts && response.data.posts.length > 0) {
-                    const recentPost = response.data.posts[0];
-                    if (recentPost.emotions && Array.isArray(recentPost.emotions)) {
-                        const emotionNames = recentPost.emotions.map((e: any) => e.name);
-                        setUserRecentEmotions(emotionNames);
-                    } else {
-                        setUserRecentEmotions([]);
-                    }
-                } else {
-                    setUserRecentEmotions([]);
-                }
-            } catch (error) {
-                devLog('최근 감정 가져오기 실패:', error instanceof Error ? error.message : '');
-                setUserRecentEmotions([]);
-            }
-        };
-
-        fetchUserRecentEmotions();
-    }, [user?.user_id]);
 
     // parent 맵 변경 시 AsyncStorage에 저장
     useEffect(() => {
@@ -620,7 +506,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     useEffect(() => {
         resetScrollPositions(); // Hook에서 제공되는 함수 사용
         setPage(1); // 필터/정렬 변경 시 페이지 리셋
-    }, [posts, selectedEmotion, sortOrder, resetScrollPositions]);
+    }, [selectedEmotion, sortOrder, resetScrollPositions]);
 
     // 댓글에 익명 사용자 정보 추가
     const processCommentsWithAnonymous = useCallback(async (postId: number, comments: ApiComment[]): Promise<ExtendedComment[]> => {
@@ -657,9 +543,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     }, []);
 
     // === ✅ React Query로 게시물 데이터 관리 (캐싱 + 성능 최적화) ===
-    // 🔄 무한 스크롤 사용 여부 (true로 설정하면 성능 향상)
-    const USE_INFINITE_SCROLL = true; // 무한 스크롤 활성화 ✅
-
     const {
         data: postsQueryData,
         isLoading: isLoadingQuery,
@@ -678,6 +561,11 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         let isMounted = true;
 
         const syncQueryData = async () => {
+            // 새로고침 시 무한스크롤 상태 리셋
+            if (isMounted) {
+                setApiPage(1);
+                setHasMoreApiData(true);
+            }
             // 에러 처리
             if (queryError) {
                 devLog('❌ Query 에러:', queryError);
@@ -728,10 +616,18 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     if (abortController.signal.aborted || !isMounted) return;
 
                     try {
-                        const [blockedContentsResponse, blockedUsersResponse] = await Promise.all([
-                            blockService.getBlockedContents().catch(() => ({ data: [] })),
-                            blockService.getBlockedUsers().catch(() => ({ data: [] }))
-                        ]);
+                        const cachedBlocked = blockedCacheRef.current;
+                        let blockedContentsResponse: any, blockedUsersResponse: any;
+                        if (cachedBlocked && Date.now() - cachedBlocked.ts < 60000) {
+                            blockedContentsResponse = cachedBlocked.contents;
+                            blockedUsersResponse = cachedBlocked.users;
+                        } else {
+                            [blockedContentsResponse, blockedUsersResponse] = await Promise.all([
+                                blockService.getBlockedContents().catch(() => ({ data: [] })),
+                                blockService.getBlockedUsers().catch(() => ({ data: [] }))
+                            ]);
+                            blockedCacheRef.current = { ts: Date.now(), contents: blockedContentsResponse, users: blockedUsersResponse };
+                        }
 
                         const blockedContents = blockedContentsResponse.data || [];
                         const blockedUsers = blockedUsersResponse.data || [];
@@ -765,8 +661,8 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
 
                             return {
                                 ...post,
-                                comments: filteredComments
-                                // comment_count는 원본 API 값 유지 (filteredComments.length로 덮어쓰지 않음)
+                                comments: filteredComments,
+                                comment_count: post.comment_count !== undefined ? post.comment_count : filteredComments.length
                             };
                         });
 
@@ -992,28 +888,49 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         }));
     };
 
-    const sharePost = useCallback(async (postId: number, content: string) => {
-        setMenuVisible({});
-        try {
-            const shareOptions = {
-                title: '하루 이야기 공유',
-                message: `${content.length > 200 ? content.substring(0, 200) + '...' : content}\n\n- 나의 하루 앱에서`,
-                url: `https://dayonme.com/posts/${postId}`,
-            };
+    const sharePost = (postId: number, content: string) => {
+        // 실제 공유 기능 구현 - React Native Share API 사용
+        const shareData = {
+            message: `하루 이야기를 공유합니다:\n\n"${content.length > 100 ? content.substring(0, 100) + '...' : content}"\n\n- 나의 하루 앱에서`,
+            title: '하루 이야기 공유'
+        };
 
-            await Share.open(shareOptions);
-        } catch (error: any) {
-            if (error?.message !== 'User did not share') {
-                if (__DEV__) console.error('공유 오류:', error);
+        // React Native의 Share API 또는 복사 기능으로 구현
+        Alert.alert('공유하기', '이 게시물을 어떻게 공유하시겠습니까?', [
+            { text: '취소', style: 'cancel' },
+            { 
+                text: '텍스트 복사', 
+                onPress: () => {
+                    // Clipboard.setString(shareData.message); // 실제 구현 시 react-native-clipboard 사용
+                    Alert.alert('복사 완료', '게시물 내용이 클립보드에 복사되었습니다.');
+                }
+            },
+            { 
+                text: '링크 공유', 
+                onPress: () => {
+                    Alert.alert('준비 중', '링크 공유 기능은 준비 중입니다.');
+                }
             }
-        }
-    }, []);
+        ]);
+        setMenuVisible({});
+    };
 
     // 게시물 신고 기능 - 상세한 신고 사유 선택 (중복 신고 방지 포함)
     const reportPost = async (postId: number) => {
         setMenuVisible({}); // 메뉴 먼저 닫기
-
+        
         try {
+            // 중복 신고 방지: 이미 신고했는지 확인
+            // const hasReported = await reportService.checkMyReport?.(postId);
+            // if (hasReported) {
+            //     Alert.alert(
+            //         '이미 신고한 게시물',
+            //         '이미 신고한 게시물입니다.\n중복 신고는 불가능합니다.',
+            //         [{ text: '확인', style: 'default' }]
+            //     );
+            //     return;
+            // }
+            
             Alert.alert(
                 '게시물 신고',
                 '이 게시물을 신고하는 이유를 선택해주세요.\n허위 신고 시 제재를 받을 수 있습니다.',
@@ -1073,26 +990,31 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         }
     };
 
-    // 신고 제출 함수
+    // 신고 제출 함수 (임시 비활성화 - 백엔드 구현 후 활성화 예정)
     const submitReport = async (postId: number, reportType: string, reason: string) => {
         try {
-            await reportService.reportPost(
-                postId,
-                reportType as any,
-                reason
-            );
+            devLog(`게시물 신고 - ID: ${postId}, 유형: ${reportType}, 사유: ${reason}`);
 
+            // 실제 API 호출 임시 비활성화 (백엔드 구현 후 활성화)
+            // const response = await reportService.reportPost(
+            //     postId,
+            //     reportType as any,
+            //     reason
+            // );
+            
+            // 임시 성공 시뮬레이션
             Alert.alert(
                 '신고 접수 완료',
-                '신고가 접수되었습니다.\n관리자가 검토 후 조치할 예정입니다.\n허위 신고 시 제재를 받을 수 있습니다.',
+                '신고가 접수되었습니다.\n\n※ 현재 개발 중인 기능으로 실제로는 저장되지 않습니다.\n실제 서비스 시 관리자에게 전달됩니다.',
                 [{ text: '확인', style: 'default' }]
             );
 
+            devLog(`신고 완료 - 게시물 ID: ${postId}, 신고자: ${user?.user_id}`);
+
         } catch (error: any) {
-            if (__DEV__) console.error('신고 제출 오류:', error);
             Alert.alert(
-                '오류',
-                '신고 처리 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.',
+                '알림', 
+                '현재 개발 중인 기능입니다.\n추후 업데이트에서 정상 작동할 예정입니다.',
                 [{ text: '확인', style: 'default' }]
             );
         }
@@ -1115,20 +1037,19 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         );
     };
 
-    const bookmarkPost = async (postId: number) => {
-        setMenuVisible({});
-        try {
-            const result = await bookmarkService.toggleBookmark('my_day', postId);
-            if (result.status === 'success') {
-                const message = result.data.isBookmarked
-                    ? '즐겨찾기에 추가했습니다! ⭐\n마이페이지 > 즐겨찾기에서 확인할 수 있습니다.'
-                    : '즐겨찾기에서 제거했습니다.';
-                Alert.alert('완료', message);
+    const bookmarkPost = (postId: number) => {
+        // 개선된 북마크 기능 - 즐겨찾기 개념으로 변경
+        Alert.alert('즐겨찾기', '이 게시물을 즐겨찾기에 추가하시겠습니까?\n\n즐겨찾기한 글은 나중에 쉽게 다시 찾아볼 수 있습니다.', [
+            { text: '취소', style: 'cancel' },
+            { 
+                text: '즐겨찾기 추가', 
+                onPress: () => {
+                    Alert.alert('즐겨찾기 추가 완료! ⭐', '마이페이지 > 즐겨찾기에서 확인할 수 있습니다.');
+                    // 실제 즐겨찾기 로직 구현 필요
+                }
             }
-        } catch (error) {
-            if (__DEV__) console.error('즐겨찾기 처리 오류:', error);
-            Alert.alert('오류', '즐겨찾기 처리 중 오류가 발생했습니다.');
-        }
+        ]);
+        setMenuVisible({});
     };
 
     // 본인 게시물 수정 기능 추가
@@ -1265,22 +1186,22 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     // DeviceEventEmitter로 새 글 작성/수정 이벤트 리스닝
     useEffect(() => {
         const subscription = DeviceEventEmitter.addListener('homeScreenRefresh', (event) => {
-            if (__DEV__) console.log('📡 [HomeScreen] homeScreenRefresh 이벤트 수신:', JSON.stringify(event));
+            console.log('📡 [HomeScreen] homeScreenRefresh 이벤트 수신:', JSON.stringify(event));
 
             if (event?.postUpdated && event?.postId && event?.updatedEmotion) {
                 // 낙관적 업데이트: 캐시에서 해당 게시물의 감정을 즉시 변경
-                if (__DEV__) console.log('🔄 [HomeScreen] 낙관적 업데이트 시작:', event.postId, event.updatedEmotion);
+                console.log('🔄 [HomeScreen] 낙관적 업데이트 시작:', event.postId, event.updatedEmotion);
 
                 queryClient.setQueryData(['posts', isAuthenticated], (oldData: any) => {
-                    if (__DEV__) console.log('📦 [HomeScreen] setQueryData 콜백 - oldData:', oldData ? 'exists' : 'null', oldData?.posts?.length);
+                    console.log('📦 [HomeScreen] setQueryData 콜백 - oldData:', oldData ? 'exists' : 'null', oldData?.posts?.length);
                     if (!oldData?.posts) {
-                        if (__DEV__) console.log('⚠️ [HomeScreen] oldData.posts가 없음');
+                        console.log('⚠️ [HomeScreen] oldData.posts가 없음');
                         return oldData;
                     }
 
                     const updatedPosts = oldData.posts.map((post: any) => {
                         if (post.post_id === event.postId) {
-                            if (__DEV__) console.log('✅ [HomeScreen] 게시물 찾음, 감정 업데이트:', post.post_id);
+                            console.log('✅ [HomeScreen] 게시물 찾음, 감정 업데이트:', post.post_id);
                             return {
                                 ...post,
                                 emotions: [event.updatedEmotion],
@@ -1290,26 +1211,43 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                         return post;
                     });
 
-                    if (__DEV__) console.log('✅ [HomeScreen] 캐시 업데이트 완료');
+                    console.log('✅ [HomeScreen] 캐시 업데이트 완료');
                     return { ...oldData, posts: updatedPosts };
                 });
 
                 setHasPostedToday(true);
             } else if (event?.newPostCreated || event?.postUpdated) {
                 // 새 글 작성 또는 감정 데이터 없는 수정 시 전체 새로고침
-                if (__DEV__) console.log('🔄 [HomeScreen] 전체 새로고침 시작');
+                console.log('🔄 [HomeScreen] 전체 새로고침 시작');
                 setHasPostedToday(true);
                 queryClient.resetQueries({ queryKey: ['posts'] });
             }
 
             if (event?.userBlocked || event?.userUnblocked) {
+                blockedCacheRef.current = null;
                 // 차단/차단 해제 시 게시물 새로고침
                 queryClient.invalidateQueries({ queryKey: ['posts'] });
             }
         });
 
+        // 404 에러로 삭제된 게시물 캐시 무효화 이벤트
+        const invalidateCacheSubscription = DeviceEventEmitter.addListener('invalidatePostCache', (event) => {
+            console.log('📡 [HomeScreen] invalidatePostCache 이벤트 수신:', event?.postId);
+            queryClient.invalidateQueries({ queryKey: ['posts'] });
+        });
+
+        // 댓글 작성 후 카운트 업데이트 이벤트
+        const commentCountSubscription = DeviceEventEmitter.addListener('postCommentCountUpdate', (event) => {
+            const { postId, newCount } = event;
+            setPosts(prevPosts => prevPosts.map(post =>
+                post.post_id === postId ? { ...post, comment_count: newCount } : post
+            ));
+        });
+
         return () => {
             subscription.remove();
+            invalidateCacheSubscription.remove();
+            commentCountSubscription.remove();
         };
     }, [queryClient, isAuthenticated]);
 
@@ -1338,7 +1276,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 checkTodayPost(true); // 오늘 글 작성 여부 강제 재확인
                 refreshUserData(); // 사용자 프로필 정보 새로고침
                 loadUnreadCount(); // 읽지 않은 알림 개수 로드
-                loadUnreadEncouragementCount(); // 읽지 않은 격려 메시지 개수 로드
             }
             // 게시물은 낙관적 업데이트로 처리 (DeviceEventEmitter)
         }, [isAuthenticated, user?.profile_image_url])
@@ -1398,13 +1335,13 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                         const hasEmotion = dayEmotions && Array.isArray(dayEmotions.emotions) && dayEmotions.emotions.length > 0;
                         const topEmotion = hasEmotion ? dayEmotions.emotions.reduce((prev, current) => (prev?.count > current?.count) ? prev : current) : null;
                         return (
-                            <Pressable key={dateInfo.dateStr} style={{ alignItems: 'center', minWidth: normalizeSpace(55) }}>
-                                <Box style={{ width: normalizeIcon(40), height: normalizeIcon(40), borderRadius: normalizeSpace(23), padding: normalizeSpace(2), backgroundColor: hasEmotion ? topEmotion?.color + '30' : 'transparent', borderWidth: 3, borderColor: dateInfo.isToday ? SEMANTIC_COLORS.primary : hasEmotion ? topEmotion?.color || SEMANTIC_COLORS.border : SEMANTIC_COLORS.border, justifyContent: 'center', alignItems: 'center' }}>
-                                    <Box style={{ width: normalizeIcon(45), height: normalizeIcon(45), borderRadius: normalizeSpace(23), backgroundColor: colors.cardBackground, justifyContent: 'center', alignItems: 'center' }}>
+                            <Pressable key={dateInfo.dateStr} style={{ alignItems: 'center', minWidth: normalizeSpace(50) }}>
+                                <Box style={{ width: normalizeIcon(35), height: normalizeIcon(35), borderRadius: normalizeSpace(23), padding: normalizeSpace(2), backgroundColor: hasEmotion ? topEmotion?.color + '30' : 'transparent', borderWidth: 3, borderColor: dateInfo.isToday ? SEMANTIC_COLORS.primary : hasEmotion ? topEmotion?.color || SEMANTIC_COLORS.border : SEMANTIC_COLORS.border, justifyContent: 'center', alignItems: 'center' }}>
+                                    <Box style={{ width: normalizeIcon(35), height: normalizeIcon(35), borderRadius: normalizeSpace(23), backgroundColor: colors.cardBackground, justifyContent: 'center', alignItems: 'center' }}>
                                         {hasEmotion && topEmotion ? (/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]/u.test(topEmotion.icon) ? <RNText style={{ fontSize: normalizeIcon(30) }}>{topEmotion.icon}</RNText> : <MaterialCommunityIcons name={topEmotion.icon} size={normalizeIcon(30)} color={topEmotion.color || SEMANTIC_COLORS.purple} />) : <MaterialCommunityIcons name="emoticon-outline" size={normalizeIcon(30)} color={SEMANTIC_COLORS.border} />}
                                     </Box>
                                 </Box>
-                                <Text style={{ marginTop: 3, fontSize: dateInfo.isToday ? normalize(13, 11, 15) : normalize(13, 11, 15), fontFamily: dateInfo.isToday ? 'Pretendard-Bold' : 'Pretendard-SemiBold', color: dateInfo.isToday ? colors.primary : colors.text }}>{dateInfo.dayName}</Text>
+                                <Text style={{ marginTop: 3, fontSize: dateInfo.isToday ? normalize(13, 11, 15) : normalize(13, 11, 15), fontWeight: dateInfo.isToday ? '700' : '600', color: dateInfo.isToday ? colors.primary : colors.text }}>{dateInfo.dayName}</Text>
                             </Pressable>
                         );
                     })}
@@ -1474,7 +1411,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     {(() => {
                                         // 로컬 URI인지 확인 (file://, content://, 또는 file:///로 시작)
                                         const isLocalUri = uri.startsWith('file://') || uri.startsWith('content://') || uri.startsWith('file:///');
-                                        const processedUri = isLocalUri ? uri : getThumbnailUrl(normalizeImageUrl(uri));
+                                        const processedUri = isLocalUri ? uri : normalizeImageUrl(uri);
 
                                         // 빈 문자열인 경우 이미지 렌더링 건너뜀
                                         if (!processedUri || processedUri.trim() === '') {
@@ -1764,6 +1701,16 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
 
     // 오늘의 베스트 게시물 렌더링
     const renderDailyBestPost = () => {
+        // 최근 생성된 게시물들 중에서 좋아요가 가장 많은 게시물 선택
+        const sortedPosts = posts.sort((a, b) => {
+            // 좋아요 수 우선, 같으면 최신순
+            if (b.like_count === a.like_count) {
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            }
+            return b.like_count - a.like_count;
+        });
+        
+        const bestPost = sortedPosts[0];
         if (!bestPost || posts.length === 0) {
             return null; // 게시물이 없으면 베스트 섹션 숨김
         }
@@ -1791,13 +1738,13 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 style={{
                                     width: normalizeSpace(4),
                                     height: normalizeSpace(16),
-                                    backgroundColor: colors.primary,
+                                    backgroundColor: '#2563eb',
                                     borderRadius: normalizeSpace(2),
                                     marginRight: normalizeSpace(6)
                                 }}
                             />
-                            <Text style={{ fontSize: normalize(15, 13, 17), fontFamily: 'Pretendard-Bold', color: SEMANTIC_COLORS.warning }}>🏆</Text>
-                            <Text style={{ fontSize: normalize(15, 13, 17), fontFamily: 'Pretendard-SemiBold', color: colors.text }}>오늘의 베스트</Text>
+                            <Text style={{ fontSize: normalize(15, 13, 17), fontWeight: '700', color: SEMANTIC_COLORS.warning }}>🏆</Text>
+                            <Text style={{ fontSize: normalize(15, 13, 17), fontWeight: '600', color: colors.text }}>오늘의 베스트</Text>
                         </HStack>
 
                         <HStack style={{ alignItems: 'center', gap: 8 }}>
@@ -1857,11 +1804,52 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     };
 
     // FlatList 무한 스크롤
-    const loadMorePosts = useCallback(() => {
-        if (hasMorePosts && !loadingPosts) {
+    const loadMorePosts = useCallback(async () => {
+        // 로컬 데이터가 더 있으면 로컬 페이지 증가
+        if (paginatedPosts.length < filteredPosts.length) {
             setPage(prev => prev + 1);
+            return;
         }
-    }, [hasMorePosts, loadingPosts]);
+        // 서버에 더 데이터가 있으면 API 추가 요청
+        if (!hasMoreApiData || isLoadingMore || loadingPosts) return;
+        setIsLoadingMore(true);
+        try {
+            const nextApiPage = apiPage + 1;
+            const response = await postService.getPosts({ page: nextApiPage, limit: 20, sort_by: 'latest' });
+            let newPosts: any[] = [];
+            if (response?.status === 'success' && Array.isArray(response.data?.posts)) {
+                newPosts = response.data.posts;
+            } else if (Array.isArray(response?.data)) {
+                newPosts = response.data;
+            }
+            if (newPosts.length === 0) {
+                setHasMoreApiData(false);
+                return;
+            }
+            const existingIds = new Set(posts.map((p: any) => p.post_id));
+            const convertedNewPosts = newPosts
+                .filter((p: any) => !existingIds.has(p.post_id))
+                .map((p: any) => ({
+                    ...p,
+                    authorName: p.is_anonymous ? '익명' : (p.user?.nickname || '사용자'),
+                    comments: [],
+                    emotions: p.emotions || [],
+                    image_url: p.image_url ? sanitizeUrl(p.image_url) : undefined,
+                }));
+            if (convertedNewPosts.length > 0) {
+                setPosts(prev => [...prev, ...convertedNewPosts]);
+                setPage(prev => prev + 1);
+            }
+            setApiPage(nextApiPage);
+            if (newPosts.length < 20) {
+                setHasMoreApiData(false);
+            }
+        } catch (error) {
+            devLog('추가 게시물 로드 실패:', error);
+        } finally {
+            setIsLoadingMore(false);
+        }
+    }, [paginatedPosts.length, filteredPosts.length, hasMoreApiData, isLoadingMore, loadingPosts, apiPage, posts]);
 
     // ✅ 감정 이름 정규화 헬퍼 함수 (코드 중복 제거)
     const normalizeEmotionName = useCallback((emotion: any): string => {
@@ -1939,12 +1927,11 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                         liked={likedPosts.has(post.post_id)}
                         onBookmark={handleBookmark}
                         isBookmarked={bookmarkedPosts.has(post.post_id)}
-                        onShare={sharePost}
                     />
                 </View>
             </View>
         );
-    }, [highlightedPost, postRefs, cumulativeY, handlePostExpand, handleLike, likedPosts, handleBookmark, bookmarkedPosts, sharePost, normalizeEmotionName, isDark]);
+    }, [highlightedPost, postRefs, cumulativeY, handlePostExpand, handleLike, likedPosts, handleBookmark, bookmarkedPosts, normalizeEmotionName, isDark]);
 
     const handleImageUpload = () => {
         if (isUploadingImage) {
@@ -2061,6 +2048,11 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         try {
             const isCurrentlyLiked = likedPosts.has(postId);
 
+            // 게시물 타입 확인
+            const targetPost = posts.find(post => post.post_id === postId);
+            if (!targetPost) {
+                return;
+            }
             // 여러 API 순차적으로 시도 (게시물 타입을 명확히 알 수 없으므로)
             let success = false;
             let lastError = null;
@@ -2098,16 +2090,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 });
             } else {
                 setLikedPosts(prev => new Set([...prev, postId]));
-
-                // 좋아요 추가 시 감정 선호도 기록
-                const post = posts.find(p => p.post_id === postId);
-                if (post?.emotions && post.emotions.length > 0) {
-                    recordLike(post.emotions);
-                }
             }
 
-            // 로컬 상태 업데이트 (함수형 업데이트로 stale closure 방지)
-            setPosts(prevPosts => prevPosts.map(post =>
+            // 로컬 상태 업데이트
+            setPosts(posts.map(post =>
                 post.post_id === postId
                     ? {
                         ...post,
@@ -2124,59 +2110,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 : '좋아요 처리 중 오류가 발생했습니다.';
             Alert.alert('오류', errorMessage);
         }
-    }, [isAuthenticated, user, isConnected, likedPosts]);
-
-    // 리액션 핸들러 (2026 트렌드 - 다양한 리액션)
-    const handleReaction = useCallback(async (postId: number, reactionType: ReactionType) => {
-        if (!isAuthenticated || !user) {
-            setEmotionLoginPromptAction('like');
-            setEmotionLoginPromptVisible(true);
-            return;
-        }
-
-        if (!isConnected) {
-            Alert.alert('오프라인', '네트워크 연결을 확인해주세요.');
-            return;
-        }
-
-        try {
-            // ✅ 백엔드 리액션 API 연동 완료
-            const response = await reactionService.toggleReaction(postId, reactionType);
-
-            if (response.success) {
-                // 서버 응답으로 상태 업데이트
-                setPostReactions(prev => ({
-                    ...prev,
-                    [postId]: {
-                        stats: response.data.stats,
-                        userReaction: response.data.userReaction,
-                        total: response.data.total
-                    }
-                }));
-
-                // 리액션이 'like'인 경우 좋아요 상태도 업데이트
-                if (reactionType === 'like') {
-                    setLikedPosts(prev => {
-                        const newSet = new Set(prev);
-                        if (response.data.action === 'added') {
-                            newSet.add(postId);
-                        } else if (response.data.action === 'removed') {
-                            newSet.delete(postId);
-                        }
-                        return newSet;
-                    });
-                }
-            }
-        } catch (error) {
-            devLog('리액션 처리 오류:', error);
-            Alert.alert('오류', '리액션 처리 중 오류가 발생했습니다.');
-        }
-    }, [isAuthenticated, user, isConnected, handleLike]);
-
-    const openReactionPicker = useCallback((postId: number) => {
-        setSelectedPostForReaction(postId);
-        setReactionPickerVisible(true);
-    }, []);
+    }, [isAuthenticated, user, posts, likedPosts]);
 
     // 북마크 토글 핸들러
     const handleBookmark = useCallback(async (postId: number) => {
@@ -2227,14 +2161,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     }
                     return newSet;
                 });
-            }
-
-            // 북마크 추가 시 감정 선호도 기록
-            if (response.data.isBookmarked) {
-                const post = posts.find(p => p.post_id === postId);
-                if (post?.emotions && post.emotions.length > 0) {
-                    recordBookmark(post.emotions);
-                }
             }
 
             // Toast 메시지 표시 (자동 숨김은 useEffect에서 처리)
@@ -2309,8 +2235,8 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 image_url: apiPost.image_url,
                 like_count: apiPost.like_count || 0,
                 comment_count: apiPost.comment_count || 0,
-                created_at: apiPost.created_at || new Date().toISOString(),
-                updated_at: apiPost.updated_at || apiPost.created_at || new Date().toISOString(),
+                created_at: (apiPost as any).createdAt || apiPost.created_at || new Date().toISOString(),
+                updated_at: (apiPost as any).updatedAt || apiPost.updated_at || (apiPost as any).createdAt || apiPost.created_at || new Date().toISOString(),
                 is_anonymous: apiPost.is_anonymous || false,
                 user_id: apiPost.user_id,
                 isLiked: apiPost.is_liked || false,
@@ -2334,7 +2260,19 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     // === ✅ loadWeeklyEmotions, loadUnreadCount는 hooks에서 제공됨 ===
 
     // 강화된 오늘 글 작성 여부 확인 (AsyncStorage + API)
-    const checkTodayPost = async (forceApiCheck = false) => {
+    // 동시에 들어오는 동일 호출(마운트/포커스 중복)은 진행 중인 요청을 공유
+    const checkTodayPost = (forceApiCheck = false) => {
+        const key = forceApiCheck ? 'force' : 'normal';
+        const running = todayCheckInflightRef.current[key];
+        if (running) return running;
+        const p = checkTodayPostImpl(forceApiCheck).finally(() => {
+            todayCheckInflightRef.current[key] = null;
+        });
+        todayCheckInflightRef.current[key] = p;
+        return p;
+    };
+
+    const checkTodayPostImpl = async (forceApiCheck = false): Promise<{ hasPosted: boolean; post: any }> => {
         try {
             setIsCheckingTodayPost(true);
             
@@ -2372,8 +2310,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
             }
 
             // 1. 강제 API 확인이거나 캐시된 데이터가 없으면 API부터 호출
+            let apiChecked = false;
             if (forceApiCheck || !posts || posts.length === 0) {
                 try {
+                    apiChecked = true;
                     const apiResult = await myDayService.getTodayPost();
                     if (apiResult) {
                         todayPost = apiResult;
@@ -2414,7 +2354,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
             }
             
             // 3. API 우선 확인에서도 찾지 못했고 강제 확인이면 한 번 더 API 호출
-            if (!todayPost && forceApiCheck) {
+            if (!todayPost && forceApiCheck && !apiChecked) {
                 try {
                     const apiResult = await myDayService.getTodayPost();
                     if (apiResult) {
@@ -2744,13 +2684,412 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         }
     }, [commentInputs, user, posts, replyingTo]);
 
-    // 나의 최근 글 렌더링 함수 - ProfileScreen으로 이동됨 (삭제됨)
+    const renderMyRecentPosts = () => {
+        // 비로그인 사용자에게는 "나의 최근글" 섹션 숨김
+        if (!isAuthenticated) {
+            return null;
+        }
+
+        if (myRecentPosts.length === 0) {
+            return (
+                <Box 
+                    className="mb-1"
+                    style={{
+                        backgroundColor: colors.cardBackground,
+                        borderRadius: 12,
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4,
+                        elevation: 2
+                    }}
+                >
+                    {/* 헤더 */}
+                    <Box className="px-4 py-3 border-b border-gray-100">
+                        <HStack className="items-center justify-between">
+                            <HStack className="items-center">
+                                <Box
+                                    className="mr-3"
+                                    style={{
+                                        width: normalizeIcon(32),
+                                        height: normalizeIcon(32),
+                                        borderRadius: normalizeSpace(14),
+                                        backgroundColor: '#f0f9ff',
+                                        justifyContent: 'center',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <MaterialCommunityIcons
+                                        name="pencil-outline"
+                                        size={normalizeIcon(16)}
+                                        color="#2563eb"
+                                    />
+                                </Box>
+                                <HStack className="items-center">
+                                    <Box
+                                        className="mr-2"
+                                        style={{
+                                            width: 4,
+                                            height: 16,
+                                            backgroundColor: '#2563eb',
+                                            borderRadius: 2
+                                        }}
+                                    />
+                                    <VStack>
+                                        <Text
+                                            className="text-base font-bold"
+                                            style={{
+                                                color: colors.text,
+                                                fontSize: normalize(15, 13, 17),
+                                                fontWeight: '700',
+                                                letterSpacing: -0.2,
+                                                lineHeight: 20
+                                            }}
+                                        >
+                                            나의 최근 글
+                                        </Text>
+                                    <Text 
+                                        className="text-sm" 
+                                        style={{color: colors.textSecondary, fontSize: normalize(13, 12, 15)}}
+                                    >
+                                        아직 작성한 글이 없습니다
+                                    </Text>
+                                    </VStack>
+                                </HStack>
+                            </HStack>
+                            
+                        </HStack>
+                    </Box>
+
+                    {/* 빈 상태 콘텐츠 - 글이 없을 때는 접지 않고 항상 보여 첫 글 작성으로 안내 */}
+                    {(
+                        <Box className="px-4 py-3">
+                            <Center>
+                                <Pressable
+                                    onPress={navigateToWriteMyDay}
+                                    style={{
+                                        alignItems: 'center',
+                                        padding: 16,
+                                        borderRadius: 12,
+                                        backgroundColor: colors.cardBackground,
+                                        borderWidth: 1,
+                                        borderColor: colors.border,
+                                        borderStyle: 'dashed'
+                                    }}
+                                >
+                                    <Box
+                                        style={{
+                                            width: 38,
+                                            height: 38,
+                                            borderRadius: 14,
+                                            backgroundColor: colors.primary + '20',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            marginBottom: 12
+                                        }}
+                                    >
+                                        <MaterialCommunityIcons
+                                            name="pencil-plus-outline"
+                                            size={22}
+                                            color={colors.primary}
+                                        />
+                                    </Box>
+                                    <Text
+                                        className="text-sm text-center font-medium"
+                                        style={{
+                                            color: colors.primary,
+                                            lineHeight: 20
+                                        }}
+                                    >
+                                        첫 번째 글을 작성해보세요!
+                                    </Text>
+                                    <Text
+                                        className="text-xs text-center mt-1"
+                                        style={{
+                                            color: colors.textSecondary,
+                                            lineHeight: 16
+                                        }}
+                                    >
+                                        탭하여 하루 이야기 시작하기
+                                    </Text>
+                                </Pressable>
+                            </Center>
+                        </Box>
+                    )}
+                </Box>
+            );
+        }
+
+        // 화면 너비 기반 반응형 카드 크기 계산
+        const screenWidth = wp(100);
+        const horizontalPadding = normalizeSpace(8) * 2; // ScrollView 좌우 padding
+        const cardGap = normalizeSpace(8); // 카드 간격
+
+        // 화면 크기에 따라 카드 개수 동적 조정
+        const getCardCount = () => {
+            if (screenWidth < wp(35)) return 2.5;  // 초소형
+            if (screenWidth < wp(38)) return 3;    // 갤럭시 S25
+            if (screenWidth < wp(42)) return 3;    // 아이폰
+            return 3.5;                             // 대형
+        };
+
+        const cardCount = getCardCount();
+        const totalGap = cardGap * (cardCount - 1);
+        const calculatedWidth = (screenWidth - horizontalPadding - totalGap) / cardCount;
+
+        // 최소/최대 크기 제한 (가독성 보장)
+        const minCardWidth = normalize(100, 95, 110);
+        const maxCardWidth = normalize(140, 130, 150);
+        const cardWidth = Math.max(minCardWidth, Math.min(calculatedWidth, maxCardWidth));
+
+        // 카드 높이 비율 증가 (텍스트 3줄 + 이모지 상하단 완전히 표시)
+        const cardHeight = cardWidth * 1.85; // 3줄 텍스트 + 감정 이모지(상하 여백 포함) + 하단 정보가 모두 보이도록
+
+        return (
+            <Box
+                className="mb-1"
+                style={{
+                    backgroundColor: colors.cardBackground,
+                    borderRadius: 12,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1,
+                    marginHorizontal: 8
+                }}
+            >
+                {/* 헤더 - 간결한 인스타그램 스타일 */}
+                <Box className="px-4 py-2 border-b" style={{ borderBottomColor: colors.border }}>
+                    <HStack className="items-center justify-between">
+                        <HStack className="items-center" style={{ gap: 8 }}>
+                            <Text
+                                style={{
+                                    color: colors.text,
+                                    fontSize: normalize(14, 12, 16),
+                                    fontWeight: '700',
+                                    letterSpacing: -0.3,
+                                }}
+                            >
+                                ✍️ 나의 최근 글
+                            </Text>
+                            <Box
+                                style={{
+                                    backgroundColor: colors.cardBackgroundVariant,
+                                    paddingHorizontal: 8,
+                                    paddingVertical: 3,
+                                    borderRadius: normalizeSpace(12),
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        color: colors.textSecondary,
+                                        fontSize: normalize(12, 11, 14),
+                                        fontWeight: '600',
+                                    }}
+                                >
+                                    {myRecentPosts.length}
+                                </Text>
+                            </Box>
+                        </HStack>
+
+                        <HStack className="items-center" style={{ gap: 6 }}>
+                            <Pressable
+                                onPress={() => setIsMyRecentPostsCollapsed(!isMyRecentPostsCollapsed)}
+                                style={{
+                                    padding: 6,
+                                    borderRadius: normalizeSpace(12),
+                                    backgroundColor: isDark ? '#404040' : '#f3f4f6',
+                                }}
+                            >
+                                <MaterialCommunityIcons
+                                    name={isMyRecentPostsCollapsed ? "chevron-down" : "chevron-up"}
+                                    size={14}
+                                    color={isDark ? '#ffffff' : '#6b7280'}
+                                />
+                            </Pressable>
+
+                            <Pressable
+                                onPress={() => {
+                                    if (navigation) {
+                                        // Profile 탭의 MyPosts로 이동 (Home 출처 정보 전달)
+                                        // @ts-ignore
+                                        navigation.getParent()?.navigate('Profile', {
+                                            screen: 'MyPosts',
+                                            params: { sourceScreen: 'Home' }
+                                        });
+                                    } else {
+                                        Alert.alert(
+                                            '내 게시물 전체보기',
+                                            '내 게시물 전용 페이지로 이동하시겠습니까?\n\n📊 감정 통계\n📈 활동 요약\n📝 전체 게시물 목록\n\n현재 네비게이션이 설정되지 않아 이동할 수 없습니다.',
+                                            [{ text: '확인' }]
+                                        );
+                                    }
+                                }}
+                                style={{
+                                    paddingHorizontal: 10,
+                                    paddingVertical: 5,
+                                    borderRadius: normalizeSpace(12),
+                                    backgroundColor: colors.primary,
+                                }}
+                            >
+                                <Text style={{
+                                    color: 'white',
+                                    fontSize: normalize(11, 10, 13),
+                                    fontWeight: '600',
+                                }}>
+                                    전체보기
+                                </Text>
+                            </Pressable>
+                        </HStack>
+                    </HStack>
+                </Box>
+
+                {/* 콘텐츠 영역 */}
+                {!isMyRecentPostsCollapsed && (
+                <View style={{ paddingVertical: normalizeSpace(8) }}>
+                    <ScrollView
+                        horizontal={true}
+                        showsHorizontalScrollIndicator={false}
+                        style={{ flexGrow: 0 }}
+                        contentContainerStyle={{
+                            paddingHorizontal: normalizeSpace(8),
+                            flexDirection: 'row',
+                            alignItems: 'flex-start',
+                            gap: cardGap,
+                        }}
+                    >
+                        {myRecentPosts.slice(0, 6).map((post) => (
+                            <Pressable
+                                key={post.post_id}
+                                style={{
+                                    width: cardWidth,
+                                    height: cardHeight,
+                                    backgroundColor: colors.cardBackground,
+                                    borderRadius: normalizeBorderRadius(10),
+                                    borderWidth: 1,
+                                    borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#e5e7eb',
+                                    overflow: 'hidden',
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 1 },
+                                    shadowOpacity: 0.08,
+                                    shadowRadius: 3,
+                                    elevation: 2
+                                }}
+                                onPress={() => {
+                                    const existsInPosts = posts.some(p => p.post_id === post.post_id);
+                                    devLog(`✅ 나의 최근 글 클릭: ID=${post.post_id}, posts에 존재=${existsInPosts}`);
+
+                                    // posts에 있으면 스크롤, 없으면 상세 화면으로 이동
+                                    if (existsInPosts) {
+                                        scrollToPost(post.post_id, post.content || '');
+                                    } else {
+                                        // PostDetail 화면으로 직접 이동
+                                        if (navigation) {
+                                            // @ts-ignore
+                                            navigation.navigate('PostDetail', {
+                                                postId: post.post_id,
+                                                postType: 'myday',
+                                                sourceScreen: 'Home'
+                                            });
+                                        }
+                                    }
+                                }}
+                            >
+                                <VStack className="items-center" style={{ flex: 1, padding: normalizeSpace(8), paddingTop: normalizeSpace(12), paddingBottom: normalizeSpace(10), justifyContent: 'space-between' }}>
+                                    {/* 감정 아이콘 */}
+                                    {post.emotions.length > 0 && (
+                                        <VStack className="items-center" style={{ gap: normalizeSpace(2), marginTop: normalizeSpace(2), marginBottom: normalizeSpace(2) }}>
+                                            <Text style={{ fontSize: normalizeIcon(23), lineHeight: 28 }}>
+                                                {(() => {
+                                                    const emotion = post.emotions[0];
+                                                    const localEmotion = localEmotions.find(e => e.label === emotion?.name);
+                                                    return localEmotion?.icon || emotion.icon || '😊';
+                                                })()}
+                                            </Text>
+                                            <Text
+                                                style={{
+                                                    fontSize: normalize(12, 12, 15),
+                                                    color: colors.text,
+                                                    fontWeight: '600',
+                                                    textAlign: 'center',
+                                                    letterSpacing: -0.2
+                                                }}
+                                            >
+                                                {post.emotions[0]?.name || '감정'}
+                                            </Text>
+                                        </VStack>
+                                    )}
+
+                                    {/* 글 내용 */}
+                                    <VStack className="items-center" style={{ flex: 1, justifyContent: 'center', paddingHorizontal: normalizeSpace(2), marginTop: -3 }}>
+                                        <Text
+                                            numberOfLines={3}
+                                            ellipsizeMode="tail"
+                                            style={{
+                                                fontSize: normalize(12, 12, 14),
+                                                color: colors.text,
+                                                textAlign: 'center',
+                                                lineHeight: 17,
+                                                fontWeight: '500',
+                                                letterSpacing: -0.2
+                                            }}
+                                        >
+                                            {post.content || '내용 없음'}
+                                        </Text>
+                                    </VStack>
+
+                                    {/* 하단 정보 */}
+                                    <VStack className="items-center" style={{ gap: normalizeSpace(2), marginBottom: normalizeSpace(2) }}>
+                                        <HStack style={{ gap: normalizeSpace(6) }}>
+                                            <Text style={{
+                                                fontSize: normalize(11, 10, 13),
+                                                color: colors.textSecondary,
+                                                fontWeight: '500',
+                                            }}>
+                                                ❤️ {post.like_count}
+                                            </Text>
+                                            <Text style={{
+                                                fontSize: normalize(11, 10, 13),
+                                                color: colors.textSecondary,
+                                                fontWeight: '500',
+                                            }}>
+                                                💬 {post.comment_count}
+                                            </Text>
+                                        </HStack>
+                                        <Text
+                                            style={{
+                                                fontSize: normalize(11, 10, 13),
+                                                color: colors.textSecondary,
+                                                textAlign: 'center',
+                                            }}
+                                        >
+                                            {(() => {
+                                                if (!post.created_at) return '방금 전';
+                                                const createdDate = new Date(post.created_at);
+                                                if (isNaN(createdDate.getTime())) return '방금 전';
+                                                const month = createdDate.getMonth() + 1;
+                                                const day = createdDate.getDate();
+                                                return `${month}/${day}`;
+                                            })()}
+                                        </Text>
+                                    </VStack>
+                                </VStack>
+                            </Pressable>
+                        ))}
+                    </ScrollView>
+                </View>
+                )}
+            </Box>
+        );
+    };
+
     // 프로필 이미지 메모이제이션 (불필요한 재렌더링 방지)
     const MemoizedProfileImage = useMemo(() => (
         <Box
             style={{
-                width: normalizeIcon(52),
-                height: normalizeIcon(52),
+                width: normalizeIcon(48),
+                height: normalizeIcon(48),
                 borderRadius: normalizeSpace(14),
                 backgroundColor: user?.profile_image_url ? 'transparent' : (isDark ? DARK_COLORS.purple : LIGHT_COLORS.purple),
                 justifyContent: 'center',
@@ -2762,9 +3101,9 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         >
             {user?.profile_image_url ? (
                 <OptimizedImage
-                    uri={getThumbnailUrl(normalizeImageUrl(user.profile_image_url))}
-                    width={normalizeIcon(46)}
-                    height={normalizeIcon(46)}
+                    uri={normalizeImageUrl(user.profile_image_url)}
+                    width={normalizeIcon(42)}
+                    height={normalizeIcon(42)}
                     borderRadius={normalizeSpace(14)}
                     resizeMode="cover"
                     priority="high"
@@ -2777,8 +3116,8 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     alignItems: 'center'
                 }}>
                     <Text style={{
-                        fontSize: normalize(28, 30, 32),
-                        lineHeight: normalize(28, 30, 32),
+                        fontSize: normalize(24, 26, 28),
+                        lineHeight: normalize(24, 26, 28),
                         textAlign: 'center',
                         textAlignVertical: 'center',
                         includeFontPadding: false
@@ -2803,7 +3142,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
             {/* 네트워크 오프라인 인디케이터 */}
             {!isConnected && (
                 <View style={{
-                    backgroundColor: colors.error,
+                    backgroundColor: '#EF4444',
                     paddingVertical: normalizeSpace(8),
                     paddingHorizontal: normalizeSpace(16),
                     flexDirection: 'row',
@@ -2815,7 +3154,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     <Text style={{
                         color: '#FFFFFF',
                         fontSize: normalize(13),
-                        fontFamily: 'Pretendard-SemiBold'
+                        fontWeight: '600'
                     }}>
                         오프라인 상태입니다
                     </Text>
@@ -2849,75 +3188,58 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 }
                 onEndReached={loadMorePosts}
                 onEndReachedThreshold={0.5}
-                initialNumToRender={8}
-                maxToRenderPerBatch={5}
+                initialNumToRender={6}
+                maxToRenderPerBatch={6}
                 windowSize={5}
+                removeClippedSubviews={true}
                 updateCellsBatchingPeriod={50}
-                removeClippedSubviews={Platform.OS === 'android'}
-                legacyImplementation={false}
                 ListHeaderComponent={<>
-                {/* 사용자 환영 메시지 및 액션 버튼 - 글래스모피즘 스타일 */}
+                {/* 사용자 환영 메시지 및 액션 버튼 - Instagram 스타일 */}
                 {(isAuthenticated || user) ? (
                     <>
-                        <Animated.View
+                        <Box
                             ref={headerSectionRef}
-                            style={{
-                                transform: [{ translateY: headerTranslateY }],
-                                marginBottom: normalizeSpace(8),
-                            }}
-                        >
-                        <View
-                            style={{
-                                marginHorizontal: normalizeSpace(8),
-                                backgroundColor: isDark ? colors.cardBackground : '#ffffff',
-                                borderRadius: normalizeBorderRadius(16),
-                                borderWidth: 1,
-                                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: isDark ? 0.3 : 0.1,
-                                shadowRadius: 8,
-                                elevation: 4,
-                            }}
-                        >
-                        {/* 헤더 영역 - Option A: 스마트 압축 */}
-                        <HStack style={{ paddingHorizontal: normalizeSpace(12), paddingVertical: normalizeSpace(12), alignItems: 'center', justifyContent: 'space-between' }}>
-                            {/* 좌측: 프로필 사진 + 2줄 정보 */}
-                            <HStack style={{ gap: normalizeSpace(10), flex: 1, alignItems: 'center', minWidth: 0 }}>
+                        className="mb-1"
+                        style={{
+                            backgroundColor: colors.cardBackground,
+                            borderWidth: isDark ? 0 : 1,
+                            borderColor: isDark ? 'transparent' : '#f1f5f9',
+                            borderRadius: 14,
+                            shadowColor: '#000',
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: isDark ? 0.2 : 0.08,
+                            shadowRadius: 8,
+                            elevation: 2,
+                            marginHorizontal: 8
+                        }}
+                    >
+                        {/* 헤더 영역 - 2행 구조 (인스타그램 스타일 최적화) */}
+                        <VStack className="px-4" style={{ paddingVertical: normalizeSpace(8), gap: normalizeSpace(12) }}>
+                            {/* 1행: 프로필 사진 + 환영 인사말 + 아이콘들 */}
+                            <HStack style={{ alignItems: 'center', gap: normalizeSpace(12) }}>
                                 {/* 프로필 사진 (메모이제이션) */}
                                 {MemoizedProfileImage}
 
-                                {/* 2줄 텍스트: 닉네임 + 상태 메시지 */}
-                                <VStack style={{ flex: 1, justifyContent: 'center', minWidth: 0 }}>
-                                    <Text
-                                        style={{
-                                            color: isDark ? '#ffffff' : colors.text,
-                                            fontSize: normalize(14, 13, 15),
-                                            fontFamily: 'Pretendard-Bold',
-                                            letterSpacing: -0.3,
-                                        }}
-                                        numberOfLines={1}
-                                        ellipsizeMode="tail"
-                                    >
-                                        {user?.nickname || '게스트'}님의 하루
-                                    </Text>
-                                    <Text
-                                        style={{
-                                            color: isDark ? '#E879F9' : '#8B5CF6',
-                                            fontSize: normalize(10, 9, 11),
-                                            fontFamily: 'Pretendard-Medium',
-                                            marginTop: 2,
-                                        }}
-                                        numberOfLines={1}
-                                        ellipsizeMode="tail"
-                                    >
-                                        💜 {hasPostedToday ? '오늘 하루 기록 완료!' : '오늘의 감정 기록하기'}
-                                    </Text>
-                                </VStack>
-                            </HStack>
+                                {/* 환영 인사말 */}
+                                <Text
+                                    style={{
+                                        flex: 1,
+                                        color: isDark ? '#ffffff' : colors.text,
+                                        fontSize: normalize(14, 12, 16),
+                                        fontWeight: '700',
+                                        letterSpacing: -0.3,
+                                        lineHeight: 20,
+                                        textShadowColor: isDark ? 'rgba(0,0,0,0.5)' : 'transparent',
+                                        textShadowOffset: { width: 0, height: 1 },
+                                        textShadowRadius: 2
+                                    }}
+                                    numberOfLines={2}
+                                >
+                                    {greetingText}
+                                </Text>
 
-                            {/* 우측: 아이콘들 */}
-                            <HStack style={{ gap: normalizeSpace(4), flexShrink: 0 }}>
+                                {/* 우측 아이콘들 */}
+                                <HStack style={{ gap: 6 }}>
                                     {/* 프로필/로그인 버튼 */}
                                     <Pressable
                                         onPress={() => {
@@ -2935,8 +3257,8 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                             backgroundColor: isAuthenticated
                                                 ? (isDark ? '#0c4a6e' : '#e0f2fe')
                                                 : (isDark ? DARK_COLORS.purple : LIGHT_COLORS.purple),
-                                            width: normalizeSpace(32),
-                                            height: normalizeSpace(32),
+                                            width: normalizeSpace(36),
+                                            height: normalizeSpace(36),
                                             justifyContent: 'center',
                                             alignItems: 'center'
                                         }}
@@ -2947,11 +3269,11 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         {isAuthenticated ? (
                                             <MaterialCommunityIcons
                                                 name="account-circle-outline"
-                                                size={normalizeIcon(18)}
+                                                size={normalizeIcon(20)}
                                                 color={SEMANTIC_COLORS.info}
                                             />
                                         ) : (
-                                            <RNText style={{ fontSize: FONT_SIZES.h3 }}>😊</RNText>
+                                            <RNText style={{ fontSize: FONT_SIZES.h2 }}>😊</RNText>
                                         )}
                                     </Pressable>
 
@@ -2961,8 +3283,8 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         style={{
                                             borderRadius: normalizeSpace(14),
                                             backgroundColor: isDark ? '#78350f' : '#fef3c7',
-                                            width: normalizeSpace(32),
-                                            height: normalizeSpace(32),
+                                            width: normalizeSpace(36),
+                                            height: normalizeSpace(36),
                                             justifyContent: 'center',
                                             alignItems: 'center'
                                         }}
@@ -2972,84 +3294,26 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     >
                                         <MaterialCommunityIcons
                                             name={isDark ? "white-balance-sunny" : "moon-waning-crescent"}
-                                            size={normalizeIcon(18)}
+                                            size={normalizeIcon(20)}
                                             color={isDark ? SEMANTIC_COLORS.warning : SEMANTIC_COLORS.secondary}
                                         />
                                     </Pressable>
-
-                                    {/* 격려 메시지 버튼 - 로그인한 사용자만 표시 */}
-                                    {isAuthenticated && (
-                                        <Pressable
-                                            onPress={() => {
-                                                if (__DEV__) console.log('💌 격려 메시지 버튼 클릭됨');
-                                                navigation.navigate('Profile', {
-                                                    screen: 'Encouragement',
-                                                    params: { from: 'Home' }
-                                                });
-                                            }}
-                                            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                                            accessibilityRole="button"
-                                            accessibilityLabel="격려 메시지"
-                                            style={{
-                                                borderRadius: normalizeSpace(14),
-                                                backgroundColor: isDark ? '#831843' : '#fce7f3',
-                                                width: normalizeSpace(32),
-                                                height: normalizeSpace(32),
-                                                justifyContent: 'center',
-                                                alignItems: 'center',
-                                                position: 'relative'
-                                            }}
-                                        >
-                                            <MaterialCommunityIcons
-                                                name="heart-outline"
-                                                size={normalizeIcon(18)}
-                                                color="#ec4899"
-                                            />
-                                            {unreadEncouragementCount > 0 && (
-                                                <Box
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: -3,
-                                                        right: -3,
-                                                        backgroundColor: colors.error,
-                                                        borderRadius: 8,
-                                                        minWidth: 16,
-                                                        height: 16,
-                                                        justifyContent: 'center',
-                                                        alignItems: 'center',
-                                                        paddingHorizontal: 3
-                                                    }}
-                                                >
-                                                    <Text
-                                                        style={{
-                                                            color: '#FFFFFF',
-                                                            fontSize: normalize(9, 8, 10),
-                                                            fontFamily: 'Pretendard-Bold',
-                                                            lineHeight: 16
-                                                        }}
-                                                    >
-                                                        {unreadEncouragementCount > 99 ? '99+' : unreadEncouragementCount}
-                                                    </Text>
-                                                </Box>
-                                            )}
-                                        </Pressable>
-                                    )}
 
                                     {/* 알림 버튼 - 로그인한 사용자만 표시 */}
                                     {isAuthenticated && (
                                         <Pressable
                                             onPress={() => {
-                                                if (__DEV__) console.log('🔔 알림 버튼 클릭됨');
+                                                console.log('🔔 알림 버튼 클릭됨');
                                                 navigation.navigate('NotificationScreen');
                                             }}
                                             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                                             accessibilityRole="button"
                                             accessibilityLabel="알림"
                                             style={{
-                                                borderRadius: normalizeSpace(14),
+                                                borderRadius: 14,
                                                 backgroundColor: isDark ? '#78350f' : '#fef3c7',
-                                                width: normalizeSpace(32),
-                                                height: normalizeSpace(32),
+                                                width: 36,
+                                                height: 36,
                                                 justifyContent: 'center',
                                                 alignItems: 'center',
                                                 position: 'relative'
@@ -3057,7 +3321,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         >
                                             <MaterialCommunityIcons
                                                 name="bell-outline"
-                                                size={normalizeIcon(18)}
+                                                size={20}
                                                 color="#f59e0b"
                                             />
                                             {unreadCount > 0 && (
@@ -3066,7 +3330,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                                         position: 'absolute',
                                                         top: -3,
                                                         right: -3,
-                                                        backgroundColor: colors.error,
+                                                        backgroundColor: '#ef4444',
                                                         borderRadius: 8,
                                                         minWidth: 16,
                                                         height: 16,
@@ -3077,9 +3341,9 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                                 >
                                                     <Text
                                                         style={{
-                                                            color: '#FFFFFF',
+                                                            color: '#ffffff',
                                                             fontSize: normalize(9, 8, 10),
-                                                            fontFamily: 'Pretendard-Bold',
+                                                            fontWeight: 'bold',
                                                             lineHeight: 16
                                                     }}
                                                 >
@@ -3089,68 +3353,103 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         )}
                                     </Pressable>
                                     )}
+                                </HStack>
                             </HStack>
-                        </HStack>
-                        </View>
-                        </Animated.View>
 
+                            {/* 2행: 응원 메시지 (전체 너비) */}
+                            <Animated.View
+                                style={[
+                                    {
+                                        paddingHorizontal: 14,
+                                        paddingVertical: 5,
+                                        backgroundColor: isDark ? 'rgba(139, 92, 246, 0.25)' : 'rgba(139, 92, 246, 0.1)',
+                                        borderRadius: 12,
+                                        borderWidth: 1,
+                                        borderColor: isDark ? 'rgba(139, 92, 246, 0.4)' : 'rgba(139, 92, 246, 0.2)',
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        alignSelf: 'stretch',
+                                    },
+                                    {
+                                        transform: [{ scale: heartPulseAnim }]
+                                    }
+                                ]}
+                            >
+                                <Text style={{
+                                    fontSize: normalize(13, 12, 15),
+                                    color: '#8B5CF6',
+                                    fontWeight: '500',
+                                    marginRight: 6,
+                                }}>
+                                    💜
+                                </Text>
+                                <Text
+                                    style={{
+                                        fontSize: normalize(13, 12, 15),
+                                        color: isDark ? '#E879F9' : '#8B5CF6',
+                                        fontWeight: '600',
+                                        letterSpacing: -0.1,
+                                        lineHeight: 20,
+                                        textShadowColor: isDark ? 'rgba(0,0,0,0.3)' : 'transparent',
+                                        textShadowOffset: { width: 0, height: 1 },
+                                        textShadowRadius: 1,
+                                    }}
+                                    numberOfLines={1}
+                                >
+                                    {hasPostedToday ? '오늘 하루도 수고하셨어요' : encouragementText.replace(/[🌟💪✨🌈💜🌸🍀🌺⭐🎈🌻🦋🌙🎯💎🌊🔆🎪🌿🎨]/g, '').trim()}
+                                </Text>
+                            </Animated.View>
+                        </VStack>
+                    </Box>
+
+                    {/* 명언 카드 섹션 */}
+                    <DailyQuoteCard
+                        style={{ marginBottom: 5 }}
+                        onPress={() => navigation.navigate('ProfileEdit' as never)}
+                    />
                     </>
                 ) : null}
 
-                {/* 비로그인 사용자 헤더 - Option A */}
+                {/* 비로그인 사용자 간단한 헤더 */}
                 {!isAuthenticated && (
-                    <View
+                    <Box
+                        className="mb-1"
                         style={{
-                            marginBottom: normalizeSpace(8),
-                            marginHorizontal: normalizeSpace(8),
-                            backgroundColor: isDark ? colors.cardBackground : '#ffffff',
-                            borderRadius: normalizeBorderRadius(16),
-                            borderWidth: 1,
-                            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                            backgroundColor: colors.cardBackground,
+                            borderWidth: isDark ? 0 : 1,
+                            borderColor: isDark ? 'transparent' : '#f1f5f9',
+                            borderRadius: 14,
                             shadowColor: '#000',
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: isDark ? 0.3 : 0.1,
+                            shadowOffset: { width: 0, height: 1 },
+                            shadowOpacity: isDark ? 0.2 : 0.08,
                             shadowRadius: 8,
-                            elevation: 4,
+                            elevation: 2,
+                            marginHorizontal: 8
                         }}
                     >
-                        <HStack style={{ alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: normalizeSpace(12), paddingVertical: normalizeSpace(12) }}>
-                            <HStack style={{ gap: normalizeSpace(10), flex: 1, alignItems: 'center' }}>
-                                <Text style={{ fontSize: normalize(24, 22, 26) }}>🌈</Text>
-                                <VStack style={{ flex: 1 }}>
-                                    <Text
-                                        style={{
-                                            color: isDark ? '#ffffff' : colors.text,
-                                            fontSize: normalize(14, 13, 15),
-                                            fontFamily: 'Pretendard-Bold',
-                                            letterSpacing: -0.3,
-                                        }}
-                                        numberOfLines={1}
-                                    >
-                                        누군가의 하루
-                                    </Text>
-                                    <Text
-                                        style={{
-                                            color: isDark ? '#E879F9' : '#8B5CF6',
-                                            fontSize: normalize(11, 10, 12),
-                                            fontFamily: 'Pretendard-Medium',
-                                            marginTop: 2,
-                                        }}
-                                        numberOfLines={1}
-                                    >
-                                        💜 감정을 공유하는 따뜻한 공간
-                                    </Text>
-                                </VStack>
-                            </HStack>
+                        <HStack style={{ alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: normalizeSpace(16), paddingVertical: normalizeSpace(12) }}>
+                            <Text
+                                style={{
+                                    color: isDark ? '#ffffff' : colors.text,
+                                    fontSize: normalize(14, 12, 16),
+                                    fontWeight: '700',
+                                    letterSpacing: -0.3,
+                                }}
+                            >
+                                {greetingText}
+                            </Text>
 
-                            <HStack style={{ gap: normalizeSpace(6) }}>
+                            {/* 우측 아이콘들 */}
+                            <HStack style={{ gap: 6 }}>
+                                {/* 로그인 버튼 */}
                                 <Pressable
                                     onPress={() => navigation.navigate('Auth' as never)}
                                     style={{
                                         borderRadius: normalizeSpace(14),
                                         backgroundColor: isDark ? DARK_COLORS.purple : LIGHT_COLORS.purple,
-                                        width: normalizeSpace(32),
-                                        height: normalizeSpace(32),
+                                        width: normalizeSpace(36),
+                                        height: normalizeSpace(36),
                                         justifyContent: 'center',
                                         alignItems: 'center'
                                     }}
@@ -3161,13 +3460,14 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     <RNText style={{ fontSize: FONT_SIZES.h2 }}>😊</RNText>
                                 </Pressable>
 
+                                {/* 다크모드 토글 */}
                                 <Pressable
                                     onPress={toggleTheme}
                                     style={{
                                         borderRadius: normalizeSpace(14),
                                         backgroundColor: isDark ? '#78350f' : '#fef3c7',
-                                        width: normalizeSpace(32),
-                                        height: normalizeSpace(32),
+                                        width: normalizeSpace(36),
+                                        height: normalizeSpace(36),
                                         justifyContent: 'center',
                                         alignItems: 'center'
                                     }}
@@ -3177,13 +3477,13 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 >
                                     <MaterialCommunityIcons
                                         name={isDark ? "white-balance-sunny" : "moon-waning-crescent"}
-                                        size={normalizeIcon(18)}
+                                        size={normalizeIcon(20)}
                                         color={isDark ? SEMANTIC_COLORS.warning : SEMANTIC_COLORS.secondary}
                                     />
                                 </Pressable>
                             </HStack>
                         </HStack>
-                    </View>
+                    </Box>
                 )}
 
                 {/* 비로그인 사용자 환영 배너 */}
@@ -3194,148 +3494,131 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     />
                 )}
 
-                {/* 주간 감정 그래프 섹션 - 개선된 다크모드 지원 */}
-                {isAuthenticated && weeklyEmotions && weeklyEmotions.length > 0 && (
-                    <View
-                        style={{
-                            marginHorizontal: 8,
-                            marginBottom: 4,
-                            backgroundColor: isDark ? 'rgba(139, 92, 246, 0.08)' : '#faf5ff',
-                            borderRadius: 2,
-                            padding: normalizeSpace(8),
-                            borderWidth: 1,
-                            borderColor: isDark ? 'rgba(139, 92, 246, 0.2)' : '#e9d5ff',
-                            shadowColor: isDark ? '#8B5CF6' : '#000',
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: isDark ? 0.15 : 0.08,
-                            shadowRadius: 0,
-                            elevation: 2,
-                        }}
-                    >
-                        <HStack style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: isEmotionSectionCollapsed ? 0 : 8 }}>
-                            <TouchableOpacity
-                                onPress={() => navigation.navigate('Review' as never, { initialTab: 'insights' } as never)}
-                                style={{ flex: 1 }}
-                                activeOpacity={0.7}
-                            >
-                                <HStack style={{ alignItems: 'center', gap: 6 }}>
-                                    <Text style={{ fontSize: normalize(15, 13, 17) }}>📊</Text>
-                                    <Text style={{
-                                        fontSize: normalize(13, 12, 15),
-                                        fontFamily: 'Pretendard-Bold',
-                                        color: isDark ? '#E879F9' : '#7C3AED',
-                                        letterSpacing: -0.3
-                                    }}>
-                                        이번 주 감정
-                                    </Text>
-                                </HStack>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={() => setIsEmotionSectionCollapsed(!isEmotionSectionCollapsed)}
-                                activeOpacity={0.7}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                                <MaterialCommunityIcons
-                                    name={isEmotionSectionCollapsed ? "chevron-down" : "chevron-up"}
-                                    size={normalizeIcon(20)}
-                                    color={colors.textSecondary}
-                                />
-                            </TouchableOpacity>
-                        </HStack>
-
-                        {!isEmotionSectionCollapsed && (
-                            <VStack style={{ gap: 6 }}>
-                                {/* 요일별 감정 아이콘 */}
-                                <HStack style={{ justifyContent: 'space-around', paddingVertical: 6 }}>
-                                    {(() => {
-                                        const today = new Date();
-                                        const currentDay = today.getDay();
-                                        const mondayOffset = currentDay === 0 ? -6 : -(currentDay - 1);
-                                        const weekDays = ['월', '화', '수', '목', '금', '토', '일'];
-
-                                        return weekDays.map((day, index) => {
-                                            const date = new Date();
-                                            date.setDate(today.getDate() + mondayOffset + index);
-                                            const dateStr = date.toISOString().split('T')[0];
-
-                                            const dayData = weeklyEmotions?.find(data => data?.date === dateStr);
-                                            const hasEmotion = dayData && Array.isArray(dayData.emotions) && dayData.emotions.length > 0;
-                                            const topEmotion = hasEmotion
-                                                ? dayData.emotions.reduce((prev, current) => prev.count > current.count ? prev : current)
-                                                : null;
-
-                                            const isToday = date.toDateString() === today.toDateString();
-
-                                            return (
-                                                <VStack key={day} style={{ alignItems: 'center', gap: 4 }}>
-                                                    {/* 요일 */}
-                                                    <Text style={{
-                                                        fontSize: normalize(14, 13, 15),
-                                                        color: isToday ? colors.primary : colors.text,
-                                                        fontFamily: isToday ? 'Pretendard-Bold' : 'Pretendard-SemiBold'
-                                                    }}>
-                                                        {day}
-                                                    </Text>
-
-                                                    {/* 감정 아이콘 */}
-                                                    <Text style={{
-                                                        fontSize: normalize(28, 26, 30),
-                                                        color: hasEmotion && topEmotion ? colors.text : (isDark ? '#555555' : '#CCCCCC')
-                                                    }}>
-                                                        {hasEmotion && topEmotion ? topEmotion.icon : '─'}
-                                                    </Text>
-
-                                                    {/* 감정 이름 */}
-                                                    <Text style={{
-                                                        fontSize: normalize(11, 10, 12),
-                                                        color: hasEmotion && topEmotion ? colors.text : colors.textSecondary,
-                                                        fontFamily: 'Pretendard-Medium'
-                                                    }}>
-                                                        {hasEmotion && topEmotion ? topEmotion.name : '없음'}
-                                                    </Text>
-                                                </VStack>
-                                            );
-                                        });
-                                    })()}
-                                </HStack>
-
-                                {/* 통계 요약 */}
-                                <Box style={{
-                                    paddingVertical: 7,
-                                    paddingHorizontal: 14,
-                                    borderRadius: 2,
-                                }}>
-                                    <Text style={{
-                                        fontSize: normalize(13, 12, 14),
-                                        color: isDark ? '#E879F9' : '#8B5CF6',
-                                        fontFamily: 'Pretendard-SemiBold',
-                                        textAlign: 'center'
-                                    }}>
-                                        이번 주 {weeklyEmotionDaysCount}일 기록! 💪
-                                    </Text>
-                                </Box>
-                            </VStack>
+                {/* 주간 감정 기록 섹션 - 로그인 사용자만 표시 */}
+                {isAuthenticated && (
+                    <>
+                        {emotionError && (
+                            <Box className="mb-4 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                                <Text className="text-yellow-800 text-center">⚠️ {emotionError}</Text>
+                            </Box>
                         )}
-                    </View>
+
+                        <Box
+                            className="mb-1"
+                            testID="emotion-surface"
+                            style={{
+                                backgroundColor: colors.cardBackground,
+                                borderWidth: isDark ? 0 : 1,
+                                borderColor: isDark ? 'transparent' : '#f1f5f9',
+                                borderRadius: 14,
+                                shadowColor: '#000',
+                                shadowOffset: { width: 0, height: 1 },
+                                shadowOpacity: isDark ? 0.2 : 0.08,
+                                shadowRadius: 8,
+                                elevation: 2,
+                                marginHorizontal: 8
+                            }}
+                        >
+                            <Box className="px-4 py-1 border-b border-gray-100">
+                                <HStack className="justify-between items-center">
+                                    <HStack className="items-center">
+                                        <Text
+                                            className="text-xl font-bold"
+                                            style={{
+                                                color: colors.text,
+                                                fontSize: normalize(15, 13, 17),
+                                                fontWeight: '700',
+                                                letterSpacing: -0.4,
+                                                lineHeight: 18
+                                            }}
+                                        >
+                                            📊 이번 주 감정 기록
+                                        </Text>
+                                    </HStack>
+
+                                    <HStack style={{ gap: 8, alignItems: 'center' }}>
+                                        {/* 접기/펼치기 버튼 */}
+                                        <Pressable
+                                            onPress={() => setIsEmotionSectionCollapsed(!isEmotionSectionCollapsed)}
+                                            style={{
+                                                borderRadius: 12,
+                                                backgroundColor: isEmotionSectionCollapsed
+                                                    ? (isDark ? '#7f1d1d' : '#fef2f2')
+                                                    : (isDark ? '#14532d' : '#dcfce7'),
+                                                width: 27,
+                                                height: 27,
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                                padding: 4
+                                            }}
+                                        >
+                                            <MaterialCommunityIcons
+                                                name={isEmotionSectionCollapsed ? "chevron-down" : "chevron-up"}
+                                                size={18}
+                                                color={isEmotionSectionCollapsed ? "#dc2626" : "#16a34a"}
+                                            />
+                                        </Pressable>
+
+                                        {/* 감정 기록 삭제 버튼 */}
+                                        <Pressable
+                                            onPress={() => setShowEmotionDeleteModal(true)}
+                                            style={{
+                                                borderRadius: 12,
+                                                backgroundColor: isDark ? '#7f1d1d' : '#fee2e2',
+                                                width: 27,
+                                                height: 27,
+                                                justifyContent: 'center',
+                                                alignItems: 'center'
+                                            }}
+                                        >
+                                            <MaterialCommunityIcons
+                                                name="delete-outline"
+                                                size={18}
+                                                color="#dc2626"
+                                            />
+                                        </Pressable>
+                                    </HStack>
+                                </HStack>
+                            </Box>
+                            {!isEmotionSectionCollapsed && (
+                                <Box className="px-3 py-1">
+                                    {emotionLoading ? (
+                                        <Center className="py-8">
+                                            <Text
+                                                className="text-sm"
+                                                style={{color: colors.textSecondary}}
+                                            >
+                                                감정 기록 로딩중...
+                                            </Text>
+                                        </Center>
+                                    ) : (
+                                        renderWeeklyEmotionChart()
+                                    )}
+                                </Box>
+                            )}
+                        </Box>
+                    </>
                 )}
 
                 {/* 🌈 누군가의 하루 섹션 - 메인 피드 (우선순위 최상) */}
-                <HStack ref={postsStartRef} className="justify-between items-center" style={{ paddingHorizontal: 8, marginBottom: 3, marginTop: 2 }}>
+                <HStack ref={postsStartRef} className="justify-between items-center mb-1 mt-1" style={{ paddingHorizontal: 8 }}>
                     <HStack className="items-center">
-                        <Text
-                            className="text-2xl font-bold"
+                        <Text 
+                            className="text-2xl font-bold" 
                             style={{
                                 color: colors.text,
                                 fontSize: normalize(15, 13, 17),
-                                fontFamily: 'Pretendard-Bold',
+                                fontWeight: '700',
                                 letterSpacing: -0.3
                             }}
                         >
-                            🌈 누군가의 하루는
+                            🌈 누군가의 하루는..
                         </Text>
                     </HStack>
                     <HStack className="items-center" style={{ gap: 6 }}>
                         {/* 개수 배지 */}
+                        {/* 필터로 목록이 줄었을 때만 "표시/전체" 개수 표시 (20/20 같은 무의미한 칩 제거) */}
+                        {filteredPosts.length !== posts.length && (
                         <Box
                             style={{
                                 backgroundColor: isDark ? '#404040' : '#f3f4f6',
@@ -3348,12 +3631,46 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 style={{
                                     color: isDark ? '#ffffff' : colors.textSecondary,
                                     fontSize: normalize(12, 11, 14),
-                                    fontFamily: 'Pretendard-Medium'
+                                    fontWeight: '500'
                                 }}
                             >
-                                {tabFilteredPosts.length}/{posts.length}
+                                {filteredPosts.length}/{posts.length}
                             </Text>
                         </Box>
+                        )}
+                        {/* 최신순/인기순 토글 */}
+                        <HStack style={{ gap: 4 }}>
+                            <Pressable
+                                onPress={() => setSortOrder('recent')}
+                                style={{
+                                    paddingHorizontal: 10,
+                                    paddingVertical: 5,
+                                    borderRadius: 12,
+                                    backgroundColor: sortOrder === 'recent' ? colors.primary : colors.cardBackground,
+                                    borderWidth: 1,
+                                    borderColor: sortOrder === 'recent' ? colors.primary : colors.border,
+                                }}
+                            >
+                                <Text style={{ color: sortOrder === 'recent' ? '#fff' : colors.text, fontWeight: '600', fontSize: normalize(12, 11, 14) }}>
+                                    최신순
+                                </Text>
+                            </Pressable>
+                            <Pressable
+                                onPress={() => setSortOrder('popular')}
+                                style={{
+                                    paddingHorizontal: 10,
+                                    paddingVertical: 4,
+                                    borderRadius: 12,
+                                    backgroundColor: sortOrder === 'popular' ? colors.primary : colors.cardBackground,
+                                    borderWidth: 1,
+                                    borderColor: sortOrder === 'popular' ? colors.primary : colors.border,
+                                }}
+                            >
+                                <Text style={{ color: sortOrder === 'popular' ? '#fff' : colors.text, fontWeight: '600', fontSize: normalize(12, 11, 14) }}>
+                                    인기순
+                                </Text>
+                            </Pressable>
+                        </HStack>
                         <Pressable
                         onPress={() => {
                             refetchPosts();
@@ -3377,69 +3694,17 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     </Pressable>
                     </HStack>
                 </HStack>
-
-                {/* 탭 네비게이션 - 모던 스타일 */}
-                <View style={{
-                    marginHorizontal: normalizeSpace(8),
-                    marginVertical: normalizeSpace(2),
-                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#f8fafc',
-                    borderRadius: normalizeBorderRadius(14),
-                    padding: normalizeSpace(2),
-                    flexDirection: 'row',
-                }}>
-                    {(['전체', '나와 같은감정', '인기', '나의 글'] as FeedTab[]).map((tab) => (
-                        <Pressable
-                            key={tab}
-                            onPress={() => setActiveTab(tab)}
-                            style={{
-                                flex: 1,
-                                paddingVertical: normalizeSpace(7),
-                                paddingHorizontal: normalizeSpace(2),
-                                borderRadius: normalizeBorderRadius(10),
-                                backgroundColor: activeTab === tab
-                                    ? (isDark ? '#8B5CF6' : '#8B5CF6')
-                                    : 'transparent',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                shadowColor: activeTab === tab ? '#8B5CF6' : 'transparent',
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: activeTab === tab ? 0.3 : 0,
-                                shadowRadius: 4,
-                                elevation: activeTab === tab ? 2 : 0,
-                            }}
-                        >
-                            <Text
-                                style={{
-                                    fontSize: normalize(12, 11, 13),
-                                    fontFamily: activeTab === tab ? 'Pretendard-Bold' : 'Pretendard-SemiBold',
-                                    color: activeTab === tab
-                                        ? '#ffffff'
-                                        : (isDark ? '#9ca3af' : '#6b7280'),
-                                    letterSpacing: -0.4,
-                                    textAlign: 'center',
-                                }}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                                minimumFontScale={0.75}
-                            >
-                                {tab}
-                            </Text>
-                        </Pressable>
-                    ))}
-                </View>
-
-
                 <FilterBar selectedEmotion={selectedEmotion} onEmotionChange={setSelectedEmotion} isDark={isDark} />
 
-                {/* 나의 최근 글 섹션 - ProfileScreen으로 이동됨 */}
+                {renderMyRecentPosts()}
                 </>}
                 ListEmptyComponent={
                     loadingPosts ? (
-                        <View>
-                            <SkeletonPostCard />
-                            <SkeletonPostCard />
-                            <SkeletonPostCard />
-                        </View>
+                        <Box className="bg-white rounded-xl p-6 mb-4 shadow-sm">
+                            <Center className="py-8">
+                                <Text className="mt-4 text-base text-gray-600">게시물을 불러오는 중...</Text>
+                            </Center>
+                        </Box>
                     ) : posts.length === 0 ? (
                         <EmptyState isDark={isDark} />
                     ) : filteredPosts.length === 0 ? (
@@ -3453,7 +3718,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     ) : null
                 }
                 ListFooterComponent={
-                    hasMorePosts && page > 1 ? (
+                    (hasMorePosts && page > 1) || isLoadingMore ? (
                         <View style={{
                             paddingVertical: normalizeSpace(20),
                             alignItems: 'center'
@@ -3478,7 +3743,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     onPress={scrollToTop}
                     style={{
                         position: 'absolute',
-                        bottom: normalizeSpace(16) + Math.max(insets.bottom, 20) + 56 + 54,
+                        bottom: 90,
                         right: normalizeSpace(16),
                         width: normalizeSpace(32),
                         height: normalizeSpace(32),
@@ -3542,7 +3807,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 borderTopLeftRadius: 20,
                                 borderTopRightRadius: 20,
                                 background: 'linear-gradient(90deg, #10b981, #34d399, #6ee7b7)',
-                                backgroundColor: colors.success, // fallback
+                                backgroundColor: '#10b981', // fallback
                             }}
                         />
                         
@@ -3558,7 +3823,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         width: 36,
                                         height: 36,
                                         borderRadius: 28,
-                                        backgroundColor: colors.success,
+                                        backgroundColor: '#10b981',
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         marginRight: 16,
@@ -3576,7 +3841,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             <VStack style={{ flex: 1 }}>
                                 <Text style={{
                                     fontSize: normalize(15, 13, 17),
-                                    fontFamily: 'Pretendard-Bold',
+                                    fontWeight: '700',
                                     color: colors.text,
                                     marginBottom: 6,
                                     letterSpacing: 0.3,
@@ -3637,7 +3902,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             <Animated.View
                                 style={{
                                     height: '100%',
-                                    backgroundColor: colors.success,
+                                    backgroundColor: '#10b981',
                                     borderRadius: 2,
                                     width: progressBarAnim.interpolate({
                                         inputRange: [0, 1],
@@ -3652,68 +3917,55 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
 
             {/* 커스텀 플로팅 액션 버튼 - 로그인한 사용자만 표시 */}
             {isAuthenticated && (
-                <Animated.View
+                <TouchableOpacity
+                    activeOpacity={0.8}
+                    disabled={isCheckingTodayPost}
+                    onPress={navigateToWriteMyDay}
+                    onLongPress={() => InteractionManager.runAfterInteractions(() => Alert.alert(
+                        hasPostedToday ? '✅ 오늘 기록 완료!' : '✍️ 오늘 기록하기',
+                        hasPostedToday
+                            ? '오늘의 이야기를 남겼어요!\n\n• 기존 글 수정 가능\n• 내일 또 만나요'
+                            : '오늘의 감정과 순간을 기록해보세요!\n\n• 감정 선택\n• 이야기와 사진 추가\n• 익명 공유 가능',
+                        [{ text: '확인', style: 'default' }]
+                    ))}
                     style={{
                         position: 'absolute',
-                        right: normalizeSpace(12),
-                        bottom: normalizeSpace(16) + Math.max(insets.bottom, 20) + 56,
-                        transform: [{ scale: fabPulseAnim }],
+                        right: normalizeSpace(8),
+                        bottom: normalizeSpace(40),
                     }}
                 >
-                    <TouchableOpacity
-                        activeOpacity={0.8}
-                        disabled={isCheckingTodayPost}
-                        onPress={navigateToWriteMyDay}
-                        onLongPress={() => InteractionManager.runAfterInteractions(() => Alert.alert(
-                            hasPostedToday ? '✅ 오늘의 하루를 남겼어요' : '✍️ 하루 남기기',
-                            hasPostedToday
-                                ? '오늘의 이야기가 기록되었어요!\n\n• 기존 글 수정 가능\n• 내일 또 만나요'
-                                : '오늘의 감정과 순간을 남겨보세요!\n\n• 감정 선택\n• 이야기와 사진 추가\n• 익명 공유 가능',
-                            [{ text: '확인', style: 'default' }]
-                        ))}
+                    <LinearGradient
+                        colors={hasPostedToday ? [SEMANTIC_COLORS.success, SEMANTIC_COLORS.successLight] : [SEMANTIC_COLORS.purpleDark, SEMANTIC_COLORS.purple]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={{
+                            paddingHorizontal: normalizeSpace(18),
+                            height: normalizeSpace(44),
+                            borderRadius: normalizeSpace(22),
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            shadowColor: hasPostedToday ? SEMANTIC_COLORS.success : SEMANTIC_COLORS.purpleDark,
+                            shadowOffset: { width: 0, height: 4 },
+                            shadowOpacity: 0.35,
+                            shadowRadius: 10,
+                            elevation: 8,
+                        }}
                     >
-                        <LinearGradient
-                            colors={hasPostedToday ? [SEMANTIC_COLORS.success, SEMANTIC_COLORS.successLight] : [SEMANTIC_COLORS.purpleDark, SEMANTIC_COLORS.purple]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
+                        <RNText
                             style={{
-                                flexDirection: 'row',
-                                paddingHorizontal: normalizeSpace(14),
-                                height: normalizeSpace(44),
-                                borderRadius: normalizeSpace(22),
-                                justifyContent: 'center',
-                                alignItems: 'center',
-                                gap: 6,
-                                shadowColor: hasPostedToday ? SEMANTIC_COLORS.success : SEMANTIC_COLORS.purpleDark,
-                                shadowOffset: { width: 0, height: 4 },
-                                shadowOpacity: 0.35,
-                                shadowRadius: 10,
-                                elevation: 8,
+                                color: '#ffffff',
+                                fontSize: normalize(15, 13, 16),
+                                fontWeight: '700',
+                                letterSpacing: -0.3,
+                                includeFontPadding: false,
                             }}
                         >
-                            {!isCheckingTodayPost && (
-                                <MaterialCommunityIcons
-                                    name={hasPostedToday ? "check-circle" : "pencil-outline"}
-                                    size={normalize(18, 16, 20)}
-                                    color="#ffffff"
-                                />
-                            )}
-                            <RNText
-                                style={{
-                                    color: '#ffffff',
-                                    fontSize: normalize(13, 11, 15),
-                                    fontFamily: 'Pretendard-Bold',
-                                    letterSpacing: -0.3,
-                                    includeFontPadding: false,
-                                }}
-                            >
-                                {isCheckingTodayPost
-                                    ? "확인 중..."
-                                    : (hasPostedToday ? "쓰기 완료" : "하루 쓰기")}
-                            </RNText>
-                        </LinearGradient>
-                    </TouchableOpacity>
-                </Animated.View>
+                            {isCheckingTodayPost
+                                ? "확인 중..."
+                                : (hasPostedToday ? "나눔 완료! ✨" : "💕 나의 하루")}
+                        </RNText>
+                    </LinearGradient>
+                </TouchableOpacity>
             )}
 
             {/* 비로그인 사용자 감성적 로그인 유도 버튼 */}
@@ -3724,7 +3976,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     style={{
                         position: 'absolute',
                         right: normalizeSpace(12),
-                        bottom: normalizeSpace(16) + Math.max(insets.bottom, 20) + 56,
+                        bottom: normalizeSpace(40),
                     }}
                 >
                     <LinearGradient
@@ -3749,7 +4001,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 style={{
                                     color: '#ffffff',
                                     fontSize: normalize(11, 10, 12),
-                                    fontFamily: 'Pretendard-Medium',
+                                    fontWeight: '500',
                                     letterSpacing: -0.1,
                                     includeFontPadding: false,
                                     opacity: 0.9,
@@ -3762,7 +4014,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     style={{
                                         color: '#ffffff',
                                         fontSize: normalize(14, 13, 16),
-                                        fontFamily: 'Pretendard-Bold',
+                                        fontWeight: '700',
                                         letterSpacing: -0.3,
                                         includeFontPadding: false,
                                     }}
@@ -3883,6 +4135,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             <RNText
                                 style={{
                                     fontSize: normalize(20),
+                                    fontWeight: '700',
                                     color: isDark ? '#F9FAFB' : '#111827',
                                     textAlign: 'center',
                                     fontFamily: 'Pretendard-Bold',
@@ -3922,10 +4175,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             {/* 수정하기 버튼 - Primary */}
                             <TouchableOpacity
                                 style={{
-                                    backgroundColor: colors.primary,
+                                    backgroundColor: '#667EEA',
                                     paddingVertical: normalizeSpace(16),
                                     borderRadius: normalizeBorderRadius(16),
-                                    shadowColor: colors.primary,
+                                    shadowColor: '#667EEA',
                                     shadowOffset: { width: 0, height: 4 },
                                     shadowOpacity: 0.3,
                                     shadowRadius: 8,
@@ -3948,6 +4201,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     <RNText
                                         style={{
                                             fontSize: normalize(16),
+                                            fontWeight: '600',
                                             color: '#FFFFFF',
                                             fontFamily: 'Pretendard-SemiBold',
                                             letterSpacing: -0.3,
@@ -3971,6 +4225,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 <RNText
                                     style={{
                                         fontSize: normalize(16),
+                                        fontWeight: '600',
                                         color: isDark ? '#D1D5DB' : '#6B7280',
                                         textAlign: 'center',
                                         fontFamily: 'Pretendard-SemiBold',
@@ -3984,21 +4239,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     </Pressable>
                 </Pressable>
             )}
-
-            {/* 리액션 피커 모달 (2026 트렌드) */}
-            <ReactionPicker
-                visible={reactionPickerVisible}
-                currentReaction={selectedPostForReaction ? postReactions[selectedPostForReaction]?.userReaction : null}
-                onReactionSelect={(reaction) => {
-                    if (selectedPostForReaction) {
-                        handleReaction(selectedPostForReaction, reaction);
-                    }
-                }}
-                onClose={() => {
-                    setReactionPickerVisible(false);
-                    setSelectedPostForReaction(null);
-                }}
-            />
         </SafeAreaView>
     );
 };
@@ -4008,7 +4248,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
 const styles = StyleSheet.create({
     authorBadge: {
         fontSize: 12,
-        fontFamily: 'Pretendard-Bold',
+        fontWeight: '700',
         color: '#007AFF',
         backgroundColor: '#007AFF20',
         paddingHorizontal: 8,

@@ -236,7 +236,7 @@ const CreateChallengeScreen = () => {
                 uploadSuccess = true;
                 if (__DEV__) console.log(`✅ 이미지 ${i + 1} 업로드 성공`);
               }
-            } catch (uploadError: unknown) {
+            } catch (uploadError: any) {
               if (__DEV__) console.log(`⚠️ 이미지 ${i + 1} 업로드 실패 (시도 ${retry + 1}/${MAX_RETRIES + 1}):`, uploadError.message);
 
               if (retry === MAX_RETRIES) {
@@ -299,7 +299,7 @@ const CreateChallengeScreen = () => {
           navigation.reset({
             index: 1,
             routes: [
-              { name: 'ChallengeMain', params: { refresh: true } },
+              { name: 'ChallengeMain' },
               {
                 name: 'ChallengeDetail',
                 params: { challengeId: challengeId }
@@ -308,7 +308,7 @@ const CreateChallengeScreen = () => {
           });
         } else {
           if (__DEV__) console.log('🔄 메인으로 이동 (ID 없음)');
-          navigation.navigate('ChallengeMain', { refresh: true });
+          navigation.navigate('ChallengeMain');
         }
 
         // 네비게이션 성공 후 알림 표시
@@ -323,12 +323,12 @@ const CreateChallengeScreen = () => {
         showAlert('챌린지 생성 완료', '새로운 챌린지가 생성되었습니다! 하지만 화면 이동 중 오류가 발생했습니다.', 'success');
       }
 
-    } catch (err: unknown) {
+    } catch (err: any) {
       if (__DEV__) {
-        if (__DEV__) console.error('챌린지 생성 오류:', err);
-        if (__DEV__) console.error('요청 데이터:', formData);
-        if (__DEV__) console.error('오류 응답:', err.response?.data);
-        if (__DEV__) console.error('오류 상태:', err.response?.status);
+        console.error('챌린지 생성 오류:', err);
+        console.error('요청 데이터:', formData);
+        console.error('오류 응답:', err.response?.data);
+        console.error('오류 상태:', err.response?.status);
       }
 
       const errorMessage = err.response?.data?.message ||
@@ -363,10 +363,11 @@ const CreateChallengeScreen = () => {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}. ${month}. ${day}`;
+    return date.toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
   };
 
   const addTag = () => {
@@ -460,11 +461,11 @@ const CreateChallengeScreen = () => {
         // WebP 사용 시 사용자에게 알림
         const webpCount = sortedAssets.filter(a => a.type === IMAGE_CONFIG.PREFERRED_TYPE).length;
         if (webpCount > 0 && __DEV__) {
-          if (__DEV__) console.log(`✅ WebP 이미지 ${webpCount}개 선택됨 (트래픽 최적화)`);
+          console.log(`✅ WebP 이미지 ${webpCount}개 선택됨 (트래픽 최적화)`);
         }
       }
     } catch (error) {
-      if (__DEV__) console.error('이미지 선택 오류:', error);
+      console.error('이미지 선택 오류:', error);
       showAlert('오류', '이미지를 선택하는 중 문제가 발생했습니다.');
     }
   };
@@ -574,7 +575,7 @@ const CreateChallengeScreen = () => {
                   onPress={() => setShowStartDatePicker(true)}
                 >
                   <MaterialCommunityIcons name="calendar" size={scaleFontSize(18)} color="#007AFF" />
-                  <Text numberOfLines={1} style={[styles.dateText, { color: isDark ? '#ffffff' : '#262626' }]}>{formatDate(formData.start_date)}</Text>
+                  <Text style={[styles.dateText, { color: isDark ? '#ffffff' : '#262626' }]}>{formatDate(formData.start_date)}</Text>
                 </TouchableOpacity>
                 {errors.start_date && <Text style={styles.errorText}>{errors.start_date}</Text>}
               </View>
@@ -586,7 +587,7 @@ const CreateChallengeScreen = () => {
                   onPress={() => setShowEndDatePicker(true)}
                 >
                   <MaterialCommunityIcons name="calendar" size={scaleFontSize(18)} color="#007AFF" />
-                  <Text numberOfLines={1} style={[styles.dateText, { color: isDark ? '#ffffff' : '#262626' }]}>{formatDate(formData.end_date)}</Text>
+                  <Text style={[styles.dateText, { color: isDark ? '#ffffff' : '#262626' }]}>{formatDate(formData.end_date)}</Text>
                 </TouchableOpacity>
                 {errors.end_date && <Text style={styles.errorText}>{errors.end_date}</Text>}
               </View>
@@ -827,7 +828,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: scaleFontSize(18),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   placeholder: {
@@ -845,13 +846,13 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: scaleFontSize(15),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: scaleHeight(8),
     letterSpacing: -0.2,
   },
   sectionTitle: {
     fontSize: scaleFontSize(16),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: scaleHeight(10),
     letterSpacing: -0.3,
   },
@@ -859,7 +860,7 @@ const styles = StyleSheet.create({
     fontSize: scaleFontSize(13),
     marginBottom: scaleHeight(10),
     lineHeight: scaleFontSize(18),
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   input: {
     borderWidth: 1.5,
@@ -868,7 +869,7 @@ const styles = StyleSheet.create({
     paddingVertical: scaleHeight(12),
     fontSize: scaleFontSize(15),
     lineHeight: scaleFontSize(20),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     minHeight: scaleHeight(44),
   },
   textArea: {
@@ -878,7 +879,7 @@ const styles = StyleSheet.create({
     paddingVertical: scaleHeight(12),
     fontSize: scaleFontSize(15),
     lineHeight: scaleFontSize(20),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     minHeight: scaleHeight(100),
     textAlignVertical: 'top',
   },
@@ -889,19 +890,19 @@ const styles = StyleSheet.create({
     fontSize: scaleFontSize(14),
     textAlign: 'right',
     marginTop: scaleHeight(4),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   errorText: {
     fontSize: scaleFontSize(13),
     color: '#ff3b30',
     marginTop: scaleHeight(4),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   helperText: {
     fontSize: scaleFontSize(13),
     marginTop: scaleHeight(4),
     lineHeight: scaleFontSize(18),
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   dateRow: {
     flexDirection: 'row',
@@ -914,7 +915,7 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontSize: scaleFontSize(14),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: scaleHeight(8),
     letterSpacing: -0.2,
   },
@@ -930,10 +931,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dateText: {
-    fontSize: scaleFontSize(14),
-    fontFamily: 'Pretendard-Bold',
+    fontSize: scaleFontSize(13),
+    fontWeight: '700',
     letterSpacing: -0.2,
-    flexShrink: 1,
+    flex: 1,
   },
   tagInputRow: {
     flexDirection: 'row',
@@ -947,7 +948,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: scaleWidth(14),
     paddingVertical: scaleHeight(12),
     fontSize: scaleFontSize(15),
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     minHeight: scaleHeight(44),
   },
   addTagButton: {
@@ -983,7 +984,7 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: scaleFontSize(13),
     color: '#ffffff',
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.1,
   },
   removeTagButton: {
@@ -1011,7 +1012,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: scaleFontSize(15),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.2,
   },
   createButton: {
@@ -1028,7 +1029,7 @@ const styles = StyleSheet.create({
   },
   createButtonText: {
     fontSize: scaleFontSize(15),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     color: '#ffffff',
     letterSpacing: -0.2,
   },
@@ -1083,7 +1084,7 @@ const styles = StyleSheet.create({
   addImageText: {
     fontSize: scaleFontSize(13),
     marginTop: scaleHeight(6),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   // 커스텀 알럿 스타일
   modalOverlay: {
@@ -1114,7 +1115,7 @@ const styles = StyleSheet.create({
   },
   alertTitle: {
     fontSize: scaleFontSize(18),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: scaleHeight(8),
     textAlign: 'center',
   },
@@ -1138,7 +1139,7 @@ const styles = StyleSheet.create({
   },
   alertButtonText: {
     fontSize: scaleFontSize(16),
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     color: '#fff',
   },
 });

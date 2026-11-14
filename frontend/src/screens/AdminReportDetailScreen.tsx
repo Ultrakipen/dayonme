@@ -92,7 +92,7 @@ const AdminReportDetailScreen: React.FC<Props> = ({ navigation, route }) => {
       const response = await reportService.getReportById(reportId);
       setReport(response);
     } catch (error) {
-      if (__DEV__) console.error('신고 상세 로드 오류:', error);
+      console.error('신고 상세 로드 오류:', error);
       showAlert('오류', '신고 정보를 불러올 수 없습니다.', [
         { text: '확인', onPress: () => navigation.goBack() },
       ], 'error');
@@ -134,7 +134,7 @@ const AdminReportDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 },
               ], 'success');
             } catch (error) {
-              if (__DEV__) console.error('신고 처리 오류:', error);
+              console.error('신고 처리 오류:', error);
               showAlert('오류', '신고 처리 중 문제가 발생했습니다.', undefined, 'error');
             } finally {
               setProcessing(false);
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: SPACING.md,
     fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   header: {
     flexDirection: 'row',
@@ -652,7 +652,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: FONT_SIZES.h4,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     letterSpacing: -0.3,
   },
   content: {
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: moderateScale(16),
     letterSpacing: -0.2,
   },
@@ -688,7 +688,7 @@ const styles = StyleSheet.create({
   },
   statusTextLarge: {
     fontSize: FONT_SIZES.h4,
-    fontFamily: 'Pretendard-ExtraBold',
+    fontWeight: '800',
     letterSpacing: -0.3,
     color: '#FFFFFF',
   },
@@ -707,7 +707,7 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   infoValue: {
     fontSize: FONT_SIZES.bodySmall,
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
   },
   contentTitle: {
     fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     marginBottom: SPACING.sm,
     letterSpacing: -0.2,
   },
@@ -754,7 +754,7 @@ const styles = StyleSheet.create({
   },
   viewContentButtonText: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   actionButtons: {
     gap: moderateScale(14),
@@ -770,7 +770,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     color: '#FFFFFF',
   },
   processingOverlay: {
@@ -786,7 +786,7 @@ const styles = StyleSheet.create({
   processingText: {
     marginTop: SPACING.md,
     fontSize: FONT_SIZES.h5,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
 });
 

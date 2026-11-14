@@ -56,7 +56,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
         setProfileImageUrl(response.data.profile_image_url || '');
       }
     } catch (error) {
-      if (__DEV__) console.error('프로필 로드 오류:', error);
+      console.error('프로필 로드 오류:', error);
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
         if (user) updateUser({ ...user, profile_image_url: imageUrl });
         showAlert.success('성공', '프로필 이미지가 업데이트되었습니다.');
       }
-    } catch (error: unknown) {
+    } catch (error: any) {
       showAlert.error('오류', error?.message || '이미지 업로드 실패');
     } finally {
       setImageLoading(false);
@@ -118,7 +118,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
             setProfileImageUrl('');
             if (user) updateUser({ ...user, profile_image_url: '' });
             showAlert.success('성공', '프로필 이미지가 삭제되었습니다.');
-          } catch (error: unknown) {
+          } catch (error: any) {
             showAlert.error('오류', error?.message || '이미지 삭제 실패');
           } finally {
             setImageLoading(false);
@@ -149,7 +149,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
       showAlert.success('성공', '프로필이 업데이트되었습니다.', [
         { text: '확인', onPress: () => navigation.goBack() }
       ]);
-    } catch (error: unknown) {
+    } catch (error: any) {
       showAlert.error('오류', error?.message || '프로필 업데이트 실패');
     } finally {
       setLoading(false);
@@ -190,7 +190,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: textColor }]}>프로필 편집</Text>
         <TouchableOpacity style={styles.headerButton} onPress={handleSave} disabled={loading}>
-          <Text style={[styles.headerButtonText, { color: primaryColor, fontFamily: 'Pretendard-Bold' }]}>
+          <Text style={[styles.headerButtonText, { color: primaryColor, fontWeight: '700' }]}>
             {loading ? '저장 중...' : '완료'}
           </Text>
         </TouchableOpacity>
@@ -283,7 +283,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
 
         {/* 안내 문구 */}
         <Text style={[styles.infoText, { color: tertiaryColor }]}>
-          {"프로필 정보는 다른 사용자에게\n공개될 수 있습니다."}
+          프로필 정보는 다른 사용자에게 공개될 수 있습니다.
         </Text>
       </ScrollView>
     </View>
@@ -304,19 +304,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
   },
   headerButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     minWidth: 60,
-    minHeight: 44,
-    justifyContent: 'center',
   },
   headerButtonText: {
-    fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-SemiBold',
+    fontSize: FONT_SIZES.body,
+    fontWeight: '500',
   },
   headerTitle: {
-    fontSize: FONT_SIZES.h4,
-    fontFamily: 'Pretendard-Bold',
+    fontSize: FONT_SIZES.bodyLarge,
+    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -342,7 +340,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 40,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     color: '#FFFFFF',
   },
   cameraIcon: {
@@ -361,23 +359,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   changePhotoText: {
-    fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-SemiBold',
-    marginTop: 8,
-    lineHeight: 22,
+    fontSize: FONT_SIZES.body,
+    fontWeight: '600',
+    marginTop: 4,
   },
   removePhotoText: {
-    fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-Medium',
-    marginTop: 10,
-    lineHeight: 20,
+    fontSize: FONT_SIZES.bodySmall,
+    fontWeight: '500',
+    marginTop: 8,
   },
   sectionContainer: {
     marginBottom: 24,
   },
   sectionTitle: {
     fontSize: FONT_SIZES.bodySmall,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginLeft: 20,
@@ -392,22 +388,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderBottomWidth: 0.5,
-    minHeight: 56,
   },
   inputRowLast: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    minHeight: 56,
+    paddingVertical: 14,
   },
   inputLabel: {
-    width: 85,
+    width: 80,
     fontSize: FONT_SIZES.body,
-    fontFamily: 'Pretendard-Medium',
-    lineHeight: 20,
+    fontWeight: '400',
   },
   inputWrapper: {
     flex: 1,
@@ -417,24 +410,22 @@ const styles = StyleSheet.create({
   },
   inputValue: {
     flex: 1,
-    fontSize: FONT_SIZES.bodyLarge,
+    fontSize: FONT_SIZES.body,
     textAlign: 'right',
-    paddingVertical: 4,
-    lineHeight: 22,
+    paddingVertical: 0,
   },
   readOnlyValue: {
     fontSize: FONT_SIZES.body,
-    lineHeight: 20,
   },
   lockIcon: {
-    fontSize: 16,
+    fontSize: 14,
     marginLeft: 8,
   },
   infoText: {
-    fontSize: FONT_SIZES.bodySmall,
+    fontSize: FONT_SIZES.caption,
     textAlign: 'center',
     paddingHorizontal: 40,
-    lineHeight: 20,
+    lineHeight: 18,
   },
 });
 

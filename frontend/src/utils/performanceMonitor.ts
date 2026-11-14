@@ -35,7 +35,7 @@ class PerformanceMonitor {
 
     const metric = this.metrics.get(metricName);
     if (!metric) {
-      if (__DEV__) console.warn(`⚠️ 측정되지 않은 메트릭: ${metricName}`);
+      console.warn(`⚠️ 측정되지 않은 메트릭: ${metricName}`);
       return null;
     }
 

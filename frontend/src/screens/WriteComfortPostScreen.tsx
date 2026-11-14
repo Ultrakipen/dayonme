@@ -1,5 +1,6 @@
 // src/screens/WriteComfortPostScreen.tsx
 import React, { useState, useCallback, useMemo, useEffect, memo, useRef } from 'react';
+import { showCrisisSupportIfNeeded } from '../utils/crisisSupport';
 import {
   ScrollView,
   View,
@@ -29,7 +30,6 @@ import { launchImageLibrary, launchCamera, ImagePickerResponse, MediaType, Photo
 import comfortWallService from '../services/api/comfortWallService';
 import postService from '../services/api/postService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import EncryptedStorage from 'react-native-encrypted-storage';
 import { normalizeImageUrl } from '../utils/imageUtils';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import ImageCarousel from '../components/ImageCarousel';
@@ -178,10 +178,21 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
   // 성공 모달 확인 핸들러
   const handleSuccessConfirm = useCallback(() => {
     setShowSuccessModal(false);
-    // 수정 완료 이벤트 발생 - PostDetail에서 즉시 새로고침
-    DeviceEventEmitter.emit('homeScreenRefresh', { postUpdated: true, postId });
+    // 저장된 emotion ID 가져오기 (폼 초기화 전에 저장된 값)
+    const savedEmotionId = (navigation as any).emotionIdForEvent;
+    // 수정 완료 이벤트 발생 - PostDetail과 ComfortMain에서 즉시 새로고침
+    DeviceEventEmitter.emit('homeScreenRefresh', {
+      postUpdated: true,
+      postId,
+      updatedData: {
+        anonymous_emotion_id: savedEmotionId,
+        is_anonymous: isAnonymous
+      }
+    });
+    // 저장된 값 정리
+    delete (navigation as any).emotionIdForEvent;
     navigation.goBack();
-  }, [navigation, postId]);
+  }, [navigation, postId, isAnonymous]);
 
   // 애니메이션 값들 (필수 애니메이션만 유지)
   const fadeAnim = useMemo(() => new Animated.Value(0), []);
@@ -286,7 +297,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
         navigation.goBack();
       }
     } catch (error) {
-      if (__DEV__) console.error('게시물 로드 오류:', error);
+      console.error('게시물 로드 오류:', error);
       Alert.alert('오류', '게시물을 불러오는 중 오류가 발생했습니다.');
       navigation.goBack();
     } finally {
@@ -466,8 +477,8 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             name: `image_${Date.now()}.jpg`,
           } as any);
 
-          // 인증 토큰 가져오기 (EncryptedStorage에서 가져옴)
-          const token = await EncryptedStorage.getItem('authToken');
+          // 인증 토큰 가져오기
+          const token = await AsyncStorage.getItem('authToken');
 
           const uploadUrl = `${API_CONFIG.BASE_URL.replace('/api', '')}/api/uploads/images`;
           if (__DEV__) console.log('📤 업로드 URL:', uploadUrl);
@@ -508,8 +519,8 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
           }
         } catch (error) {
           if (__DEV__) {
-            if (__DEV__) console.error('❌ 이미지 업로드 오류:', error);
-            if (__DEV__) console.error('❌ 오류 상세:', JSON.stringify(error, null, 2));
+            console.error('❌ 이미지 업로드 오류:', error);
+            console.error('❌ 오류 상세:', JSON.stringify(error, null, 2));
           }
           // 업로드 실패 시 로컬 URI 유지
           uploadedImageUrls.push(imageUri);
@@ -527,7 +538,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
   // 게시물 작성 핸들러
   const handleSubmit = useCallback(async () => {
     if (__DEV__) {
-      if (__DEV__) console.log('📝 [WriteComfortPost] handleSubmit 시작:', {
+      console.log('📝 [WriteComfortPost] handleSubmit 시작:', {
         selectedImagesLength: selectedImages.length,
         selectedImages: selectedImages,
         imageFeatureEnabled,
@@ -621,7 +632,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
       // 정상 진행
       await proceedWithSubmit(uploadedImageUrls);
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (__DEV__) console.error('게시물 작성 오류:', error);
       Alert.alert('오류', '게시물 작성 중 오류가 발생했습니다. 네트워크를 확인해주세요.');
       setIsSubmitting(false);
@@ -636,6 +647,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
       // 서버에 게시물 생성/수정 요청
       const trimmedTitle = title.trim();
       const trimmedContent = content.trim();
+      showCrisisSupportIfNeeded(`${trimmedTitle} ${trimmedContent}`);
 
       // ref에서 최신 감정 ID 가져오기 (클로저 문제 해결)
       const currentEmotionId = selectedEmotionIdRef.current;
@@ -657,6 +669,9 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
         if (isEditMode && postId) {
           // 수정 모드 - 위로와 공감 게시물이므로 comfortWallService 사용
           response = await comfortWallService.updatePost(postId, postData);
+
+          // 수정된 emotion ID를 navigation state에 저장 (폼 초기화 전에)
+          (navigation as any).emotionIdForEvent = currentEmotionId;
 
           // 수정 완료 모달 표시
           setShowSuccessModal(true);
@@ -697,10 +712,12 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
         setContent('');
         setSelectedTags([]);
         setSelectedImages([]);
+        setSelectedEmotionId(null); // 익명 캐릭터 선택 초기화
+        selectedEmotionIdRef.current = null; // ref도 초기화
 
         return; // 성공 시 함수 종료
 
-      } catch (apiError: unknown) {
+      } catch (apiError: any) {
         if (__DEV__) console.error(`게시물 ${isEditMode ? '수정' : '작성'} 실패:`, apiError);
         Alert.alert('오류', `게시물 ${isEditMode ? '수정' : '작성'}에 실패했습니다. 잠시 후 다시 시도해주세요.`);
         setIsSubmitting(false);
@@ -710,7 +727,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
       // 예상치 못한 응답 형태
       Alert.alert('알림', '게시물은 작성되었지만 응답을 확인할 수 없습니다. 목록을 확인해주세요.');
 
-    } catch (error: unknown) {
+    } catch (error: any) {
       if (__DEV__) console.error('게시물 작성 오류:', error);
       Alert.alert('오류', '게시물 작성 중 오류가 발생했습니다. 네트워크를 확인해주세요.');
     } finally {
@@ -764,7 +781,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             variant="h3"
             style={{
               fontSize: scale(16.5),
-              fontFamily: 'Pretendard-Bold',
+              fontWeight: '700',
               color: theme.text.primary,
               letterSpacing: -0.4,
               fontFamily: 'Pretendard-Bold'
@@ -795,7 +812,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             ) : (
               <StyledText
                 style={{
-                  fontFamily: 'Pretendard-SemiBold',
+                  fontWeight: '600',
                   fontSize: scale(14.5),
                   color: (!isFormValid || isSubmitting || isUploadingImages)
                     ? (isDark ? 'rgba(102, 126, 234, 0.4)' : 'rgba(102, 126, 234, 0.5)')
@@ -852,7 +869,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 variant="label"
                 style={{
                   fontSize: scale(16),
-                  fontFamily: 'Pretendard-Bold',
+                  fontWeight: '700',
                   color: isDark ? '#60a5fa' : theme.text.primary,
                   letterSpacing: -0.2,
                   marginBottom: scale(6)
@@ -899,7 +916,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               }}
               contentStyle={{
                 fontSize: scale(16),
-                fontFamily: 'Pretendard-Medium',
+                fontWeight: '500',
                 color: isDark ? '#FFFFFF' : '#1a1a1a',
                 lineHeight: scale(24),
                 paddingLeft: scale(4),
@@ -929,7 +946,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 style={{
                   fontSize: scale(14),
                   color: trimmedTitle.length < 5 ? '#FF6B6B' : theme.text.secondary,
-                  fontFamily: 'Pretendard-SemiBold',
+                  fontWeight: '600',
                   letterSpacing: -0.1
                 }}
               >
@@ -960,7 +977,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               variant="label"
               style={{
                 fontSize: scale(16),
-                fontFamily: 'Pretendard-Bold',
+                fontWeight: '700',
                 color: isDark ? '#60a5fa' : theme.text.primary,
                 letterSpacing: -0.2,
                 marginBottom: scale(6)
@@ -973,7 +990,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               style={{
                 fontSize: scale(14),
                 color: isDark ? 'rgba(255, 255, 255, 0.5)' : theme.text.secondary,
-                fontFamily: 'Pretendard-Regular',
+                fontWeight: '400',
                 lineHeight: scale(18)
               }}
             >
@@ -1018,7 +1035,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             }}
             contentStyle={{
               fontSize: scale(16),
-              fontFamily: 'Pretendard-Regular',
+              fontWeight: '400',
               color: isDark ? '#FFFFFF' : '#1a1a1a',
               lineHeight: scale(24),
               paddingLeft: scale(4),
@@ -1044,7 +1061,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               style={{
                 fontSize: scale(14),
                 color: trimmedContent.length < 20 ? '#FF6B6B' : theme.colors.textSecondary,
-                fontFamily: 'Pretendard-SemiBold',
+                fontWeight: '600',
                 letterSpacing: -0.1
               }}
             >
@@ -1088,7 +1105,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                     textAlign: 'center',
                     marginBottom: scale(8),
                     fontSize: scale(16),
-                    fontFamily: 'Pretendard-SemiBold',
+                    fontWeight: '600',
                     color: theme.text.primary
                   }}
                 >
@@ -1119,7 +1136,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 >
                   <StyledText style={{
                     fontSize: scale(17),
-                    fontFamily: 'Pretendard-SemiBold',
+                    fontWeight: '600',
                     color: isDark ? '#60a5fa' : '#0095F6'
                   }}>
                     다시 시도해보기
@@ -1134,7 +1151,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                     variant="label"
                     style={{
                       fontSize: scale(16),
-                      fontFamily: 'Pretendard-Bold',
+                      fontWeight: '700',
                       color: theme.text.primary,
                       letterSpacing: -0.2,
                       marginBottom: scale(6)
@@ -1147,7 +1164,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                     style={{
                       fontSize: scale(14),
                       color: theme.text.secondary,
-                      fontFamily: 'Pretendard-Regular',
+                      fontWeight: '400',
                       lineHeight: scale(18)
                     }}
                   >
@@ -1236,7 +1253,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                       style={{
                         textAlign: 'center',
                         fontSize: scale(13),
-                        fontFamily: 'Pretendard-SemiBold',
+                        fontWeight: '600',
                         color: isDark ? '#60a5fa' : '#0095F6'
                       }}
                     >
@@ -1273,7 +1290,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 variant="label"
                 style={{
                   fontSize: scale(16),
-                  fontFamily: 'Pretendard-Bold',
+                  fontWeight: '700',
                   color: theme.text.primary,
                   letterSpacing: -0.2,
                   marginBottom: scale(6)
@@ -1286,7 +1303,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 style={{
                   fontSize: scale(14),
                   color: theme.text.secondary,
-                  fontFamily: 'Pretendard-Regular',
+                  fontWeight: '400',
                   lineHeight: scale(18)
                 }}
               >
@@ -1331,7 +1348,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                   >
                     <StyledText style={{
                       fontSize: scale(15),
-                      fontFamily: 'Pretendard-SemiBold',
+                      fontWeight: '600',
                       color: isDark ? '#60a5fa' : '#0095F6',
                       marginRight: scale(6)
                     }}>
@@ -1374,7 +1391,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                   variant="body"
                   style={{
                     fontSize: scale(15),
-                    fontFamily: 'Pretendard-Bold',
+                    fontWeight: '700',
                     color: theme.text.primary,
                     letterSpacing: -0.2,
                     width: scale(80),
@@ -1389,7 +1406,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 style={{
                   fontSize: scale(14),
                   color: theme.text.secondary,
-                  fontFamily: 'Pretendard-Regular',
+                  fontWeight: '400',
                   lineHeight: scale(20)
                 }}
               >
@@ -1467,7 +1484,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                   variant="label"
                   style={{
                     fontSize: scale(16),
-                    fontFamily: 'Pretendard-Bold',
+                    fontWeight: '700',
                     color: theme.text.primary,
                     letterSpacing: -0.2,
                     marginBottom: scale(6)
@@ -1480,7 +1497,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                   style={{
                     fontSize: scale(14),
                     color: theme.text.secondary,
-                    fontFamily: 'Pretendard-Regular',
+                    fontWeight: '400',
                     lineHeight: scale(18)
                   }}
                 >
@@ -1571,7 +1588,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               <StyledText
                 variant="body"
                 style={{
-                  fontFamily: 'Pretendard-ExtraBold',
+                  fontWeight: '800',
                   color: isDark ? '#60a5fa' : '#0095F6',
                   fontSize: scale(16),
                   letterSpacing: -0.3
@@ -1601,7 +1618,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                     color: isDark ? 'rgba(255, 255, 255, 0.85)' : theme.text.primary,
                     lineHeight: scale(21),
                     flex: 1,
-                    fontFamily: 'Pretendard-Medium'
+                    fontWeight: '500'
                   }}
                 >
                   따뜻한 위로와 공감을 나누는 공간이에요
@@ -1625,7 +1642,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                     color: isDark ? 'rgba(255, 255, 255, 0.85)' : theme.text.primary,
                     lineHeight: scale(21),
                     flex: 1,
-                    fontFamily: 'Pretendard-Medium'
+                    fontWeight: '500'
                   }}
                 >
                   개인정보나 민감한 내용은 피해주세요
@@ -1649,7 +1666,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                     color: isDark ? 'rgba(255, 255, 255, 0.85)' : theme.text.primary,
                     lineHeight: scale(21),
                     flex: 1,
-                    fontFamily: 'Pretendard-Medium'
+                    fontWeight: '500'
                   }}
                 >
                   서로를 존중하는 따뜻한 말로 소통해주세요
@@ -1727,7 +1744,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                   <StyledText style={{
                     flex: 1,
                     fontSize: scale(15.5),
-                    fontFamily: 'Pretendard-SemiBold',
+                    fontWeight: '600',
                     color: theme.text.primary,
                     letterSpacing: -0.3
                   }}>갤러리</StyledText>
@@ -1761,7 +1778,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                   <StyledText style={{
                     flex: 1,
                     fontSize: scale(15.5),
-                    fontFamily: 'Pretendard-SemiBold',
+                    fontWeight: '600',
                     color: theme.text.primary,
                     letterSpacing: -0.3
                   }}>카메라</StyledText>
@@ -1781,7 +1798,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               >
                 <StyledText style={{
                   fontSize: scale(15),
-                  fontFamily: 'Pretendard-Medium',
+                  fontWeight: '500',
                   color: isDark ? 'rgba(255, 255, 255, 0.35)' : 'rgba(0, 0, 0, 0.35)',
                   letterSpacing: -0.2
                 }}>취소</StyledText>
@@ -1862,7 +1879,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 0,
     fontSize: FONT_SIZES.h3,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
     color: '#1a1a1a',
     overflow: 'hidden',
   },
@@ -1870,7 +1887,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 0,
     fontSize: FONT_SIZES.h4,
-    fontFamily: 'Pretendard-Regular',
+    fontWeight: '400',
     color: '#1a1a1a',
     textAlignVertical: 'top',
     overflow: 'hidden',
@@ -1981,7 +1998,7 @@ const styles = StyleSheet.create({
   imageNumberText: {
     color: '#FFFFFF',
     fontSize: FONT_SIZES.tiny,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   selectedImageContainer: {
     width: 100,
@@ -2148,7 +2165,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 22,
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700' as any,
     color: '#1a1a1a',
     marginBottom: 8,
     textAlign: 'center' as any,
@@ -2159,7 +2176,7 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center' as any,
     lineHeight: 20,
-    fontFamily: 'Pretendard-Regular',
+    fontWeight: '400' as any,
   },
   modalButtons: {
     paddingHorizontal: 16,
@@ -2213,14 +2230,14 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     fontSize: FONT_SIZES.h4,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600' as any,
     color: '#1a1a1a',
     marginBottom: 4,
     letterSpacing: -0.2,
   },
   buttonDescription: {
     fontSize: FONT_SIZES.caption,
-    fontFamily: 'Pretendard-Regular',
+    fontWeight: '400' as any,
     color: '#8E8E93',
     lineHeight: 16,
   },
@@ -2243,7 +2260,7 @@ const styles = StyleSheet.create({
   },
   modalCancelButtonText: {
     fontSize: FONT_SIZES.bodyLarge,
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600' as any,
     color: '#8E8E93',
     letterSpacing: -0.2,
   },

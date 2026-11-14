@@ -1,11 +1,23 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Card } from '../../../components/common/Card';
 import { useModernTheme } from '../../../hooks/useModernTheme';
 import { FONT_SIZES } from '../../../constants';
 import { getScale } from '../../../utils/responsive';
+import apiClient from '../../../services/api/client';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { TwemojiImage } from '../../../components/common/TwemojiImage';
-import { useReviewData } from '../ReviewDataContext';
+
+const CACHE_KEY = '@ai_emotion_analysis_cache';
+const CACHE_EXPIRY = 30 * 60 * 1000; // 30분
+
+interface AIAnalysis {
+  summary: string;
+  emotionTrend: 'improving' | 'stable' | 'declining';
+  suggestion: string;
+  keywords: string[];
+  confidence: number;
+}
 
 interface Props {
   period?: 'week' | 'month' | 'year';
@@ -16,35 +28,80 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
   const scale = getScale(360, 0.9, 1.3);
   const styles = useMemo(() => createStyles(scale), [scale]);
 
-  // Context에서 데이터 가져오기 (이미 로드됨)
-  const { data, loading, refresh } = useReviewData();
-  const analysis = data.aiAnalysis;
-
+  const [analysis, setAnalysis] = useState<AIAnalysis | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [typingText, setTypingText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
+  // 캐시 로드
+  const loadFromCache = useCallback(async (): Promise<AIAnalysis | null> => {
+    try {
+      const cached = await AsyncStorage.getItem(`${CACHE_KEY}_${period}`);
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached);
+        if (Date.now() - timestamp < CACHE_EXPIRY) {
+          return data;
+        }
+      }
+    } catch (err) {
+      if (__DEV__) console.warn('AI 분석 캐시 로드 실패:', err);
+    }
+    return null;
+  }, [period]);
+
+  // 캐시 저장
+  const saveToCache = useCallback(async (data: AIAnalysis) => {
+    try {
+      await AsyncStorage.setItem(`${CACHE_KEY}_${period}`, JSON.stringify({
+        data,
+        timestamp: Date.now()
+      }));
+    } catch (err) {
+      if (__DEV__) console.warn('AI 분석 캐시 저장 실패:', err);
+    }
+  }, [period]);
+
+  // 데이터 로드
+  const loadAnalysis = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      // 캐시 확인
+      const cachedData = await loadFromCache();
+      if (cachedData) {
+        setAnalysis(cachedData);
+        setLoading(false);
+        startTypingAnimation(cachedData.summary);
+        return;
+      }
+
+      const response = await apiClient.get(`/review/ai-analysis?period=${period}`);
+
+      if (response.data.status === 'success') {
+        const data = response.data.data;
+        setAnalysis(data);
+        await saveToCache(data);
+        startTypingAnimation(data.summary);
+      }
+    } catch (err) {
+      setError('AI 분석을 불러오는데 실패했습니다');
+      if (__DEV__) console.error('AI 분석 로드 실패:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [period, loadFromCache, saveToCache]);
+
   // 타이핑 애니메이션
   const startTypingAnimation = useCallback((text: string) => {
-    // undefined 문자열 제거 및 안전 처리
-    const safeText = (text || '')
-      .replace(/\.?undefined/g, '')
-      .replace(/undefined/g, '')
-      .trim();
-
-    if (!safeText) {
-      setTypingText('감정 데이터를 분석하고 있어요.');
-      setIsTyping(false);
-      return () => {};
-    }
-
     setIsTyping(true);
     setTypingText('');
 
     let index = 0;
     const interval = setInterval(() => {
-      if (index < safeText.length) {
-        const char = safeText.charAt(index);
-        setTypingText(prev => prev + char);
+      if (index < text.length) {
+        setTypingText(prev => prev + text[index]);
         index++;
       } else {
         clearInterval(interval);
@@ -55,12 +112,9 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
     return () => clearInterval(interval);
   }, []);
 
-  // 데이터가 로드되면 타이핑 애니메이션 시작
   useEffect(() => {
-    if (analysis?.summary) {
-      startTypingAnimation(analysis.summary);
-    }
-  }, [analysis, startTypingAnimation]);
+    loadAnalysis();
+  }, [loadAnalysis]);
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
@@ -89,12 +143,30 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
     }
   };
 
+  if (error) {
+    return (
+      <Card accessible={true} accessibilityLabel="AI 감정 분석">
+        <View style={styles.errorContainer}>
+          <Text style={[styles.errorText, { color: colors.textSecondary }]}>{error}</Text>
+          <TouchableOpacity
+            onPress={loadAnalysis}
+            style={[styles.retryButton, { marginTop: 12 * scale }]}
+            accessibilityRole="button"
+            accessibilityLabel="다시 시도"
+          >
+            <Text style={{ color: colors.primary, fontSize: FONT_SIZES.body }}>다시 시도</Text>
+          </TouchableOpacity>
+        </View>
+      </Card>
+    );
+  }
+
   if (loading || !analysis) {
     return (
-      <Card accessible={true} accessibilityLabel="나의 감정 흐름 로딩 중">
+      <Card accessible={true} accessibilityLabel="AI 감정 분석 로딩 중">
         <View style={styles.loadingContainer}>
           <TwemojiImage emoji="🤖" size={32 * scale} style={{ marginBottom: 12 * scale }} />
-          <Text style={[styles.loadingText, { color: colors.textSecondary, fontSize: FONT_SIZES.body * scale }]}>
+          <Text style={[styles.loadingText, { color: colors.textSecondary, fontSize: FONT_SIZES.body }]}>
             AI가 감정을 분석하고 있어요...
           </Text>
         </View>
@@ -103,19 +175,19 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
   }
 
   return (
-    <Card accessible={true} accessibilityLabel="나의 감정 흐름 결과">
+    <Card accessible={true} accessibilityLabel="AI 감정 분석 결과">
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <TwemojiImage emoji="🤖" size={FONT_SIZES.h4 * scale} style={{ marginRight: 8 * scale }} />
-            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h4 * scale }]}>
-              나의 감정 흐름
+            <TwemojiImage emoji="🤖" size={FONT_SIZES.h3 * scale} style={{ marginRight: 8 * scale }} />
+            <Text style={[styles.title, { color: colors.text, fontSize: FONT_SIZES.h3 }]}>
+              AI 감정 분석
             </Text>
           </View>
           <View style={[styles.trendBadge, { backgroundColor: getTrendColor(analysis.emotionTrend) + '20' }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TwemojiImage emoji={getTrendIcon(analysis.emotionTrend)} size={FONT_SIZES.caption * scale} style={{ marginRight: 4 * scale }} />
-              <Text style={{ fontSize: FONT_SIZES.caption * scale, color: getTrendColor(analysis.emotionTrend) }}>
+              <Text style={{ fontSize: FONT_SIZES.caption, color: getTrendColor(analysis.emotionTrend) }}>
                 {getTrendText(analysis.emotionTrend)}
               </Text>
             </View>
@@ -128,7 +200,7 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
         backgroundColor: isDark ? colors.surface : '#F8F9FA',
         borderLeftColor: colors.primary
       }]}>
-        <Text style={[styles.aiComment, { color: colors.text, fontSize: FONT_SIZES.body * scale, lineHeight: 24 * scale }]}>
+        <Text style={[styles.aiComment, { color: colors.text, fontSize: FONT_SIZES.body, lineHeight: 24 * scale }]}>
           "{typingText}"
           {isTyping && <Text style={{ color: colors.primary }}>|</Text>}
         </Text>
@@ -137,7 +209,7 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
       {/* 키워드 태그 */}
       {analysis.keywords && analysis.keywords.length > 0 && (
         <View style={styles.keywordsContainer}>
-          <Text style={[styles.keywordsLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption * scale }]}>
+          <Text style={[styles.keywordsLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.caption }]}>
             주요 키워드
           </Text>
           <View style={styles.keywordsList}>
@@ -146,7 +218,7 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
                 key={index}
                 style={[styles.keywordTag, { backgroundColor: colors.primary + '15' }]}
               >
-                <Text style={[styles.keywordText, { color: colors.primary, fontSize: FONT_SIZES.caption * scale }]}>
+                <Text style={[styles.keywordText, { color: colors.primary, fontSize: FONT_SIZES.caption }]}>
                   #{keyword}
                 </Text>
               </View>
@@ -161,7 +233,7 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
           backgroundColor: isDark ? 'rgba(76, 175, 80, 0.1)' : '#E8F5E9'
         }]}>
           <TwemojiImage emoji="💡" size={FONT_SIZES.bodyLarge * scale} style={{ marginRight: 8 * scale }} />
-          <Text style={[styles.suggestionText, { color: colors.text, fontSize: FONT_SIZES.bodySmall * scale, lineHeight: 20 * scale }]}>
+          <Text style={[styles.suggestionText, { color: colors.text, fontSize: FONT_SIZES.bodySmall, lineHeight: 20 * scale }]}>
             {analysis.suggestion}
           </Text>
         </View>
@@ -169,7 +241,7 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
 
       {/* 신뢰도 */}
       <View style={styles.confidenceContainer}>
-        <Text style={[styles.confidenceLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny * scale }]}>
+        <Text style={[styles.confidenceLabel, { color: colors.textSecondary, fontSize: FONT_SIZES.tiny }]}>
           분석 신뢰도
         </Text>
         <View style={[styles.confidenceBar, { backgroundColor: colors.border }]}>
@@ -180,7 +252,7 @@ export const AIEmotionAnalysis: React.FC<Props> = React.memo(({ period = 'week' 
             }]}
           />
         </View>
-        <Text style={[styles.confidenceValue, { color: colors.primary, fontSize: FONT_SIZES.tiny * scale }]}>
+        <Text style={[styles.confidenceValue, { color: colors.primary, fontSize: FONT_SIZES.tiny }]}>
           {analysis.confidence}%
         </Text>
       </View>
@@ -198,7 +270,7 @@ const createStyles = (scale: number) => StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
   },
   trendBadge: {
     paddingHorizontal: 10 * scale,
@@ -214,13 +286,13 @@ const createStyles = (scale: number) => StyleSheet.create({
   },
   aiComment: {
     fontStyle: 'italic',
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   keywordsContainer: {
     marginBottom: 16 * scale,
   },
   keywordsLabel: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
     marginBottom: 8 * scale,
   },
   keywordsList: {
@@ -234,7 +306,7 @@ const createStyles = (scale: number) => StyleSheet.create({
     borderRadius: 16 * scale,
   },
   keywordText: {
-    fontFamily: 'Pretendard-SemiBold',
+    fontWeight: '600',
   },
   suggestionBox: {
     flexDirection: 'row',
@@ -245,7 +317,7 @@ const createStyles = (scale: number) => StyleSheet.create({
   },
   suggestionText: {
     flex: 1,
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   confidenceContainer: {
     flexDirection: 'row',
@@ -253,7 +325,7 @@ const createStyles = (scale: number) => StyleSheet.create({
     gap: 8 * scale,
   },
   confidenceLabel: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   confidenceBar: {
     flex: 1,
@@ -266,7 +338,7 @@ const createStyles = (scale: number) => StyleSheet.create({
     borderRadius: 2 * scale,
   },
   confidenceValue: {
-    fontFamily: 'Pretendard-Bold',
+    fontWeight: '700',
     minWidth: 35 * scale,
     textAlign: 'right',
   },
@@ -278,7 +350,7 @@ const createStyles = (scale: number) => StyleSheet.create({
     marginBottom: 12 * scale,
   },
   loadingText: {
-    fontFamily: 'Pretendard-Medium',
+    fontWeight: '500',
   },
   errorContainer: {
     alignItems: 'center',

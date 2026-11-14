@@ -10,11 +10,9 @@ import {
   View,
   StatusBar,
   PixelRatio,
-  Pressable,
-  Modal
+  Pressable
 } from 'react-native';
 import { TextInput, ActivityIndicator, Checkbox } from 'react-native-paper';
-import authService from '../services/api/authService';
 import LinearGradient from 'react-native-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -103,14 +101,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // 계정 복구 모달 상태
-  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
-  const [recoveryData, setRecoveryData] = useState<{
-    days_remaining: number | null;
-    deleted_at: string | null;
-  } | null>(null);
-  const [isRecovering, setIsRecovering] = useState(false);
-
   // TextInput ref 생성
   const emailRef = useRef<any>(null);
   const passwordRef = useRef<any>(null);
@@ -125,7 +115,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           setRememberEmail(true);
         }
       } catch (error) {
-        if (__DEV__) console.error('이메일 로드 실패:', error);
+        console.error('이메일 로드 실패:', error);
       }
     };
     loadSavedEmail();
@@ -179,7 +169,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       });
       clearTimeout(timeoutId);
       return response;
-    } catch (error: unknown) {
+    } catch (error: any) {
       clearTimeout(timeoutId);
       if (error.name === 'AbortError') {
         throw new Error('요청 시간이 초과되었습니다. 다시 시도해주세요.');
@@ -238,17 +228,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         await AsyncStorage.removeItem('savedEmail');
       }
 
-      // rememberMe 옵션과 함께 로그인 (타임아웃 적용)
-      await Promise.race([
-        login({ email, password, rememberMe }),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('요청 시간이 초과되었습니다. 다시 시도해주세요.')), API_TIMEOUT)
-        )
-      ]);
+      // rememberMe 옵션과 함께 로그인
+      await login({ email, password, rememberMe });
 
       // 로그인 성공 후 Main으로 이동
       // Auth가 모달로 열리므로 부모 네비게이터를 통해 reset 해야 함
-      if (__DEV__) console.log('🚀 로그인 성공 - Main으로 화면 전환 시도');
+      console.log('🚀 로그인 성공 - Main으로 화면 전환 시도');
       const parentNav = navigation.getParent();
       if (parentNav) {
         parentNav.dispatch(
@@ -257,7 +242,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             routes: [{ name: 'Main' }],
           })
         );
-        if (__DEV__) console.log('✅ 부모 네비게이터로 Main 전환 완료');
+        console.log('✅ 부모 네비게이터로 Main 전환 완료');
       } else {
         // 부모가 없으면 현재 네비게이터 사용
         navigation.dispatch(
@@ -266,116 +251,31 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             routes: [{ name: 'Main' }],
           })
         );
-        if (__DEV__) console.log('✅ 현재 네비게이터로 Main 전환 완료');
+        console.log('✅ 현재 네비게이터로 Main 전환 완료');
       }
-    } catch (error: unknown) {
-      const err = error as { status?: string; message?: string; data?: any; httpStatus?: number };
-      if (__DEV__) console.log('🔍 로그인 에러 수신:', {
-        status: err.status,
-        httpStatus: err.httpStatus,
-        hasData: !!err.data,
-        canRecover: err.data?.can_recover,
-        message: err.message
-      });
+    } catch (error: any) {
+      // 보안: 서버 에러 메시지를 직접 노출하지 않고 일반화된 메시지 사용
+      const status = error?.response?.status;
+      let errorMessage = '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
 
-      // 삭제 예정 계정 처리 (30일 유예기간 내)
-      if (err.status === 'pending_deletion' && err.data?.can_recover) {
-        if (__DEV__) console.log('✅ pending_deletion 감지 - 복구 모달 표시');
-        setRecoveryData({
-          days_remaining: err.data.days_remaining,
-          deleted_at: err.data.deleted_at
-        });
-        setShowRecoveryModal(true);
-        return;
+      if (status === 401 || status === 400) {
+        errorMessage = '이메일 또는 비밀번호가 올바르지 않습니다.';
+      } else if (status === 429) {
+        errorMessage = '너무 많은 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
       }
 
-      // Rate Limit 에러 처리
-      if (err.httpStatus === 429) {
-        showAlert.error(
-          '로그인 제한',
-          '너무 많은 로그인 시도가 있었습니다.\n15분 후에 다시 시도해주세요.'
-        );
-        return;
-      }
-
-      // 인증 실패 에러 처리
-      if (err.httpStatus === 401 || err.httpStatus === 400) {
-        showAlert.error(
-          '로그인 실패',
-          '이메일 또는 비밀번호가 올바르지 않습니다.\n다시 확인해주세요.'
-        );
-        return;
-      }
-
-      // 기타 에러
-      const errorMessage = err.message || '로그인 중 오류가 발생했습니다.\n잠시 후 다시 시도해주세요.';
       showAlert.error('로그인 실패', errorMessage);
     } finally {
       setIsLoading(false);
     }
   }, [email, password, rememberEmail, rememberMe, isLoading, validateForm, login]);
 
-  // 계정 복구 핸들러
-  const handleRecoverAccount = useCallback(async () => {
-    if (__DEV__) console.log('🔄 계정 복구 버튼 클릭됨', { email, hasPassword: !!password, isRecovering });
-    if (isRecovering) {
-      if (__DEV__) console.log('⚠️ 이미 복구 진행 중 - 중복 클릭 방지');
-      return;
-    }
-    setIsRecovering(true);
-
-    try {
-      if (__DEV__) console.log('🚀 복구 API 호출 시작:', email);
-      const response = await Promise.race([
-        authService.recoverAccount(email, password),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('요청 시간이 초과되었습니다. 다시 시도해주세요.')), API_TIMEOUT)
-        )
-      ]) as any;
-
-      if (response.status === 'success' && response.data) {
-        // 토큰 저장
-        if (response.data.token) {
-          await AsyncStorage.setItem('authToken', response.data.token);
-        }
-        if (response.data.user) {
-          await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
-        }
-
-        setShowRecoveryModal(false);
-        showAlert.success('복구 완료', '계정이 성공적으로 복구되었습니다.');
-
-        // Main으로 이동
-        await checkAuthStatus();
-        const parentNav = navigation.getParent();
-        if (parentNav) {
-          parentNav.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{ name: 'Main' }],
-            })
-          );
-        }
-      }
-    } catch (error: unknown) {
-      const err = error as { message?: string };
-      showAlert.error('복구 실패', err.message || '계정 복구에 실패했습니다.');
-    } finally {
-      setIsRecovering(false);
-    }
-  }, [email, password, isRecovering, checkAuthStatus, navigation]);
-
   // 네이버 로그인 핸들러
   const handleNaverLogin = useCallback(async () => {
     if (isSocialLoading) return;
     setIsSocialLoading(true);
     try {
-      await Promise.race([
-        naverNativeLogin(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('요청 시간이 초과되었습니다. 다시 시도해주세요.')), API_TIMEOUT)
-        )
-      ]);
+      await naverNativeLogin();
       await checkAuthStatus();
 
       // 소셜 로그인 성공 후 Main으로 이동
@@ -395,26 +295,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           })
         );
       }
-    } catch (error: unknown) {
-      if (__DEV__) console.error('네이버 로그인 오류:', error);
-      const err = error as { message?: string };
-      showAlert.error('로그인 실패', err.message || '네이버 로그인 중 오류가 발생했습니다.');
+    } catch (error: any) {
+      console.error('네이버 로그인 오류:', error);
+      showAlert.error('로그인 실패', '네이버 로그인 중 오류가 발생했습니다.');
     } finally {
       setIsSocialLoading(false);
     }
-  }, [isSocialLoading, checkAuthStatus, navigation]);
+  }, [isSocialLoading, checkAuthStatus]);
 
   // 카카오 로그인 핸들러
   const handleKakaoLogin = useCallback(async () => {
     if (isSocialLoading) return;
     setIsSocialLoading(true);
     try {
-      await Promise.race([
-        kakaoNativeLogin(),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('요청 시간이 초과되었습니다. 다시 시도해주세요.')), API_TIMEOUT)
-        )
-      ]);
+      await kakaoNativeLogin();
       await checkAuthStatus();
 
       // 소셜 로그인 성공 후 Main으로 이동
@@ -434,14 +328,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           })
         );
       }
-    } catch (error: unknown) {
-      if (__DEV__) console.error('카카오 로그인 오류:', error);
-      const err = error as { message?: string };
-      showAlert.error('로그인 실패', err.message || '카카오 로그인 중 오류가 발생했습니다.');
+    } catch (error: any) {
+      console.error('카카오 로그인 오류:', error);
+      showAlert.error('로그인 실패', '카카오 로그인 중 오류가 발생했습니다.');
     } finally {
       setIsSocialLoading(false);
     }
-  }, [isSocialLoading, checkAuthStatus, navigation]);
+  }, [isSocialLoading, checkAuthStatus]);
 
   // 비밀번호 표시 토글
   const togglePasswordVisibility = useCallback(() => {
@@ -509,7 +402,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       fontSize: normalizeFontSize(12),
       marginTop: spacing(5),
       marginLeft: spacing(4),
-      fontFamily: 'Pretendard-SemiBold' as const
+      fontWeight: '600' as const
     },
     loginButton: {
       borderRadius: spacing(14),
@@ -608,7 +501,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                         >
                           <Text style={{
                             fontSize: normalizeFontSize(18),
-                            fontFamily: 'Pretendard-Black',
+                            fontWeight: '900',
                             color: COLORS.white
                           }}>
                             💙
@@ -618,11 +511,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                       <View style={{ alignItems: 'center' }}>
                         <Text style={{
                           fontSize: normalizeFontSize(26),
-                          fontFamily: 'Pretendard-Black',
-                          color: isDark ? COLORS.white : COLORS.gradient.primary[0],
+                          fontWeight: '900',
+                          color: isDark ? COLORS.white : '#1a1a1a',
                           letterSpacing: -0.5,
                           marginBottom: spacing(6),
-                          textShadowColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(102, 126, 234, 0.15)',
+                          textShadowColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
                           textShadowOffset: { width: 0, height: 1 },
                           textShadowRadius: 2
                         }}>
@@ -631,7 +524,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                         <Text style={{
                           fontSize: normalizeFontSize(13),
                           color: isDark ? COLORS.text.secondary.dark : '#555',
-                          fontFamily: 'Pretendard-SemiBold',
+                          fontWeight: '600',
                           textAlign: 'center',
                           lineHeight: normalizeFontSize(19)
                         }}>
@@ -768,7 +661,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           <Text style={{
                             fontSize: normalizeFontSize(13),
                             color: isDark ? COLORS.text.secondary.dark : '#555',
-                            fontFamily: 'Pretendard-Medium',
+                            fontWeight: '500',
                             marginLeft: spacing(2)
                           }}>
                             이메일 기억하기
@@ -793,7 +686,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           <Text style={{
                             fontSize: normalizeFontSize(13),
                             color: isDark ? COLORS.text.secondary.dark : '#555',
-                            fontFamily: 'Pretendard-Medium',
+                            fontWeight: '500',
                             marginLeft: spacing(2)
                           }}>
                             로그인 상태 유지
@@ -837,7 +730,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                             <Text style={{
                               color: COLORS.white,
                               fontSize: normalizeFontSize(15.5),
-                              fontFamily: 'Pretendard-Bold',
+                              fontWeight: '700',
                               textAlign: 'center',
                               letterSpacing: 0.3
                             }}>
@@ -861,7 +754,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                         <Text style={{
                           color: COLORS.gradient.primary[0],
                           fontSize: normalizeFontSize(13.5),
-                          fontFamily: 'Pretendard-SemiBold'
+                          fontWeight: '600'
                         }}>
                           비밀번호를 잊으셨나요?
                         </Text>
@@ -882,7 +775,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           paddingHorizontal: spacing(10),
                           fontSize: normalizeFontSize(13),
                           color: isDark ? COLORS.placeholder.dark : '#8e8e93',
-                          fontFamily: 'Pretendard-SemiBold'
+                          fontWeight: '600'
                         }}>
                           간편 로그인
                         </Text>
@@ -921,14 +814,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                             }}>
                               <Text style={{
                                 fontSize: normalizeFontSize(12),
-                                fontFamily: 'Pretendard-Black',
+                                fontWeight: '900',
                                 color: COLORS.kakao.background
                               }}>K</Text>
                             </View>
                             <Text style={{
                               color: COLORS.kakao.text,
                               fontSize: normalizeFontSize(14.5),
-                              fontFamily: 'Pretendard-Bold',
+                              fontWeight: '700',
                               letterSpacing: 0.3
                             }}>
                               카카오로 계속하기
@@ -962,14 +855,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                             }}>
                               <Text style={{
                                 fontSize: normalizeFontSize(12),
-                                fontFamily: 'Pretendard-Black',
+                                fontWeight: '900',
                                 color: COLORS.naver.background
                               }}>N</Text>
                             </View>
                             <Text style={{
                               color: COLORS.naver.text,
                               fontSize: normalizeFontSize(14.5),
-                              fontFamily: 'Pretendard-Bold',
+                              fontWeight: '700',
                               letterSpacing: 0.3
                             }}>
                               네이버로 계속하기
@@ -990,7 +883,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                         <Text style={{
                           color: isDark ? COLORS.text.secondary.dark : COLORS.text.secondary.light,
                           fontSize: normalizeFontSize(13.5),
-                          fontFamily: 'Pretendard-Regular'
+                          fontWeight: '400'
                         }}>
                           계정이 없으신가요?{' '}
                         </Text>
@@ -1006,7 +899,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           <Text style={{
                             color: COLORS.gradient.primary[0],
                             fontSize: normalizeFontSize(13.5),
-                            fontFamily: 'Pretendard-Bold'
+                            fontWeight: '700'
                           }}>
                             회원가입
                           </Text>
@@ -1020,183 +913,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
           </LinearGradient>
         </View>
       </TouchableWithoutFeedback>
-
-      {/* 계정 복구 모달 */}
-      <Modal
-        visible={showRecoveryModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowRecoveryModal(false)}
-      >
-        <View style={{
-          flex: 1,
-          backgroundColor: 'rgba(0, 0, 0, 0.6)',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: spacing(20)
-        }}>
-          <View style={{
-            backgroundColor: isDark ? '#1e1e1e' : COLORS.white,
-            borderRadius: spacing(20),
-            padding: spacing(24),
-            width: '100%',
-            maxWidth: 340,
-            shadowColor: COLORS.black,
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.3,
-            shadowRadius: 20,
-            elevation: 20
-          }}>
-            {/* 아이콘 */}
-            <View style={{
-              alignItems: 'center',
-              marginBottom: spacing(16)
-            }}>
-              <View style={{
-                width: spacing(60),
-                height: spacing(60),
-                borderRadius: spacing(30),
-                backgroundColor: isDark ? '#2d2d2d' : '#fff3e0',
-                justifyContent: 'center',
-                alignItems: 'center'
-              }}>
-                <MaterialCommunityIcons
-                  name="account-reactivate"
-                  size={spacing(32)}
-                  color="#ff9800"
-                />
-              </View>
-            </View>
-
-            {/* 제목 */}
-            <Text style={{
-              fontSize: normalizeFontSize(18),
-              fontFamily: 'Pretendard-Bold',
-              color: isDark ? COLORS.white : '#1a1a1a',
-              textAlign: 'center',
-              marginBottom: spacing(12)
-            }}>
-              계정 복구 안내
-            </Text>
-
-            {/* 설명 */}
-            <Text style={{
-              fontSize: normalizeFontSize(14),
-              color: isDark ? COLORS.text.secondary.dark : '#555',
-              textAlign: 'center',
-              lineHeight: normalizeFontSize(22),
-              marginBottom: spacing(8)
-            }}>
-              이 계정은 삭제 예정 상태입니다.
-            </Text>
-
-            {recoveryData && (
-              <View style={{
-                backgroundColor: isDark ? '#2d2d2d' : '#f5f5f5',
-                borderRadius: spacing(12),
-                padding: spacing(16),
-                marginBottom: spacing(20)
-              }}>
-                {recoveryData.days_remaining !== null ? (
-                  <>
-                    <Text style={{
-                      fontSize: normalizeFontSize(13),
-                      color: isDark ? COLORS.text.secondary.dark : '#666',
-                      textAlign: 'center',
-                      marginBottom: spacing(4)
-                    }}>
-                      남은 복구 기간
-                    </Text>
-                    <Text style={{
-                      fontSize: normalizeFontSize(24),
-                      fontFamily: 'Pretendard-ExtraBold',
-                      color: '#ff9800',
-                      textAlign: 'center'
-                    }}>
-                      {recoveryData.days_remaining}일
-                    </Text>
-                    <Text style={{
-                      fontSize: normalizeFontSize(12),
-                      color: isDark ? '#888' : '#999',
-                      textAlign: 'center',
-                      marginTop: spacing(8)
-                    }}>
-                      복구 기간이 지나면 계정이 완전히 삭제됩니다
-                    </Text>
-                  </>
-                ) : (
-                  <Text style={{
-                    fontSize: normalizeFontSize(14),
-                    color: isDark ? COLORS.text.secondary.dark : '#666',
-                    textAlign: 'center',
-                    lineHeight: normalizeFontSize(22)
-                  }}>
-                    계정 복구 버튼을 누르면{'\n'}바로 로그인됩니다
-                  </Text>
-                )}
-              </View>
-            )}
-
-            {/* 버튼 */}
-            <VStack style={{ gap: spacing(10) }}>
-              <Pressable
-                onPress={handleRecoverAccount}
-                disabled={isRecovering}
-              >
-                <LinearGradient
-                  colors={COLORS.gradient.primary}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={{
-                    borderRadius: spacing(12),
-                    paddingVertical: spacing(14),
-                    opacity: isRecovering ? 0.7 : 1
-                  }}
-                >
-                  <View style={{
-                    flexDirection: 'row',
-                    justifyContent: 'center',
-                    alignItems: 'center'
-                  }}>
-                    {isRecovering && (
-                      <ActivityIndicator
-                        size="small"
-                        color={COLORS.white}
-                        style={{ marginRight: spacing(8) }}
-                      />
-                    )}
-                    <Text style={{
-                      color: COLORS.white,
-                      fontSize: normalizeFontSize(15),
-                      fontFamily: 'Pretendard-Bold',
-                      textAlign: 'center'
-                    }}>
-                      {isRecovering ? '복구 중...' : '계정 복구하기'}
-                    </Text>
-                  </View>
-                </LinearGradient>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setShowRecoveryModal(false)}
-                disabled={isRecovering}
-                style={{
-                  paddingVertical: spacing(12),
-                  alignItems: 'center'
-                }}
-              >
-                <Text style={{
-                  color: isDark ? COLORS.text.secondary.dark : '#888',
-                  fontSize: normalizeFontSize(14),
-                  fontFamily: 'Pretendard-Medium'
-                }}>
-                  취소
-                </Text>
-              </Pressable>
-            </VStack>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
     </>
   );

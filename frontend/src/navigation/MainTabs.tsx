@@ -4,8 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { ActivityIndicator, View, Dimensions, PixelRatio, Platform } from 'react-native';
-import { NavigationProp } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { NavigationProp, getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import HomeStack from './HomeStack';
 import ComfortStack from './ComfortStack';
 import ChallengeStack from './ChallengeStack';
@@ -16,6 +15,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import { MainTabParamList } from '../types/navigation';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const Stack = createStackNavigator();
@@ -23,20 +23,20 @@ const Stack = createStackNavigator();
 // 인스타그램 스타일 탭바 크기 (2026 모바일 트렌드)
 const getResponsiveSizes = () => {
   return {
-    TAB_BAR_HEIGHT: 60,           // 탭바 높이 증가
-    TAB_ITEM_HEIGHT: 60,          // 아이템 높이
-    ICON_SIZE_ACTIVE: 26,         // 활성 아이콘 크기 (인스타그램과 동일)
-    ICON_SIZE_INACTIVE: 26,       // 비활성 아이콘도 같은 크기로 통일
-    FONT_SIZE: 12,                // 폰트 크기 (11→12 가독성 향상)
-    PADDING_BOTTOM: 12,           // 하단 패딩 증가 (텍스트와 하단 여백)
+    TAB_BAR_HEIGHT: 50,           // 탭바 높이
+    TAB_ITEM_HEIGHT: 50,          // 아이템 높이
+    ICON_SIZE_ACTIVE: 24,         // 활성 아이콘 크기
+    ICON_SIZE_INACTIVE: 24,       // 비활성 아이콘 크기
+    FONT_SIZE: 11,                // 폰트 크기
+    PADDING_BOTTOM: 8,            // 하단 패딩
     PADDING_TOP: 0,               // 상단 패딩
     SHADOW_OFFSET: -2,            // 그림자 오프셋
     SHADOW_RADIUS: 8,             // 그림자 반경
     MARGIN_TOP: 0,                // 아이콘 상단 마진
     MARGIN_TOP_LABEL: 2,          // 라벨 상단 마진
-    MARGIN_BOTTOM: 4,             // 라벨 하단 마진 추가
-    PADDING_ITEM_TOP: 4,          // 아이템 상단 패딩
-    PADDING_ITEM_BOTTOM: 4,       // 아이템 하단 패딩
+    MARGIN_BOTTOM: 2,             // 라벨 하단 마진
+    PADDING_ITEM_TOP: 3,          // 아이템 상단 패딩
+    PADDING_ITEM_BOTTOM: 3,       // 아이템 하단 패딩
   };
 };
 
@@ -47,6 +47,31 @@ const MainTabs = () => {
 
   // 반응형 크기 가져오기
   const sizes = getResponsiveSizes();
+
+  // 화면 비율에 따른 동적 여백 계산
+  const { width, height } = Dimensions.get('window');
+  const aspectRatio = height / width; // 세로/가로 비율
+
+  // 기기 타입별 여백 계산
+  const getBottomPadding = () => {
+    // insets.bottom이 충분히 크면 시스템 값 우선 사용
+    if (insets.bottom > 10) {
+      return insets.bottom + 4;
+    }
+
+    // 플립/폴더블 같은 긴 화면 (2.3 이상)
+    if (aspectRatio > 2.3) {
+      return 12;
+    }
+
+    // 일반 스마트폰
+    return 8;
+  };
+
+  const getTabBarHeight = () => {
+    const basePadding = getBottomPadding();
+    return sizes.TAB_BAR_HEIGHT + basePadding;
+  };
 
   // 로딩 중일 때
   if (isLoading) {
@@ -63,19 +88,17 @@ const MainTabs = () => {
   return (
     <Tab.Navigator
       screenOptions={{
-        // 키보드가 올라오면 탭바 숨김 (Android)
-        tabBarHideOnKeyboard: true,
         // 진하고 뚜렷한 감정 앱 컬러 팔레트
         tabBarActiveTintColor: isDark ? '#A78BFA' : '#667eea', // 더 선명한 보라색
         tabBarInactiveTintColor: isDark ? '#9ca3af' : '#9ca3af',
         tabBarStyle: {
           backgroundColor: isDark ? '#1f2937' : '#FFFFFF', // 순백으로 변경 (대비 향상)
           borderTopWidth: 0,
-          // 갤럭시 플립 등 긴 화면 대응: 최소 패딩 20 보장
-          paddingBottom: Math.max(sizes.PADDING_BOTTOM, insets.bottom, 20),
+          // 화면 비율에 따라 동적으로 계산된 여백
+          paddingBottom: getBottomPadding(),
           paddingTop: sizes.PADDING_TOP,
-          // 갤럭시 플립 대응: 최소 높이 80 보장
-          height: Math.max(sizes.TAB_BAR_HEIGHT + insets.bottom, 80),
+          // 화면 비율에 따라 동적으로 계산된 높이
+          height: getTabBarHeight(),
           // 부드럽고 자연스러운 그림자
           elevation: 16,
           shadowColor: isDark ? '#000' : '#667eea',
@@ -94,7 +117,7 @@ const MainTabs = () => {
         },
         tabBarLabelStyle: {
           fontSize: sizes.FONT_SIZE,
-          fontFamily: 'Pretendard-Bold', // Bold로 강화
+          fontWeight: '700', // Bold로 강화
           marginTop: sizes.MARGIN_TOP_LABEL,
           marginBottom: sizes.MARGIN_BOTTOM,
           letterSpacing: -0.2, // 글자 간격 조정
@@ -104,9 +127,27 @@ const MainTabs = () => {
       <Tab.Screen
         name="Home"
         component={HomeStack}
-        options={{
+        options={({ route }) => ({
           headerShown: false,
           tabBarLabel: '나의 하루',
+          tabBarStyle: (() => {
+            const routeName = getFocusedRouteNameFromRoute(route);
+            if (routeName === 'PostDetail' || routeName === 'WriteMyDay' || routeName === 'EditPost') {
+              return { display: 'none' };
+            }
+            return {
+              backgroundColor: isDark ? '#1f2937' : '#FFFFFF',
+              borderTopWidth: 0,
+              paddingBottom: getBottomPadding(),
+              paddingTop: sizes.PADDING_TOP,
+              height: getTabBarHeight(),
+              elevation: 16,
+              shadowColor: isDark ? '#000' : '#667eea',
+              shadowOffset: { width: 0, height: sizes.SHADOW_OFFSET },
+              shadowOpacity: isDark ? 0.3 : 0.12,
+              shadowRadius: sizes.SHADOW_RADIUS,
+            };
+          })(),
           tabBarIcon: ({ color, size, focused }: { color: string; size: number; focused: boolean }) => {
             try {
               return (
@@ -121,7 +162,7 @@ const MainTabs = () => {
               return null;
             }
           },
-        }}
+        })}
         listeners={({ navigation }: { navigation: NavigationProp<MainTabParamList> }) => ({
           tabPress: (e: any) => {
             e.preventDefault();
@@ -135,9 +176,27 @@ const MainTabs = () => {
       <Tab.Screen
         name="Comfort"
         component={ComfortStack}
-        options={{
+        options={({ route }) => ({
           headerShown: false,
           tabBarLabel: '위로와 공감',
+          tabBarStyle: (() => {
+            const routeName = getFocusedRouteNameFromRoute(route);
+            if (routeName === 'PostDetail' || routeName === 'WriteComfortPost') {
+              return { display: 'none' };
+            }
+            return {
+              backgroundColor: isDark ? '#1f2937' : '#FFFFFF',
+              borderTopWidth: 0,
+              paddingBottom: getBottomPadding(),
+              paddingTop: sizes.PADDING_TOP,
+              height: getTabBarHeight(),
+              elevation: 16,
+              shadowColor: isDark ? '#000' : '#667eea',
+              shadowOffset: { width: 0, height: sizes.SHADOW_OFFSET },
+              shadowOpacity: isDark ? 0.3 : 0.12,
+              shadowRadius: sizes.SHADOW_RADIUS,
+            };
+          })(),
           tabBarIcon: ({ color, size, focused }: { color: string; size: number; focused: boolean }) => (
             <MaterialCommunityIcons
               name={focused ? 'heart' : 'heart-outline'}
@@ -145,7 +204,7 @@ const MainTabs = () => {
               size={focused ? sizes.ICON_SIZE_ACTIVE : sizes.ICON_SIZE_INACTIVE}
             />
           ),
-        }}
+        })}
         listeners={({ navigation }: { navigation: NavigationProp<MainTabParamList> }) => ({
           tabPress: (e: any) => {
             e.preventDefault();
@@ -159,9 +218,27 @@ const MainTabs = () => {
       <Tab.Screen
         name="Challenge"
         component={ChallengeStack}
-        options={{
+        options={({ route }) => ({
           headerShown: false,
           tabBarLabel: '감정 챌린지',
+          tabBarStyle: (() => {
+            const routeName = getFocusedRouteNameFromRoute(route);
+            if (routeName === 'PostDetail' || routeName === 'ChallengeDetail') {
+              return { display: 'none' };
+            }
+            return {
+              backgroundColor: isDark ? '#1f2937' : '#FFFFFF',
+              borderTopWidth: 0,
+              paddingBottom: getBottomPadding(),
+              paddingTop: sizes.PADDING_TOP,
+              height: getTabBarHeight(),
+              elevation: 16,
+              shadowColor: isDark ? '#000' : '#667eea',
+              shadowOffset: { width: 0, height: sizes.SHADOW_OFFSET },
+              shadowOpacity: isDark ? 0.3 : 0.12,
+              shadowRadius: sizes.SHADOW_RADIUS,
+            };
+          })(),
           tabBarIcon: ({ color, size, focused }: { color: string; size: number; focused: boolean }) => (
             <MaterialCommunityIcons
               name={focused ? 'trophy' : 'trophy-outline'}
@@ -169,7 +246,7 @@ const MainTabs = () => {
               size={focused ? sizes.ICON_SIZE_ACTIVE : sizes.ICON_SIZE_INACTIVE}
             />
           ),
-        }}
+        })}
         listeners={({ navigation }: { navigation: NavigationProp<MainTabParamList> }) => ({
           tabPress: (e: any) => {
             e.preventDefault();

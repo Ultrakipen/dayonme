@@ -1,5 +1,5 @@
 // src/hooks/HomeScreen/useWeeklyEmotions.ts
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import emotionService from '../../services/api/emotionService';
 import { devLog } from '../../utils/security';
 
@@ -23,7 +23,19 @@ export const useWeeklyEmotions = (userId?: number) => {
   const [weeklyEmotions, setWeeklyEmotions] = useState<WeeklyEmotion[]>([]);
 
   // 주간 감정 데이터 로드
-  const loadWeeklyEmotions = useCallback(async () => {
+  // 동시에 들어오는 중복 호출(마운트/포커스)은 진행 중인 요청을 공유
+  const inflightRef = useRef<Promise<void> | null>(null);
+
+  const loadWeeklyEmotions = useCallback((): Promise<void> => {
+    if (inflightRef.current) return inflightRef.current;
+    const p = fetchWeekly().finally(() => {
+      inflightRef.current = null;
+    });
+    inflightRef.current = p;
+    return p;
+  }, [userId]);
+
+  const fetchWeekly = async (): Promise<void> => {
     if (!userId) return;
 
     try {
@@ -32,8 +44,7 @@ export const useWeeklyEmotions = (userId?: number) => {
 
       const response = await emotionService.getEmotionStats({
         start_date: weekAgo.toISOString().split('T')[0],
-        end_date: today.toISOString().split('T')[0],
-        source: 'post' // 글 작성 시 기록된 감정만 조회
+        end_date: today.toISOString().split('T')[0]
       });
 
       setWeeklyEmotions(response?.data?.data || []);
@@ -41,7 +52,7 @@ export const useWeeklyEmotions = (userId?: number) => {
       devLog('주간 감정 로드 실패:', error);
       setWeeklyEmotions([]);
     }
-  }, [userId]);
+  };
 
   useEffect(() => {
     if (userId) {
