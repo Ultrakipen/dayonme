@@ -717,7 +717,7 @@ const CreateChallengeScreen = () => {
                   }
                 }
               }}
-              placeholder="예: 100 (제한 없으려면 비워두세요)"
+              placeholder="예: 100"
               placeholderTextColor={isDark ? '#888888' : '#9CA3AF'}
               keyboardType="number-pad"
             />
@@ -1073,8 +1073,9 @@ const styles = StyleSheet.create({
     padding: scaleWidth(2),
   },
   addImageButton: {
-    width: scaleWidth(100),
-    height: scaleWidth(100),
+    minWidth: scaleWidth(100),
+    minHeight: scaleWidth(100),
+    paddingHorizontal: scaleWidth(10),
     borderRadius: scaleWidth(12),
     borderWidth: 1.5,
     borderStyle: 'dashed',
@@ -1085,6 +1086,7 @@ const styles = StyleSheet.create({
     fontSize: scaleFontSize(13),
     marginTop: scaleHeight(6),
     fontWeight: '700',
+    textAlign: 'center',
   },
   // 커스텀 알럿 스타일
   modalOverlay: {
