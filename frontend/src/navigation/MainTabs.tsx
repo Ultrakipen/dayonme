@@ -19,12 +19,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
-// 탭 라벨은 글자 크기 설정이 커져도 1.15배까지만 커지게 제한(라벨 겹침 방지)
+// 탭 라벨은 글자 크기 설정을 1.3배까지는 그대로 따르고 그 이상은 막는다. 제한을 완전히 풀면(2.0배) 라벨마다 줄어드는 정도가 달라 어색해지는 것을 실험으로 확인함
 const renderTabLabel = (title: string) => ({ color }: { color: string }) => {
   const sizes = getResponsiveSizes();
   return (
     <Text
-      maxFontSizeMultiplier={1.15}
+      maxFontSizeMultiplier={1.3}
       numberOfLines={1}
       style={{ color, fontSize: sizes.FONT_SIZE, fontWeight: '700', letterSpacing: -0.2, marginTop: sizes.MARGIN_TOP_LABEL, marginBottom: sizes.MARGIN_BOTTOM }}
     >

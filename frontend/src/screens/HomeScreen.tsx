@@ -3947,7 +3947,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                         }}
                     >
                         <RNText
-                            maxFontSizeMultiplier={1.15}
+                            maxFontSizeMultiplier={1.3}
                             style={{
                                 color: modernTheme.colors.onAccent,
                                 fontSize: normalize(15, 13, 16),
