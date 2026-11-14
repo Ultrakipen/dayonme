@@ -250,7 +250,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
             <View style={[styles.inputRow, { borderBottomColor: borderColor }]}>
               <Text style={[styles.inputLabel, { color: textColor }]}>이메일</Text>
               <View style={styles.inputWrapper}>
-                <Text style={[styles.readOnlyValue, { color: tertiaryColor }]}>{user.email}</Text>
+                <Text numberOfLines={1} ellipsizeMode="middle" style={[styles.readOnlyValue, { color: tertiaryColor }]}>{user.email}</Text>
                 <Text style={[styles.lockIcon]}>🔒</Text>
               </View>
             </View>
@@ -400,7 +400,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   inputLabel: {
-    width: 80,
+    minWidth: 80,
+    flexShrink: 0,
+    marginRight: 8,
     fontSize: FONT_SIZES.body,
     fontWeight: '400',
   },
@@ -418,6 +420,8 @@ const styles = StyleSheet.create({
   },
   readOnlyValue: {
     fontSize: FONT_SIZES.body,
+    flexShrink: 1,
+    textAlign: 'right',
   },
   lockIcon: {
     fontSize: 14,

@@ -2229,7 +2229,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             size={isReply ? 24 : 28}
           />
           <VStack style={{ flex: 1, marginLeft: normalizeSpace(8) }} pointerEvents="box-none">
-            <HStack style={{ alignItems: 'center' }} pointerEvents="box-none">
+            <HStack style={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 2 }} pointerEvents="box-none">
               <ClickableNickname
                 userId={commentUserId}
                 nickname={displayName}

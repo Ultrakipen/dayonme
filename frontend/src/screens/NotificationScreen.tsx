@@ -711,6 +711,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.body,
     fontWeight: '400',
     textAlign: 'center',
+    paddingHorizontal: 24,
     lineHeight: moderateScale(22),
     letterSpacing: 0.1,
   },
