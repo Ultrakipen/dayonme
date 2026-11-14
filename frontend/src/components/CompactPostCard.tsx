@@ -310,10 +310,6 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
                 lineHeight: 21,
                 fontWeight: '600',
                 color: isDark ? '#ffffff' : '#1f2937',
-                textShadowColor: isDark ? 'rgba(0, 0, 0, 0.3)' :
-  'rgba(255, 255, 255, 0.8)',
-                textShadowOffset: { width: 0, height: 0.5 },
-                textShadowRadius: 1,
               }}>오늘은</Text>
               <Text style={{
                 fontSize: 18,
@@ -325,9 +321,6 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
                   isDark,
                   modernTheme.text.primary
                 ),
-                textShadowColor: 'rgba(0, 0, 0, 0.15)',
-                textShadowOffset: { width: 0, height: 0.5 },
-                textShadowRadius: 1,
               }}>"{post.emotions && post.emotions.length > 0 ?
   post.emotions[0].name : '기쁨'}"</Text>
               <Text style={{
@@ -335,10 +328,6 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
                 lineHeight: 21,
                 fontWeight: '600',
                 color: isDark ? '#ffffff' : '#1f2937',
-                textShadowColor: isDark ? 'rgba(0, 0, 0, 0.3)' :
-  'rgba(255, 255, 255, 0.8)',
-                textShadowOffset: { width: 0, height: 0.5 },
-                textShadowRadius: 1,
               }}>에요</Text>
 
               {/* 익명 게시물에서 본인이 작성한 글일 때 "나" 표시 */}

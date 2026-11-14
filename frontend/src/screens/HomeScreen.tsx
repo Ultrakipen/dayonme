@@ -3227,9 +3227,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         fontWeight: '700',
                                         letterSpacing: -0.3,
                                         lineHeight: 20,
-                                        textShadowColor: isDark ? 'rgba(0,0,0,0.5)' : 'transparent',
-                                        textShadowOffset: { width: 0, height: 1 },
-                                        textShadowRadius: 2
                                     }}
                                     numberOfLines={2}
                                 >
@@ -3393,9 +3390,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         fontWeight: '600',
                                         letterSpacing: -0.1,
                                         lineHeight: 20,
-                                        textShadowColor: isDark ? 'rgba(0,0,0,0.3)' : 'transparent',
-                                        textShadowOffset: { width: 0, height: 1 },
-                                        textShadowRadius: 1,
                                     }}
                                     numberOfLines={1}
                                 >

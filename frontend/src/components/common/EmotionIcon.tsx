@@ -1,9 +1,8 @@
 import React from 'react';
-import { Image } from 'react-native';
-import Svg, { Circle, Defs, Ellipse, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Ellipse, RadialGradient, Stop, SvgXml } from 'react-native-svg';
 import { EMOTION_ICONS, getEmotionIconIdByLabel, lighten, darken } from '../../constants/emotionIcons';
 import { EMOTION_AVATARS } from '../../constants/emotions';
-import { EMOTION_TWEMOJI } from '../../constants/emotionTwemoji';
+import { EMOTION_TWEMOJI_SVG } from '../../constants/emotionTwemojiSvg';
 import { EMOTION_ICON_STYLE } from '../../constants/emotionIconStyle';
 
 interface EmotionIconProps {
@@ -34,12 +33,13 @@ const resolveId = (emotionId?: number, label?: string, emojiCode?: string): numb
 const EmotionIconBase: React.FC<EmotionIconProps> = ({ emotionId, label, emojiCode, size = 32, variant = 'b5' }) => {
   const id = resolveId(emotionId, label, emojiCode);
   if (!id) return null;
-  if (EMOTION_ICON_STYLE === 'twemoji' && EMOTION_TWEMOJI[id]) {
+  if (EMOTION_ICON_STYLE === 'twemoji' && EMOTION_TWEMOJI_SVG[id]) {
+    // 벡터라서 크기를 키워도 번지지 않는다(72px 비트맵을 늘려 쓰던 방식 대체)
     return (
-      <Image
-        source={EMOTION_TWEMOJI[id]}
-        style={{ width: size, height: size }}
-        resizeMode="contain"
+      <SvgXml
+        xml={EMOTION_TWEMOJI_SVG[id]}
+        width={size}
+        height={size}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
       />

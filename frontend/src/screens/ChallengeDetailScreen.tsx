@@ -5261,9 +5261,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginRight: scaleSize(20),
     letterSpacing: -0.3,
-    textShadowColor: "rgba(0, 0, 0, 0.1)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   modalSubtitle: {
     fontSize: scaleFont(16),
@@ -5272,8 +5269,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: -0.2,
     lineHeight: scaleFont(22),
-    textShadowColor: "rgba(0, 0, 0, 0.05)",
-    textShadowOffset: { width: 0, height: 1 },
   },
 
   // 감정 선택
@@ -5306,9 +5301,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     letterSpacing: -0.2,
-    textShadowColor: "rgba(0, 0, 0, 0.1)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
     marginTop: scaleVertical(2),
   },
 
@@ -5353,9 +5345,6 @@ const styles = StyleSheet.create({
     fontSize: scaleFont(16),
     fontWeight: "700",
     letterSpacing: -0.2,
-    textShadowColor: "rgba(0, 0, 0, 0.05)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
   },
   // 제출 버튼
   submitButton: {
@@ -5373,9 +5362,6 @@ const styles = StyleSheet.create({
     fontSize: scaleFont(16),
     fontWeight: "700",
     letterSpacing: -0.2,
-    textShadowColor: "rgba(0, 0, 0, 0.1)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   // 전체 너비 제출 버튼
   submitButtonFull: {
@@ -5401,17 +5387,11 @@ const styles = StyleSheet.create({
     fontSize: scaleFont(24),
     fontWeight: "700",
     marginBottom: scaleVertical(4),
-    textShadowColor: "rgba(0, 0, 0, 0.1)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
     letterSpacing: -0.3,
   },
   statLabel: {
     fontSize: scaleFont(13),
     fontWeight: "600",
-    textShadowColor: "rgba(0, 0, 0, 0.05)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
     letterSpacing: -0.1,
   },
 
@@ -5446,15 +5426,11 @@ const styles = StyleSheet.create({
     fontSize: scaleFont(15),
     fontWeight: "600",
     marginBottom: scaleVertical(2),
-    textShadowColor: "rgba(0, 0, 0, 0.05)",
-    textShadowOffset: { width: 0, height: 1 },
     letterSpacing: -0.2,
   },
   participantRole: {
     fontSize: scaleFont(13),
     fontWeight: "600",
-    textShadowColor: "rgba(0, 0, 0, 0.05)",
-    textShadowOffset: { width: 0, height: 1 },
     letterSpacing: -0.1,
   },
   creatorBadge: {

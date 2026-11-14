@@ -2573,9 +2573,6 @@ fontSize: FONT_SIZES.h3,
     fontWeight: '700',
     letterSpacing: -0.2,
     // 2025 트렌드: 글로우 효과
-    textShadowColor: `${COLORS.primary}20`,
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   headerButton: {
     padding: 8,

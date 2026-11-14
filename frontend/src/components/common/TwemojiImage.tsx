@@ -1,9 +1,33 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Image, StyleSheet, View, Text } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 
 // Twemoji CDN URL 생성 (72x72 고해상도)
 const getTwemojiUrl = (code: string): string =>
   `https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/${code}.png`;
+
+// 벡터(SVG): 72px 비트맵을 40~56dp로 늘려 쓰면 가장자리가 번지므로, 받아서 메모리에 캐시한 뒤 벡터로 그린다.
+// 받는 동안/실패 시에는 기존 비트맵을 그대로 보여 준다(화면이 비거나 깜빡이지 않음).
+const getTwemojiSvgUrl = (code: string): string =>
+  `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.3/assets/svg/${code}.svg`;
+const SVG_CACHE = new Map<string, string>();
+const SVG_PENDING = new Map<string, Promise<string | null>>();
+const loadSvg = (code: string): Promise<string | null> => {
+  const hit = SVG_CACHE.get(code);
+  if (hit) return Promise.resolve(hit);
+  const pending = SVG_PENDING.get(code);
+  if (pending) return pending;
+  const p = fetch(getTwemojiSvgUrl(code))
+    .then((r) => (r.ok ? r.text() : null))
+    .then((t) => {
+      if (t && t.indexOf('<svg') >= 0) { SVG_CACHE.set(code, t); return t; }
+      return null;
+    })
+    .catch(() => null)
+    .finally(() => { SVG_PENDING.delete(code); });
+  SVG_PENDING.set(code, p);
+  return p;
+};
 
 // 이모지 → 유니코드 코드 포인트 변환
 const emojiToCodePoint = (emoji: string): string => {
@@ -118,11 +142,29 @@ export const TwemojiImage: React.FC<TwemojiImageProps> = React.memo(({
   const imageUrl = useMemo(() => getTwemojiUrl(emojiCode), [emojiCode]);
 
   const [hasError, setHasError] = React.useState(false);
+  const [svgXml, setSvgXml] = useState<string | null>(() => SVG_CACHE.get(emojiCode) || null);
+
+  useEffect(() => {
+    let alive = true;
+    const cached = SVG_CACHE.get(emojiCode);
+    if (cached) { setSvgXml(cached); return; }
+    setSvgXml(null);
+    loadSvg(emojiCode).then((t) => { if (alive && t) setSvgXml(t); });
+    return () => { alive = false; };
+  }, [emojiCode]);
 
   if (hasError && fallbackToText) {
     return (
       <View style={[styles.container, { width: size, height: size }, style]}>
         <Text style={{ fontSize: size * 0.8, lineHeight: size }}>{emoji}</Text>
+      </View>
+    );
+  }
+
+  if (svgXml) {
+    return (
+      <View style={[{ width: size, height: size }, style]}>
+        <SvgXml xml={svgXml} width={size} height={size} />
       </View>
     );
   }
