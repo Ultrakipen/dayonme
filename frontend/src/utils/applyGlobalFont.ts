@@ -1,7 +1,9 @@
 // 앱 전체 기본 서체를 Pretendard로 적용한다.
 // - React 19에서는 Text.defaultProps가 동작하지 않으므로 Text/TextInput의 render를 감싼다.
 // - 안드로이드는 굵기별 서체 파일이 따로 있으므로 fontWeight를 서체 이름으로 바꿔 준다(가짜 굵기 방지).
-// - 이미 fontFamily가 지정된 곳(아이콘 서체, Pretendard 직접 지정 등)은 건드리지 않는다.
+// - 아이콘 서체나 Pretendard를 직접 지정한 곳은 건드리지 않는다. 단 'System'/'Roboto' 같은 시스템 서체 이름은
+//   '지정 안 됨'으로 보고 Pretendard로 통일한다(UI 라이브러리가 시스템 서체 이름을 글자마다 넣어 화면별로 서체가 달라지는 것을 막음).
+// - 일반 글자(400)는 Medium(500)으로 매핑한다. Pretendard Regular는 시스템 서체보다 획이 얇아 작은 글자가 덜 선명해 보이기 때문(획 굵기 약 12~15% 차이 측정).
 // 문제가 생기면 ENABLE_GLOBAL_PRETENDARD를 false로 바꾸면 이전 동작으로 돌아간다.
 import { useContext } from 'react';
 import { StyleSheet, Text, TextInput } from 'react-native';
@@ -11,16 +13,33 @@ const TextAncestorContext = require('react-native/Libraries/Text/TextAncestor').
 
 export const ENABLE_GLOBAL_PRETENDARD = true;
 
+// 시스템 서체 이름(= Pretendard로 대체해도 되는 값) → 이름에 담긴 굵기
+const SYSTEM_FAMILIES: Record<string, string | null> = {
+  System: null,
+  Roboto: null,
+  'sans-serif': null,
+  'sans-serif-medium': '500',
+  'sans-serif-light': '300',
+  'sans-serif-thin': '100',
+  'sans-serif-condensed': null,
+  'San Francisco': null,
+  'SF Pro Text': null,
+  'SF Pro Display': null,
+  Helvetica: null,
+  'Helvetica Neue': null,
+  Arial: null,
+};
+
 const FAMILY_BY_WEIGHT: Record<string, string> = {
   '100': 'Pretendard-Thin',
   '200': 'Pretendard-ExtraLight',
   '300': 'Pretendard-Light',
-  '400': 'Pretendard-Regular',
-  normal: 'Pretendard-Regular',
-  '500': 'Pretendard-Medium',
-  '600': 'Pretendard-SemiBold',
-  '700': 'Pretendard-Bold',
-  bold: 'Pretendard-Bold',
+  '400': 'Pretendard-Medium',
+  normal: 'Pretendard-Medium',
+  '500': 'Pretendard-SemiBold',
+  '600': 'Pretendard-Bold',
+  '700': 'Pretendard-ExtraBold',
+  bold: 'Pretendard-ExtraBold',
   '800': 'Pretendard-ExtraBold',
   '900': 'Pretendard-Black',
 };
@@ -32,10 +51,14 @@ const patch = (Component: any) => {
     // 훅은 항상 같은 순서로 호출해야 하므로 조건 분기보다 먼저 호출한다
     const nested = useContext(TextAncestorContext);
     const flat: any = StyleSheet.flatten(props?.style) || {};
-    if (flat.fontFamily) return originalRender.call(this, props, ref);
+    const given = flat.fontFamily as string | undefined;
+    const isSystem = !!given && Object.prototype.hasOwnProperty.call(SYSTEM_FAMILIES, given);
+    // 아이콘 서체, Pretendard 직접 지정 등 시스템 서체가 아닌 지정은 그대로 둔다
+    if (given && !isSystem) return originalRender.call(this, props, ref);
     // 중첩 Text이고 굵기도 지정하지 않았다면 부모의 서체(굵기 포함)를 상속하도록 둔다
-    if (nested && flat.fontWeight == null) return originalRender.call(this, props, ref);
-    const weight = flat.fontWeight == null ? '400' : String(flat.fontWeight);
+    if (nested && flat.fontWeight == null && !isSystem) return originalRender.call(this, props, ref);
+    const nameWeight = isSystem ? SYSTEM_FAMILIES[given as string] : null;
+    const weight = flat.fontWeight == null ? (nameWeight || '400') : String(flat.fontWeight);
     const family = FAMILY_BY_WEIGHT[weight] || 'Pretendard-Regular';
     return originalRender.call(
       this,

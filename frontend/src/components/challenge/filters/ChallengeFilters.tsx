@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
   },
   filterChipsContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap', // 글자 크기를 키우거나 서체가 넓어져도 첫/끝 칩이 잘리지 않게 두 줄로 내려온다
     justifyContent: 'center',
     alignItems: 'center',
     gap: 6,
