@@ -17,7 +17,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Vibration,
-  Share,
   useWindowDimensions,
   Text as RNText,
   DeviceEventEmitter,
@@ -40,6 +39,7 @@ import {
 } from 'react-native-paper';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import PostShareModal from '../components/PostShareModal';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import CustomAlert from '../components/ui/CustomAlert';
 import Toast from '../components/Toast';
@@ -529,6 +529,7 @@ const ComfortScreen: React.FC = () => {
 
   // 메뉴 상태
   const [menuVisible, setMenuVisible] = useState<Record<number, boolean>>({});
+  const [shareTarget, setShareTarget] = useState<{ content: string; emotionId?: number } | null>(null);
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [selectedReportReason, setSelectedReportReason] = useState<string>('');
@@ -1633,36 +1634,10 @@ const ComfortScreen: React.FC = () => {
     setDeletePostId(null);
   }, []);
 
-  // 게시물 공유
-  const handleShare = useCallback(async (postId: number, content: string, nickname?: string) => {
-    try {
-      setMenuVisible(prev => ({
-        ...prev,
-        [postId]: false
-      }));
-
-      const shareContent = nickname
-        ? `${nickname}님의 감정 나눔:\n\n${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`
-        : `익명의 감정 나눔:\n\n${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`;
-
-      const result = await Share.share({
-        message: shareContent,
-        title: '위로와 공감 게시물 공유',
-      });
-
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          // 특정 앱으로 공유됨
-        } else {
-          // 공유됨
-        }
-      } else if (result.action === Share.dismissedAction) {
-        // 취소됨
-      }
-    } catch (error: any) {
-      Alert.alert('오류', '공유 중 오류가 발생했습니다.');
-      console.error('공유 오류:', error);
-    }
+  // 게시물 공유: 본인 글만 이미지 카드로 공유
+  const handleShare = useCallback((postId: number, content: string, emotionId?: number) => {
+    setMenuVisible(prev => ({ ...prev, [postId]: false }));
+    setShareTarget({ content, emotionId });
   }, []);
 
   // 게시물 신고
@@ -2512,13 +2487,15 @@ const ComfortScreen: React.FC = () => {
                 <View style={[cardStyles.bottomSheetContainer, { backgroundColor: themeColors.surface }]}>
                   <View style={cardStyles.bottomSheetHandle} />
 
-                  <TouchableOpacity
-                    style={cardStyles.bottomSheetItem}
-                    onPress={() => handleShare(item.post_id, item.content, item.nickname)}
-                  >
-                    <MaterialCommunityIcons name="share-outline" size={22} color={themeColors.text} />
-                    <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>공유하기</Text>
-                  </TouchableOpacity>
+                  {isMyPost && (
+                    <TouchableOpacity
+                      style={cardStyles.bottomSheetItem}
+                      onPress={() => handleShare(item.post_id, item.content, randomEmotion.id)}
+                    >
+                      <MaterialCommunityIcons name="share-outline" size={22} color={themeColors.text} />
+                      <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>공유하기</Text>
+                    </TouchableOpacity>
+                  )}
 
                   {isMyPost && (
                     <>
@@ -3274,6 +3251,14 @@ const ComfortScreen: React.FC = () => {
               navigation.navigate('Auth', { screen: 'Register' });
             }}
             actionType={emotionLoginPromptAction}
+          />
+
+          {/* 게시물 공유 카드(본인 글) */}
+          <PostShareModal
+            visible={shareTarget !== null}
+            content={shareTarget?.content || ''}
+            emotionId={shareTarget?.emotionId}
+            onClose={() => setShareTarget(null)}
           />
         </KeyboardAvoidingView>
       </SafeAreaView>

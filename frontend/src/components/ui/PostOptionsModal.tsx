@@ -22,7 +22,7 @@ interface PostOptionsModalProps {
   visible: boolean;
   isOwner: boolean;
   isAnonymous?: boolean;
-  onShare: () => void;
+  onShare?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   onReport?: () => void;
@@ -133,15 +133,17 @@ const PostOptionsModal: React.FC<PostOptionsModalProps> = ({
           {/* 핸들 바 */}
           <View style={styles.bottomSheetHandle} />
 
-          {/* 공유하기 */}
-          <TouchableOpacity
-            style={styles.bottomSheetItem}
-            onPress={onShare}
-            activeOpacity={0.6}
-          >
-            <MaterialCommunityIcons name="share-outline" size={normalizeIcon(24)} color={iconColor} />
-            <Text style={styles.bottomSheetItemText}>공유하기</Text>
-          </TouchableOpacity>
+          {/* 공유하기: 본인 글에서만 제공(onShare가 있을 때) */}
+          {onShare && (
+            <TouchableOpacity
+              style={styles.bottomSheetItem}
+              onPress={onShare}
+              activeOpacity={0.6}
+            >
+              <MaterialCommunityIcons name="share-outline" size={normalizeIcon(24)} color={iconColor} />
+              <Text style={styles.bottomSheetItemText}>공유하기</Text>
+            </TouchableOpacity>
+          )}
 
           {/* 내 글이면 수정/삭제, 아니면 신고 */}
           {isOwner ? (

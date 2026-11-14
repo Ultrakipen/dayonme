@@ -9,7 +9,6 @@ import {
   Text as RNText,
   StyleSheet,
   TouchableOpacity,
-  Share,
   Dimensions,
   Keyboard,
   Animated,
@@ -40,6 +39,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { Box, Text as UIText, VStack, HStack, Center, Pressable } from '../../components/ui';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import PostOptionsModal from '../../components/ui/PostOptionsModal';
+import PostShareModal from '../../components/PostShareModal';
 import BlockReasonModal, { BlockReason } from '../../components/BlockReasonModal';
 import CustomAlert from '../../components/ui/CustomAlert';
 import { showAlert } from '../../contexts/AlertContext';
@@ -216,6 +216,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   
   // 액션 메뉴 상태
   const [showActionSheet, setShowActionSheet] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
 
   // 차단 모달 상태
   const [blockModalVisible, setBlockModalVisible] = useState(false);
@@ -1034,21 +1035,11 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   // fetchPostData를 ref에 저장 (hoisting 문제 방지)
   fetchPostDataRef.current = fetchPostData;
 
-  // 공유하기
-  const handleShare = useCallback(async () => {
+  // 공유하기: 본인 글만 이미지 카드로 공유
+  const handleShare = useCallback(() => {
     if (!post) return;
-    
-    try {
-      const shareContent = {
-        title: '게시물 공유',
-        message: `"${post.content.substring(0, 100)}${post.content.length > 100 ? '...' : ''}"`
-      };
-      
-      await Share.share(shareContent);
-      setShowActionSheet(false);
-    } catch (error) {
-      logger.error('공유 오류:', error);
-    }
+    setShowActionSheet(false);
+    setShowShareCard(true);
   }, [post]);
 
  // 신고하기
@@ -3881,13 +3872,20 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         visible={showActionSheet}
         isOwner={post != null && user != null && post.user_id === user.user_id}
         isAnonymous={post?.is_anonymous || false}
-        onShare={handleShare}
+        onShare={post != null && user != null && post.user_id === user.user_id ? handleShare : undefined}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onReport={handleReport}
         onBlockPost={handleBlockPost}
         onBlockUser={handleBlockUser}
         onClose={() => setShowActionSheet(false)}
+      />
+
+      <PostShareModal
+        visible={showShareCard}
+        content={post?.content || ''}
+        emotionId={post?.anonymous_emotion_id || post?.emotions?.[0]?.emotion_id || undefined}
+        onClose={() => setShowShareCard(false)}
       />
 
       {/* 댓글 액션 시트 모달 */}
