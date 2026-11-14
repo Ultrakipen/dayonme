@@ -1105,7 +1105,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           onPress={() => handleSubmitRef.current()}
           disabled={!isFormValid || isSubmitting}
           style={{
-            backgroundColor: isFormValid && !isSubmitting ? theme.colors.primary : 'rgba(85,102,221,0.3)',
+            backgroundColor: isFormValid && !isSubmitting ? theme.colors.primary : theme.colors.tint,
             paddingHorizontal: SPACING.md,
             paddingVertical: SPACING.xs,
             borderRadius: normalize(14, false),
@@ -1114,7 +1114,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: isDark ? 0.1 : 0.15,
             shadowRadius: 3,
-            elevation: 3,
+            elevation: isFormValid && !isSubmitting ? 3 : 0,
           }}
           accessible={true}
           accessibilityRole="button"
@@ -1125,7 +1125,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           <Text style={{
             fontSize: FONT_SIZES.sm,
             fontWeight: '700',
-            color: isFormValid && !isSubmitting ? theme.colors.onAccent : '#FFFFFF',
+            color: isFormValid && !isSubmitting ? theme.colors.onAccent : theme.text.tertiary,
             fontFamily: 'Pretendard-Bold',
           }}>
             {isSubmitting
@@ -1325,7 +1325,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                         key={emotion?.emotion_id || `empty-${index}`}
                         style={{
                           width: itemWidth,
-                          height: itemWidth * 0.85,
+                          minHeight: itemWidth * 0.85,
                           borderRadius: normalize(12, false),
                           justifyContent: 'center',
                           alignItems: 'center',
@@ -1363,7 +1363,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                           </Box>
                         )}
                         {emotion && (
-                          <Text style={{
+                          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{
                             fontSize: FONT_SIZES.sm,
                             fontWeight: '700',
                             color: theme.colors.text.primary,
