@@ -3289,7 +3289,10 @@ const ChallengeDetailScreen = () => {
                     color={colors.primary}
                   />
                   <Text
-                    style={[styles.actionButtonText, { color: colors.primary }]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.75}
+                    style={[styles.actionButtonText, { color: colors.primary, flexShrink: 1 }]}
                   >
                     {hasUserEmotionRecord() ? "감정 수정하기" : "감정 나누기"}
                   </Text>
@@ -3315,8 +3318,9 @@ const ChallengeDetailScreen = () => {
                     size={scaleSize(20)}
                     color={colors.primary}
                   />
-                  <Text style={[styles.commentViewButtonTextCompact, {
-                    color: theme.text.primary
+                  <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[styles.commentViewButtonTextCompact, {
+                    color: theme.text.primary,
+                    flexShrink: 1
                   }]}>
                     응원댓글
                   </Text>
