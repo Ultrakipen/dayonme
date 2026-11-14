@@ -3759,6 +3759,8 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   // 게시물 목록 헤더 (95% 너비, 중앙정렬)
   postsListHeader: {
     flexDirection: 'row',
+    flexWrap: 'wrap', // 글자가 커져 한 줄에 안 들어가면 정렬 버튼이 아래 줄로 내려온다(기본 크기에서는 한 줄)
+    rowGap: 4,
     justifyContent: 'space-between',
     alignItems: 'center',
     width: CONTAINER_WIDTH,
@@ -3775,6 +3777,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     gap: 8,
     flexShrink: 1,
     minWidth: 0,
+    maxWidth: '100%',
     marginRight: 8,
   },
   postsListTitle: {
@@ -3797,6 +3800,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     flexDirection: 'row',
     gap: 8,
     flexShrink: 0,
+    marginLeft: 'auto', // 아래 줄로 내려와도 오른쪽 정렬 유지
   },
   sortButton: {
     flexDirection: 'row',
