@@ -32,6 +32,7 @@ import { useModernTheme } from '../contexts/ModernThemeContext';
 import ModernToast, { ToastType } from '../components/ModernToast';
 import { FONT_SIZES } from '../constants';
 import { EMOTION_AVATARS } from '../constants/emotions';
+import EmotionIcon from '../components/common/EmotionIcon';
 
 // 반응형 폰트 스케일링 함수 - React Native 0.80 호환
 const BASE_WIDTH = 360;
@@ -763,7 +764,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
         keyboardShouldPersistTaps="handled"
       >
         {/* 게시물 카드 */}
-        <Box style={[styles.postCard, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.04 }]}>
+        <Box style={[styles.postCard, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.04 }]}>
           {/* 게시물 헤더 */}
           <HStack style={styles.postHeader} pointerEvents="box-none">
             <ClickableAvatar
@@ -851,9 +852,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
                   borderWidth: 1,
                   borderColor: isDark ? post.emotions[0].color + '60' : post.emotions[0].color + '40',
                 }}>
-                  <Text style={{ fontSize: FONT_SIZES.bodyLarge }}>
-                    {getRandomEmotion(post.user_id, post.post_id).emoji}
-                  </Text>
+                  <EmotionIcon emotionId={getRandomEmotion(post.user_id, post.post_id).id} size={FONT_SIZES.bodyLarge + 4} />
                   <Text style={{
                     fontSize: FONT_SIZES.caption,
                     fontWeight: '600',
@@ -913,7 +912,7 @@ const MyDayDetailScreen: React.FC<MyDayDetailScreenProps> = ({ navigation, route
         </Box>
 
         {/* 댓글 섹션 */}
-        <Box style={[styles.commentSection, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.04 }]}>
+        <Box style={[styles.commentSection, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.04 }]}>
           <HStack style={styles.commentHeader}>
             <Text style={[styles.commentTitle, { color: isDark ? '#FFFFFF' : '#1A1A1A' }]}>댓글 {comments.length}개</Text>
             <TouchableOpacity

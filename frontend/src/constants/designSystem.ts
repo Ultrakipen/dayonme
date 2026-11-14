@@ -7,11 +7,11 @@
 // ===== 색상 팔레트 =====
 export const COLORS = {
   // Primary Colors - 통일된 브랜드 컬러
-  primary: '#667EEA',
+  primary: '#5566DD',
   primaryLight: '#8B9FFF',
   primaryDark: '#5568D3',
 
-  secondary: '#764BA2',
+  secondary: '#4A5AD0',
   secondaryLight: '#9B6BC7',
   secondaryDark: '#5A3880',
 
@@ -78,10 +78,10 @@ export const COLORS = {
   darkShadowColor: 'rgba(15, 15, 30, 0.5)',
 
   // Gradient Colors (for backward compatibility)
-  gradientStart: '#667EEA',
-  gradientEnd: '#764BA2',
+  gradientStart: '#5566DD',
+  gradientEnd: '#4A5AD0',
   // Gradient Arrays - MyChallengesScreen에서 사용
-  gradientHarmony: ['#667EEA', '#764BA2'],
+  gradientHarmony: ['#5566DD', '#4A5AD0'],
   gradientWarm: ['#FA709A', '#FEE140'],
   gradientCool: ['#4FACFE', '#00F2FE'],
   gradientNature: ['#43E97B', '#38F9D7'],

@@ -19,6 +19,8 @@ import userService, { UserProfile } from '../services/api/userService';
 import blockService from '../services/api/blockService';
 import { RootStackParamList } from '../types/navigation';
 import SendEncouragementModal from '../components/SendEncouragementModal';
+import EmotionIcon from '../components/common/EmotionIcon';
+import { getReadableEmotionColor } from '../utils/emotionTextColor';
 import { useAuth } from '../contexts/AuthContext';
 import GuestPromptBottomSheet from '../components/GuestPromptBottomSheet';
 import { showAlert } from '../contexts/AlertContext';
@@ -60,7 +62,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: theme.colors.accentText,
   }), [theme, isDark]);
 
   // 테마별 emotion colors
@@ -224,7 +226,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       paddingVertical: moderateScale(14),
       paddingHorizontal: moderateScale(32),
       borderRadius: moderateScale(12),
-      shadowColor: isDark ? '#fff' : '#000',
+      shadowColor: isDark ? '#000000' : '#000',
       shadowOffset: { width: 0, height: moderateScale(4) },
       shadowOpacity: isDark ? 0.1 : 0.2,
       shadowRadius: moderateScale(8),
@@ -420,8 +422,8 @@ const UserProfileScreen: React.FC = React.memo(() => {
       borderWidth: 1.5,
     },
     myDayBadge: {
-      backgroundColor: isDark ? '#1E3A8A' : '#DBEAFE',
-      borderColor: isDark ? '#60A5FA' : '#3B82F6',
+      backgroundColor: theme.colors.tint,
+      borderColor: theme.colors.primary,
     },
     comfortBadge: {
       backgroundColor: isDark ? '#78350F' : '#FEF3C7',
@@ -433,7 +435,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       letterSpacing: -0.2,
     },
     myDayText: {
-      color: isDark ? '#93C5FD' : '#1E40AF',
+      color: theme.colors.accentText,
     },
     comfortText: {
       color: isDark ? '#FCD34D' : '#D97706',
@@ -561,7 +563,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
       paddingHorizontal: moderateScale(32),
       borderRadius: moderateScale(12),
       marginBottom: moderateScale(12),
-      shadowColor: isDark ? '#fff' : '#000',
+      shadowColor: isDark ? '#000000' : '#000',
       shadowOffset: { width: 0, height: moderateScale(4) },
       shadowOpacity: isDark ? 0.1 : 0.2,
       shadowRadius: moderateScale(8),
@@ -1002,7 +1004,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
                 ]}
               >
                 {isEmoji ? (
-                  <RNText style={styles.emotionEmoji}>{tag.icon}</RNText>
+                  <EmotionIcon emotionId={tag.emotion_id} label={tag.name} size={moderateScale(22)} />
                 ) : (
                   <MaterialCommunityIcons
                     name={tag.icon || 'emoticon-happy-outline'}
@@ -1010,7 +1012,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
                     color={tag.color}
                   />
                 )}
-                <RNText style={[styles.emotionName, { color: tag.color }]}>
+                <RNText style={[styles.emotionName, { color: getReadableEmotionColor(tag.color, isDark, theme.text.primary) }]}>
                   {tag.name}
                 </RNText>
                 <RNText style={styles.emotionCount}>{tag.count}회</RNText>
@@ -1156,7 +1158,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
                         const isEmoji = emotion.icon && (emotion.icon.length <= 4 || /[\u{1F600}-\u{1F64F}]/u.test(emotion.icon));
 
                         return isEmoji ? (
-                          <RNText style={styles.postEmotionIcon}>{emotion.icon}</RNText>
+                          <EmotionIcon emotionId={emotion.emotion_id} label={emotion.name} size={moderateScale(18)} />
                         ) : (
                           <MaterialCommunityIcons
                             name={emotion.icon || 'emoticon-happy-outline'}
@@ -1322,7 +1324,7 @@ const UserProfileScreen: React.FC = React.memo(() => {
         paddingHorizontal: moderateScale(32),
         borderRadius: moderateScale(12),
         marginBottom: moderateScale(12),
-        shadowColor: isDark ? '#fff' : '#000',
+        shadowColor: isDark ? '#000000' : '#000',
         shadowOffset: { width: 0, height: moderateScale(4) },
         shadowOpacity: isDark ? 0.1 : 0.2,
         shadowRadius: moderateScale(8),

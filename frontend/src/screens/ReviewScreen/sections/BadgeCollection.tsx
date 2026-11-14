@@ -86,7 +86,7 @@ export const BadgeCollection: React.FC<Props> = ({ onClose }) => {
             </Text>
             {data.newBadges > 0 && (
               <View style={[styles.newBadge, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.newBadgeText, { fontSize: FONT_SIZES.caption }]}>
+                <Text style={[styles.newBadgeText, { fontSize: FONT_SIZES.caption, color: colors.onAccent }]}>
                   +{data.newBadges} NEW
                 </Text>
               </View>

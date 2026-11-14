@@ -9,6 +9,7 @@ import {
   FlatList,
   RefreshControl,
   Alert,
+  Share,
   ActivityIndicator,
   Platform,
   Animated,
@@ -525,28 +526,10 @@ const MyChallengesScreenFixed = ({ route }: any) => {
   const handleShareChallenge = useCallback((challenge: Challenge) => {
     const shareText = `🎯 감정 챌린지에 함께 참여해보세요!\n\n📝 ${challenge.title}\n${challenge.description ? `💭 ${challenge.description}\n` : ''}👥 현재 ${challenge.participant_count}명 참여 중\n\n#감정챌린지 #Dayonme`;
 
-    Alert.alert(
-      '챌린지 공유',
-      '어떤 방식으로 공유하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '링크 복사',
-          onPress: () => {
-            // TODO: 실제 클립보드 API 사용
-            if (__DEV__) console.log('링크 복사:', shareText);
-            Alert.alert('완료', '챌린지 링크가 클립보드에 복사되었습니다.');
-          }
-        },
-        {
-          text: 'SNS 공유',
-          onPress: () => {
-            if (__DEV__) console.log('SNS 공유:', shareText);
-            Alert.alert('알림', 'SNS 공유 기능은 곧 추가될 예정입니다.');
-          }
-        }
-      ]
-    );
+    // 시스템 공유창으로 공유(앱에서 링크가 열리도록 하는 작업 전까지는 링크 없이 문구만)
+    Share.share({ message: shareText }).catch(() => {
+      Alert.alert('오류', '공유 중 오류가 발생했습니다.');
+    });
   }, []);
 
   // 참여자 초대 핸들러
@@ -671,12 +654,15 @@ const MyChallengesScreenFixed = ({ route }: any) => {
     const cardAnim = useRef(new Animated.Value(0)).current;
     const scaleValue = useRef(new Animated.Value(1)).current;
     const glowAnim = useRef(new Animated.Value(0)).current;
-    const statusInfo = getStatusInfo(challenge.status);
+    // 서버 상태가 active 로 남아 있어도 종료일이 지났으면 화면에서는 종료로 취급한다(표시 전용)
+    const endedByDate = !!challenge.end_date && !isNaN(new Date(challenge.end_date).getTime()) && new Date(challenge.end_date).getTime() < Date.now() - 24 * 60 * 60 * 1000;
+    const displayStatus = challenge.status === 'active' && endedByDate ? 'completed' : challenge.status;
+    const statusInfo = getStatusInfo(displayStatus);
     const isCreated = activeTab === 'created';
 
     // 상태별 조화로운 그라데이션 선택
     const getHarmonyGradient = () => {
-      switch (challenge.status) {
+      switch (displayStatus) {
         case 'active':
           return COLORS.gradientHarmony;  // 메인 하모니
         case 'upcoming':
@@ -850,9 +836,9 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                       <MaterialCommunityIcons
                         name="comment-text-outline"
                         size={13}
-                        color={COLORS.primary}
+                        color={theme.colors.accentText}
                       />
-                      <Text style={[styles.compactSocialText, { color: COLORS.primary }]}>
+                      <Text style={[styles.compactSocialText, { color: theme.colors.accentText }]}>
                         {challenge.comment_count || 0}
                       </Text>
                     </View>
@@ -954,7 +940,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
             style={styles.searchButton}
             onPress={() => setShowSearchModal(true)}
           >
-            <MaterialCommunityIcons name="magnify" size={20} color={COLORS.primary} />
+            <MaterialCommunityIcons name="magnify" size={20} color={theme.colors.accentText} />
           </TouchableOpacity>
 
         </View>
@@ -966,19 +952,19 @@ const MyChallengesScreenFixed = ({ route }: any) => {
           <TouchableOpacity
             style={[
               styles.simpleTabButton,
-              activeTab === 'created' && styles.activeCreatedTabButton
+              activeTab === 'created' && [styles.activeCreatedTabButton, { backgroundColor: theme.colors.primary, shadowColor: isDark ? '#000000' : theme.colors.primary }]
             ]}
             onPress={() => setActiveTab('created')}
           >
             <MaterialCommunityIcons
               name="crown"
               size={16}
-              color={activeTab === 'created' ? 'white' : (isDark ? theme.colors.text.primary : COLORS.text)}
+              color={activeTab === 'created' ? theme.colors.onAccent : (isDark ? theme.colors.text.primary : COLORS.text)}
             />
             <Text style={[
               styles.simpleTabText,
               {
-                color: activeTab === 'created' ? 'white' : (isDark ? theme.colors.text.primary : COLORS.text),
+                color: activeTab === 'created' ? theme.colors.onAccent : (isDark ? theme.colors.text.primary : COLORS.text),
                 fontWeight: activeTab === 'created' ? '700' : '600'
               }
             ]}>
@@ -1047,7 +1033,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
               styles.filterChip,
               {
                 backgroundColor: isActive
-                  ? (filter.type === 'status' ? COLORS.primary : COLORS.accent)
+                  ? theme.colors.primary
                   : (isDark ? theme.colors.border : COLORS.surfaceVariant),
               }
             ]}
@@ -1058,11 +1044,11 @@ const MyChallengesScreenFixed = ({ route }: any) => {
             <MaterialCommunityIcons
               name={filter.icon as any}
               size={14}
-              color={isActive ? 'white' : (isDark ? theme.colors.text.primary : COLORS.text)}
+              color={isActive ? theme.colors.onAccent : (isDark ? theme.colors.text.primary : COLORS.text)}
             />
             <Text style={[
               styles.filterChipText,
-              { color: isActive ? 'white' : (isDark ? theme.colors.text.primary : COLORS.text) }
+              { color: isActive ? theme.colors.onAccent : (isDark ? theme.colors.text.primary : COLORS.text) }
             ]}>
               {filter.label}
             </Text>
@@ -1121,7 +1107,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={isDark ? theme.colors.background : COLORS.background} translucent={false} />
         <SafeAreaView style={{ backgroundColor: isDark ? theme.colors.background : COLORS.background }}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={theme.colors.accentText} />
           <Text style={[styles.loadingText, { color: isDark ? theme.colors.text.primary : COLORS.text }]}>
             챌린지 불러오는 중...
           </Text>
@@ -1336,7 +1322,7 @@ const MyChallengesScreenFixed = ({ route }: any) => {
                     onPress={() => handleOptionSelect('editTitle')}
                   >
                     <View style={[styles.optionIcon, { backgroundColor: COLORS.primary + '20' }]}>
-                      <MaterialCommunityIcons name="pencil" size={22} color={COLORS.primary} />
+                      <MaterialCommunityIcons name="pencil" size={22} color={theme.colors.accentText} />
                     </View>
                     <View style={styles.optionTextContainer}>
                       <Text style={[styles.optionTitle, { color: isDark ? theme.colors.text.primary : COLORS.text }]}>
@@ -1661,10 +1647,10 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   activeCreatedTabButton: {
-    backgroundColor: '#667EEA',         // 밝은 Primary 컬러로 명확한 대비
+    backgroundColor: '#5566DD',         // 밝은 Primary 컬러로 명확한 대비
     shadowOpacity: 0.15,
     elevation: 4,
-    shadowColor: '#667EEA',
+    shadowColor: '#5566DD',
   },
   activeParticipatingTabButton: {
     backgroundColor: '#764BA2',         // 밝은 Secondary 컬러로 명확한 대비

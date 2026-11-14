@@ -3,7 +3,7 @@
 
 export const SEMANTIC_COLORS = {
   // 브랜드 색상
-  primary: '#2563EB',
+  primary: '#5566DD',
   primaryLight: '#3B82F6',
   primaryDark: '#1D4ED8',
 
@@ -23,7 +23,7 @@ export const SEMANTIC_COLORS = {
   infoLight: '#38BDF8',
 
   // 보라색 계열 (브랜드 악센트)
-  purple: '#8B5CF6',
+  purple: '#5566DD',
   purpleLight: '#A78BFA',
   purpleDark: '#7C3AED',
 

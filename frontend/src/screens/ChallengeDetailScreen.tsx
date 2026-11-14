@@ -58,7 +58,9 @@ import {
   RADIUS,
   SHADOWS,
 } from "../constants/designSystem";
-import { EMOTION_AVATARS, getTwemojiUrl, getEmotionById } from "../constants/emotions";
+import { getReadableEmotionColor } from "../utils/emotionTextColor";
+import { EMOTION_AVATARS, getEmotionById } from "../constants/emotions";
+import SvgEmotionIcon from "../components/common/EmotionIcon";
 import { showAlert } from "../contexts/AlertContext";
 
 // React Native 0.80 호환: 동적 화면 크기 계산
@@ -105,7 +107,7 @@ const anonymousEmotions = [
   { label: "설렘이", icon: "heart-multiple", color: "#FF69B4" },
   { label: "편안이", icon: "emoticon-kiss", color: "#98FB98" },
   { label: "궁금이", icon: "emoticon-outline", color: "#DAA520" },
-  { label: "사랑이", icon: "heart", color: "#E8D5F2" },
+  { label: "사랑이", icon: "heart", color: "#E91E63" },
   { label: "아픔이", icon: "medical-bag", color: "#8B4513" },
   { label: "희망이", icon: "star", color: "#FFD700" },
 ];
@@ -231,7 +233,7 @@ const ChallengeDetailScreen = () => {
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: theme.colors.accentText,
   };
 
   // 헤더 숨기기
@@ -371,7 +373,7 @@ const ChallengeDetailScreen = () => {
     설렘이: { emoji: "🤗", color: "#FF69B4" },
     편안이: { emoji: "😌", color: "#98FB98" },
     궁금이: { emoji: "🤔", color: "#DAA520" },
-    사랑이: { emoji: "❤️", color: "#E8D5F2" },
+    사랑이: { emoji: "❤️", color: "#E91E63" },
     아픔이: { emoji: "🤕", color: "#8B4513" },
     욕심이: { emoji: "🤑", color: "#32CD32" },
     // 추가로 '이' 없는 버전도 지원 (호환성)
@@ -392,20 +394,17 @@ const ChallengeDetailScreen = () => {
     설렘: { emoji: "🤗", color: "#FF69B4" },
     편안함: { emoji: "😌", color: "#98FB98" },
     궁금함: { emoji: "🤔", color: "#DAA520" },
-    사랑: { emoji: "❤️", color: "#E8D5F2" },
+    사랑: { emoji: "❤️", color: "#E91E63" },
     아픔: { emoji: "🤕", color: "#8B4513" },
     욕심: { emoji: "🤑", color: "#32CD32" },
   };
 
-  // 감정 Twemoji URL 가져오기 (고해상도 이미지)
-  const getEmotionTwemojiUrl = (emotionName: string): string => {
+  // 감정 이름 -> 감정 id (EmotionIcon용, 기본값 1: 기쁨이)
+  const getEmotionIconId = (emotionName: string): number => {
     const emotion = EMOTION_AVATARS.find(
       e => e.label === emotionName || e.shortName === emotionName
     );
-    if (emotion) {
-      return getTwemojiUrl(emotion.emojiCode);
-    }
-    return getTwemojiUrl('1f60a'); // 기본값 (기쁨이)
+    return emotion ? emotion.id : 1;
   };
 
   // 감정 색상 가져오기
@@ -548,20 +547,20 @@ const ChallengeDetailScreen = () => {
     { emotion_id: 2, name: "행복이", icon: "smile", color: "#FFA500" },
     { emotion_id: 3, name: "슬픔이", icon: "sad", color: "#4682B4" },
     { emotion_id: 4, name: "우울이", icon: "sad", color: "#708090" },
-    { emotion_id: 5, name: "지루미", icon: "neutral", color: "#A9A9A9" },
-    { emotion_id: 6, name: "버럭이", icon: "angry", color: "#FF4500" },
-    { emotion_id: 7, name: "불안이", icon: "worried", color: "#DDA0DD" },
-    { emotion_id: 8, name: "걱정이", icon: "worried", color: "#FFA07A" },
+    { emotion_id: 5, name: "불안이", icon: "worried", color: "#DDA0DD" },
+    { emotion_id: 6, name: "걱정이", icon: "worried", color: "#FFA07A" },
+    { emotion_id: 7, name: "버럭이", icon: "angry", color: "#FF4500" },
+    { emotion_id: 8, name: "짜증이", icon: "angry", color: "#DC143C" },
     { emotion_id: 9, name: "감동이", icon: "love", color: "#FF6347" },
     { emotion_id: 10, name: "황당이", icon: "confused", color: "#20B2AA" },
     { emotion_id: 11, name: "당황이", icon: "surprised", color: "#FF8C00" },
-    { emotion_id: 12, name: "짜증이", icon: "angry", color: "#DC143C" },
-    { emotion_id: 13, name: "무섭이", icon: "scared", color: "#9370DB" },
+    { emotion_id: 12, name: "무섭이", icon: "scared", color: "#9370DB" },
+    { emotion_id: 13, name: "편안이", icon: "calm", color: "#98FB98" },
     { emotion_id: 14, name: "추억이", icon: "love", color: "#87CEEB" },
     { emotion_id: 15, name: "설렘이", icon: "excited", color: "#FF69B4" },
-    { emotion_id: 16, name: "편안이", icon: "calm", color: "#98FB98" },
+    { emotion_id: 16, name: "지루미", icon: "neutral", color: "#A9A9A9" },
     { emotion_id: 17, name: "궁금이", icon: "curious", color: "#DAA520" },
-    { emotion_id: 18, name: "사랑이", icon: "love", color: "#E8D5F2" },
+    { emotion_id: 18, name: "사랑이", icon: "love", color: "#E91E63" },
     { emotion_id: 19, name: "아픔이", icon: "hurt", color: "#8B4513" },
     { emotion_id: 20, name: "욕심이", icon: "greedy", color: "#32CD32" },
   ];
@@ -1299,11 +1298,7 @@ const ChallengeDetailScreen = () => {
                     { backgroundColor: item.emotion_color },
                   ]}
                 >
-                  <Image
-                    source={{ uri: getEmotionTwemojiUrl(item.emotion_name) }}
-                    style={styles.instagramAvatarEmoji}
-                    resizeMode="contain"
-                  />
+                  <SvgEmotionIcon emotionId={getEmotionIconId(item.emotion_name)} size={scaleSize(22)} />
                 </View>
                 <View style={styles.instagramUserDetails}>
                   <Text
@@ -1315,7 +1310,7 @@ const ChallengeDetailScreen = () => {
                     {item.nickname}
                     {item.user_id === user?.user_id && (
                       <Text
-                        style={[styles.authorTag, { color: COLORS.primary }]}
+                        style={[styles.authorTag, { color: theme.colors.accentText }]}
                       >
                         {" "}
                         (나)
@@ -1480,7 +1475,7 @@ const ChallengeDetailScreen = () => {
                     style={[
                       styles.inlineReplySend,
                       {
-                        backgroundColor: inlineReplyText.trim() ? '#667eea' : theme.bg.secondary,
+                        backgroundColor: inlineReplyText.trim() ? theme.colors.primary : theme.bg.secondary,
                         opacity: inlineReplyText.trim() ? 1 : 0.5,
                       }
                     ]}
@@ -1501,7 +1496,7 @@ const ChallengeDetailScreen = () => {
                     <MaterialCommunityIcons
                       name="send"
                       size={scaleSize(16)}
-                      color={inlineReplyText.trim() ? "#FFFFFF" : theme.text.tertiary}
+                      color={inlineReplyText.trim() ? theme.colors.onAccent : theme.text.tertiary}
                     />
                   </TouchableOpacity>
                 </View>
@@ -1767,7 +1762,7 @@ const ChallengeDetailScreen = () => {
         <View style={styles.commentPreviewHeader}>
           <Text style={[styles.commentPreviewTitle, { color: theme.text.primary }]}>💬 최근 활동</Text>
           <TouchableOpacity onPress={() => setCommentModalVisible(true)}>
-            <Text style={[styles.viewAllButton, { color: COLORS.primary }]}>모두 보기 ({comments.length})</Text>
+            <Text style={[styles.viewAllButton, { color: theme.colors.accentText }]}>모두 보기 ({comments.length})</Text>
           </TouchableOpacity>
         </View>
 
@@ -1799,7 +1794,7 @@ const ChallengeDetailScreen = () => {
 
               {emotion && (
                 <View style={[styles.miniEmotionTag, { backgroundColor: emotion.color + '20' }]}>
-                  <Text style={[styles.miniEmotionText, { color: emotion.color }]}>{emotionName}</Text>
+                  <Text style={[styles.miniEmotionText, { color: getReadableEmotionColor(emotion.color, isDark, theme.text.primary) }]}>{emotionName}</Text>
                 </View>
               )}
 
@@ -2712,7 +2707,7 @@ const ChallengeDetailScreen = () => {
       case "upcoming":
         return COLORS.warning; // 예정 - 주황색
       case "completed":
-        return "#6366F1"; // 완료 - 보라색 (성취감을 주는 색상)
+        return theme.colors.primary; // 완료 - 앱 accent
       default:
         return COLORS.textSecondary;
     }
@@ -2762,11 +2757,7 @@ const ChallengeDetailScreen = () => {
             { backgroundColor: emotionColor },
           ]}
         >
-          <Image
-            source={{ uri: getEmotionTwemojiUrl(item.name) }}
-            style={styles.emotionModalEmoji}
-            resizeMode="contain"
-          />
+          <SvgEmotionIcon emotionId={getEmotionIconId(item.name)} size={scaleSize(32)} />
         </View>
         <Text
           style={[
@@ -2976,7 +2967,7 @@ const ChallengeDetailScreen = () => {
                 opacity: fadeAnim,
                 transform: [{ scale: scaleAnim }],
                 backgroundColor: theme.bg.card,
-                shadowColor: isDark ? '#ffffff' : '#000000',
+                shadowColor: isDark ? '#000000' : '#000000',
                 shadowOpacity: isDark ? 0.1 : 0.15,
               },
             ]}
@@ -2989,7 +2980,7 @@ const ChallengeDetailScreen = () => {
                   {
                     backgroundColor: getStatusColor(challenge.status),
                     ...(challenge.status === "completed" && {
-                      shadowColor: "#6366F1",
+                      shadowColor: isDark ? '#000000' : theme.colors.primary,
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: 0.15,
                       shadowRadius: 4,
@@ -3001,7 +2992,7 @@ const ChallengeDetailScreen = () => {
                 <Text
                   style={[
                     styles.statusText,
-                    challenge.status === "completed" && { fontWeight: "700" },
+                    challenge.status === "completed" && { fontWeight: "700", color: theme.colors.onAccent },
                   ]}
                 >
                   {challenge.status === "active"
@@ -3221,7 +3212,7 @@ const ChallengeDetailScreen = () => {
                     {
                       backgroundColor: isDark
                         ? `${COLORS.danger}15`
-                        : theme.bg.surface,
+                        : theme.bg.secondary,
                     },
                   ]}
                   onPress={() => toggleLike(challenge.challenge_id)}
@@ -3249,7 +3240,7 @@ const ChallengeDetailScreen = () => {
                   <MaterialCommunityIcons
                     name="comment-text-outline"
                     size={scaleSize(24)}
-                    color="#0984E3"
+                    color={theme.colors.accentText}
                   />
                   <Text
                     style={[
@@ -3298,7 +3289,10 @@ const ChallengeDetailScreen = () => {
                     color={colors.primary}
                   />
                   <Text
-                    style={[styles.actionButtonText, { color: colors.primary }]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.75}
+                    style={[styles.actionButtonText, { color: colors.primary, flexShrink: 1 }]}
                   >
                     {hasUserEmotionRecord() ? "감정 수정하기" : "감정 나누기"}
                   </Text>
@@ -3324,13 +3318,14 @@ const ChallengeDetailScreen = () => {
                     size={scaleSize(20)}
                     color={colors.primary}
                   />
-                  <Text style={[styles.commentViewButtonTextCompact, {
-                    color: theme.text.primary
+                  <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[styles.commentViewButtonTextCompact, {
+                    color: theme.text.primary,
+                    flexShrink: 1
                   }]}>
                     응원댓글
                   </Text>
-                  <View style={[styles.commentBadgeCompact, { backgroundColor: colors.primary }]}>
-                    <Text style={[styles.commentBadgeText, { color: '#FFFFFF' }]}>{comments.length}</Text>
+                  <View style={[styles.commentBadgeCompact, { backgroundColor: theme.colors.primary }]}>
+                    <Text style={[styles.commentBadgeText, { color: theme.colors.onAccent }]}>{comments.length}</Text>
                   </View>
                 </TouchableOpacity>
               </View>
@@ -3413,13 +3408,13 @@ const ChallengeDetailScreen = () => {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[COLORS.primary, COLORS.secondary]}
+                colors={[theme.colors.primary, theme.colors.primary]}
                 style={styles.scrollToTopGradient}
               >
                 <MaterialCommunityIcons
                   name="chevron-up"
                   size={24}
-                  color="white"
+                  color={theme.colors.onAccent}
                 />
               </LinearGradient>
             </TouchableOpacity>
@@ -3627,11 +3622,7 @@ const ChallengeDetailScreen = () => {
                         },
                       ]}
                     >
-                      <Image
-                        source={{ uri: getEmotionTwemojiUrl(replyingToItem.emotion_name) }}
-                        style={styles.originalPostAvatarEmoji}
-                        resizeMode="contain"
-                      />
+                      <SvgEmotionIcon emotionId={getEmotionIconId(replyingToItem.emotion_name)} size={scaleSize(22)} />
                     </View>
                     <Text
                       style={[
@@ -3754,7 +3745,7 @@ const ChallengeDetailScreen = () => {
               {/* 참여자 통계 */}
               <View style={[styles.participantStats, { borderBottomColor: isDarkMode ? COLORS.darkBorder : COLORS.border }]}>
                 <View style={styles.statItem}>
-                  <Text style={[styles.statNumber, { color: COLORS.primary }]}>
+                  <Text style={[styles.statNumber, { color: theme.colors.accentText }]}>
                     {challenge.participants?.length || 0}
                   </Text>
                   <Text
@@ -3809,12 +3800,12 @@ const ChallengeDetailScreen = () => {
                     <MaterialCommunityIcons
                       name="account-edit"
                       size={18}
-                      color={COLORS.primary}
+                      color={theme.colors.accentText}
                     />
                     <Text
                       style={[
                         styles.participantActionButtonText,
-                        { color: COLORS.primary },
+                        { color: theme.colors.accentText },
                       ]}
                     >
                       참여자 수 수정
@@ -4172,7 +4163,7 @@ const ChallengeDetailScreen = () => {
                       <MaterialCommunityIcons
                         name="image-plus"
                         size={32}
-                        color={COLORS.primary}
+                        color={theme.colors.accentText}
                       />
                       <Text
                         style={[
@@ -4579,7 +4570,7 @@ const ChallengeDetailScreen = () => {
                     <MaterialCommunityIcons
                       name="pencil"
                       size={24}
-                      color={COLORS.primary}
+                      color={theme.colors.accentText}
                     />
                     <Text style={[styles.bottomModalOptionText, { color: theme.text.primary }]}>수정하기</Text>
                   </TouchableOpacity>
@@ -5274,9 +5265,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginRight: scaleSize(20),
     letterSpacing: -0.3,
-    textShadowColor: "rgba(0, 0, 0, 0.1)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   modalSubtitle: {
     fontSize: scaleFont(16),
@@ -5285,8 +5273,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: -0.2,
     lineHeight: scaleFont(22),
-    textShadowColor: "rgba(0, 0, 0, 0.05)",
-    textShadowOffset: { width: 0, height: 1 },
   },
 
   // 감정 선택
@@ -5319,9 +5305,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     letterSpacing: -0.2,
-    textShadowColor: "rgba(0, 0, 0, 0.1)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
     marginTop: scaleVertical(2),
   },
 
@@ -5366,9 +5349,6 @@ const styles = StyleSheet.create({
     fontSize: scaleFont(16),
     fontWeight: "700",
     letterSpacing: -0.2,
-    textShadowColor: "rgba(0, 0, 0, 0.05)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
   },
   // 제출 버튼
   submitButton: {
@@ -5386,9 +5366,6 @@ const styles = StyleSheet.create({
     fontSize: scaleFont(16),
     fontWeight: "700",
     letterSpacing: -0.2,
-    textShadowColor: "rgba(0, 0, 0, 0.1)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   // 전체 너비 제출 버튼
   submitButtonFull: {
@@ -5414,17 +5391,11 @@ const styles = StyleSheet.create({
     fontSize: scaleFont(24),
     fontWeight: "700",
     marginBottom: scaleVertical(4),
-    textShadowColor: "rgba(0, 0, 0, 0.1)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
     letterSpacing: -0.3,
   },
   statLabel: {
     fontSize: scaleFont(13),
     fontWeight: "600",
-    textShadowColor: "rgba(0, 0, 0, 0.05)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
     letterSpacing: -0.1,
   },
 
@@ -5459,15 +5430,11 @@ const styles = StyleSheet.create({
     fontSize: scaleFont(15),
     fontWeight: "600",
     marginBottom: scaleVertical(2),
-    textShadowColor: "rgba(0, 0, 0, 0.05)",
-    textShadowOffset: { width: 0, height: 1 },
     letterSpacing: -0.2,
   },
   participantRole: {
     fontSize: scaleFont(13),
     fontWeight: "600",
-    textShadowColor: "rgba(0, 0, 0, 0.05)",
-    textShadowOffset: { width: 0, height: 1 },
     letterSpacing: -0.1,
   },
   creatorBadge: {
@@ -5733,7 +5700,7 @@ const styles = StyleSheet.create({
     marginBottom: scaleVertical(6),
   },
   miniEmotionText: {
-    fontSize: scaleFont(11),
+    fontSize: scaleFont(12),
     fontWeight: '600',
   },
   commentPreviewText: {
@@ -5905,7 +5872,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   instagramTagText: {
-    fontSize: scaleFont(11),
+    fontSize: scaleFont(12),
     fontWeight: "600",
     letterSpacing: -0.1,
     color: "white",

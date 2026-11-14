@@ -23,7 +23,7 @@ const BASE_WIDTH = 360;
 
 const EmotionReportScreen: React.FC = () => {
   const navigation = useNavigation();
-  const { isDark } = useModernTheme();
+  const { theme, isDark } = useModernTheme();
   const [report, setReport] = useState<EmotionReport | null>(null);
   const [reportList, setReportList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,13 +40,13 @@ const EmotionReportScreen: React.FC = () => {
     card: isDark ? '#1e1e1e' : '#ffffff',
     text: isDark ? '#ffffff' : '#1a1a1a',
     textSecondary: isDark ? '#a0a0a0' : '#666666',
-    primary: isDark ? '#667eea' : '#764ba2',
+    primary: theme.colors.primary,
     border: isDark ? '#333333' : '#e0e0e0',
     success: '#4CAF50',
     warning: '#FF9800',
     error: '#F44336',
     chartBg: isDark ? '#2a2a2a' : '#f0f0f0',
-  }), [isDark]);
+  }), [isDark, theme]);
 
   // 트렌드 아이콘 및 색상
   const getTrendInfo = useCallback((trend: string) => {
@@ -148,7 +148,7 @@ const EmotionReportScreen: React.FC = () => {
                   }
                 ]}
               />
-              <Text style={[styles.barText, { color: colors.text, fontSize: 11 * scale }]}>
+              <Text style={[styles.barText, { color: colors.text, fontSize: Math.max(12, 12 * scale) }]}>
                 {emotion.count}회 ({emotion.percentage}%)
               </Text>
             </View>
@@ -186,10 +186,10 @@ const EmotionReportScreen: React.FC = () => {
                   ]}
                 />
               </View>
-              <Text style={[styles.dayLabel, { color: colors.textSecondary, fontSize: 11 * scale, marginTop: 4 * scale }]}>
+              <Text style={[styles.dayLabel, { color: colors.textSecondary, fontSize: Math.max(12, 12 * scale), marginTop: 4 * scale }]}>
                 {day.day_name}
               </Text>
-              <Text style={[styles.dayCount, { color: colors.text, fontSize: 10 * scale }]}>
+              <Text style={[styles.dayCount, { color: colors.text, fontSize: Math.max(12, 12 * scale) }]}>
                 {day.count}
               </Text>
             </View>
@@ -206,7 +206,7 @@ const EmotionReportScreen: React.FC = () => {
       <Text style={[styles.statValue, { color: color || colors.primary, fontSize: 24 * scale, marginTop: 8 * scale }]}>
         {value}
       </Text>
-      <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: 11 * scale, marginTop: 4 * scale }]}>
+      <Text style={[styles.statLabel, { color: colors.textSecondary, fontSize: Math.max(12, 12 * scale), marginTop: 4 * scale }]}>
         {label}
       </Text>
     </View>
@@ -238,7 +238,7 @@ const EmotionReportScreen: React.FC = () => {
           <Text style={[
             styles.monthButtonText,
             {
-              color: selectedPeriod === item.report_period ? '#fff' : colors.text,
+              color: selectedPeriod === item.report_period ? theme.colors.onAccent : colors.text,
               fontSize: 13 * scale,
             }
           ]}>
@@ -246,7 +246,7 @@ const EmotionReportScreen: React.FC = () => {
           </Text>
           {!item.is_viewed && (
             <View style={[styles.newBadge, { backgroundColor: colors.error, marginLeft: 4 * scale }]}>
-              <Text style={{ color: '#fff', fontSize: 8 * scale }}>N</Text>
+              <Text style={{ color: '#fff', fontSize: Math.max(10, 10 * scale) }}>N</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -392,7 +392,7 @@ const EmotionReportScreen: React.FC = () => {
             )}
 
             {/* 생성 시간 */}
-            <Text style={[styles.generatedAt, { color: colors.textSecondary, fontSize: 11 * scale, textAlign: 'center', marginBottom: 24 * scale }]}>
+            <Text style={[styles.generatedAt, { color: colors.textSecondary, fontSize: Math.max(12, 12 * scale), textAlign: 'center', marginBottom: 24 * scale }]}>
               {new Date(report.generated_at).toLocaleDateString('ko-KR', {
                 year: 'numeric',
                 month: 'long',

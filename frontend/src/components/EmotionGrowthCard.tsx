@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../contexts/ThemeContext';
+import { useModernTheme } from '../contexts/ModernThemeContext';
 import { viralApi, CompletionCard } from '../services/api/emotionFeatureService';
 
 const getScreenWidth = () => Dimensions.get('window').width;
@@ -35,6 +36,7 @@ const EmotionGrowthCard: React.FC<EmotionGrowthCardProps> = ({
   compact = false,
 }) => {
   const { isDarkMode } = useTheme();
+  const { theme } = useModernTheme();
   const [data, setData] = useState<CompletionCard | null>(completionData || null);
   const [loading, setLoading] = useState(!completionData && !!completionId);
   const [sharing, setSharing] = useState(false);
@@ -59,8 +61,8 @@ const EmotionGrowthCard: React.FC<EmotionGrowthCardProps> = ({
     if (isDarkMode) {
       return ['#1a1a2e', '#16213e', '#0f3460'];
     }
-    return ['#667eea', '#764ba2', '#f093fb'];
-  }, [isDarkMode]);
+    return [theme.colors.primaryDark, theme.colors.primaryDark, theme.colors.primaryDark];
+  }, [isDarkMode, theme.colors.primaryDark]);
 
   // 데이터 로드
   React.useEffect(() => {
@@ -124,7 +126,7 @@ ${data.top_emotions?.map(e => e.icon).join(' ') || ''}
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: isDarkMode ? '#1a1a2e' : '#f5f5f5' }]}>
-        <ActivityIndicator size="large" color={isDarkMode ? '#667eea' : '#764ba2'} />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
   }
@@ -158,7 +160,7 @@ ${data.top_emotions?.map(e => e.icon).join(' ') || ''}
           <Text style={[styles.statValue, { fontSize: (compact ? 24 : 28) * scale }]}>
             {data.completed_days}
           </Text>
-          <Text style={[styles.statLabel, { fontSize: 11 * scale }]}>일간 기록</Text>
+          <Text style={[styles.statLabel, { fontSize: Math.max(12, 12 * scale) }]}>일간 기록</Text>
         </View>
 
         <View style={[styles.divider, { height: 40 * scale }]} />
@@ -167,7 +169,7 @@ ${data.top_emotions?.map(e => e.icon).join(' ') || ''}
           <Text style={[styles.statValue, { fontSize: (compact ? 24 : 28) * scale }]}>
             {data.total_emotions_logged}
           </Text>
-          <Text style={[styles.statLabel, { fontSize: 11 * scale }]}>감정 표현</Text>
+          <Text style={[styles.statLabel, { fontSize: Math.max(12, 12 * scale) }]}>감정 표현</Text>
         </View>
 
         <View style={[styles.divider, { height: 40 * scale }]} />
@@ -176,7 +178,7 @@ ${data.top_emotions?.map(e => e.icon).join(' ') || ''}
           <Text style={[styles.statValue, { fontSize: (compact ? 24 : 28) * scale }]}>
             {data.encouragements_received}
           </Text>
-          <Text style={[styles.statLabel, { fontSize: 11 * scale }]}>응원 받음</Text>
+          <Text style={[styles.statLabel, { fontSize: Math.max(12, 12 * scale) }]}>응원 받음</Text>
         </View>
       </View>
 
@@ -189,7 +191,7 @@ ${data.top_emotions?.map(e => e.icon).join(' ') || ''}
               <View key={index} style={[styles.emotionBubble, { padding: 8 * scale, marginHorizontal: 4 * scale }]}>
                 <Text style={{ fontSize: 24 * scale }}>{emotion.icon}</Text>
                 {!compact && (
-                  <Text style={[styles.emotionName, { fontSize: 10 * scale }]}>{emotion.name}</Text>
+                  <Text style={[styles.emotionName, { fontSize: Math.max(12, 12 * scale) }]}>{emotion.name}</Text>
                 )}
               </View>
             ))}
@@ -210,7 +212,7 @@ ${data.top_emotions?.map(e => e.icon).join(' ') || ''}
       )}
 
       {/* 완주 날짜 */}
-      <Text style={[styles.dateText, { fontSize: 11 * scale, marginTop: 12 * scale }]}>
+      <Text style={[styles.dateText, { fontSize: Math.max(12, 12 * scale), marginTop: 12 * scale }]}>
         {new Date(data.completed_at).toLocaleDateString('ko-KR', {
           year: 'numeric',
           month: 'long',
@@ -237,7 +239,7 @@ ${data.top_emotions?.map(e => e.icon).join(' ') || ''}
       )}
 
       {/* 브랜드 워터마크 */}
-      <Text style={[styles.watermark, { fontSize: 10 * scale, marginTop: 8 * scale }]}>
+      <Text style={[styles.watermark, { fontSize: Math.max(12, 12 * scale), marginTop: 8 * scale }]}>
         Dayonme
       </Text>
     </LinearGradient>
@@ -332,6 +334,7 @@ const styles = StyleSheet.create({
   },
   emotionsRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
   },
   emotionBubble: {

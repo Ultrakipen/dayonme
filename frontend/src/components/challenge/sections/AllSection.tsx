@@ -63,7 +63,7 @@ export const AllSection = memo<AllSectionProps>(({
           <MaterialCommunityIcons
             name="account-group"
             size={26}
-            color={COLORS.primary}
+            color={modernTheme.colors.accentText}
             style={{ marginRight: 12 }}
           />
           <Text style={[styles.sectionTitle, { color: modernTheme.text.primary }]}>
@@ -79,16 +79,16 @@ export const AllSection = memo<AllSectionProps>(({
             accessibilityLabel="내 챌린지 보기"
             accessibilityRole="button"
           >
-            <MaterialCommunityIcons name="account-heart-outline" size={20} color={COLORS.primary} />
-            <Text style={[styles.myChallengeText, { color: COLORS.primary }]}>내 챌린지</Text>
+            <MaterialCommunityIcons name="account-heart-outline" size={20} color={modernTheme.colors.accentText} />
+            <Text style={[styles.myChallengeText, { color: modernTheme.colors.accentText }]}>내 챌린지</Text>
           </TouchableOpacity>
         )}
       </View>
 
       {/* 상태 탭 */}
-      <View style={[styles.statusTabContainer, { backgroundColor: modernTheme.bg.surface }]}>
+      <View style={[styles.statusTabContainer, { backgroundColor: modernTheme.bg.secondary }]}>
         <TouchableOpacity
-          style={[styles.statusTab, allStatusFilter === 'active' && styles.statusTabActive]}
+          style={[styles.statusTab, allStatusFilter === 'active' && [styles.statusTabActive, { backgroundColor: modernTheme.colors.primary }]]}
           onPress={() => {
             console.log('🔘 진행 챌린지 버튼 클릭 - 현재 필터:', allStatusFilter);
             onFilterChange('active');
@@ -97,13 +97,13 @@ export const AllSection = memo<AllSectionProps>(({
           <Text style={[
             styles.statusTabText,
             { color: modernTheme.text.secondary },
-            allStatusFilter === 'active' && styles.statusTabTextActive
+            allStatusFilter === 'active' && [styles.statusTabTextActive, { color: modernTheme.colors.onAccent }]
           ]}>
             진행 챌린지
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.statusTab, allStatusFilter === 'completed' && styles.statusTabActive]}
+          style={[styles.statusTab, allStatusFilter === 'completed' && [styles.statusTabActive, { backgroundColor: modernTheme.colors.primary }]]}
           onPress={() => {
             console.log('🔘 끝난 챌린지 버튼 클릭 - 현재 필터:', allStatusFilter);
             onFilterChange('completed');
@@ -112,7 +112,7 @@ export const AllSection = memo<AllSectionProps>(({
           <Text style={[
             styles.statusTabText,
             { color: modernTheme.text.secondary },
-            allStatusFilter === 'completed' && styles.statusTabTextActive
+            allStatusFilter === 'completed' && [styles.statusTabTextActive, { color: modernTheme.colors.onAccent }]
           ]}>
             끝난 챌린지
           </Text>
@@ -133,10 +133,10 @@ export const AllSection = memo<AllSectionProps>(({
             진행 중인 챌린지에서만 사용할 수 있어요
           </Text>
           <TouchableOpacity
-            style={styles.warningButton}
+            style={[styles.warningButton, { backgroundColor: modernTheme.colors.primary }]}
             onPress={() => onFilterChange('active')}
           >
-            <Text style={styles.warningButtonText}>진행 챌린지 보기</Text>
+            <Text style={[styles.warningButtonText, { color: modernTheme.colors.onAccent }]}>진행 챌린지 보기</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -177,15 +177,15 @@ export const AllSection = memo<AllSectionProps>(({
                 <MaterialCommunityIcons
                   name="chevron-down"
                   size={24}
-                  color={COLORS.primary}
+                  color={modernTheme.colors.accentText}
                 />
-                <Text style={[styles.loadMoreText, { color: COLORS.primary }]}>
+                <Text style={[styles.loadMoreText, { color: modernTheme.colors.accentText }]}>
                   더 많은 챌린지 보기
                 </Text>
               </TouchableOpacity>
             ) : loadingMore ? (
               <View style={styles.loadingMore}>
-                <ActivityIndicator size="small" color={COLORS.primary} />
+                <ActivityIndicator size="small" color={modernTheme.colors.primary} />
                 <Text style={[styles.loadingMoreText, { color: modernTheme.text.secondary }]}>
                   더 많은 챌린지 로드 중...
                 </Text>

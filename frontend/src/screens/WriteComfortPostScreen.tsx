@@ -25,6 +25,7 @@ import { StyledText, StyledButton, StyledCard } from '../components/ModernUI';
 import TagSearchInput from '../components/TagSearchInput';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useModernTheme } from '../contexts/ModernThemeContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { launchImageLibrary, launchCamera, ImagePickerResponse, MediaType, PhotoQuality } from 'react-native-image-picker';
 import comfortWallService from '../services/api/comfortWallService';
@@ -35,7 +36,8 @@ import ConfirmationModal from '../components/ui/ConfirmationModal';
 import ImageCarousel from '../components/ImageCarousel';
 import { API_CONFIG } from '../config/api';
 import { FONT_SIZES } from '../constants';
-import { EMOTION_AVATARS, getTwemojiUrl } from '../constants/emotions';
+import { EMOTION_AVATARS } from '../constants/emotions';
+import EmotionIcon from '../components/common/EmotionIcon';
 
 interface Tag {
   tag_id: number;
@@ -50,6 +52,7 @@ interface WriteComfortPostScreenProps {
 const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ navigation, route }) => {
   const paperTheme = useTheme();
   const { theme, isDark } = useModernTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { width: screenWidth } = useWindowDimensions();
 
@@ -59,7 +62,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: theme.colors.primary,
   };
 
   const BASE_WIDTH = 360;
@@ -759,7 +762,8 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
       <View style={{
         backgroundColor: theme.bg.primary,
         paddingHorizontal: scale(16),
-        paddingVertical: scale(12),
+        paddingTop: scale(12) + insets.top,
+        paddingBottom: scale(12),
         borderBottomWidth: isDark ? 0 : 0.5,
         borderBottomColor: isDark ? 'transparent' : 'rgba(0,0,0,0.05)',
       }}>
@@ -797,7 +801,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             style={{
               backgroundColor: (!isFormValid || isSubmitting || isUploadingImages)
                 ? 'transparent'
-                : '#667eea',
+                : theme.colors.primary,
               paddingHorizontal: scale(16),
               paddingVertical: scale(8),
               borderRadius: scale(20),
@@ -808,15 +812,15 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             activeOpacity={0.7}
           >
             {(isSubmitting || isUploadingImages) ? (
-              <ActivityIndicator size="small" color="#667eea" />
+              <ActivityIndicator size="small" color={theme.colors.primary} />
             ) : (
               <StyledText
                 style={{
                   fontWeight: '600',
                   fontSize: scale(14.5),
                   color: (!isFormValid || isSubmitting || isUploadingImages)
-                    ? (isDark ? 'rgba(102, 126, 234, 0.4)' : 'rgba(102, 126, 234, 0.5)')
-                    : '#FFFFFF',
+                    ? (isDark ? 'rgba(85, 102, 221, 0.4)' : 'rgba(85, 102, 221, 0.5)')
+                    : theme.colors.onAccent,
                   fontFamily: 'Pretendard-SemiBold'
                 }}
               >
@@ -856,8 +860,8 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             borderRadius: scale(20),
             padding: scale(20),
             borderWidth: isDark ? 0.5 : 0,
-            borderColor: isDark ? 'rgba(96, 165, 250, 0.2)' : 'transparent',
-            shadowColor: isDark ? 'rgba(96, 165, 250, 0.15)' : '#000000',
+            borderColor: isDark ? theme.colors.border : 'transparent',
+            shadowColor: '#000000',
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: isDark ? 0.4 : 0.08,
             shadowRadius: 12,
@@ -870,7 +874,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 style={{
                   fontSize: scale(16),
                   fontWeight: '700',
-                  color: isDark ? '#60a5fa' : theme.text.primary,
+                  color: theme.text.primary,
                   letterSpacing: -0.2,
                   marginBottom: scale(6)
                 }}
@@ -898,8 +902,8 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               placeholder="고민이나 이야기의 제목을 적어주세요..."
               placeholderTextColor={isDark ? '#9CA3AF' : '#4B5563'}
               textColor={isDark ? '#FFFFFF' : '#1a1a1a'}
-              selectionColor={isDark ? '#60a5fa' : '#0095F6'}
-              cursorColor={isDark ? '#60a5fa' : '#0095F6'}
+              selectionColor={theme.colors.primary}
+              cursorColor={theme.colors.primary}
               dense={false}
               multiline={false}
               underlineColor="transparent"
@@ -936,7 +940,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                         inputRange: [0, 1],
                         outputRange: ['0%', '100%'],
                       }),
-                      backgroundColor: trimmedTitle.length < 5 ? '#FF6B6B' : trimmedTitle.length < 20 ? '#4ECDC4' : '#45B7D1'
+                      backgroundColor: trimmedTitle.length < 5 ? theme.colors.error : trimmedTitle.length < 20 ? theme.colors.primary : theme.colors.primary
                     }
                   ]}
                 />
@@ -945,7 +949,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 variant="caption"
                 style={{
                   fontSize: scale(14),
-                  color: trimmedTitle.length < 5 ? '#FF6B6B' : theme.text.secondary,
+                  color: trimmedTitle.length < 5 ? theme.colors.error : theme.text.secondary,
                   fontWeight: '600',
                   letterSpacing: -0.1
                 }}
@@ -964,8 +968,8 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
           borderRadius: scale(20),
           padding: scale(20),
           borderWidth: isDark ? 0.5 : 0,
-          borderColor: isDark ? 'rgba(96, 165, 250, 0.2)' : 'transparent',
-          shadowColor: isDark ? 'rgba(96, 165, 250, 0.15)' : '#000000',
+          borderColor: isDark ? theme.colors.border : 'transparent',
+          shadowColor: '#000000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: isDark ? 0.4 : 0.08,
           shadowRadius: 12,
@@ -978,7 +982,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               style={{
                 fontSize: scale(16),
                 fontWeight: '700',
-                color: isDark ? '#60a5fa' : theme.text.primary,
+                color: theme.text.primary,
                 letterSpacing: -0.2,
                 marginBottom: scale(6)
               }}
@@ -1019,8 +1023,8 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
             placeholder="어떤 일이 있었나요? 어떤 기분이신가요? 편하게 이야기해주세요..."
             placeholderTextColor={isDark ? '#9CA3AF' : '#4B5563'}
             textColor={isDark ? '#FFFFFF' : '#1a1a1a'}
-            selectionColor={isDark ? '#60a5fa' : '#0095F6'}
-            cursorColor={isDark ? '#60a5fa' : '#0095F6'}
+            selectionColor={theme.colors.primary}
+            cursorColor={theme.colors.primary}
             underlineColor="transparent"
             activeUnderlineColor="transparent"
             theme={{
@@ -1052,7 +1056,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                   height: '100%',
                   borderRadius: scale(2),
                   width: `${Math.min(content.length / 2000 * 100, 100)}%`,
-                  backgroundColor: trimmedContent.length < 20 ? '#FF6B6B' : content.length < 100 ? '#4ECDC4' : '#45B7D1'
+                  backgroundColor: trimmedContent.length < 20 ? theme.colors.error : content.length < 100 ? theme.colors.primary : theme.colors.primary
                 }}
               />
             </View>
@@ -1060,7 +1064,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
               variant="caption"
               style={{
                 fontSize: scale(14),
-                color: trimmedContent.length < 20 ? '#FF6B6B' : theme.colors.textSecondary,
+                color: trimmedContent.length < 20 ? theme.colors.error : theme.text.secondary,
                 fontWeight: '600',
                 letterSpacing: -0.1
               }}
@@ -1125,19 +1129,19 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 </StyledText>
                 <TouchableOpacity
                   style={{
-                    backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : '#F0F9FF',
+                    backgroundColor: theme.colors.tint,
                     paddingHorizontal: scale(20),
                     paddingVertical: scale(12),
                     borderRadius: scale(20),
                     borderWidth: 1,
-                    borderColor: isDark ? 'rgba(96, 165, 250, 0.4)' : '#0095F6'
+                    borderColor: theme.colors.primary
                   }}
                   onPress={() => setImageFeatureEnabled(true)}
                 >
                   <StyledText style={{
                     fontSize: scale(17),
                     fontWeight: '600',
-                    color: isDark ? '#60a5fa' : '#0095F6'
+                    color: theme.colors.accentText
                   }}>
                     다시 시도해보기
                   </StyledText>
@@ -1224,7 +1228,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                       width: scale(80),
                       height: scale(80),
                       borderWidth: 2,
-                      borderColor: isDark ? 'rgba(96, 165, 250, 0.3)' : '#E3F2FD',
+                      borderColor: theme.colors.border,
                       borderStyle: 'dashed',
                       borderRadius: scale(16),
                       alignItems: 'center',
@@ -1244,9 +1248,9 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                       justifyContent: 'center',
                       marginBottom: scale(6),
                       borderWidth: 2,
-                      borderColor: isDark ? '#60a5fa' : '#0095F6'
+                      borderColor: theme.colors.primary
                     }}>
-                      <MaterialCommunityIcons name="plus" size={scale(18)} color={isDark ? '#60a5fa' : '#0095F6'} />
+                      <MaterialCommunityIcons name="plus" size={scale(18)} color={theme.colors.accentText} />
                     </View>
                     <StyledText
                       variant="caption"
@@ -1254,7 +1258,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                         textAlign: 'center',
                         fontSize: scale(13),
                         fontWeight: '600',
-                        color: isDark ? '#60a5fa' : '#0095F6'
+                        color: theme.colors.accentText
                       }}
                     >
                       {selectedImages.length}/3
@@ -1333,12 +1337,12 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                       alignItems: 'center',
                       paddingHorizontal: scale(16),
                       paddingVertical: scale(10),
-                      backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : '#F0F9FF',
+                      backgroundColor: theme.colors.tint,
                       borderRadius: scale(20),
                       borderWidth: 1,
-                      borderColor: isDark ? 'rgba(96, 165, 250, 0.4)' : '#0095F6',
+                      borderColor: theme.colors.primary,
                       marginBottom: scale(8),
-                      shadowColor: isDark ? 'rgba(96, 165, 250, 0.3)' : '#0095F6',
+                      shadowColor: isDark ? '#000000' : theme.colors.primary,
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: isDark ? 0.3 : 0.1,
                       shadowRadius: 4,
@@ -1349,12 +1353,12 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                     <StyledText style={{
                       fontSize: scale(15),
                       fontWeight: '600',
-                      color: isDark ? '#60a5fa' : '#0095F6',
+                      color: theme.colors.accentText,
                       marginRight: scale(6)
                     }}>
                       #{tag.name}
                     </StyledText>
-                    <MaterialCommunityIcons name="close-circle" size={scale(18)} color={isDark ? '#60a5fa' : '#0095F6'} />
+                    <MaterialCommunityIcons name="close-circle" size={scale(18)} color={theme.colors.accentText} />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -1384,7 +1388,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 <MaterialCommunityIcons
                   name={isAnonymous ? "incognito" : "account"}
                   size={scale(18)}
-                  color={isDark ? '#60a5fa' : '#0095F6'}
+                  color={theme.colors.accentText}
                   style={{ marginRight: scale(8) }}
                 />
                 <StyledText
@@ -1431,7 +1435,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 borderRadius: scale(16),
                 padding: scale(2),
                 justifyContent: 'center',
-                backgroundColor: isAnonymous ? (isDark ? '#60a5fa' : '#0095F6') : (isDark ? '#374151' : '#E5E5E5'),
+                backgroundColor: isAnonymous ? theme.colors.primary : (isDark ? '#374151' : '#E5E5E5'),
                 alignItems: isAnonymous ? 'flex-end' : 'flex-start',
                 shadowColor: '#000000',
                 shadowOffset: { width: 0, height: 2 },
@@ -1456,7 +1460,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                 <MaterialCommunityIcons
                   name={isAnonymous ? "incognito" : "account"}
                   size={scale(14)}
-                  color={isAnonymous ? (isDark ? '#60a5fa' : '#0095F6') : (isDark ? '#9CA3AF' : '#8E8E93')}
+                  color={isAnonymous ? theme.colors.accentText : (isDark ? '#9CA3AF' : '#8E8E93')}
                 />
               </View>
             </TouchableOpacity>
@@ -1528,13 +1532,9 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                           paddingVertical: scale(10),
                           paddingHorizontal: scale(8),
                           borderRadius: scale(16),
-                          backgroundColor: isSelected
-                            ? (isDark ? `${emotion.color}30` : `${emotion.color}20`)
-                            : 'transparent',
+                          backgroundColor: isSelected ? theme.colors.tint : theme.colors.card,
                           borderWidth: isSelected ? 2 : 1,
-                          borderColor: isSelected
-                            ? emotion.color
-                            : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'),
+                          borderColor: isSelected ? theme.colors.accent : theme.colors.border,
                           minWidth: scale(64),
                         }}
                         activeOpacity={0.7}
@@ -1543,27 +1543,41 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                           width: scale(44),
                           height: scale(44),
                           borderRadius: scale(22),
-                          backgroundColor: isSelected ? `${emotion.color}40` : `${emotion.color}20`,
+                          backgroundColor: 'transparent',
                           alignItems: 'center',
                           justifyContent: 'center',
                           marginBottom: scale(6),
                         }}>
-                          <Image
-                            source={{ uri: getTwemojiUrl(emotion.emojiCode) }}
-                            style={{ width: scale(28), height: scale(28) }}
-                            resizeMode="contain"
-                          />
+                          <EmotionIcon emotionId={emotion.id} size={scale(28)} />
                         </View>
                         <StyledText
                           style={{
                             fontSize: scale(12),
                             fontWeight: isSelected ? '700' : '500',
-                            color: isSelected ? emotion.color : theme.text.secondary,
+                            color: theme.colors.text.primary,
                             textAlign: 'center',
                           }}
                         >
                           {emotion.shortName}
                         </StyledText>
+                        {isSelected && (
+                          <View
+                            pointerEvents="none"
+                            style={{
+                              position: 'absolute',
+                              top: scale(4),
+                              right: scale(4),
+                              width: scale(18),
+                              height: scale(18),
+                              borderRadius: scale(9),
+                              backgroundColor: theme.colors.accent,
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <MaterialCommunityIcons name="check" size={scale(12)} color={theme.colors.onAccent} />
+                          </View>
+                        )}
                       </TouchableOpacity>
                     );
                   })}
@@ -1577,19 +1591,19 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
         <View style={{
           marginHorizontal: scale(16),
           marginVertical: scale(10),
-          backgroundColor: isDark ? 'rgba(96, 165, 250, 0.08)' : '#F0F9FF',
+          backgroundColor: theme.colors.tint,
           borderRadius: scale(20),
           padding: scale(20),
         }}>
           <VStack>
             {/* 제목 줄 */}
             <HStack style={{ alignItems: 'center', marginBottom: scale(16) }}>
-              <MaterialCommunityIcons name="heart-outline" size={scale(20)} color={isDark ? '#60a5fa' : '#0095F6'} style={{ marginRight: scale(8) }} />
+              <MaterialCommunityIcons name="heart-outline" size={scale(20)} color={theme.colors.accentText} style={{ marginRight: scale(8) }} />
               <StyledText
                 variant="body"
                 style={{
                   fontWeight: '800',
-                  color: isDark ? '#60a5fa' : '#0095F6',
+                  color: theme.colors.accentText,
                   fontSize: scale(16),
                   letterSpacing: -0.3
                 }}
@@ -1605,7 +1619,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                   width: scale(5),
                   height: scale(5),
                   borderRadius: scale(2.5),
-                  backgroundColor: isDark ? '#60a5fa' : '#0095F6',
+                  backgroundColor: theme.colors.primary,
                   marginTop: scale(6),
                   marginRight: scale(8),
                   flexShrink: 0,
@@ -1629,7 +1643,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                   width: scale(5),
                   height: scale(5),
                   borderRadius: scale(2.5),
-                  backgroundColor: isDark ? '#60a5fa' : '#0095F6',
+                  backgroundColor: theme.colors.primary,
                   marginTop: scale(6),
                   marginRight: scale(8),
                   flexShrink: 0,
@@ -1653,7 +1667,7 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                   width: scale(5),
                   height: scale(5),
                   borderRadius: scale(2.5),
-                  backgroundColor: isDark ? '#60a5fa' : '#0095F6',
+                  backgroundColor: theme.colors.primary,
                   marginTop: scale(6),
                   marginRight: scale(8),
                   flexShrink: 0,
@@ -1734,12 +1748,12 @@ const WriteComfortPostScreen: React.FC<WriteComfortPostScreenProps> = memo(({ na
                     width: scale(40),
                     height: scale(40),
                     borderRadius: scale(20),
-                    backgroundColor: isDark ? 'rgba(96, 165, 250, 0.12)' : 'rgba(59, 130, 246, 0.08)',
+                    backgroundColor: theme.colors.tint,
                     alignItems: 'center',
                     justifyContent: 'center',
                     marginRight: scale(12),
                   }}>
-                    <MaterialCommunityIcons name="image-multiple" size={scale(22)} color={isDark ? '#60a5fa' : '#3b82f6'} />
+                    <MaterialCommunityIcons name="image-multiple" size={scale(22)} color={theme.colors.accentText} />
                   </View>
                   <StyledText style={{
                     flex: 1,
@@ -1899,9 +1913,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 30,
     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    backgroundColor: '#667eea',
+    backgroundColor: '#5566DD',
     borderWidth: 0,
-    shadowColor: 'rgba(102, 126, 234, 0.4)',
+    shadowColor: 'rgba(85, 102, 221, 0.4)',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 16,
@@ -2006,10 +2020,10 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderWidth: 3,
-    borderColor: 'rgba(102, 126, 234, 0.3)',
+    borderColor: 'rgba(85, 102, 221, 0.3)',
     overflow: 'hidden',
     position: 'relative',
-    shadowColor: 'rgba(102, 126, 234, 0.3)',
+    shadowColor: 'rgba(85, 102, 221, 0.3)',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 16,

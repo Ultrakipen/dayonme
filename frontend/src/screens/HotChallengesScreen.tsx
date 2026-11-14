@@ -16,6 +16,7 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -85,6 +86,7 @@ interface Challenge {
 }
 
 const HotChallengesScreen = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const { theme, isDark } = useModernTheme();
   const { isAuthenticated, user } = useAuth();
@@ -560,22 +562,17 @@ const hapticOptions = {
               <View style={[
                 styles.unifiedHotBadge,
                 !isDark && {
-                  shadowColor: '#FF6B6B',
+                  shadowColor: '#000',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.2,
                   shadowRadius: 6,
                   elevation: 3,
                 }
               ]}>
-                <LinearGradient
-                  colors={['#FF6B6B', '#FF8E53']}
-                  style={styles.unifiedBadgeGradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                >
-                  <MaterialCommunityIcons name="fire" size={icons.sm} color="white" />
-                  <Text style={styles.unifiedBadgeRank}>#{index + 1}</Text>
-                </LinearGradient>
+                <View style={[styles.unifiedBadgeGradient, { backgroundColor: theme.colors.primary }]}>
+                  <MaterialCommunityIcons name="fire" size={icons.sm} color={theme.colors.onAccent} />
+                  <Text style={[styles.unifiedBadgeRank, { color: theme.colors.onAccent }]}>#{index + 1}</Text>
+                </View>
               </View>
 
               {/* 급상승 뱃지 */}
@@ -604,7 +601,7 @@ const hapticOptions = {
                 }
               ]}>
                 <View style={[styles.statusDot, { backgroundColor: getStatusColor(challenge.status) }]} />
-                <Text style={[
+                <Text numberOfLines={1} style={[
                   styles.statusText,
                   { color: getStatusTextColor(challenge.status) }
                 ]}>
@@ -620,13 +617,13 @@ const hapticOptions = {
                     <View key={tagIndex} style={[
                       styles.inlineTag,
                       {
-                        backgroundColor: isDark ? 'rgba(108, 92, 231, 0.15)' : 'rgba(108, 92, 231, 0.1)',
-                        borderColor: isDark ? 'rgba(108, 92, 231, 0.3)' : 'rgba(108, 92, 231, 0.25)'
+                        backgroundColor: theme.colors.tint,
+                        borderColor: theme.colors.tint
                       }
                     ]}>
-                      <Text style={[
+                      <Text numberOfLines={1} style={[
                         styles.inlineTagText,
-                        { color: isDark ? '#6C5CE7' : theme.colors.primary }
+                        { color: theme.colors.accentText }
                       ]}>#{tag}</Text>
                     </View>
                   ))}
@@ -657,10 +654,10 @@ const hapticOptions = {
               <MaterialCommunityIcons
                 name={challenge.status === 'active' ? 'clock-outline' : challenge.status === 'upcoming' ? 'calendar-clock' : 'check-circle'}
                 size={icons.sm}
-                color={challenge.status === 'active' ? '#FF6B6B' : challenge.status === 'upcoming' ? '#FF9500' : (isDark ? 'rgba(255, 255, 255, 0.6)' : '#999999')}
+                color={challenge.status === 'active' ? theme.colors.accentText : challenge.status === 'upcoming' ? '#FF9500' : (isDark ? 'rgba(255, 255, 255, 0.6)' : '#999999')}
               />
               <Text style={[styles.metaText, {
-                color: challenge.status === 'active' ? '#FF6B6B' : challenge.status === 'upcoming' ? '#FF9500' : (isDark ? 'rgba(255, 255, 255, 0.6)' : '#999999'),
+                color: challenge.status === 'active' ? theme.colors.accentText : challenge.status === 'upcoming' ? '#FF9500' : (isDark ? 'rgba(255, 255, 255, 0.6)' : '#999999'),
               }]}>
                 {getDDayInfo(challenge)}
               </Text>
@@ -783,21 +780,14 @@ const hapticOptions = {
         style={[
           styles.header,
           {
+            paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + spacing.sm,
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }]
           }
         ]}
       >
         <LinearGradient
-          colors={isDark ? [
-            'rgba(255, 107, 107, 0.15)',
-            'rgba(255, 142, 83, 0.08)',
-            'transparent'
-          ] : [
-            'rgba(255, 107, 107, 0.1)',
-            'rgba(255, 142, 83, 0.05)',
-            'transparent'
-          ]}
+          colors={[theme.colors.tint, 'transparent']}
           style={styles.headerGradient}
         >
           <View style={styles.headerContent}>
@@ -816,12 +806,9 @@ const hapticOptions = {
 
             <View style={styles.headerTitleContainer}>
               <View style={styles.headerTitleRow}>
-                <LinearGradient
-                  colors={['#FF6B6B', '#FF8E53']}
-                  style={styles.fireIcon}
-                >
-                  <MaterialCommunityIcons name="fire" size={icons.md} color="white" />
-                </LinearGradient>
+                <View style={[styles.fireIcon, { backgroundColor: theme.colors.tint }]}>
+                  <MaterialCommunityIcons name="fire" size={icons.md} color={theme.colors.accentText} />
+                </View>
                 <Text style={[styles.headerTitle, { color: theme.text.primary }]}>
                   HOT 챌린지
                 </Text>
@@ -859,11 +846,11 @@ const hapticOptions = {
             ].map(({ key, label, icon }) => (
               <TouchableOpacity
                 key={key}
-                style={[styles.sortButton, sortBy === key && { backgroundColor: isDark ? 'rgba(108,92,231,0.2)' : 'rgba(0,122,255,0.1)' }]}
+                style={[styles.sortButton, sortBy === key && { backgroundColor: theme.colors.tint }]}
                 onPress={() => setSortBy(key as any)}
               >
-                <MaterialCommunityIcons name={icon as any} size={icons.sm} color={sortBy === key ? (isDark ? '#6C5CE7' : theme.colors.primary) : theme.text.secondary} />
-                <Text style={[styles.sortButtonText, { color: sortBy === key ? (isDark ? '#6C5CE7' : theme.colors.primary) : theme.text.secondary }]}>{label}</Text>
+                <MaterialCommunityIcons name={icon as any} size={icons.sm} color={sortBy === key ? theme.colors.accentText : theme.text.secondary} />
+                <Text style={[styles.sortButtonText, { color: sortBy === key ? theme.colors.accentText : theme.text.secondary }]}>{label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1198,7 +1185,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 107, 107, 0.3)',
   },
   trendingText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     color: '#FF6B6B',
     marginLeft: 2,
@@ -1213,7 +1200,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(52, 199, 89, 0.3)',
   },
   newText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     color: '#34C759',
     letterSpacing: -0.1,
@@ -1244,7 +1231,7 @@ const styles = StyleSheet.create({
   },
   // 상태 텍스트
   statusText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: -0.1,
     ...Platform.select({
@@ -1258,9 +1245,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
   },
   // 인라인 태그 (초소형)
   inlineTag: {
+    flexShrink: 1,
     paddingHorizontal: spacing.xs,
     paddingVertical: 3,
     borderRadius: 10,
@@ -1269,7 +1258,7 @@ const styles = StyleSheet.create({
   },
   // 인라인 태그 텍스트
   inlineTagText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: -0.1,
     ...Platform.select({

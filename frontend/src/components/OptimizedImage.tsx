@@ -123,7 +123,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         ]}>
           <ActivityIndicator
             size="small"
-            color={isDark ? '#a78bfa' : '#667eea'}
+            color={theme.colors.primary}
           />
         </View>
       )}

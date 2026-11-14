@@ -21,7 +21,7 @@ export const SearchStatus = memo<SearchStatusProps>(({
     <View style={[
       styles.container,
       {
-        backgroundColor: theme.bg.surface,
+        backgroundColor: theme.bg.secondary,
         borderBottomColor: theme.bg.border
       }
     ]}>

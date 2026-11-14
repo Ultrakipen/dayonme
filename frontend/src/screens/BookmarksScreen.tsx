@@ -199,9 +199,9 @@ const BookmarksScreen = () => {
               <Icon
                 name={item.post_type === 'my_day' ? 'calendar-outline' : 'heart-outline'}
                 size={normalize(14)}
-                color={isDark ? '#a78bfa' : '#667eea'}
+                color={theme.colors.primary}
               />
-              <RNText style={[styles.typeText, { color: isDark ? '#a78bfa' : '#667eea' }]}>
+              <RNText style={[styles.typeText, { color: theme.colors.primary }]}>
                 {item.post_type === 'my_day' ? '나의 하루' : '위로와 공감'}
               </RNText>
             </View>
@@ -294,7 +294,7 @@ const BookmarksScreen = () => {
           style={[
             styles.tab,
             activeTab === 'all' && styles.activeTab,
-            activeTab === 'all' && { borderBottomColor: isDark ? '#a78bfa' : '#667eea' }
+            activeTab === 'all' && { borderBottomColor: theme.colors.primary }
           ]}
           onPress={() => setActiveTab('all')}
         >
@@ -302,7 +302,7 @@ const BookmarksScreen = () => {
             styles.tabText,
             { color: theme.text.secondary },
             activeTab === 'all' && styles.activeTabText,
-            activeTab === 'all' && { color: isDark ? '#a78bfa' : '#667eea' }
+            activeTab === 'all' && { color: theme.colors.primary }
           ]}>
             전체
           </RNText>
@@ -311,7 +311,7 @@ const BookmarksScreen = () => {
           style={[
             styles.tab,
             activeTab === 'my_day' && styles.activeTab,
-            activeTab === 'my_day' && { borderBottomColor: isDark ? '#a78bfa' : '#667eea' }
+            activeTab === 'my_day' && { borderBottomColor: theme.colors.primary }
           ]}
           onPress={() => setActiveTab('my_day')}
         >
@@ -319,7 +319,7 @@ const BookmarksScreen = () => {
             styles.tabText,
             { color: theme.text.secondary },
             activeTab === 'my_day' && styles.activeTabText,
-            activeTab === 'my_day' && { color: isDark ? '#a78bfa' : '#667eea' }
+            activeTab === 'my_day' && { color: theme.colors.primary }
           ]}>
             나의 하루
           </RNText>
@@ -328,7 +328,7 @@ const BookmarksScreen = () => {
           style={[
             styles.tab,
             activeTab === 'comfort_wall' && styles.activeTab,
-            activeTab === 'comfort_wall' && { borderBottomColor: isDark ? '#a78bfa' : '#667eea' }
+            activeTab === 'comfort_wall' && { borderBottomColor: theme.colors.primary }
           ]}
           onPress={() => setActiveTab('comfort_wall')}
         >
@@ -336,7 +336,7 @@ const BookmarksScreen = () => {
             styles.tabText,
             { color: theme.text.secondary },
             activeTab === 'comfort_wall' && styles.activeTabText,
-            activeTab === 'comfort_wall' && { color: isDark ? '#a78bfa' : '#667eea' }
+            activeTab === 'comfort_wall' && { color: theme.colors.primary }
           ]}>
             위로와 공감
           </RNText>
@@ -350,15 +350,15 @@ const BookmarksScreen = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={isDark ? '#a78bfa' : '#667eea'}
-            colors={[isDark ? '#a78bfa' : '#667eea']}
+            tintColor={theme.colors.primary}
+            colors={[theme.colors.primary]}
           />
         }
         showsVerticalScrollIndicator={false}
       >
         {loading && page === 1 ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={isDark ? '#a78bfa' : '#667eea'} />
+            <ActivityIndicator size="large" color={theme.colors.primary} />
           </View>
         ) : bookmarks.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -375,7 +375,7 @@ const BookmarksScreen = () => {
             {bookmarks.map(renderBookmarkCard)}
             {loading && page > 1 && (
               <View style={styles.loadingMore}>
-                <ActivityIndicator size="small" color={isDark ? '#a78bfa' : '#667eea'} />
+                <ActivityIndicator size="small" color={theme.colors.primary} />
               </View>
             )}
           </>

@@ -317,7 +317,7 @@ const AdminReportListScreen: React.FC<Props> = ({ navigation, route }) => {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#667EEA" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
             로딩 중...
           </Text>

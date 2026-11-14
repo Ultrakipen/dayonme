@@ -15,6 +15,7 @@ import {
   Modal,
   useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import notificationService from '../services/api/notificationService';
@@ -36,6 +37,7 @@ interface NotificationSettingsScreenProps {
 }
 
 const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const { isDarkMode } = useTheme();
   const { theme, isDark } = useModernTheme();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -609,7 +611,7 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
     return (
       <View style={[styles.container, { backgroundColor: colors.surface }]}>
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.surface} />
-        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+        <View style={[styles.header, { paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + SPACING.sm, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
           <TouchableOpacity
             style={styles.backButton}
             onPress={() => navigation.goBack()}
@@ -632,7 +634,7 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.surface} />
       {/* 헤더 */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + SPACING.sm, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}

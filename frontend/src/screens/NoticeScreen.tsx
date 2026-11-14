@@ -68,7 +68,7 @@ const NoticeScreen: React.FC<NoticeScreenProps> = ({ navigation }) => {
     text: isDark ? theme.colors.text.primary : '#1A1A1A',
     textSecondary: isDark ? theme.colors.text.secondary : '#666666',
     border: isDark ? theme.colors.border : '#E5E5E5',
-    accent: '#667EEA',
+    accent: theme.colors.primary,
     important: '#FF6B6B',
     maintenance: '#FF9500',
   }), [isDark, theme]);
@@ -108,12 +108,12 @@ const NoticeScreen: React.FC<NoticeScreenProps> = ({ navigation }) => {
           <View style={styles.noticeHeader}>
             {item.is_pinned && (
               <View style={[styles.badge, { backgroundColor: colors.accent + '20' }]}>
-                <Text style={[styles.badgeText, { color: colors.accent, fontSize: 10 * scale }]}>고정</Text>
+                <Text style={[styles.badgeText, { color: colors.accent, fontSize: Math.max(12, 12 * scale) }]}>고정</Text>
               </View>
             )}
             {item.type === 'important' && (
               <View style={[styles.badge, { backgroundColor: colors.important + '20' }]}>
-                <Text style={[styles.badgeText, { color: colors.important, fontSize: 10 * scale }]}>중요</Text>
+                <Text style={[styles.badgeText, { color: colors.important, fontSize: Math.max(12, 12 * scale) }]}>중요</Text>
               </View>
             )}
           </View>

@@ -1,5 +1,5 @@
 import React, { memo, useRef, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView, ActivityIndicator, AccessibilityInfo } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -78,18 +78,28 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
     }
   }, [challenge.image_urls, challenge.challenge_id]);
 
+  // 모션 줄이기 설정이면 눌림 효과 끔
+  const reduceMotionRef = useRef(false);
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(v => { reduceMotionRef.current = !!v; }).catch(() => {});
+  }, []);
+
   const handlePressIn = () => {
-    Animated.timing(scaleValue, {
-      toValue: 0.98,
-      duration: 150,
+    if (reduceMotionRef.current) return;
+    Animated.spring(scaleValue, {
+      toValue: 0.97,
       useNativeDriver: true,
+      speed: 40,
+      bounciness: 0,
     }).start();
   };
   const handlePressOut = () => {
-    Animated.timing(scaleValue, {
+    if (reduceMotionRef.current) { scaleValue.setValue(1); return; }
+    Animated.spring(scaleValue, {
       toValue: 1,
-      duration: 150,
       useNativeDriver: true,
+      speed: 30,
+      bounciness: 6,
     }).start();
   };
 
@@ -191,10 +201,10 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
           {challenge.progress !== undefined && (
             <View style={[
               styles.miniProgressBadge,
-              { backgroundColor: isDarkMode ? 'rgba(108, 92, 231, 0.2)' : 'rgba(108, 92, 231, 0.15)' }
+              { backgroundColor: theme.colors.tint }
             ]}>
-              <MaterialCommunityIcons name="target" size={normalizeIcon(10)} color={COLORS.primary} />
-              <Text style={[styles.miniProgressText, { color: COLORS.primary }]}>
+              <MaterialCommunityIcons name="target" size={normalizeIcon(10)} color={theme.colors.accentText} />
+              <Text style={[styles.miniProgressText, { color: theme.colors.accentText }]}>
                 {challenge.progress}%
               </Text>
             </View>
@@ -266,10 +276,19 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
               })}
             </ScrollView>
           ) : (
-            <View style={[
-              styles.textCard,
-              { backgroundColor: isDarkMode ? 'rgba(108, 92, 231, 0.15)' : 'rgba(108, 92, 231, 0.05)' }
-            ]}>
+            <LinearGradient
+              colors={[theme.colors.tint, theme.colors.primary + '24']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.textCard as any}
+            >
+              <MaterialCommunityIcons
+                name="trophy-variant"
+                size={44}
+                color={theme.colors.primary + '1F'}
+                style={styles.textCardDecoIcon}
+                pointerEvents="none"
+              />
               <Text style={[
                 styles.textCardTitle,
                 { color: theme.text.primary }
@@ -279,13 +298,13 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
               {Array.isArray(challenge.tags) && challenge.tags.length > 0 && (
                 <View style={styles.textCardTagsContainer}>
                   {challenge.tags.slice(0, 2).map((tag, index) => (
-                    <Text key={index} style={[styles.textCardTag, { color: COLORS.primary }]}>
+                    <Text key={index} style={[styles.textCardTag, { color: theme.colors.accentText }]}>
                       #{tag}
                     </Text>
                   ))}
                 </View>
               )}
-            </View>
+            </LinearGradient>
           )}
         </View>
 
@@ -299,10 +318,10 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
           >
             {challenge.tags.map((tag, index) => (
               <View key={index} style={[styles.tagBadge, {
-                backgroundColor: isDarkMode ? 'rgba(108, 92, 231, 0.15)' : 'rgba(108, 92, 231, 0.1)',
-                borderColor: isDarkMode ? 'rgba(108, 92, 231, 0.3)' : 'rgba(108, 92, 231, 0.2)'
+                backgroundColor: theme.colors.tint,
+                borderColor: theme.bg.border
               }]}>
-                <Text style={[styles.tagText, { color: COLORS.primary }]}>
+                <Text style={[styles.tagText, { color: theme.colors.accentText }]}>
                   #{tag}
                 </Text>
               </View>
@@ -315,7 +334,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
             <MaterialCommunityIcons
               name="account-group"
               size={normalizeIcon(20)}
-              color={theme.text.secondary}
+              color={theme.colors.accentText}
             />
             <Text
               style={[styles.participantText, { color: theme.text.primary }]}
@@ -329,7 +348,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
             <MaterialCommunityIcons
               name="heart"
               size={normalizeIcon(20)}
-              color={COLORS.danger}
+              color={theme.colors.accentText}
             />
             <Text style={[
               styles.socialInteractionText,
@@ -341,7 +360,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
             <MaterialCommunityIcons
               name="emoticon-happy-outline"
               size={normalizeIcon(20)}
-              color="#FF6347"
+              color={theme.colors.accentText}
             />
             <Text style={[
               styles.socialInteractionText,
@@ -353,7 +372,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
             <MaterialCommunityIcons
               name="comment-text-outline"
               size={normalizeIcon(20)}
-              color={COLORS.primary}
+              color={theme.colors.accentText}
             />
             <Text style={[
               styles.socialInteractionText,
@@ -389,13 +408,13 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
                 disabled={loadingMore}
               >
                 <LinearGradient
-                  colors={[COLORS.primary, COLORS.secondary]}
+                  colors={[theme.colors.primary, theme.colors.primary]}
                   style={styles.joinButtonGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                 >
-                  <MaterialCommunityIcons name="plus" size={18} color="white" />
-                  <Text style={[styles.joinButtonText, { marginLeft: 4 }]}>
+                  <MaterialCommunityIcons name="plus" size={18} color={theme.colors.onAccent} />
+                  <Text style={[styles.joinButtonText, { marginLeft: 4, color: theme.colors.onAccent }]}>
                     {loadingMore ? '참여중...' : '참여하기'}
                   </Text>
                 </LinearGradient>
@@ -452,7 +471,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(107, 114, 128, 0.3)',
   },
   activeBadgeText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '600',
     letterSpacing: -0.2,
     lineHeight: 14,
@@ -482,7 +501,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(245, 158, 11, 0.3)',
   },
   ddayText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: 0.2,
     lineHeight: 14,
@@ -496,7 +515,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   miniProgressText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: -0.1,
     lineHeight: 14,
@@ -518,7 +537,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   tagText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
     lineHeight: 16,
     letterSpacing: -0.2,
@@ -554,6 +573,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  textCardDecoIcon: {
+    position: 'absolute' as const,
+    right: -8,
+    top: -8,
   },
   textCardTitle: {
     fontSize: 18,
@@ -627,7 +652,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
   },
   participatingBadgeText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     color: 'white',
     letterSpacing: -0.2,

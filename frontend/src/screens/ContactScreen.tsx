@@ -31,8 +31,8 @@ const ContactScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
     text: isDark ? theme.colors.text.primary : '#1A1A1A',
     textSecondary: isDark ? theme.colors.text.secondary : '#666666',
     border: isDark ? theme.colors.border : '#E5E5E5',
-    accent: '#667EEA',
-    inputBg: isDark ? theme.bg.tertiary : '#F0F0F0',
+    accent: theme.colors.primary,
+    inputBg: isDark ? theme.bg.secondary : '#F0F0F0',
   }), [isDark, theme]);
 
   const handleSubmit = async () => {
@@ -82,7 +82,7 @@ const ContactScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
                 ]}
                 onPress={() => setCategory(cat)}
               >
-                <Text style={[styles.categoryText, { color: category === cat ? '#FFF' : colors.text, fontSize: 13 * scale }]}>
+                <Text style={[styles.categoryText, { color: category === cat ? theme.colors.onAccent : colors.text, fontSize: 13 * scale }]}>
                   {cat}
                 </Text>
               </TouchableOpacity>
@@ -92,7 +92,7 @@ const ContactScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           {/* 제목 */}
           <Text style={[styles.label, { color: colors.text, fontSize: 14 * scale }]}>제목</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: colors.inputBg, color: colors.text, fontSize: 15 * scale }]}
+            style={[styles.input, { backgroundColor: colors.inputBg, color: colors.text, fontSize: 15 * scale, borderWidth: 1, borderColor: theme.colors.inputBorder }]}
             placeholder="문의 제목을 입력하세요"
             placeholderTextColor={colors.textSecondary}
             value={title}
@@ -103,7 +103,7 @@ const ContactScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
           {/* 내용 */}
           <Text style={[styles.label, { color: colors.text, fontSize: 14 * scale }]}>내용</Text>
           <TextInput
-            style={[styles.textArea, { backgroundColor: colors.inputBg, color: colors.text, fontSize: 15 * scale }]}
+            style={[styles.textArea, { backgroundColor: colors.inputBg, color: colors.text, fontSize: 15 * scale, borderWidth: 1, borderColor: theme.colors.inputBorder }]}
             placeholder="문의 내용을 상세히 입력해주세요"
             placeholderTextColor={colors.textSecondary}
             value={content}
@@ -132,9 +132,9 @@ const ContactScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
             activeOpacity={0.8}
           >
             {loading ? (
-              <ActivityIndicator color="#FFF" />
+              <ActivityIndicator color={theme.colors.onAccent} />
             ) : (
-              <Text style={[styles.submitText, { fontSize: 16 * scale }]}>문의 접수하기</Text>
+              <Text style={[styles.submitText, { color: theme.colors.onAccent, fontSize: 16 * scale }]}>문의 접수하기</Text>
             )}
           </TouchableOpacity>
         </View>

@@ -88,8 +88,8 @@ android {
         // 버전 관리 (업데이트 시 versionCode는 반드시 증가해야 함)
         // versionCode: 정수값, 매 업데이트마다 증가 (1 → 2 → 3...)
         // versionName: 사용자에게 표시되는 버전 (시맨틱 버저닝: major.minor.patch)
-        versionCode 26
-        versionName "1.2.5"
+        versionCode 27
+        versionName "1.3.0"
 
         // CPU 아키텍처 필터링 (릴리즈에서만 ARM 제한)
         // 디버그에서는 에뮬레이터(x86) 지원을 위해 모든 아키텍처 포함

@@ -11,6 +11,7 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { getScale } from '../utils/responsive';
+import { useModernTheme } from '../contexts/ModernThemeContext';
 
 const normalize = (size: number) => Math.round(size * getScale());
 
@@ -33,6 +34,7 @@ const GuestPromptBottomSheet: React.FC<GuestPromptBottomSheetProps> = ({
   message = '챌린지에 참여하고 감정을 기록해보세요',
   isDarkMode = false
 }) => {
+  const { theme: mt } = useModernTheme();
   // 디버깅용
   React.useEffect(() => {
     if (visible) {
@@ -61,7 +63,7 @@ const GuestPromptBottomSheet: React.FC<GuestPromptBottomSheetProps> = ({
         {/* 아이콘 */}
         <View style={styles.iconContainer}>
           <LinearGradient
-            colors={isDarkMode ? ['#8B5CF6', '#A855F7'] : ['#6C5CE7', '#A29BFE']}
+            colors={[mt.colors.primary, mt.colors.primary]}
             style={styles.iconGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -69,7 +71,7 @@ const GuestPromptBottomSheet: React.FC<GuestPromptBottomSheetProps> = ({
             <MaterialCommunityIcons
               name="lock-outline"
               size={32}
-              color="#FFFFFF"
+              color={mt.colors.onAccent}
             />
           </LinearGradient>
         </View>
@@ -99,12 +101,12 @@ const GuestPromptBottomSheet: React.FC<GuestPromptBottomSheetProps> = ({
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={isDarkMode ? ['#8B5CF6', '#A855F7'] : ['#667eea', '#764ba2']}
+              colors={[mt.colors.primary, mt.colors.primary]}
               style={styles.primaryButton}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <Text style={styles.primaryButtonText}>회원가입</Text>
+              <Text style={[styles.primaryButtonText, { color: mt.colors.onAccent }]}>회원가입</Text>
             </LinearGradient>
           </TouchableOpacity>
 

@@ -3,6 +3,7 @@
  */
 
 import { AppRegistry, InteractionManager, LogBox } from 'react-native';
+import './src/utils/applyGlobalFont';
 
 // 개발 환경에서 불필요한 에러 로그 숨김
 LogBox.ignoreLogs([

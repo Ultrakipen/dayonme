@@ -237,7 +237,7 @@ export const MySection = memo<MySectionProps>(({
           {!showDetailedStats ? (
             <View style={styles.miniStatsRow}>
               <View style={styles.miniStatItem}>
-                <MaterialCommunityIcons name="folder-multiple" size={16} color={COLORS.primary} />
+                <MaterialCommunityIcons name="folder-multiple" size={16} color={theme.colors.accentText} />
                 <Text style={[styles.miniStatText, { color: theme.text.primary }]}>{stats.total}</Text>
               </View>
               <View style={styles.miniStatDivider} />
@@ -258,7 +258,7 @@ export const MySection = memo<MySectionProps>(({
             <View>
               <View style={styles.detailedStatsRow}>
                 <View style={styles.statBox}>
-                  <Text style={[styles.statValue, { color: COLORS.primary }]}>{stats.total}</Text>
+                  <Text style={[styles.statValue, { color: theme.colors.accentText }]}>{stats.total}</Text>
                   <Text style={[styles.statLabel, { color: theme.text.secondary }]}>전체</Text>
                 </View>
                 <View style={styles.statBox}>
@@ -297,7 +297,7 @@ export const MySection = memo<MySectionProps>(({
         </View>
         <TouchableOpacity onPress={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
           style={[styles.viewModeButton, { backgroundColor: theme.bg.card, borderColor: theme.bg.border }]}>
-          <MaterialCommunityIcons name={viewMode === 'grid' ? 'view-list' : 'view-grid'} size={22} color={COLORS.primary} />
+          <MaterialCommunityIcons name={viewMode === 'grid' ? 'view-list' : 'view-grid'} size={22} color={theme.colors.accentText} />
         </TouchableOpacity>
       </View>
 
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
   controlBar: {

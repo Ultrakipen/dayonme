@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import userService from '../services/api/userService';
@@ -22,6 +23,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import ImageResizer from '@bam.tech/react-native-image-resizer';
 import { normalizeImageUrl, invalidateImageCache } from '../utils/imageUtils';
 import { FONT_SIZES } from '../constants';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface ProfileEditScreenProps {
   navigation: {
@@ -31,6 +33,7 @@ interface ProfileEditScreenProps {
 }
 
 const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const { user, updateUser } = useAuth();
   const { theme, isDark } = useModernTheme();
 
@@ -184,7 +187,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={bgColor} />
 
       {/* 헤더 */}
-      <View style={[styles.header, { backgroundColor: bgColor, borderBottomColor: borderColor }]}>
+      <View style={[styles.header, { paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + 12, backgroundColor: bgColor, borderBottomColor: borderColor }]}>
         <TouchableOpacity style={styles.headerButton} onPress={() => navigation.goBack()}>
           <Text style={[styles.headerButtonText, { color: primaryColor }]}>취소</Text>
         </TouchableOpacity>
@@ -220,7 +223,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
               </View>
             )}
             <View style={[styles.cameraIcon, { backgroundColor: primaryColor }]}>
-              <Text style={styles.cameraEmoji}>📷</Text>
+              <MaterialCommunityIcons name="camera" size={16} color={theme?.colors?.onAccent || '#FFFFFF'} />
             </View>
           </TouchableOpacity>
 
@@ -248,7 +251,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
             <View style={[styles.inputRow, { borderBottomColor: borderColor }]}>
               <Text style={[styles.inputLabel, { color: textColor }]}>이메일</Text>
               <View style={styles.inputWrapper}>
-                <Text style={[styles.readOnlyValue, { color: tertiaryColor }]}>{user.email}</Text>
+                <Text numberOfLines={1} ellipsizeMode="middle" style={[styles.readOnlyValue, { color: tertiaryColor }]}>{user.email}</Text>
                 <Text style={[styles.lockIcon]}>🔒</Text>
               </View>
             </View>
@@ -398,7 +401,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   inputLabel: {
-    width: 80,
+    minWidth: 80,
+    flexShrink: 0,
+    marginRight: 8,
     fontSize: FONT_SIZES.body,
     fontWeight: '400',
   },
@@ -416,6 +421,8 @@ const styles = StyleSheet.create({
   },
   readOnlyValue: {
     fontSize: FONT_SIZES.body,
+    flexShrink: 1,
+    textAlign: 'right',
   },
   lockIcon: {
     fontSize: 14,

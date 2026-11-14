@@ -42,7 +42,8 @@ const BlockReasonModal: React.FC<BlockReasonModalProps> = ({
     }
   };
 
-  const styles = getStyles(modernTheme || defaultTheme, isDark);
+  const accent = themeContext?.theme?.colors;
+  const styles = getStyles(modernTheme || defaultTheme, isDark, accent);
 
   const reasons: { value: BlockReason; label: string; icon: string }[] = [
     { value: 'spam', label: '스팸', icon: 'mail-unread' },
@@ -107,7 +108,7 @@ const BlockReasonModal: React.FC<BlockReasonModalProps> = ({
                   <Icon
                     name={reason.icon}
                     size={22}
-                    color={selectedReason === reason.value ? '#8B5CF6' : (modernTheme || defaultTheme).text.secondary}
+                    color={selectedReason === reason.value ? accent?.accentText : (modernTheme || defaultTheme).text.secondary}
                   />
                   <Text
                     style={[
@@ -144,7 +145,7 @@ const BlockReasonModal: React.FC<BlockReasonModalProps> = ({
               ]}
               onPress={handleBlock}
             >
-              <Text style={styles.blockButtonText}>차단</Text>
+              <Text style={[styles.blockButtonText, selectedReason && accent ? { color: accent.onAccent } : null]}>차단</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -153,7 +154,7 @@ const BlockReasonModal: React.FC<BlockReasonModalProps> = ({
   );
 };
 
-const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
+const getStyles = (theme: any, isDark: boolean, accent?: any) => StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.75)',
@@ -168,7 +169,7 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     maxWidth: 400,
     maxHeight: '85%',
     overflow: 'hidden',
-    shadowColor: isDark ? '#fff' : '#000',
+    shadowColor: isDark ? '#000000' : '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: isDark ? 0.15 : 0.25,
     shadowRadius: 16,
@@ -218,8 +219,8 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     borderColor: 'transparent',
   },
   reasonItemSelected: {
-    backgroundColor: isDark ? 'rgba(139, 92, 246, 0.2)' : 'rgba(139, 92, 246, 0.12)',
-    borderColor: '#8B5CF6',
+    backgroundColor: accent?.tint,
+    borderColor: accent?.primary,
   },
   reasonLeft: {
     flexDirection: 'row',
@@ -235,7 +236,7 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
   },
   reasonLabelSelected: {
     fontWeight: '700',
-    color: '#8B5CF6',
+    color: accent?.accentText,
   },
   radio: {
     width: 22,
@@ -247,13 +248,13 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     alignItems: 'center',
   },
   radioSelected: {
-    borderColor: '#8B5CF6',
+    borderColor: accent?.primary,
   },
   radioInner: {
     width: 11,
     height: 11,
     borderRadius: 5.5,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: accent?.primary,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -287,7 +288,7 @@ const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     justifyContent: 'center',
   },
   blockButtonActive: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: accent?.primary,
   },
   blockButtonText: {
     fontSize: 15.5,

@@ -21,7 +21,7 @@ export const EMOTION_AVATARS = [
   { id: 15, label: '설렘이', shortName: '설렘', emoji: '🤗', emojiCode: '1f917', color: '#FF69B4' },
   { id: 16, label: '지루미', shortName: '지루', emoji: '😑', emojiCode: '1f611', color: '#A9A9A9' },
   { id: 17, label: '궁금이', shortName: '궁금', emoji: '🤔', emojiCode: '1f914', color: '#DAA520' },
-  { id: 18, label: '사랑이', shortName: '사랑', emoji: '❤️', emojiCode: '2764', color: '#E8D5F2' },
+  { id: 18, label: '사랑이', shortName: '사랑', emoji: '❤️', emojiCode: '2764', color: '#E91E63' },
   { id: 19, label: '아픔이', shortName: '아픔', emoji: '🤕', emojiCode: '1f915', color: '#8B4513' },
   { id: 20, label: '욕심이', shortName: '욕심', emoji: '🤑', emojiCode: '1f911', color: '#32CD32' },
 ];

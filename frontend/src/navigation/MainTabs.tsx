@@ -3,7 +3,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { ActivityIndicator, View, Dimensions, PixelRatio, Platform } from 'react-native';
+import { ActivityIndicator, View, Text, Dimensions, PixelRatio, Platform } from 'react-native';
 import { NavigationProp, getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import HomeStack from './HomeStack';
 import ComfortStack from './ComfortStack';
@@ -18,6 +18,20 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+
+// 탭 라벨은 글자 크기 설정을 1.3배까지는 그대로 따르고 그 이상은 막는다. 제한을 완전히 풀면(2.0배) 라벨마다 줄어드는 정도가 달라 어색해지는 것을 실험으로 확인함
+const renderTabLabel = (title: string) => ({ color }: { color: string }) => {
+  const sizes = getResponsiveSizes();
+  return (
+    <Text
+      maxFontSizeMultiplier={1.3}
+      numberOfLines={1}
+      style={{ color, fontSize: sizes.FONT_SIZE, fontWeight: '700', letterSpacing: -0.2, marginTop: sizes.MARGIN_TOP_LABEL, marginBottom: sizes.MARGIN_BOTTOM }}
+    >
+      {title}
+    </Text>
+  );
+};
 const Stack = createStackNavigator();
 
 // 인스타그램 스타일 탭바 크기 (2026 모바일 트렌드)
@@ -41,7 +55,7 @@ const getResponsiveSizes = () => {
 };
 
 const MainTabs = () => {
-  const { isDark } = useModernTheme();
+  const { isDark, theme } = useModernTheme();
   const { isAuthenticated, isLoading } = useAuth();
   const insets = useSafeAreaInsets();
 
@@ -89,7 +103,7 @@ const MainTabs = () => {
     <Tab.Navigator
       screenOptions={{
         // 진하고 뚜렷한 감정 앱 컬러 팔레트
-        tabBarActiveTintColor: isDark ? '#A78BFA' : '#667eea', // 더 선명한 보라색
+        tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: isDark ? '#9ca3af' : '#9ca3af',
         tabBarStyle: {
           backgroundColor: isDark ? '#1f2937' : '#FFFFFF', // 순백으로 변경 (대비 향상)
@@ -101,7 +115,7 @@ const MainTabs = () => {
           height: getTabBarHeight(),
           // 부드럽고 자연스러운 그림자
           elevation: 16,
-          shadowColor: isDark ? '#000' : '#667eea',
+          shadowColor: isDark ? '#000' : theme.colors.primary,
           shadowOffset: { width: 0, height: sizes.SHADOW_OFFSET },
           shadowOpacity: isDark ? 0.3 : 0.12,
           shadowRadius: sizes.SHADOW_RADIUS,
@@ -129,7 +143,7 @@ const MainTabs = () => {
         component={HomeStack}
         options={({ route }) => ({
           headerShown: false,
-          tabBarLabel: '나의 하루',
+          tabBarLabel: renderTabLabel('나의 하루'),
           tabBarStyle: (() => {
             const routeName = getFocusedRouteNameFromRoute(route);
             if (routeName === 'PostDetail' || routeName === 'WriteMyDay' || routeName === 'EditPost') {
@@ -142,7 +156,7 @@ const MainTabs = () => {
               paddingTop: sizes.PADDING_TOP,
               height: getTabBarHeight(),
               elevation: 16,
-              shadowColor: isDark ? '#000' : '#667eea',
+              shadowColor: isDark ? '#000' : theme.colors.primary,
               shadowOffset: { width: 0, height: sizes.SHADOW_OFFSET },
               shadowOpacity: isDark ? 0.3 : 0.12,
               shadowRadius: sizes.SHADOW_RADIUS,
@@ -178,7 +192,7 @@ const MainTabs = () => {
         component={ComfortStack}
         options={({ route }) => ({
           headerShown: false,
-          tabBarLabel: '위로와 공감',
+          tabBarLabel: renderTabLabel('위로와 공감'),
           tabBarStyle: (() => {
             const routeName = getFocusedRouteNameFromRoute(route);
             if (routeName === 'PostDetail' || routeName === 'WriteComfortPost') {
@@ -191,7 +205,7 @@ const MainTabs = () => {
               paddingTop: sizes.PADDING_TOP,
               height: getTabBarHeight(),
               elevation: 16,
-              shadowColor: isDark ? '#000' : '#667eea',
+              shadowColor: isDark ? '#000' : theme.colors.primary,
               shadowOffset: { width: 0, height: sizes.SHADOW_OFFSET },
               shadowOpacity: isDark ? 0.3 : 0.12,
               shadowRadius: sizes.SHADOW_RADIUS,
@@ -220,7 +234,7 @@ const MainTabs = () => {
         component={ChallengeStack}
         options={({ route }) => ({
           headerShown: false,
-          tabBarLabel: '감정 챌린지',
+          tabBarLabel: renderTabLabel('감정 챌린지'),
           tabBarStyle: (() => {
             const routeName = getFocusedRouteNameFromRoute(route);
             if (routeName === 'PostDetail' || routeName === 'ChallengeDetail') {
@@ -233,7 +247,7 @@ const MainTabs = () => {
               paddingTop: sizes.PADDING_TOP,
               height: getTabBarHeight(),
               elevation: 16,
-              shadowColor: isDark ? '#000' : '#667eea',
+              shadowColor: isDark ? '#000' : theme.colors.primary,
               shadowOffset: { width: 0, height: sizes.SHADOW_OFFSET },
               shadowOpacity: isDark ? 0.3 : 0.12,
               shadowRadius: sizes.SHADOW_RADIUS,
@@ -262,7 +276,7 @@ const MainTabs = () => {
         component={ReviewScreen}
         options={{
           headerShown: false,
-          tabBarLabel: '감정 리뷰',
+          tabBarLabel: renderTabLabel('감정 리뷰'),
           tabBarIcon: ({ color, size, focused }: { color: string; size: number; focused: boolean }) => (
             <MaterialCommunityIcons
               name={focused ? 'chart-line' : 'chart-line-variant'}
@@ -284,7 +298,7 @@ const MainTabs = () => {
         component={ProfileStack}
         options={{
           headerShown: false,
-          tabBarLabel: '프로필',
+          tabBarLabel: renderTabLabel('프로필'),
           tabBarIcon: ({ color, size, focused }: { color: string; size: number; focused: boolean }) => (
             <MaterialCommunityIcons
               name={focused ? 'account' : 'account-outline'}

@@ -47,6 +47,8 @@ import myDayService from '../services/api/myDayService';
 import uploadService from '../services/api/uploadService';
 import { normalizeImageUrl, logImageError, logImageSuccess } from '../utils/imageUtils';
 import ImageCarousel from '../components/ImageCarousel';
+import { EMOTION_AVATARS } from '../constants/emotions';
+import EmotionIcon from '../components/common/EmotionIcon';
 
 // 반응형 설정 (모듈 레벨에서 Dimensions.get() 호출 제거 - React Native 0.80 호환)
 const BASE_WIDTH = 360;
@@ -67,7 +69,7 @@ const normalize = (size: number, applyFontScale = true) => {
 
 // 폰트 크기 표준화 (시스템 폰트 크기 설정 적용)
 const getFontSizes = () => ({
-  xs: normalize(10, true),
+  xs: normalize(12, true),
   sm: normalize(12, true),
   base: normalize(14, true),
   lg: normalize(16, true),
@@ -114,28 +116,7 @@ const getTwemojiUrl = (code: string) =>
   `https://cdn.jsdelivr.net/gh/twitter/twemoji@latest/assets/72x72/${code}.png`;
 
 // 사용자 지정 감정 목록 (이모지와 색상 포함) - DB/공통상수 순서와 일치
-const localEmotions: LocalEmotion[] = [
-  { label: '기쁨이', emoji: '😊', emojiCode: '1f60a', color: '#FFD700' },    // 1
-  { label: '행복이', emoji: '😄', emojiCode: '1f604', color: '#FFA500' },    // 2
-  { label: '슬픔이', emoji: '😢', emojiCode: '1f622', color: '#4682B4' },    // 3
-  { label: '우울이', emoji: '😞', emojiCode: '1f61e', color: '#708090' },    // 4
-  { label: '불안이', emoji: '😰', emojiCode: '1f630', color: '#DDA0DD' },    // 5
-  { label: '걱정이', emoji: '😟', emojiCode: '1f61f', color: '#FFA07A' },    // 6
-  { label: '버럭이', emoji: '😠', emojiCode: '1f620', color: '#FF4500' },    // 7
-  { label: '짜증이', emoji: '😤', emojiCode: '1f624', color: '#DC143C' },    // 8
-  { label: '감동이', emoji: '🥺', emojiCode: '1f97a', color: '#FF6347' },    // 9
-  { label: '황당이', emoji: '🤨', emojiCode: '1f928', color: '#20B2AA' },    // 10
-  { label: '당황이', emoji: '😲', emojiCode: '1f632', color: '#FF8C00' },    // 11
-  { label: '무섭이', emoji: '😨', emojiCode: '1f628', color: '#9370DB' },    // 12
-  { label: '편안이', emoji: '😌', emojiCode: '1f60c', color: '#98FB98' },    // 13
-  { label: '추억이', emoji: '🥰', emojiCode: '1f970', color: '#87CEEB' },    // 14
-  { label: '설렘이', emoji: '🤗', emojiCode: '1f917', color: '#FF69B4' },    // 15
-  { label: '지루미', emoji: '😑', emojiCode: '1f611', color: '#A9A9A9' },    // 16
-  { label: '궁금이', emoji: '🤔', emojiCode: '1f914', color: '#DAA520' },    // 17
-  { label: '사랑이', emoji: '❤️', emojiCode: '2764', color: '#F8BBD9' },    // 18
-  { label: '아픔이', emoji: '🤕', emojiCode: '1f915', color: '#8B4513' },    // 19
-  { label: '욕심이', emoji: '🤑', emojiCode: '1f911', color: '#32CD32' }     // 20
-];
+const localEmotions: LocalEmotion[] = EMOTION_AVATARS.map(({ label, emoji, emojiCode, color }) => ({ label, emoji, emojiCode, color }));
 
 // 기본 감정 색상 매핑 (백엔드에서 색상이 없을 경우 사용)
 const getEmotionColor = (emotionName: string): string => {
@@ -1107,12 +1088,12 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
       headerStyle: {
         backgroundColor: headerBgColor,
         elevation: 2,
-        shadowColor: isDark ? '#fff' : '#000',
+        shadowColor: isDark ? '#000000' : '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: isDark ? 0.1 : 0.1,
         shadowRadius: 3
       },
-      headerTintColor: '#667eea',
+      headerTintColor: theme.colors.primary,
       headerTitleStyle: {
         fontWeight: 'bold',
         fontFamily: 'Pretendard-Bold',
@@ -1124,16 +1105,16 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           onPress={() => handleSubmitRef.current()}
           disabled={!isFormValid || isSubmitting}
           style={{
-            backgroundColor: isFormValid && !isSubmitting ? '#667eea' : 'rgba(102,126,234,0.3)',
+            backgroundColor: isFormValid && !isSubmitting ? theme.colors.primary : theme.colors.tint,
             paddingHorizontal: SPACING.md,
             paddingVertical: SPACING.xs,
             borderRadius: normalize(14, false),
             marginRight: SPACING.sm,
-            shadowColor: isDark ? '#ffffff' : '#000000',
+            shadowColor: isDark ? '#000000' : '#000000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: isDark ? 0.1 : 0.15,
             shadowRadius: 3,
-            elevation: 3,
+            elevation: isFormValid && !isSubmitting ? 3 : 0,
           }}
           accessible={true}
           accessibilityRole="button"
@@ -1144,7 +1125,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           <Text style={{
             fontSize: FONT_SIZES.sm,
             fontWeight: '700',
-            color: '#FFFFFF',
+            color: isFormValid && !isSubmitting ? theme.colors.onAccent : theme.text.tertiary,
             fontFamily: 'Pretendard-Bold',
           }}>
             {isSubmitting
@@ -1155,7 +1136,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
         </Pressable>
       ),
     });
-  }, [navigation, isEditMode, isFormValid, isSubmitting, headerBgColor, headerTextColor, isDark, FONT_SIZES.base, SPACING.md, SPACING.xs, SPACING.sm]);
+  }, [navigation, isEditMode, isFormValid, isSubmitting, headerBgColor, headerTextColor, isDark, theme.colors.primary, theme.colors.onAccent, FONT_SIZES.base, SPACING.md, SPACING.xs, SPACING.sm]);
 
   return (
     <>
@@ -1189,7 +1170,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             padding: SPACING.lg
           }}>
             <Center className="items-center justify-center py-8">
-              <ActivityIndicator size="large" color={theme.colors?.primary || '#2563EB'} />
+              <ActivityIndicator size="large" color={theme.colors.primary} />
               <Text style={{
                 fontSize: FONT_SIZES.sm,
                 color: theme.text.tertiary,
@@ -1210,7 +1191,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           borderRadius: normalize(16),
           backgroundColor: theme.bg.card,
           elevation: 2,
-          shadowColor: isDark ? '#fff' : '#000',
+          shadowColor: isDark ? '#000000' : '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDark ? 0.1 : 0.06,
           shadowRadius: 8
@@ -1251,27 +1232,13 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                   flexShrink: 0
                 }}>
                   {/* 로컬 감정 이모지 표시 */}
-                  {(() => {
-                    const localEmotion = localEmotions.find(local => local.label === selectedEmotion.name);
-                    if (localEmotion) {
-                      return (
-                        <Image
-                          source={{ uri: getTwemojiUrl(localEmotion.emojiCode) }}
-                          style={{
-                            width: normalize(20, false),
-                            height: normalize(20, false),
-                            marginRight: SPACING.xs
-                          }}
-                          resizeMode="contain"
-                        />
-                      );
-                    }
-                    return null;
-                  })()}
+                  <Box style={{ marginRight: SPACING.xs }}>
+                    <EmotionIcon emotionId={selectedEmotion.emotion_id} label={selectedEmotion.name} size={normalize(20, false)} />
+                  </Box>
                   <Text style={{
                     fontSize: FONT_SIZES.sm,
                     fontWeight: '600',
-                    color: selectedEmotion.color,
+                    color: theme.text.primary,
                     fontFamily: 'Pretendard-SemiBold'
                   }} numberOfLines={1}>
                     {selectedEmotion.name}
@@ -1314,7 +1281,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             {!isEmotionSectionCollapsed && (
               isLoadingEmotions ? (
                 <Center className="items-center justify-center py-4">
-                  <ActivityIndicator size="large" color={theme.colors?.primary || '#2563EB'} />
+                  <ActivityIndicator size="large" color={theme.colors.primary} />
                   <Text style={{
                     fontSize: FONT_SIZES.sm,
                     color: theme.text.tertiary,
@@ -1358,26 +1325,22 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                         key={emotion?.emotion_id || `empty-${index}`}
                         style={{
                           width: itemWidth,
-                          height: itemWidth * 0.85,
+                          minHeight: itemWidth * 0.85,
                           borderRadius: normalize(12, false),
                           justifyContent: 'center',
                           alignItems: 'center',
                           backgroundColor: emotion ? (
                             selectedEmotion?.emotion_id === emotion.emotion_id
-                              ? emotion.color
-                              : emotion.color + '12'
+                              ? theme.colors.tint
+                              : theme.colors.card
                           ) : 'transparent',
                           borderWidth: emotion ? (selectedEmotion?.emotion_id === emotion.emotion_id ? 2 : 1) : 0,
                           borderColor: emotion ? (
                             selectedEmotion?.emotion_id === emotion.emotion_id
-                              ? emotion.color
-                              : emotion.color + '30'
+                              ? theme.colors.accent
+                              : theme.colors.border
                           ) : 'transparent',
-                          shadowColor: emotion && selectedEmotion?.emotion_id === emotion.emotion_id ? emotion.color : 'transparent',
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: 0.2,
-                          shadowRadius: 4,
-                          elevation: emotion && selectedEmotion?.emotion_id === emotion.emotion_id ? 3 : 1,
+                          elevation: 0,
                           opacity: emotion ? 1 : 0,
                           paddingVertical: normalize(2, false),
                           paddingHorizontal: normalize(2, false)
@@ -1394,29 +1357,39 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                         accessibilityLabel={emotion ? `${emotion.name} 감정 선택` : undefined}
                         accessibilityState={emotion ? { selected: selectedEmotion?.emotion_id === emotion.emotion_id } : undefined}
                       >
-                        {emotion && localEmotion && (
-                          <Image
-                            source={{ uri: getTwemojiUrl(localEmotion.emojiCode) }}
-                            style={{
-                              width: normalize(28, false),
-                              height: normalize(28, false),
-                              marginBottom: normalize(2, false)
-                            }}
-                            resizeMode="contain"
-                          />
+                        {emotion && (
+                          <Box style={{ marginBottom: normalize(2, false) }}>
+                            <EmotionIcon emotionId={emotion.emotion_id} label={emotion.name} size={normalize(28, false)} />
+                          </Box>
                         )}
                         {emotion && (
-                          <Text style={{
+                          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{
                             fontSize: FONT_SIZES.sm,
                             fontWeight: '700',
-                            color: selectedEmotion?.emotion_id === emotion.emotion_id
-                              ? 'white'
-                              : isDark ? '#FFFFFF' : '#111827',
+                            color: theme.colors.text.primary,
                             fontFamily: 'Pretendard-Bold',
                             textAlign: 'center'
                           }}>
                             {emotion.name}
                           </Text>
+                        )}
+                        {emotion && selectedEmotion?.emotion_id === emotion.emotion_id && (
+                          <Box
+                            pointerEvents="none"
+                            style={{
+                              position: 'absolute',
+                              top: normalize(4, false),
+                              right: normalize(4, false),
+                              width: normalize(18, false),
+                              height: normalize(18, false),
+                              borderRadius: normalize(9, false),
+                              backgroundColor: theme.colors.accent,
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            <MaterialCommunityIcons name="check" size={normalize(12, false)} color={theme.colors.onAccent} />
+                          </Box>
                         )}
                       </Pressable>
                       );
@@ -1437,7 +1410,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           borderRadius: normalize(16),
           backgroundColor: theme.bg.card,
           elevation: 2,
-          shadowColor: isDark ? '#fff' : '#000',
+          shadowColor: isDark ? '#000000' : '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDark ? 0.1 : 0.06,
           shadowRadius: 8
@@ -1490,7 +1463,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                   lineHeight: FONT_SIZES.base * 1.5,
                   includeFontPadding: false
                 }}
-                selectionColor={isDark ? '#60a5fa' : '#3B82F6'}
+                selectionColor={theme.colors.primary}
                 underlineColorAndroid="transparent"
                 keyboardAppearance={isDark ? 'dark' : 'light'}
                 maxLength={MAX_CONTENT_LENGTH}
@@ -1528,7 +1501,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           borderRadius: normalize(16),
           backgroundColor: theme.bg.card,
           elevation: 2,
-          shadowColor: isDark ? '#fff' : '#000',
+          shadowColor: isDark ? '#000000' : '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDark ? 0.1 : 0.06,
           shadowRadius: 8
@@ -1620,7 +1593,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                           height: normalize(70),
                           borderRadius: normalize(10),
                           borderWidth: 2,
-                          borderColor: theme.colors?.primary || '#2563EB'
+                          borderColor: theme.colors.primary
                         }}
                       />
                       <IconButton
@@ -1650,10 +1623,10 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             {selectedImages.length < 3 && (
               <Pressable
                 style={{
-                  height: selectedImages.length > 0 ? normalize(60, false) : normalize(100, false),
+                  minHeight: selectedImages.length > 0 ? normalize(60, false) : normalize(100, false),
                   borderWidth: 2,
                   borderStyle: 'dashed',
-                  borderColor: isUploadingImage ? theme.text.tertiary : (theme.colors?.primary || '#2563EB'),
+                  borderColor: isUploadingImage ? theme.text.tertiary : (theme.colors.primary),
                   borderRadius: normalize(12, false),
                   backgroundColor: theme.bg.secondary,
                   justifyContent: 'center',
@@ -1666,8 +1639,8 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
               >
                 {selectedImages.length === 0 ? (
                   <>
-                    <IconButton icon="camera-plus" size={normalize(30)} iconColor={isUploadingImage ? theme.text.tertiary : (theme.colors?.primary || '#2563EB')} />
-                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: isUploadingImage ? theme.text.tertiary : (theme.colors?.primary || '#2563EB'), marginTop: SPACING.xs, fontFamily: 'Pretendard-Bold' }}>
+                    <IconButton icon="camera-plus" size={normalize(30)} iconColor={isUploadingImage ? theme.text.tertiary : theme.colors.accentText} />
+                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '700', color: isUploadingImage ? theme.text.tertiary : theme.colors.accentText, marginTop: SPACING.xs, fontFamily: 'Pretendard-Bold' }}>
                       {isUploadingImage ? '업로드 중...' : '사진 추가하기 (최대 3개)'}
                     </Text>
                     <Text style={{ fontSize: FONT_SIZES.xs, color: theme.text.tertiary, marginTop: normalize(2), paddingBottom: normalize(5), textAlign: 'center', fontFamily: 'Pretendard-Medium' }}>
@@ -1676,8 +1649,8 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                   </>
                 ) : (
                   <HStack className="items-center">
-                    <MaterialCommunityIcons name="plus-circle" size={normalize(20)} color={theme.colors?.primary || '#2563EB'} />
-                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: theme.colors?.primary || '#2563EB', marginLeft: SPACING.xs, fontFamily: 'Pretendard-SemiBold' }}>
+                    <MaterialCommunityIcons name="plus-circle" size={normalize(20)} color={theme.colors.accentText} />
+                    <Text style={{ fontSize: FONT_SIZES.sm, fontWeight: '600', color: theme.colors.accentText, marginLeft: SPACING.xs, fontFamily: 'Pretendard-SemiBold' }}>
                       사진 추가 ({selectedImages.length}/3)
                     </Text>
                   </HStack>
@@ -1695,7 +1668,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
           borderRadius: normalize(16),
           backgroundColor: theme.bg.card,
           elevation: 2,
-          shadowColor: isDark ? '#fff' : '#000',
+          shadowColor: isDark ? '#000000' : '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDark ? 0.1 : 0.06,
           shadowRadius: 8
@@ -1729,15 +1702,15 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                 onPress={() => setIsAnonymous(!isAnonymous)}
                 disabled={isLoading}
                 style={{
-                  backgroundColor: isAnonymous ? (theme.colors?.primary || '#2563EB') : 'transparent',
-                  borderColor: isAnonymous ? (theme.colors?.primary || '#2563EB') : theme.text.tertiary,
+                  backgroundColor: isAnonymous ? (theme.colors.primary) : 'transparent',
+                  borderColor: isAnonymous ? (theme.colors.primary) : theme.text.tertiary,
                   borderWidth: 2,
                   borderRadius: normalize(16, false),
                   minWidth: normalize(80, false),
                   elevation: isAnonymous ? 2 : 0
                 }}
                 labelStyle={{
-                  color: isAnonymous ? 'white' : theme.text.tertiary,
+                  color: isAnonymous ? theme.colors.onAccent : theme.text.tertiary,
                   fontWeight: '700',
                   fontSize: FONT_SIZES.xs,
                   fontFamily: 'Pretendard-Bold'
@@ -1794,7 +1767,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
               margin: SPACING.xl,
               width: SCREEN_WIDTH - normalize(40, false),
               maxWidth: normalize(300, false),
-              shadowColor: isDark ? '#fff' : '#000',
+              shadowColor: isDark ? '#000000' : '#000',
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: isDark ? 0.2 : 0.3,
               shadowRadius: 8,
@@ -1827,7 +1800,7 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
             <VStack style={{ gap: SPACING.md }}>
               <Pressable
                 style={{
-                  backgroundColor: theme.colors?.primary || '#2563EB',
+                  backgroundColor: theme.colors.primary,
                   paddingVertical: SPACING.md,
                   paddingHorizontal: SPACING.xl,
                   borderRadius: normalize(12, false),
@@ -1840,8 +1813,8 @@ const WriteMyDayScreen: React.FC<WriteMyDayScreenProps> = () => {
                   selectImageFromGallery();
                 }}
               >
-                <MaterialCommunityIcons name="image" size={normalize(20, false)} color="white" style={{ marginRight: SPACING.sm }} />
-                <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '600', color: 'white', fontFamily: 'Pretendard-SemiBold' }}>
+                <MaterialCommunityIcons name="image" size={normalize(20, false)} color={theme.colors.onAccent} style={{ marginRight: SPACING.sm }} />
+                <Text style={{ fontSize: FONT_SIZES.base, fontWeight: '600', color: theme.colors.onAccent, fontFamily: 'Pretendard-SemiBold' }}>
                   갤러리
                 </Text>
               </Pressable>

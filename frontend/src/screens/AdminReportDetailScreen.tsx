@@ -203,7 +203,7 @@ const AdminReportDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#667EEA" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
             로딩 중...
           </Text>
@@ -331,7 +331,7 @@ const AdminReportDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                 <MaterialCommunityIcons
                   name={report.item_type === 'challenge' ? 'trophy' : 'text-box'}
                   size={moderateScale(16)}
-                  color={report.item_type === 'challenge' ? '#667EEA' : '#10B981'}
+                  color={report.item_type === 'challenge' ? theme.colors.primary : '#10B981'}
                 />
                 <Text style={[styles.infoValue, { color: colors.text }]}>
                   {report.item_type === 'challenge' ? '감정 챌린지' : '게시물'}
@@ -486,13 +486,13 @@ const AdminReportDetailScreen: React.FC<Props> = ({ navigation, route }) => {
                     });
                   }}
                 >
-                  <Text style={[styles.viewContentButtonText, { color: '#667EEA' }]}>
+                  <Text style={[styles.viewContentButtonText, { color: theme.colors.primary }]}>
                     챌린지 전체 보기
                   </Text>
                   <MaterialCommunityIcons
                     name="arrow-right"
                     size={moderateScale(16)}
-                    color="#667EEA"
+                    color={theme.colors.primary}
                   />
                 </TouchableOpacity>
               </>
@@ -606,7 +606,7 @@ const AdminReportDetailScreen: React.FC<Props> = ({ navigation, route }) => {
 
       {processing && (
         <View style={styles.processingOverlay}>
-          <ActivityIndicator size="large" color="#667EEA" />
+          <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={[styles.processingText, { color: colors.text }]}>
             처리 중...
           </Text>

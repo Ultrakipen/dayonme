@@ -9,14 +9,12 @@ import {
   Text as RNText,
   StyleSheet,
   TouchableOpacity,
-  Share,
   Dimensions,
   Keyboard,
   Animated,
   Modal,
   StatusBar,
-  DeviceEventEmitter,
-  Image
+  DeviceEventEmitter
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
@@ -41,6 +39,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { Box, Text as UIText, VStack, HStack, Center, Pressable } from '../../components/ui';
 import ConfirmationModal from '../../components/ui/ConfirmationModal';
 import PostOptionsModal from '../../components/ui/PostOptionsModal';
+import PostShareModal from '../../components/PostShareModal';
 import BlockReasonModal, { BlockReason } from '../../components/BlockReasonModal';
 import CustomAlert from '../../components/ui/CustomAlert';
 import { showAlert } from '../../contexts/AlertContext';
@@ -59,7 +58,9 @@ import logger from '../../utils/logger';
 import { normalize, normalizeSpace, normalizeIcon, normalizeTouchable } from '../../utils/responsive';
 import { COLORS } from '../../constants/designSystem';
 import { EMOTION_CHARACTERS, getRandomEmotion, getAnonymousEmotion } from './utils/emotionHelper';
-import { getEmotionEmoji, getTwemojiUrl } from '../../constants/emotions';
+import { getEmotionByName } from '../../constants/emotions';
+import { getReadableEmotionColor } from '../../utils/emotionTextColor';
+import EmotionIcon from '../../components/common/EmotionIcon';
 import { tryMultipleApis, getErrorMessage } from './utils/apiHelper';
 import PostImages from './components/PostImages';
 import { extractBestComments, findCommentById, calculateTotalCommentCount } from './utils/commentHelper';
@@ -134,7 +135,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
     text: modernTheme.text.primary,
     textSecondary: modernTheme.text.secondary,
     border: modernTheme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: modernTheme.colors.accentText,
     // 기능별 색상 (하드코딩 제거)
     like: isDark ? '#f59e0b' : '#f59e0b', // 좋아요 (노란색)
     heart: isDark ? '#ef4444' : '#ef4444', // 하트 (빨간색)
@@ -215,6 +216,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   
   // 액션 메뉴 상태
   const [showActionSheet, setShowActionSheet] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
 
   // 차단 모달 상태
   const [blockModalVisible, setBlockModalVisible] = useState(false);
@@ -1033,21 +1035,11 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
   // fetchPostData를 ref에 저장 (hoisting 문제 방지)
   fetchPostDataRef.current = fetchPostData;
 
-  // 공유하기
-  const handleShare = useCallback(async () => {
+  // 공유하기: 본인 글만 이미지 카드로 공유
+  const handleShare = useCallback(() => {
     if (!post) return;
-    
-    try {
-      const shareContent = {
-        title: '게시물 공유',
-        message: `"${post.content.substring(0, 100)}${post.content.length > 100 ? '...' : ''}"`
-      };
-      
-      await Share.share(shareContent);
-      setShowActionSheet(false);
-    } catch (error) {
-      logger.error('공유 오류:', error);
-    }
+    setShowActionSheet(false);
+    setShowShareCard(true);
   }, [post]);
 
  // 신고하기
@@ -2237,7 +2229,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             size={isReply ? 24 : 28}
           />
           <VStack style={{ flex: 1, marginLeft: normalizeSpace(8) }} pointerEvents="box-none">
-            <HStack style={{ alignItems: 'center' }} pointerEvents="box-none">
+            <HStack style={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 2 }} pointerEvents="box-none">
               <ClickableNickname
                 userId={commentUserId}
                 nickname={displayName}
@@ -2254,15 +2246,9 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
 
               {/* 익명 댓글의 감정 이모지 */}
               {commentIsAnonymous && emotionEmojiCode && (
-                <Image
-                  source={{ uri: getTwemojiUrl(emotionEmojiCode) }}
-                  style={{
-                    width: normalizeIcon(14),
-                    height: normalizeIcon(14),
-                    marginRight: normalizeSpace(3)
-                  }}
-                  resizeMode="contain"
-                />
+                <View style={{ marginRight: normalizeSpace(3) }}>
+                  <EmotionIcon emojiCode={emotionEmojiCode} size={normalizeIcon(14)} />
+                </View>
               )}
 
               {isPostAuthor && (
@@ -2270,14 +2256,14 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   style={{
                     paddingHorizontal: normalizeSpace(4),
                     paddingVertical: normalizeSpace(1),
-                    backgroundColor: isDark ? '#10b981' : '#059669',
+                    backgroundColor: modernTheme.colors.success,
                     borderRadius: normalizeSpace(3),
                     marginRight: normalizeSpace(3),
                   }}
                 >
                   <RNText style={{
-                    fontSize: normalize(9, 8),
-                    color: '#ffffff',
+                    fontSize: normalize(12, 12),
+                    color: modernTheme.colors.onAccent,
                     fontWeight: '600'
                   }}>
                     작성자
@@ -2285,7 +2271,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 </Box>
               )}
               <RNText style={{
-                fontSize: normalize(10, 9),
+                fontSize: normalize(12, 12),
                 color: colors.textSecondary
               }}>
                 {formatCommentTime(comment.created_at)}
@@ -2359,7 +2345,8 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                 mode="contained"
                 onPress={handleSaveCommentEdit}
                 compact
-                style={{ borderRadius: normalizeSpace(6), backgroundColor: colors.primary }}
+                textColor={modernTheme.colors.onAccent}
+                style={{ borderRadius: normalizeSpace(6), backgroundColor: modernTheme.colors.primary }}
                 contentStyle={{ paddingHorizontal: normalizeSpace(6) }}
                 labelStyle={{ fontSize: normalize(13) }}
               >
@@ -2408,7 +2395,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   style={{ marginRight: normalizeSpace(4) }}
                 />
                 <RNText style={{
-                  fontSize: normalize(11, 10),
+                  fontSize: normalize(12, 12),
                   color: comment.is_liked ? "#f59e0b" : colors.textSecondary,
                   fontWeight: comment.is_liked ? '600' : '500'
                 }}>
@@ -2457,7 +2444,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     color={colors.textSecondary}
                     style={{ marginRight: normalizeSpace(3) }}
                   />
-                  <RNText style={{ fontSize: normalize(10, 9), color: colors.textSecondary, fontWeight: '500' }}>
+                  <RNText style={{ fontSize: normalize(12, 12), color: colors.textSecondary, fontWeight: '500' }}>
                     답글
                   </RNText>
                 </TouchableOpacity>
@@ -2485,7 +2472,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     color={colors.textSecondary}
                     style={{ marginRight: normalizeSpace(3) }}
                   />
-                  <RNText style={{ fontSize: normalize(10, 9), color: colors.textSecondary, fontWeight: '500' }}>
+                  <RNText style={{ fontSize: normalize(12, 12), color: colors.textSecondary, fontWeight: '500' }}>
                     수정
                   </RNText>
                 </TouchableOpacity>
@@ -2513,7 +2500,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     color={colors.danger}
                     style={{ marginRight: normalizeSpace(3) }}
                   />
-                  <RNText style={{ fontSize: normalize(10, 9), color: colors.danger, fontWeight: '500' }}>
+                  <RNText style={{ fontSize: normalize(12, 12), color: colors.danger, fontWeight: '500' }}>
                     삭제
                   </RNText>
                 </TouchableOpacity>
@@ -2948,14 +2935,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                           elevation: 2,
                         }}
                       >
-                        <Image
-                          source={{ uri: getTwemojiUrl(emotion.emojiCode) }}
-                          style={{
-                            width: normalizeIcon(22),
-                            height: normalizeIcon(22),
-                          }}
-                          resizeMode="contain"
-                        />
+                        <EmotionIcon emotionId={emotion.id} size={normalizeIcon(22)} />
                       </Box>
                       <VStack style={{ marginLeft: normalizeSpace(10), flex: 1 }}>
                         <HStack style={{ alignItems: 'center', marginBottom: normalizeSpace(3) }}>
@@ -2976,7 +2956,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                             <RNText style={{
                               fontSize: normalize(13),
                               fontWeight: '700',
-                              color: emotion.color
+                              color: getReadableEmotionColor(emotion.color, isDark, modernTheme.text.primary)
                             }}>
                               {emotion.label}
                             </RNText>
@@ -3006,7 +2986,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                           )}
                         </HStack>
                         <RNText style={{
-                          fontSize: normalize(11, 10),
+                          fontSize: normalize(12, 12),
                           color: colors.textSecondary,
                           fontWeight: '500',
                           letterSpacing: 0.2
@@ -3028,7 +3008,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   isAnonymous={false}
                   avatarUrl={post.user?.profile_image_url}
                   avatarText={post.user?.nickname?.[0] || 'U'}
-                  avatarColor="#667eea"
+                  avatarColor={modernTheme.colors.primary}
                   size={48}
                 />
                 <VStack style={{ marginLeft: normalizeSpace(12), flex: 1 }} pointerEvents="box-none">
@@ -3049,7 +3029,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     </ClickableNickname>
                   </View>
                   <RNText style={{
-                    fontSize: normalize(11, 10),
+                    fontSize: normalize(12, 12),
                     color: colors.textSecondary,
                     fontWeight: '500',
                     letterSpacing: 0.2
@@ -3136,16 +3116,16 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   paddingVertical: 4,
                   paddingHorizontal: 8,
                   alignSelf: 'flex-start',
-                  backgroundColor: '#6366F1',
+                  backgroundColor: modernTheme.colors.primary,
                   borderRadius: 8,
                   zIndex: 1000,
                   elevation: 5,
                 }}
               >
                 <RNText style={{
-                  fontSize: normalize(11),
+                  fontSize: normalize(12),
                   fontWeight: '600',
-                  color: '#FFFFFF',
+                  color: modernTheme.colors.onAccent,
                   letterSpacing: 0.1,
                 }}>
                   {isContentExpanded ? '접기' : '더보기'}
@@ -3180,15 +3160,15 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                   <TouchableOpacity
                     key={`tag-${post.post_id}-${tagId}`}
                     style={{
-                      backgroundColor: isDark ? '#0a2a3d' : '#E3F2FD',
+                      backgroundColor: modernTheme.colors.tint,
                       paddingHorizontal: normalizeSpace(12),
                       paddingVertical: normalizeSpace(6),
                       borderRadius: 16,
                       marginRight: normalizeSpace(8),
                       marginBottom: normalizeSpace(8),
                       borderWidth: 1,
-                      borderColor: '#0095F6',
-                      shadowColor: '#0095F6',
+                      borderColor: modernTheme.colors.accentText,
+                      shadowColor: modernTheme.colors.accentText,
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: 0.1,
                       shadowRadius: 4,
@@ -3198,7 +3178,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                     <RNText style={{
                       fontSize: normalize(12),
                       fontWeight: '500',
-                      color: '#0095F6',
+                      color: modernTheme.colors.accentText,
                     }}>
                       #{tagName}
                     </RNText>
@@ -3213,9 +3193,6 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           {post.emotions && post.emotions.length > 0 && (
             <Box style={{ paddingHorizontal: 10, paddingBottom: 10 }}>
               {post.emotions.slice(0, 1).map((emotion, index) => {
-                // 공통 getEmotionEmoji 함수 사용 (../../constants/emotions에서 import)
-                const emotionEmoji = getEmotionEmoji(typeof emotion.name === 'string' ? emotion.name : '감정');
-
                 return (
                   <Box
                     key={`emotion-${emotion.emotion_id || index}`}
@@ -3236,16 +3213,17 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                       elevation: 2,
                     }}
                   >
-                    <RNText style={{
-                      fontSize: normalizeIcon(15),
-                      marginRight: normalizeSpace(6),
-                    }}>
-                      {emotionEmoji}
-                    </RNText>
+                    <View style={{ marginRight: normalizeSpace(6) }}>
+                      <EmotionIcon
+                        emotionId={emotion.emotion_id || (typeof emotion.name === 'string' ? getEmotionByName(emotion.name)?.id : undefined)}
+                        label={typeof emotion.name === 'string' ? emotion.name : undefined}
+                        size={normalizeIcon(15)}
+                      />
+                    </View>
                     <RNText style={{
                       fontSize: normalize(13),
                       fontWeight: '600',
-                      color: emotion.color,
+                      color: getReadableEmotionColor(emotion.color, isDark, modernTheme.text.primary),
                     }}>
                       오늘의 감정: {typeof emotion.name === 'string' ? emotion.name : '감정'}
                     </RNText>
@@ -3466,11 +3444,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                               justifyContent: 'center',
                               marginRight: normalizeSpace(10),
                             }}>
-                              <Image
-                                source={{ uri: getTwemojiUrl(emotion.emojiCode) }}
-                                style={{ width: normalizeIcon(18), height: normalizeIcon(18) }}
-                                resizeMode="contain"
-                              />
+                              <EmotionIcon emotionId={emotion.id} size={normalizeIcon(18)} />
                             </Box>
                           );
                         })()
@@ -3479,7 +3453,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                           width: normalizeIcon(28),
                           height: normalizeIcon(28),
                           borderRadius: 14,
-                          backgroundColor: '#8b5cf6',
+                          backgroundColor: modernTheme.colors.primary,
                           alignItems: 'center',
                           justifyContent: 'center',
                           marginRight: normalizeSpace(10),
@@ -3487,7 +3461,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
                           <RNText style={{
                             fontSize: normalize(16),
                             fontWeight: '600',
-                            color: '#ffffff'
+                            color: modernTheme.colors.onAccent
                           }}>
                             {(bestComment.user?.nickname || '사용자')[0]}
                           </RNText>
@@ -3714,7 +3688,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             borderRadius: 8,
             marginBottom: normalizeSpace(12),
             borderLeftWidth: 4,
-            borderLeftColor: '#8B5CF6'
+            borderLeftColor: modernTheme.colors.primary
           }}>
             <HStack style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: normalizeSpace(4) }}>
               <RNText style={{ fontSize: normalize(12), color: colors.textSecondary, fontWeight: '600' }}>
@@ -3741,7 +3715,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
           <Switch
             value={isAnonymous}
             onValueChange={setIsAnonymous}
-            color="#8B5CF6"
+            color={modernTheme.colors.primary}
           />
           <RNText style={{ marginLeft: normalizeSpace(8), fontSize: normalize(13), color: colors.text }}>
             익명 댓글 작성
@@ -3766,12 +3740,12 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             borderRadius: 12,
           }}
           outlineColor="rgba(0, 0, 0, 0.08)"
-          activeOutlineColor="#6366F1"
+          activeOutlineColor={modernTheme.colors.primary}
           theme={{
             colors: {
               onSurfaceVariant: isDark ? '#888888' : '#6B7280',
               outline: 'rgba(0, 0, 0, 0.08)',
-              primary: '#6366F1',
+              primary: modernTheme.colors.primary,
               text: isDark ? '#ffffff' : '#000000',
             }
           }}
@@ -3815,10 +3789,10 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             style={{
               flex: 2,
               borderRadius: 10,
-              backgroundColor: (!commentText.trim() || submitting) ? (isDark ? '#3f3f46' : '#d1d5db') : '#6366F1',
+              backgroundColor: (!commentText.trim() || submitting) ? (isDark ? '#3f3f46' : '#d1d5db') : modernTheme.colors.primary,
               borderWidth: 1,
-              borderColor: 'rgba(99, 102, 241, 0.2)',
-              shadowColor: '#6366F1',
+              borderColor: modernTheme.colors.border,
+              shadowColor: isDark ? '#000000' : modernTheme.colors.primary,
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.1,
               shadowRadius: 3,
@@ -3832,7 +3806,7 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
             <RNText style={{
               fontSize: normalize(14),
               fontWeight: '600',
-              color: 'white'
+              color: (!commentText.trim() || submitting) ? 'white' : modernTheme.colors.onAccent
             }}>
               {submitting ? '작성 중...' : (replyingTo ? '답글 작성' : '댓글 작성')}
             </RNText>
@@ -3898,13 +3872,20 @@ const PostDetailScreen: React.FC<PostDetailScreenProps> = ({ navigation, route }
         visible={showActionSheet}
         isOwner={post != null && user != null && post.user_id === user.user_id}
         isAnonymous={post?.is_anonymous || false}
-        onShare={handleShare}
+        onShare={post != null && user != null && post.user_id === user.user_id ? handleShare : undefined}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onReport={handleReport}
         onBlockPost={handleBlockPost}
         onBlockUser={handleBlockUser}
         onClose={() => setShowActionSheet(false)}
+      />
+
+      <PostShareModal
+        visible={showShareCard}
+        content={post?.content || ''}
+        emotionId={post?.anonymous_emotion_id || post?.emotions?.[0]?.emotion_id || undefined}
+        onClose={() => setShowShareCard(false)}
       />
 
       {/* 댓글 액션 시트 모달 */}

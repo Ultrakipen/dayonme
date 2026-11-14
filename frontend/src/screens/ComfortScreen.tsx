@@ -17,7 +17,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Vibration,
-  Share,
   useWindowDimensions,
   Text as RNText,
   DeviceEventEmitter,
@@ -40,6 +39,7 @@ import {
 } from 'react-native-paper';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import PostShareModal from '../components/PostShareModal';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import CustomAlert from '../components/ui/CustomAlert';
 import Toast from '../components/Toast';
@@ -212,8 +212,6 @@ const truncateToSevenLines = (text: string) => {
 const FILTER_OPTIONS = [
   { key: 'all', label: '전체', icon: 'view-grid-outline', description: '모든 게시물' },
   { key: 'tag', label: '태그', icon: 'tag-outline', description: '태그만 검색' },
-  { key: 'latest', label: '최신순', icon: 'clock-outline', description: '최신 게시물' },
-  { key: 'best', label: '인기순', icon: 'heart', description: '좋아요 많은 글' },
 ] as const;
 
 // 필터 상태 관리를 위한 reducer (단순화)
@@ -236,7 +234,8 @@ const filterReducer = (state: FilterState, action: FilterAction): FilterState =>
 // 2025년 트렌드 컬러 팔레트
 // COLORS를 동적으로 생성하는 함수로 변경
 const getColors = (theme: any, isDark: boolean) => ({
-  primary: '#6366F1', // Modern indigo
+  primary: theme.colors.accentText, // 테마 단일 출처
+  onPrimary: theme.colors.onAccent,
   secondary: '#EC4899', // Vibrant pink
   accent: '#10B981', // Success green
   background: theme.bg.primary,
@@ -246,13 +245,13 @@ const getColors = (theme: any, isDark: boolean) => ({
   onSurfaceVariant: theme.text.secondary,
   text: isDark ? '#ffffff' : theme.text.primary, // 다크모드 대응 텍스트 색상
   outline: theme.bg.border,
-  shadow: isDark ? '#ffffff' : '#0F172A',
+  shadow: isDark ? '#000000' : '#0F172A',
   error: '#EF4444',
   warning: isDark ? '#FFC107' : '#F59E0B',
   success: '#10B981',
   glassmorphism: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.25)',
-  gradientStart: isDark ? '#4C51BF' : '#667EEA',
-  gradientEnd: isDark ? '#5B21B6' : '#764BA2',
+  gradientStart: theme.colors.primary,
+  gradientEnd: theme.colors.primary,
 });
 
 interface ComfortPost {
@@ -307,7 +306,10 @@ const HighlightedText: React.FC<{
   numberOfLines?: number;
   highlightColor?: string;
   highlightTextColor?: string;
-}> = ({ text, highlight, style, numberOfLines, highlightColor = '#667eea', highlightTextColor = '#FFFFFF' }) => {
+}> = ({ text, highlight, style, numberOfLines, highlightColor, highlightTextColor }) => {
+  const { theme: hlTheme } = useModernTheme();
+  const hlBg = highlightColor ?? hlTheme.colors.primary;
+  const hlFg = highlightTextColor ?? hlTheme.colors.onAccent;
   // text가 undefined이거나 null인 경우 처리
   if (!text || typeof text !== 'string') {
     return <Text style={style} numberOfLines={numberOfLines} />;
@@ -324,8 +326,8 @@ const HighlightedText: React.FC<{
       {parts.map((part, index) =>
         part.toLowerCase() === highlight.toLowerCase() ? (
           <Text key={index} style={[style, {
-            backgroundColor: highlightColor,
-            color: highlightTextColor,
+            backgroundColor: hlBg,
+            color: hlFg,
             fontWeight: '700',
             paddingHorizontal: 4,
             paddingVertical: 1,
@@ -389,7 +391,7 @@ const SearchInput: React.FC<{
     minHeight: 44,
     borderWidth: 1.5,
     borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.4)',
-    shadowColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.1)',
+    shadowColor: isDark ? '#000000' : 'rgba(0, 0, 0, 0.1)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -527,6 +529,7 @@ const ComfortScreen: React.FC = () => {
 
   // 메뉴 상태
   const [menuVisible, setMenuVisible] = useState<Record<number, boolean>>({});
+  const [shareTarget, setShareTarget] = useState<{ content: string; emotionId?: number } | null>(null);
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState<number | null>(null);
   const [selectedReportReason, setSelectedReportReason] = useState<string>('');
@@ -584,6 +587,7 @@ const ComfortScreen: React.FC = () => {
   const hasMoreRef = useRef(hasMore);
   const loadingMoreRef = useRef(loadingMore);
   const selectedFilterRef = useRef(selectedFilter);
+  const postsSortOrderRef = useRef(postsSortOrder);
   const selectedTagRef = useRef(selectedTag);
   const blockedUsersRef = useRef(blockedUsers);
   const blockedContentsRef = useRef(blockedContents);
@@ -669,7 +673,7 @@ const ComfortScreen: React.FC = () => {
         comfortWallService.getPosts({                           // 1: 일반 게시물
           page: 1,
           limit: API_CONSTANTS.PAGE_LIMIT,
-          sort_by: selectedFilter === 'latest' ? 'latest' : selectedFilter === 'best' ? 'popular' : 'latest',
+          sort_by: postsSortOrderRef.current,
           search: searchQuery || undefined,
           tag: selectedTag || undefined,
         }),
@@ -855,7 +859,7 @@ const ComfortScreen: React.FC = () => {
       const response = await comfortWallService.getPosts({
         page: currentPage + 1,
         limit: API_CONSTANTS.PAGE_LIMIT,
-        sort_by: currentSelectedFilter === 'latest' ? 'latest' : currentSelectedFilter === 'best' ? 'popular' : 'latest',
+        sort_by: postsSortOrderRef.current,
         search: currentSearchQuery || undefined, // 텍스트 검색 (제목, 내용)
         tag: currentSelectedTag || undefined,    // 태그 검색 (독립적으로 동작)
       });
@@ -1020,7 +1024,7 @@ const ComfortScreen: React.FC = () => {
       const response = await comfortWallService.getPosts({
         page: 1,
         limit: API_CONSTANTS.PAGE_LIMIT,
-        sort_by: 'latest',
+        sort_by: postsSortOrderRef.current,
         search: query || undefined,
       });
 
@@ -1053,7 +1057,7 @@ const ComfortScreen: React.FC = () => {
       const response = await comfortWallService.getPosts({
         page: 1,
         limit: API_CONSTANTS.PAGE_LIMIT,
-        sort_by: 'latest',
+        sort_by: postsSortOrderRef.current,
         tag: query, // 태그만 검색
         // search 파라미터는 의도적으로 제외
       });
@@ -1116,7 +1120,7 @@ const ComfortScreen: React.FC = () => {
           comfortWallService.getPosts({
             page: 1,
             limit: API_CONSTANTS.PAGE_LIMIT,
-            sort_by: 'latest',
+            sort_by: postsSortOrderRef.current,
             // search와 tag 파라미터를 명시적으로 제외
           }),
         ]);
@@ -1189,7 +1193,7 @@ const ComfortScreen: React.FC = () => {
       let apiParams: any = {
         page: 1,
         limit: API_CONSTANTS.PAGE_LIMIT,
-        sort_by: filter === 'latest' ? 'latest' : filter === 'best' ? 'popular' : 'latest'
+        sort_by: postsSortOrderRef.current
       };
 
       // 베스트/최근 게시물 데이터 (all 필터에서만 업데이트)
@@ -1202,7 +1206,7 @@ const ComfortScreen: React.FC = () => {
         apiParams = {
           page: 1,
           limit: API_CONSTANTS.PAGE_LIMIT,
-          sort_by: 'latest'
+          sort_by: postsSortOrderRef.current
           // search와 tag 파라미터를 명시적으로 제외
         };
 
@@ -1344,7 +1348,7 @@ const ComfortScreen: React.FC = () => {
           page: 1,
           limit: API_CONSTANTS.PAGE_LIMIT,
           search: trimmedQuery,
-          sort_by: selectedFilter === 'best' ? 'popular' : 'latest'
+          sort_by: postsSortOrderRef.current
         });
 
         console.log('🔍 [executeSearch] API 응답:', response.data?.status, '게시물 수:', response.data?.data?.posts?.length);
@@ -1414,7 +1418,7 @@ const ComfortScreen: React.FC = () => {
       let apiParams: any = {
         page: 1,
         limit: API_CONSTANTS.PAGE_LIMIT,
-        sort_by: 'latest'
+        sort_by: postsSortOrderRef.current
       };
       
       let newFilter: FilterType = 'all';
@@ -1630,36 +1634,10 @@ const ComfortScreen: React.FC = () => {
     setDeletePostId(null);
   }, []);
 
-  // 게시물 공유
-  const handleShare = useCallback(async (postId: number, content: string, nickname?: string) => {
-    try {
-      setMenuVisible(prev => ({
-        ...prev,
-        [postId]: false
-      }));
-
-      const shareContent = nickname
-        ? `${nickname}님의 감정 나눔:\n\n${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`
-        : `익명의 감정 나눔:\n\n${content.substring(0, 100)}${content.length > 100 ? '...' : ''}`;
-
-      const result = await Share.share({
-        message: shareContent,
-        title: '위로와 공감 게시물 공유',
-      });
-
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          // 특정 앱으로 공유됨
-        } else {
-          // 공유됨
-        }
-      } else if (result.action === Share.dismissedAction) {
-        // 취소됨
-      }
-    } catch (error: any) {
-      Alert.alert('오류', '공유 중 오류가 발생했습니다.');
-      console.error('공유 오류:', error);
-    }
+  // 게시물 공유: 본인 글만 이미지 카드로 공유
+  const handleShare = useCallback((postId: number, content: string, emotionId?: number) => {
+    setMenuVisible(prev => ({ ...prev, [postId]: false }));
+    setShareTarget({ content, emotionId });
   }, []);
 
   // 게시물 신고
@@ -1918,6 +1896,7 @@ const ComfortScreen: React.FC = () => {
     
     try {
       setLoading(true);
+      postsSortOrderRef.current = sortOrder;
       setPostsSortOrder(sortOrder);
       
       const response = await comfortWallService.getPosts({
@@ -2128,7 +2107,7 @@ const ComfortScreen: React.FC = () => {
             <View style={[
               styles.filtersSection,
               {
-                backgroundColor: isDark ? modernTheme.bg.surface : 'transparent',
+                backgroundColor: isDark ? modernTheme.bg.secondary : 'transparent',
               }
             ]}>
               {/* 검색 버튼 */}
@@ -2200,11 +2179,11 @@ const ComfortScreen: React.FC = () => {
                     <MaterialCommunityIcons
                       name={filter.icon as any}
                       size={normalizeIcon(14)}
-                      color={selectedFilter === filter.key ? 'white' : COLORS.primary}
+                      color={selectedFilter === filter.key ? COLORS.onPrimary : COLORS.primary}
                     />
                     <Text style={[
                       styles.filterChipText,
-                      { color: selectedFilter === filter.key ? 'white' : COLORS.primary }
+                      { color: selectedFilter === filter.key ? COLORS.onPrimary : COLORS.primary }
                     ]}>
                       {filter.label}
                     </Text>
@@ -2228,7 +2207,7 @@ const ComfortScreen: React.FC = () => {
       <View style={styles.bestCardGradient}>
         <View style={styles.bestCardHeader}>
           <View style={[styles.bestBadge, { backgroundColor: index < 3 ? COLORS.warning : COLORS.primary }]}>
-            <Text style={styles.bestBadgeText}>{`#${index + 1}`}</Text>
+            <Text style={[styles.bestBadgeText, index >= 3 && { color: COLORS.onPrimary }]}>{`#${index + 1}`}</Text>
           </View>
           <MaterialCommunityIcons name="heart" size={16} color={COLORS.error} />
         </View>
@@ -2475,7 +2454,7 @@ const ComfortScreen: React.FC = () => {
                     <Text style={[cardStyles.authorBadge, { color: themeColors.onSurfaceVariant }]}> [나]</Text>
                   )}
                 </View>
-                <Text style={[cardStyles.instagramPostDate, { color: themeColors.onSurfaceVariant }]}>
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.3} style={[cardStyles.instagramPostDate, { color: themeColors.onSurfaceVariant }]}>
                   {timeAgo}
                 </Text>
               </View>
@@ -2508,13 +2487,15 @@ const ComfortScreen: React.FC = () => {
                 <View style={[cardStyles.bottomSheetContainer, { backgroundColor: themeColors.surface }]}>
                   <View style={cardStyles.bottomSheetHandle} />
 
-                  <TouchableOpacity
-                    style={cardStyles.bottomSheetItem}
-                    onPress={() => handleShare(item.post_id, item.content, item.nickname)}
-                  >
-                    <MaterialCommunityIcons name="share-outline" size={22} color={themeColors.text} />
-                    <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>공유하기</Text>
-                  </TouchableOpacity>
+                  {isMyPost && (
+                    <TouchableOpacity
+                      style={cardStyles.bottomSheetItem}
+                      onPress={() => handleShare(item.post_id, item.content, randomEmotion.id)}
+                    >
+                      <MaterialCommunityIcons name="share-outline" size={22} color={themeColors.text} />
+                      <Text style={[cardStyles.bottomSheetItemText, { color: themeColors.onSurface }]}>공유하기</Text>
+                    </TouchableOpacity>
+                  )}
 
                   {isMyPost && (
                     <>
@@ -3108,7 +3089,7 @@ const ComfortScreen: React.FC = () => {
                 {/* 게시물 목록 헤더 */}
                 <View style={styles.postsListHeader}>
                   <View style={styles.postsListTitleSection}>
-                    <Text style={styles.postsListTitle}>💝 마음을 나누는 이야기</Text>
+                    <Text style={styles.postsListTitle} numberOfLines={1}>💝 마음을 나누는 이야기</Text>
                     <Text style={styles.postsListCount}>{posts.length}개</Text>
                   </View>
                   <View style={styles.postsSortSection}>
@@ -3122,7 +3103,7 @@ const ComfortScreen: React.FC = () => {
                       <MaterialCommunityIcons
                         name="clock-outline"
                         size={14}
-                        color={postsSortOrder === 'latest' ? 'white' : COLORS.onSurfaceVariant}
+                        color={postsSortOrder === 'latest' ? COLORS.onPrimary : COLORS.onSurfaceVariant}
                       />
                       <Text style={[
                         styles.sortButtonText,
@@ -3139,7 +3120,7 @@ const ComfortScreen: React.FC = () => {
                       <MaterialCommunityIcons
                         name="heart"
                         size={14}
-                        color={postsSortOrder === 'popular' ? 'white' : COLORS.onSurfaceVariant}
+                        color={postsSortOrder === 'popular' ? COLORS.onPrimary : COLORS.onSurfaceVariant}
                       />
                       <Text style={[
                         styles.sortButtonText,
@@ -3176,7 +3157,7 @@ const ComfortScreen: React.FC = () => {
               icon="plus"
               style={styles.fab}
               onPress={() => navigation.navigate('WriteComfortPost')}
-              color="white"
+              color={COLORS.onPrimary}
               size="small"
             />
           )}
@@ -3270,6 +3251,14 @@ const ComfortScreen: React.FC = () => {
               navigation.navigate('Auth', { screen: 'Register' });
             }}
             actionType={emotionLoginPromptAction}
+          />
+
+          {/* 게시물 공유 카드(본인 글) */}
+          <PostShareModal
+            visible={shareTarget !== null}
+            content={shareTarget?.content || ''}
+            emotionId={shareTarget?.emotionId}
+            onClose={() => setShareTarget(null)}
           />
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -3379,7 +3368,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     paddingVertical: 8,
     borderRadius: 10,
     marginBottom: 5,
-    height: 38,
+    minHeight: 38,
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 3,
     elevation: 2,
@@ -3469,7 +3458,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     elevation: 2,
   },
   filterChipText: {
-    fontSize: normalize(11, 11, 12),
+    fontSize: normalize(12, 12, 13),
     fontWeight: '600',
     marginLeft: 4,
     letterSpacing: -0.2,
@@ -3559,7 +3548,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
       minHeight: 22,
     },
     viewAllText: {
-      fontSize: 11,
+      fontSize: 12,
       fontWeight: '600',
       color: COLORS.primary,
       marginRight: 4,
@@ -3634,7 +3623,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     minWidth: 25,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: isDark ? '#ffffff' : '#000000',
+    shadowColor: isDark ? '#000000' : '#000000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: isDark ? 0.1 : 0.15,
     shadowRadius: 4,
@@ -3721,7 +3710,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     marginBottom: 4,
   },
   myRecentSimpleTagText: {
-    fontSize: normalize(11, 11, 12), // 최근 게시물 태그 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 최근 게시물 태그 (최소 12px)
     color: COLORS.primary,
     fontWeight: '600',
     letterSpacing: 0.2,
@@ -3732,7 +3721,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     textDecorationLine: 'underline',
   },
   myRecentSimpleTagMoreText: {
-    fontSize: normalize(11, 11, 12),
+    fontSize: normalize(12, 12, 13),
     color: COLORS.onSurfaceVariant,
     fontWeight: '500',
     marginLeft: 4,
@@ -3755,7 +3744,9 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   // 게시물 목록 헤더 (95% 너비, 중앙정렬)
   postsListHeader: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    flexWrap: 'wrap', // 글자가 커져 한 줄에 안 들어가면 정렬 버튼이 아래 줄로 내려온다(기본 크기에서는 한 줄)
+    rowGap: 4,
+    justifyContent: 'space-between',
     alignItems: 'center',
     width: CONTAINER_WIDTH,
     alignSelf: 'center',
@@ -3769,16 +3760,22 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 1,
+    minWidth: 0,
+    maxWidth: '100%',
+    marginRight: 8,
   },
   postsListTitle: {
     fontSize: 16, // 게시물 목록 제목 (15→16)
     fontWeight: '700',
     color: COLORS.onSurface,
+    flexShrink: 1,
   },
   postsListCount: {
     fontSize: normalize(12, 11, 13), // 게시물 개수
     color: COLORS.onSurfaceVariant,
     fontWeight: '500',
+    flexShrink: 0,
     backgroundColor: COLORS.primary + '15',
     paddingHorizontal: 6,
     paddingVertical: 3,
@@ -3787,6 +3784,8 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
   postsSortSection: {
     flexDirection: 'row',
     gap: 8,
+    flexShrink: 0,
+    marginLeft: 'auto', // 아래 줄로 내려와도 오른쪽 정렬 유지
   },
   sortButton: {
     flexDirection: 'row',
@@ -3798,7 +3797,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     gap: 4,
     borderWidth: 1.5,
     borderColor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.8)',
-    shadowColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.3)',
+    shadowColor: isDark ? '#000000' : 'rgba(0,0,0,0.3)',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: isDark ? 0.1 : 0.15,
     shadowRadius: 4,
@@ -3816,7 +3815,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     letterSpacing: 0.3,
   },
   sortButtonTextActive: {
-    color: '#FFFFFF',
+    color: COLORS.onPrimary,
     fontWeight: '700',
   },
 
@@ -3890,13 +3889,13 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
      marginLeft: 5,
   },
   authorBadge: {
-    fontSize: normalize(11, 11, 12), // 배지 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 배지 (최소 12px)
     fontWeight: '700',
     color: COLORS.onSurfaceVariant,
     marginLeft: 4,
   },
   instagramPostDate: {
-    fontSize: normalize(11, 11, 12), // 작성 시간 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 작성 시간 (최소 12px)
     color: COLORS.onSurfaceVariant,
     marginLeft: 5,
   },
@@ -4004,12 +4003,12 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     backgroundColor: COLORS.primary,
   },
   instagramTagText: {
-    fontSize: normalize(11, 11, 12), // 태그 텍스트 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 태그 텍스트 (최소 12px)
     color: COLORS.primary,
     fontWeight: '600',
   },
   instagramTagTextSelected: {
-    color: 'white',
+    color: COLORS.onPrimary,
   },
   
   // 액션 버튼 상단 태그 스타일 - 시인성 대폭 개선
@@ -4038,7 +4037,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     elevation: 4, // 안드로이드 그림자 증가 (3 → 4)
   },
   instagramTagAboveActionText: {
-    fontSize: normalize(11, 11, 12), // 액션 버튼 위 태그 텍스트 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 액션 버튼 위 태그 텍스트 (최소 12px)
     color: COLORS.primary,
     fontWeight: '800',
     letterSpacing: 0.2,
@@ -4048,11 +4047,11 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     borderColor: COLORS.primary,
   },
   instagramTagAboveActionTextSelected: {
-    color: '#FFFFFF',
+    color: COLORS.onPrimary,
     fontWeight: '800',
   },
   instagramTagMoreCount: {
-    fontSize: normalize(11, 11, 12), // 추가 태그 개수 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 추가 태그 개수 (최소 12px)
     color: COLORS.primary + '90',
     fontWeight: '700',
     marginLeft: 5,
@@ -4076,7 +4075,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     paddingVertical: 3,
   },
   instagramSimpleTagText: {
-    fontSize: normalize(11, 11, 12), // 간단한 태그 텍스트 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 간단한 태그 텍스트 (최소 12px)
     color: COLORS.primary,
     fontWeight: '600',
     letterSpacing: 0.2,
@@ -4087,7 +4086,7 @@ const createStyles = (COLORS: any, isDark: boolean, layout: { CONTAINER_WIDTH: n
     textDecorationLine: 'underline',
   },
   instagramSimpleTagMoreText: {
-    fontSize: normalize(11, 11, 12), // 더보기 텍스트 (최소 11px)
+    fontSize: normalize(12, 12, 13), // 더보기 텍스트 (최소 12px)
     color: COLORS.onSurfaceVariant,
     fontWeight: '500',
     marginLeft: 4,

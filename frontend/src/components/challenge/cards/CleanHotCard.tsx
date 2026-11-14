@@ -1,9 +1,8 @@
 import React, { memo, useRef, useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import FastImage from 'react-native-fast-image';
-import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { CHALLENGE_COLORS as COLORS, getGradientColors } from '../../../constants/challenge';
+import { CHALLENGE_COLORS as COLORS } from '../../../constants/challenge';
 import { getImageProps, IMAGE_SIZES } from '../../../utils/imageOptimization';
 import { useModernTheme } from '../../../contexts/ModernThemeContext';
 
@@ -54,9 +53,9 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
     const endDate = new Date(challenge.end_date);
     const diffTime = endDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return { text: 'D-DAY', color: '#EF4444' };
-    if (diffDays > 0) return { text: `D-${diffDays}`, color: diffDays <= 3 ? '#F59E0B' : '#3B82F6' };
-    return { text: '종료', color: '#9CA3AF' };
+    if (diffDays === 0) return { text: 'D-DAY', color: '#DC2626' };
+    if (diffDays > 0) return { text: `D-${diffDays}`, color: diffDays <= 3 ? '#F59E0B' : theme.colors.primary, onColor: diffDays <= 3 ? '#1A1A1A' : theme.colors.onAccent };
+    return { text: '종료', color: '#9CA3AF', onColor: '#1A1A1A' };
   };
 
   const ddayInfo = getDdayInfo();
@@ -131,30 +130,20 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
               )}
             </>
           ) : (
-            <LinearGradient
-              colors={getGradientColors(challenge.challenge_id)}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.gradient}
-            >
+            <View style={[styles.gradient, { backgroundColor: theme.colors.tint }]}>
               <MaterialCommunityIcons
                 name="emoticon-happy-outline"
                 size={32}
-                color="rgba(255, 255, 255, 0.9)"
+                color={theme.colors.accentText}
               />
-            </LinearGradient>
+            </View>
           )}
 
           {/* HOT 순위 배지 */}
-          <LinearGradient
-            colors={['#FF6B6B', '#FF8E53']}
-            style={styles.hotRankBadge}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-          >
-            <MaterialCommunityIcons name="fire" size={12} color="white" />
-            <Text style={styles.hotRankText}>#{index + 1}</Text>
-          </LinearGradient>
+          <View style={[styles.hotRankBadge, { backgroundColor: theme.colors.primary }]}>
+            <MaterialCommunityIcons name="fire" size={12} color={theme.colors.onAccent} />
+            <Text style={[styles.hotRankText, { color: theme.colors.onAccent }]}>#{index + 1}</Text>
+          </View>
 
           {/* D-DAY 배지 */}
           <Animated.View style={[
@@ -164,7 +153,7 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
               transform: [{ scale: ddayPulse }]
             }
           ]}>
-            <Text style={styles.ddayText}>
+            <Text style={[styles.ddayText, (ddayInfo as any).onColor ? { color: (ddayInfo as any).onColor } : null]}>
               {ddayInfo.text}
             </Text>
           </Animated.View>
@@ -198,8 +187,8 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
           {Array.isArray(challenge.tags) && challenge.tags.length > 0 && (
             <View style={styles.tagsContainer}>
               {challenge.tags.slice(0, 2).map((tag, idx) => (
-                <View key={idx} style={styles.tagBadge}>
-                  <Text style={styles.tagText}>#{tag}</Text>
+                <View key={idx} style={[styles.tagBadge, { backgroundColor: theme.colors.tint }]}>
+                  <Text style={[styles.tagText, { color: theme.colors.accentText }]}>#{tag}</Text>
                 </View>
               ))}
             </View>
@@ -207,19 +196,19 @@ export const CleanHotCard = memo<CleanHotCardProps>(({ challenge, index, onPress
 
           <View style={styles.footer}>
             <View style={styles.socialItem}>
-              <MaterialCommunityIcons name="account-group" size={13} color={COLORS.primary} />
+              <MaterialCommunityIcons name="account-group" size={13} color={theme.text.secondary} />
               <Text style={[styles.socialText, { color: theme.text.secondary }]}>
                 {challenge.participant_count || 0}
               </Text>
             </View>
             <View style={styles.socialRow}>
               <View style={styles.socialItem}>
-                <MaterialCommunityIcons name="heart" size={13} color={COLORS.danger} />
-                <Text style={[styles.socialText, { color: COLORS.danger }]}>{challenge.like_count || 0}</Text>
+                <MaterialCommunityIcons name="heart" size={13} color={theme.text.secondary} />
+                <Text style={[styles.socialText, { color: theme.text.secondary }]}>{challenge.like_count || 0}</Text>
               </View>
               <View style={styles.socialItem}>
-                <MaterialCommunityIcons name="comment-text-outline" size={13} color={COLORS.primary} />
-                <Text style={[styles.socialText, { color: COLORS.primary }]}>{challenge.comment_count || 0}</Text>
+                <MaterialCommunityIcons name="comment-text-outline" size={13} color={theme.text.secondary} />
+                <Text style={[styles.socialText, { color: theme.text.secondary }]}>{challenge.comment_count || 0}</Text>
               </View>
             </View>
           </View>
@@ -289,7 +278,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 14,
-    shadowColor: '#FF6B6B',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
@@ -327,7 +316,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: 'white',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
   },
   content: {

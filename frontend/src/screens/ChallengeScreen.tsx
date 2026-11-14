@@ -1237,7 +1237,7 @@ const executeSearch = useCallback((query: string) => {
           translucent={false}
         />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color={theme.colors.accentText} />
           <Text style={[styles.loadingText, { color: theme.text.primary }]}>
             챌린지 불러오는 중...
           </Text>
@@ -1250,12 +1250,12 @@ const executeSearch = useCallback((query: string) => {
     return (
       <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: theme.bg.primary }]}>
         <StatusBar
-          barStyle="light-content"
+          barStyle={isDark ? "light-content" : "dark-content"}
           backgroundColor={theme.bg.primary}
           translucent={false}
         />
         {/* 검색 헤더 */}
-        <View style={[styles.searchHeader, { borderBottomColor: theme.bg.border, shadowColor: isDark ? '#ffffff' : '#000000' }]}>
+        <View style={[styles.searchHeader, { borderBottomColor: theme.bg.border, shadowColor: isDark ? '#000000' : '#000000' }]}>
           <TouchableOpacity onPress={exitSearchMode} style={styles.backButton}>
             <MaterialCommunityIcons
               name="arrow-left"
@@ -1263,7 +1263,7 @@ const executeSearch = useCallback((query: string) => {
               color={theme.text.primary}
             />
           </TouchableOpacity>
-          <View style={[styles.searchInputContainer, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#ffffff' : '#6366F1' }]}>
+          <View style={[styles.searchInputContainer, { backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : theme.colors.primary }]}>
             <MaterialCommunityIcons
               name="magnify"
               size={20}
@@ -1344,7 +1344,7 @@ const executeSearch = useCallback((query: string) => {
                     executeSearch(item);
                   }}
                 >
-                  <Text style={[styles.popularSearchRank, { color: COLORS.primary }]}>
+                  <Text style={[styles.popularSearchRank, { color: theme.colors.accentText }]}>
                     {index + 1}
                   </Text>
                   <Text style={[styles.popularSearchText, { color: theme.text.primary }]}>
@@ -1374,7 +1374,7 @@ const executeSearch = useCallback((query: string) => {
                       {challenge.description}
                     </Text>
                     <View style={styles.searchResultMeta}>
-                      <Text style={[styles.searchResultParticipants, { color: COLORS.primary }]}>
+                      <Text style={[styles.searchResultParticipants, { color: theme.colors.accentText }]}>
                         {challenge.participant_count}명 참여
                       </Text>
                       <View style={[styles.statusBadge, { backgroundColor: getStatusColor(challenge.status) }]}>
@@ -1414,12 +1414,18 @@ const executeSearch = useCallback((query: string) => {
         backgroundColor={theme.bg.primary}
         translucent={false}
       />
+      {/* 상단 은은한 색 번짐 (헤더 뒤 배경) */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={[theme.colors.primary + '26', theme.colors.primary + '00']}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 180 }}
+      />
       {/* 위로와 공감 페이지와 동일한 단일 색상 헤더 */}
       <View
         style={[
           styles.headerGradient,
           {
-            backgroundColor: theme.bg.primary,
+            backgroundColor: 'transparent',
             borderBottomWidth: isDark ? 0 : 0.5,
             borderBottomColor: isDark ? 'transparent' : theme.bg.border,
           }
@@ -1577,7 +1583,7 @@ const executeSearch = useCallback((query: string) => {
                 backgroundColor: isDark ? 'rgba(28, 28, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)',
                 borderWidth: 0.5,
                 borderColor: isDark ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)',
-                shadowColor: isDark ? '#ffffff' : '#000000',
+                shadowColor: isDark ? '#000000' : '#000000',
                 shadowOpacity: isDark ? 0.1 : 0.15,
               },
             ]}
@@ -1612,19 +1618,19 @@ const executeSearch = useCallback((query: string) => {
         {/* 챌린지 생성 버튼 - 로그인 사용자만 표시 */}
         {isAuthenticated && (
           <TouchableOpacity
-            style={styles.floatingButton}
+            style={[styles.floatingButton, { shadowColor: isDark ? '#000000' : theme.colors.primary }]}
             onPress={handleCreateChallenge}
             activeOpacity={0.8}
             accessibilityLabel="새 챌린지 만들기"
             accessibilityRole="button"
           >
             <LinearGradient
-              colors={isDark ? ['#8B5CF6', '#A855F7'] : [COLORS.primary, COLORS.secondary]}
+              colors={[theme.colors.primary, theme.colors.primary]}
               style={styles.floatingButtonGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <MaterialCommunityIcons name="plus" size={24} color="white" />
+              <MaterialCommunityIcons name="plus" size={24} color={theme.colors.onAccent} />
             </LinearGradient>
           </TouchableOpacity>
         )}
@@ -1644,7 +1650,7 @@ const executeSearch = useCallback((query: string) => {
           <View style={[styles.modalHeader, {
             borderBottomColor: theme.bg.border,
             backgroundColor: theme.bg.card,
-            shadowColor: isDark ? '#ffffff' : '#000000',
+            shadowColor: isDark ? '#000000' : '#000000',
           }]}>
             <TouchableOpacity
               onPress={handleCloseEditModal}
@@ -1671,7 +1677,7 @@ const executeSearch = useCallback((query: string) => {
               disabled={isUpdating || !editTitle.trim() || !editDescription.trim()}
               style={[styles.modernSaveButton, {
                 backgroundColor: (isUpdating || !editTitle.trim() || !editDescription.trim())
-                  ? theme.colors.disabled
+                  ? theme.text.tertiary
                   : COLORS.primary,
                 opacity: (isUpdating || !editTitle.trim() || !editDescription.trim()) ? 0.6 : 1
               }]}
@@ -1704,7 +1710,7 @@ const executeSearch = useCallback((query: string) => {
                   <MaterialCommunityIcons
                     name="format-title"
                     size={20}
-                    color={COLORS.primary}
+                    color={theme.colors.accentText}
                     style={{ marginRight: 8 }}
                   />
                   <Text style={[styles.modernFieldLabel, { color: theme.text.primary }]}>
@@ -1754,7 +1760,7 @@ const executeSearch = useCallback((query: string) => {
                   <MaterialCommunityIcons
                     name="text-long"
                     size={20}
-                    color={COLORS.primary}
+                    color={theme.colors.accentText}
                     style={{ marginRight: 8 }}
                   />
                   <Text style={[styles.modernFieldLabel, { color: theme.text.primary }]}>
@@ -1806,7 +1812,7 @@ const executeSearch = useCallback((query: string) => {
                   <MaterialCommunityIcons
                     name="calendar-range"
                     size={20}
-                    color={COLORS.primary}
+                    color={theme.colors.accentText}
                     style={{ marginRight: 8 }}
                   />
                   <Text style={[styles.modernFieldLabel, { color: theme.text.primary }]}>
@@ -1839,7 +1845,7 @@ const executeSearch = useCallback((query: string) => {
                     <MaterialCommunityIcons
                       name="calendar"
                       size={20}
-                      color={COLORS.primary}
+                      color={theme.colors.accentText}
                       style={{ marginRight: 10 }}
                     />
                     <TextInput
@@ -1863,7 +1869,7 @@ const executeSearch = useCallback((query: string) => {
                     <MaterialCommunityIcons
                       name="arrow-right"
                       size={24}
-                      color={COLORS.primary}
+                      color={theme.colors.accentText}
                     />
                   </View>
                 </View>
@@ -1888,7 +1894,7 @@ const executeSearch = useCallback((query: string) => {
                     <MaterialCommunityIcons
                       name="calendar"
                       size={20}
-                      color={COLORS.primary}
+                      color={theme.colors.accentText}
                       style={{ marginRight: 10 }}
                     />
                     <TextInput
@@ -1913,7 +1919,7 @@ const executeSearch = useCallback((query: string) => {
                   <MaterialCommunityIcons
                     name="account-multiple"
                     size={20}
-                    color={COLORS.primary}
+                    color={theme.colors.accentText}
                     style={{ marginRight: 8 }}
                   />
                   <Text style={[styles.modernFieldLabel, { color: theme.text.primary }]}>
@@ -1940,7 +1946,7 @@ const executeSearch = useCallback((query: string) => {
                 <MaterialCommunityIcons
                   name="account-multiple"
                   size={20}
-                  color={COLORS.primary}
+                  color={theme.colors.accentText}
                   style={{ marginRight: 12 }}
                 />
                 <TextInput
@@ -2567,9 +2573,6 @@ fontSize: FONT_SIZES.h3,
     fontWeight: '700',
     letterSpacing: -0.2,
     // 2025 트렌드: 글로우 효과
-    textShadowColor: '#6366F120',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   headerButton: {
     padding: 8,

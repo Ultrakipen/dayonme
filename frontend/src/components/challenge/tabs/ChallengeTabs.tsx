@@ -30,19 +30,19 @@ export const ChallengeTabs = memo<ChallengeTabsProps>(({ activeTab, onTabChange,
         style={[
           styles.tab,
           activeTab === 'all' && styles.tabActive,
-          { backgroundColor: activeTab === 'all' ? COLORS.primary : 'transparent' }
+          { backgroundColor: activeTab === 'all' ? theme.colors.primary : 'transparent' }
         ]}
         onPress={() => onTabChange('all')}
       >
         <MaterialCommunityIcons
           name="view-grid-outline"
           size={normalizeIcon(16)}
-          color={activeTab === 'all' ? 'white' : theme.text.secondary}
+          color={activeTab === 'all' ? theme.colors.onAccent : theme.text.secondary}
         />
-        <Text style={[
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[
           styles.tabText,
           activeTab === 'all' && styles.tabTextActive,
-          { color: activeTab === 'all' ? 'white' : theme.text.secondary }
+          { color: activeTab === 'all' ? theme.colors.onAccent : theme.text.secondary }
         ]}>
           전체
         </Text>
@@ -52,19 +52,19 @@ export const ChallengeTabs = memo<ChallengeTabsProps>(({ activeTab, onTabChange,
         style={[
           styles.tab,
           activeTab === 'hot' && styles.tabActive,
-          { backgroundColor: activeTab === 'hot' ? COLORS.danger : 'transparent' }
+          { backgroundColor: activeTab === 'hot' ? theme.colors.primary : 'transparent' }
         ]}
         onPress={() => onTabChange('hot')}
       >
         <MaterialCommunityIcons
           name="fire"
           size={normalizeIcon(16)}
-          color={activeTab === 'hot' ? 'white' : theme.text.secondary}
+          color={activeTab === 'hot' ? theme.colors.onAccent : theme.text.secondary}
         />
-        <Text style={[
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[
           styles.tabText,
           activeTab === 'hot' && styles.tabTextActive,
-          { color: activeTab === 'hot' ? 'white' : theme.text.secondary }
+          { color: activeTab === 'hot' ? theme.colors.onAccent : theme.text.secondary }
         ]}>
           HOT
         </Text>
@@ -85,7 +85,7 @@ export const ChallengeTabs = memo<ChallengeTabsProps>(({ activeTab, onTabChange,
             size={normalizeIcon(16)}
             color={activeTab === 'my' ? 'white' : theme.text.secondary}
           />
-          <Text style={[
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[
             styles.tabText,
             activeTab === 'my' && styles.tabTextActive,
             { color: activeTab === 'my' ? 'white' : theme.text.secondary }

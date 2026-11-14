@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   hintText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#9ca3af',
     textAlign: 'center',
     marginTop: 4,

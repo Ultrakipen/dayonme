@@ -115,9 +115,9 @@ export const Typography = {
       lineHeight: 16,
     },
     captionSmall: {
-      fontSize: 10,
+      fontSize: 12,
       fontWeight: '400' as const,
-      lineHeight: 14,
+      lineHeight: 16,
     },
     
     // Buttons

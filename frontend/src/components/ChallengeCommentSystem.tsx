@@ -19,6 +19,7 @@ import { Box, HStack, VStack } from './ui';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { formatCommentTime } from '../utils/dateUtils';
+import { getReadableEmotionColor } from '../utils/emotionTextColor';
 import { getRelativeTime } from '../utils/date';
 import { useModernTheme } from '../contexts/ModernThemeContext';
 import { anonymousManager } from '../utils/anonymousNickname';
@@ -27,7 +28,8 @@ import { normalizeImageUrl, isValidImageUrl } from '../utils/imageUtils';
 import { sanitizeText, sanitizeComment } from '../utils/sanitize';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../styles/challengeDesignSystem';
 import BottomSheet from './BottomSheet';
-import { EMOTION_AVATARS, getTwemojiUrl } from '../constants/emotions';
+import { EMOTION_AVATARS } from '../constants/emotions';
+import EmotionIcon from './common/EmotionIcon';
 import { useAuth } from '../contexts/AuthContext';
 import reportService from '../services/api/reportService';
 
@@ -124,7 +126,7 @@ const anonymousEmotions = [
   { label: '설렘이', icon: 'heart-multiple', color: '#FF69B4' },
   { label: '편안이', icon: 'emoticon-kiss', color: '#98FB98' },
   { label: '궁금이', icon: 'emoticon-outline', color: '#DAA520' },
-  { label: '사랑이', icon: 'heart', color: '#E8D5F2' },
+  { label: '사랑이', icon: 'heart', color: '#E91E63' },
   { label: '아픔이', icon: 'medical-bag', color: '#8B4513' },
   { label: '희망이', icon: 'star', color: '#FFD700' },
 ];
@@ -347,17 +349,12 @@ const EmotionRecordCard: React.FC<{
       onPress: () => setReportSuccessVisible(false),
     },
   ];
-  // Twemoji URL을 반환하는 함수
-  const getEmotionTwemojiUrl = (emotionName: string): string => {
-    // EMOTION_AVATARS에서 감정 찾기
+  // 감정 이름 -> 감정 id (EmotionIcon용, 기본값 1: 기쁨이)
+  const getEmotionIconId = (emotionName: string): number => {
     const emotion = EMOTION_AVATARS.find(
       e => e.label === emotionName || e.shortName === emotionName
     );
-    if (emotion) {
-      return getTwemojiUrl(emotion.emojiCode);
-    }
-    // 기본값 (기쁨이)
-    return getTwemojiUrl('1f60a');
+    return emotion ? emotion.id : 1;
   };
 
   const CardContent = (
@@ -373,11 +370,7 @@ const EmotionRecordCard: React.FC<{
         styles.emotionRecordAvatar,
         { backgroundColor: record.emotion_color || '#FFD700' }
       ]}>
-        <Image
-          source={{ uri: getEmotionTwemojiUrl(record.emotion_name) }}
-          style={styles.emotionRecordEmoji}
-          resizeMode="contain"
-        />
+        <EmotionIcon emotionId={getEmotionIconId(record.emotion_name)} size={scaleSize(30)} />
       </View>
 
       {/* 감정 정보 */}
@@ -806,7 +799,7 @@ const CommentItem: React.FC<{
                     {emotion && (
                       <View style={[styles.emotionTag, { backgroundColor: emotion.color + '20', borderColor: emotion.color }]}>
                         <MaterialCommunityIcons name={emotion.icon} size={scaleSize(14)} color={emotion.color} />
-                        <Text style={[styles.emotionTagText, { color: emotion.color }]}>{emotionName}</Text>
+                        <Text style={[styles.emotionTagText, { color: getReadableEmotionColor(emotion.color, isDarkMode, theme.text.primary) }]}>{emotionName}</Text>
                       </View>
                     )}
                   </View>
@@ -1289,19 +1282,19 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
               contentContainerStyle={styles.emotionPickerContent}
             >
               <TouchableOpacity
-                style={[styles.emotionChip, !selectedEmotion && styles.emotionChipActive]}
+                style={[styles.emotionChip, !selectedEmotion && styles.emotionChipActive, !selectedEmotion && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}
                 onPress={() => setSelectedEmotion(null)}
               >
-                <Text style={[styles.emotionChipText, { color: theme.text.primary }]}>응원만</Text>
+                <Text style={[styles.emotionChipText, { color: !selectedEmotion ? theme.colors.onAccent : theme.text.primary }]}>응원만</Text>
               </TouchableOpacity>
               {anonymousEmotions.slice(0, 10).map((emotion) => (
                 <TouchableOpacity
                   key={emotion.label}
-                  style={[styles.emotionChip, selectedEmotion === emotion.label && styles.emotionChipActive]}
+                  style={[styles.emotionChip, selectedEmotion === emotion.label && styles.emotionChipActive, selectedEmotion === emotion.label && { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary }]}
                   onPress={() => setSelectedEmotion(emotion.label)}
                 >
                   <MaterialCommunityIcons name={emotion.icon} size={scaleSize(16)} color={emotion.color} />
-                  <Text style={[styles.emotionChipText, { color: theme.text.primary, marginLeft: 4 }]}>{emotion.label}</Text>
+                  <Text style={[styles.emotionChipText, { color: selectedEmotion === emotion.label ? theme.colors.onAccent : theme.text.primary, marginLeft: 4 }]}>{emotion.label}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -1331,7 +1324,7 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
                       : 'emoticon-outline'}
                     size={Math.max(scaleSize(22), 20)}
                     color={selectedEmotion
-                      ? (anonymousEmotions.find(e => e.label === selectedEmotion)?.color || '#667eea')
+                      ? (anonymousEmotions.find(e => e.label === selectedEmotion)?.color || theme.colors.primary)
                       : theme.text.tertiary}
                   />
                 </TouchableOpacity>
@@ -1344,7 +1337,7 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
                   <MaterialCommunityIcons
                     name={isAnonymous ? 'incognito' : 'incognito-off'}
                     size={Math.max(scaleSize(22), 20)}
-                    color={isAnonymous ? '#667eea' : theme.text.tertiary}
+                    color={isAnonymous ? theme.colors.primary : theme.text.tertiary}
                   />
                 </TouchableOpacity>
               </View>
@@ -1370,7 +1363,7 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
                   styles.sendButtonInner,
                   {
                     opacity: (editingComment ? editContent.trim() : newComment.trim()) ? 1 : 0.4,
-                    backgroundColor: (editingComment ? editContent.trim() : newComment.trim()) ? '#667eea' : theme.bg.secondary,
+                    backgroundColor: (editingComment ? editContent.trim() : newComment.trim()) ? theme.colors.primary : theme.bg.secondary,
                   }
                 ]}
                 onPress={editingComment ? handleEditComment : handleAddComment}
@@ -1379,7 +1372,7 @@ const ChallengeCommentSystem: React.FC<ChallengeCommentSystemProps> = ({
                 <MaterialCommunityIcons
                   name={editingComment ? 'check' : 'arrow-up'}
                   size={Math.max(scaleSize(18), 16)}
-                  color={(editingComment ? editContent.trim() : newComment.trim()) ? '#FFFFFF' : theme.text.tertiary}
+                  color={(editingComment ? editContent.trim() : newComment.trim()) ? theme.colors.onAccent : theme.text.tertiary}
                 />
               </TouchableOpacity>
             </View>
@@ -1530,7 +1523,7 @@ const styles = StyleSheet.create({
   },
   authorBadgeText: {
     color: 'white',
-    fontSize: scaleFont(11),
+    fontSize: scaleFont(12),
     fontWeight: '600',
   },
   commentTime: {
@@ -1690,8 +1683,8 @@ const styles = StyleSheet.create({
     marginRight: scaleSize(8),
   },
   emotionChipActive: {
-    backgroundColor: '#667eea',
-    borderColor: '#667eea',
+    backgroundColor: '#5566DD',
+    borderColor: '#5566DD',
   },
   emotionChipText: {
     fontSize: scaleFont(12),
@@ -1712,7 +1705,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   emotionTagText: {
-    fontSize: scaleFont(11),
+    fontSize: scaleFont(12),
     fontWeight: '600',
     marginLeft: scaleSize(4),
     letterSpacing: -0.1,

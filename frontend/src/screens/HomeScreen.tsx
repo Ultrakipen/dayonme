@@ -27,7 +27,6 @@ import {
   DeviceEventEmitter
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import LinearGradient from 'react-native-linear-gradient';
 import { useFocusEffect, useRoute, useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { Menu, Divider, Surface, FAB, Switch } from 'react-native-paper';
@@ -62,8 +61,10 @@ import {
 } from '../utils/anonymousNickname';
 import { getDailyMessage, formatGreetingWithUsername } from '../utils/dailyMessages';
 import CompactPostCard, { resetEmotionUsage } from '../components/CompactPostCard';
+import EmotionIcon from '../components/common/EmotionIcon';
 import { getEmotionEmoji } from '../constants/emotions';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
+import BottomSheet from '../components/BottomSheet';
 import DailyQuoteCard from '../components/DailyQuoteCard';
 import { OptimizedImage } from '../components/OptimizedImage';
 import Toast from '../components/Toast';
@@ -83,7 +84,7 @@ import { useHomeScroll, useWeeklyEmotions, useNotifications } from '../hooks/Hom
 import { devLog } from '../utils/security';
 import FilterBar from '../components/HomeScreen/FilterBar';
 import EmptyState from '../components/HomeScreen/EmptyState';
-import { FONT_SIZES, SEMANTIC_COLORS, DARK_COLORS, LIGHT_COLORS, SHADOW_STYLES } from '../constants';
+import { FONT_SIZES, SEMANTIC_COLORS, SHADOW_STYLES } from '../constants';
 // 타입 정의
 export type LocalEmotion = {
     label: string;
@@ -238,6 +239,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     const [showSuccessToast, setShowSuccessToast] = useState(false);
     const [emotionToast, setEmotionToast] = useState({ visible: false, message: '', type: 'success' as 'success' | 'error' | 'info' });
     const [showEmotionDeleteModal, setShowEmotionDeleteModal] = useState(false);
+    const [showEmotionMoreSheet, setShowEmotionMoreSheet] = useState(false);
 
     // 북마크 상태 관리
     const [bookmarkedPosts, setBookmarkedPosts] = useState<Set<number>>(new Set());
@@ -1338,7 +1340,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             <Pressable key={dateInfo.dateStr} style={{ alignItems: 'center', minWidth: normalizeSpace(50) }}>
                                 <Box style={{ width: normalizeIcon(35), height: normalizeIcon(35), borderRadius: normalizeSpace(23), padding: normalizeSpace(2), backgroundColor: hasEmotion ? topEmotion?.color + '30' : 'transparent', borderWidth: 3, borderColor: dateInfo.isToday ? SEMANTIC_COLORS.primary : hasEmotion ? topEmotion?.color || SEMANTIC_COLORS.border : SEMANTIC_COLORS.border, justifyContent: 'center', alignItems: 'center' }}>
                                     <Box style={{ width: normalizeIcon(35), height: normalizeIcon(35), borderRadius: normalizeSpace(23), backgroundColor: colors.cardBackground, justifyContent: 'center', alignItems: 'center' }}>
-                                        {hasEmotion && topEmotion ? (/[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]/u.test(topEmotion.icon) ? <RNText style={{ fontSize: normalizeIcon(30) }}>{topEmotion.icon}</RNText> : <MaterialCommunityIcons name={topEmotion.icon} size={normalizeIcon(30)} color={topEmotion.color || SEMANTIC_COLORS.purple} />) : <MaterialCommunityIcons name="emoticon-outline" size={normalizeIcon(30)} color={SEMANTIC_COLORS.border} />}
+                                        {hasEmotion && topEmotion ? (topEmotion.name ? <EmotionIcon label={topEmotion.name} variant="b3" size={normalizeIcon(30)} /> : /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]/u.test(topEmotion.icon) ? <RNText style={{ fontSize: normalizeIcon(30) }}>{topEmotion.icon}</RNText> : <MaterialCommunityIcons name={topEmotion.icon} size={normalizeIcon(30)} color={topEmotion.color || SEMANTIC_COLORS.purple} />) : <MaterialCommunityIcons name="emoticon-outline" size={normalizeIcon(30)} color={SEMANTIC_COLORS.border} />}
                                     </Box>
                                 </Box>
                                 <Text style={{ marginTop: 3, fontSize: dateInfo.isToday ? normalize(13, 11, 15) : normalize(13, 11, 15), fontWeight: dateInfo.isToday ? '700' : '600', color: dateInfo.isToday ? colors.primary : colors.text }}>{dateInfo.dayName}</Text>
@@ -1738,7 +1740,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 style={{
                                     width: normalizeSpace(4),
                                     height: normalizeSpace(16),
-                                    backgroundColor: '#2563eb',
+                                    backgroundColor: modernTheme.colors.primary,
                                     borderRadius: normalizeSpace(2),
                                     marginRight: normalizeSpace(6)
                                 }}
@@ -1772,6 +1774,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 {!isDailyBestCollapsed && (
                     <Box style={{ padding: 4 }}>
                         <CompactPostCard
+                            emotionIconVariant="b3"
                             post={{
                                 ...bestPost,
                                 updated_at: bestPost.updated_at || bestPost.created_at,
@@ -1903,10 +1906,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                         { width: '100%' },
                         highlightedPost?.id === post.post_id && highlightedPost?.content === post.content && {
                             borderWidth: 8,
-                            borderColor: isDark ? '#a78bfa' : '#8b5cf6',
-                            backgroundColor: isDark ? 'rgba(139, 92, 246, 0.15)' : '#f3e8ff',
+                            borderColor: modernTheme.colors.primary,
+                            backgroundColor: modernTheme.colors.tint,
                             transform: [{ scale: 1.01 }],
-                            shadowColor: isDark ? '#a78bfa' : '#7c3aed',
+                            shadowColor: isDark ? '#000000' : modernTheme.colors.primary,
                             shadowOpacity: 0.5,
                             shadowRadius: 16,
                             borderRadius: 8
@@ -1914,6 +1917,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     ]}
                 >
                     <CompactPostCard
+                        emotionIconVariant="b3"
                         post={{
                             ...post,
                             updated_at: post.updated_at || post.created_at,
@@ -2714,7 +2718,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         width: normalizeIcon(32),
                                         height: normalizeIcon(32),
                                         borderRadius: normalizeSpace(14),
-                                        backgroundColor: '#f0f9ff',
+                                        backgroundColor: modernTheme.colors.tint,
                                         justifyContent: 'center',
                                         alignItems: 'center'
                                     }}
@@ -2722,7 +2726,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     <MaterialCommunityIcons
                                         name="pencil-outline"
                                         size={normalizeIcon(16)}
-                                        color="#2563eb"
+                                        color={modernTheme.colors.accentText}
                                     />
                                 </Box>
                                 <HStack className="items-center">
@@ -2731,7 +2735,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         style={{
                                             width: 4,
                                             height: 16,
-                                            backgroundColor: '#2563eb',
+                                            backgroundColor: modernTheme.colors.primary,
                                             borderRadius: 2
                                         }}
                                     />
@@ -2797,8 +2801,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     <Text
                                         className="text-sm text-center font-medium"
                                         style={{
-                                            color: colors.primary,
-                                            lineHeight: 20
+                                            color: colors.primary
                                         }}
                                     >
                                         첫 번째 글을 작성해보세요!
@@ -2806,8 +2809,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     <Text
                                         className="text-xs text-center mt-1"
                                         style={{
-                                            color: colors.textSecondary,
-                                            lineHeight: 16
+                                            color: colors.textSecondary
                                         }}
                                     >
                                         탭하여 하루 이야기 시작하기
@@ -2934,8 +2936,8 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 }}
                             >
                                 <Text style={{
-                                    color: 'white',
-                                    fontSize: normalize(11, 10, 13),
+                                    color: modernTheme.colors.onAccent,
+                                    fontSize: normalize(12, 12, 13),
                                     fontWeight: '600',
                                 }}>
                                     전체보기
@@ -3043,14 +3045,14 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     <VStack className="items-center" style={{ gap: normalizeSpace(2), marginBottom: normalizeSpace(2) }}>
                                         <HStack style={{ gap: normalizeSpace(6) }}>
                                             <Text style={{
-                                                fontSize: normalize(11, 10, 13),
+                                                fontSize: normalize(12, 12, 13),
                                                 color: colors.textSecondary,
                                                 fontWeight: '500',
                                             }}>
                                                 ❤️ {post.like_count}
                                             </Text>
                                             <Text style={{
-                                                fontSize: normalize(11, 10, 13),
+                                                fontSize: normalize(12, 12, 13),
                                                 color: colors.textSecondary,
                                                 fontWeight: '500',
                                             }}>
@@ -3059,7 +3061,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         </HStack>
                                         <Text
                                             style={{
-                                                fontSize: normalize(11, 10, 13),
+                                                fontSize: normalize(12, 12, 13),
                                                 color: colors.textSecondary,
                                                 textAlign: 'center',
                                             }}
@@ -3091,11 +3093,11 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 width: normalizeIcon(48),
                 height: normalizeIcon(48),
                 borderRadius: normalizeSpace(14),
-                backgroundColor: user?.profile_image_url ? 'transparent' : (isDark ? DARK_COLORS.purple : LIGHT_COLORS.purple),
+                backgroundColor: user?.profile_image_url ? 'transparent' : modernTheme.colors.tint,
                 justifyContent: 'center',
                 alignItems: 'center',
                 borderWidth: 2,
-                borderColor: isDark ? DARK_COLORS.purpleLight : LIGHT_COLORS.purpleLight,
+                borderColor: modernTheme.colors.border,
                 overflow: 'hidden'
             }}
         >
@@ -3115,13 +3117,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     justifyContent: 'center',
                     alignItems: 'center'
                 }}>
-                    <Text style={{
-                        fontSize: normalize(24, 26, 28),
-                        lineHeight: normalize(24, 26, 28),
-                        textAlign: 'center',
-                        textAlignVertical: 'center',
-                        includeFontPadding: false
-                    }}>😊</Text>
+                    <EmotionIcon emotionId={1} variant="b3" size={normalizeIcon(38)} />
                 </Box>
             )}
         </Box>
@@ -3229,9 +3225,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         fontWeight: '700',
                                         letterSpacing: -0.3,
                                         lineHeight: 20,
-                                        textShadowColor: isDark ? 'rgba(0,0,0,0.5)' : 'transparent',
-                                        textShadowOffset: { width: 0, height: 1 },
-                                        textShadowRadius: 2
                                     }}
                                     numberOfLines={2}
                                 >
@@ -3254,9 +3247,9 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         }}
                                         style={{
                                             borderRadius: normalizeSpace(14),
-                                            backgroundColor: isAuthenticated
-                                                ? (isDark ? '#0c4a6e' : '#e0f2fe')
-                                                : (isDark ? DARK_COLORS.purple : LIGHT_COLORS.purple),
+                                            backgroundColor: modernTheme.bg.secondary,
+                                            minWidth: 44,
+                                            minHeight: 44,
                                             width: normalizeSpace(36),
                                             height: normalizeSpace(36),
                                             justifyContent: 'center',
@@ -3270,7 +3263,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                             <MaterialCommunityIcons
                                                 name="account-circle-outline"
                                                 size={normalizeIcon(20)}
-                                                color={SEMANTIC_COLORS.info}
+                                                color={modernTheme.text.secondary}
                                             />
                                         ) : (
                                             <RNText style={{ fontSize: FONT_SIZES.h2 }}>😊</RNText>
@@ -3282,7 +3275,9 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         onPress={toggleTheme}
                                         style={{
                                             borderRadius: normalizeSpace(14),
-                                            backgroundColor: isDark ? '#78350f' : '#fef3c7',
+                                            backgroundColor: modernTheme.bg.secondary,
+                                            minWidth: 44,
+                                            minHeight: 44,
                                             width: normalizeSpace(36),
                                             height: normalizeSpace(36),
                                             justifyContent: 'center',
@@ -3295,7 +3290,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         <MaterialCommunityIcons
                                             name={isDark ? "white-balance-sunny" : "moon-waning-crescent"}
                                             size={normalizeIcon(20)}
-                                            color={isDark ? SEMANTIC_COLORS.warning : SEMANTIC_COLORS.secondary}
+                                            color={modernTheme.text.secondary}
                                         />
                                     </Pressable>
 
@@ -3311,7 +3306,9 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                             accessibilityLabel="알림"
                                             style={{
                                                 borderRadius: 14,
-                                                backgroundColor: isDark ? '#78350f' : '#fef3c7',
+                                                backgroundColor: modernTheme.bg.secondary,
+                                                minWidth: 44,
+                                                minHeight: 44,
                                                 width: 36,
                                                 height: 36,
                                                 justifyContent: 'center',
@@ -3322,7 +3319,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                             <MaterialCommunityIcons
                                                 name="bell-outline"
                                                 size={20}
-                                                color="#f59e0b"
+                                                color={modernTheme.text.secondary}
                                             />
                                             {unreadCount > 0 && (
                                                 <Box
@@ -3362,10 +3359,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     {
                                         paddingHorizontal: 14,
                                         paddingVertical: 5,
-                                        backgroundColor: isDark ? 'rgba(139, 92, 246, 0.25)' : 'rgba(139, 92, 246, 0.1)',
+                                        backgroundColor: modernTheme.colors.tint,
                                         borderRadius: 12,
                                         borderWidth: 1,
-                                        borderColor: isDark ? 'rgba(139, 92, 246, 0.4)' : 'rgba(139, 92, 246, 0.2)',
+                                        borderColor: modernTheme.colors.border,
                                         flexDirection: 'row',
                                         alignItems: 'center',
                                         justifyContent: 'center',
@@ -3378,7 +3375,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             >
                                 <Text style={{
                                     fontSize: normalize(13, 12, 15),
-                                    color: '#8B5CF6',
+                                    color: modernTheme.colors.accentText,
                                     fontWeight: '500',
                                     marginRight: 6,
                                 }}>
@@ -3387,13 +3384,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 <Text
                                     style={{
                                         fontSize: normalize(13, 12, 15),
-                                        color: isDark ? '#E879F9' : '#8B5CF6',
+                                        color: modernTheme.colors.accentText,
                                         fontWeight: '600',
                                         letterSpacing: -0.1,
                                         lineHeight: 20,
-                                        textShadowColor: isDark ? 'rgba(0,0,0,0.3)' : 'transparent',
-                                        textShadowOffset: { width: 0, height: 1 },
-                                        textShadowRadius: 1,
                                     }}
                                     numberOfLines={1}
                                 >
@@ -3447,7 +3441,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     onPress={() => navigation.navigate('Auth' as never)}
                                     style={{
                                         borderRadius: normalizeSpace(14),
-                                        backgroundColor: isDark ? DARK_COLORS.purple : LIGHT_COLORS.purple,
+                                        backgroundColor: modernTheme.colors.tint,
                                         width: normalizeSpace(36),
                                         height: normalizeSpace(36),
                                         justifyContent: 'center',
@@ -3465,7 +3459,9 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     onPress={toggleTheme}
                                     style={{
                                         borderRadius: normalizeSpace(14),
-                                        backgroundColor: isDark ? '#78350f' : '#fef3c7',
+                                        backgroundColor: modernTheme.bg.secondary,
+                                        minWidth: 44,
+                                        minHeight: 44,
                                         width: normalizeSpace(36),
                                         height: normalizeSpace(36),
                                         justifyContent: 'center',
@@ -3478,7 +3474,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     <MaterialCommunityIcons
                                         name={isDark ? "white-balance-sunny" : "moon-waning-crescent"}
                                         size={normalizeIcon(20)}
-                                        color={isDark ? SEMANTIC_COLORS.warning : SEMANTIC_COLORS.secondary}
+                                        color={modernTheme.text.secondary}
                                     />
                                 </Pressable>
                             </HStack>
@@ -3541,12 +3537,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                         <Pressable
                                             onPress={() => setIsEmotionSectionCollapsed(!isEmotionSectionCollapsed)}
                                             style={{
-                                                borderRadius: 12,
-                                                backgroundColor: isEmotionSectionCollapsed
-                                                    ? (isDark ? '#7f1d1d' : '#fef2f2')
-                                                    : (isDark ? '#14532d' : '#dcfce7'),
-                                                width: 27,
-                                                height: 27,
+                                                borderRadius: 22,
+                                                backgroundColor: modernTheme.bg.secondary,
+                                                width: 44,
+                                                height: 44,
                                                 justifyContent: 'center',
                                                 alignItems: 'center',
                                                 padding: 4
@@ -3555,26 +3549,28 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                             <MaterialCommunityIcons
                                                 name={isEmotionSectionCollapsed ? "chevron-down" : "chevron-up"}
                                                 size={18}
-                                                color={isEmotionSectionCollapsed ? "#dc2626" : "#16a34a"}
+                                                color={modernTheme.text.secondary}
                                             />
                                         </Pressable>
 
                                         {/* 감정 기록 삭제 버튼 */}
                                         <Pressable
-                                            onPress={() => setShowEmotionDeleteModal(true)}
+                                            onPress={() => setShowEmotionMoreSheet(true)}
+                                            accessibilityRole="button"
+                                            accessibilityLabel="더보기"
                                             style={{
-                                                borderRadius: 12,
-                                                backgroundColor: isDark ? '#7f1d1d' : '#fee2e2',
-                                                width: 27,
-                                                height: 27,
+                                                borderRadius: 22,
+                                                backgroundColor: modernTheme.bg.secondary,
+                                                width: 44,
+                                                height: 44,
                                                 justifyContent: 'center',
                                                 alignItems: 'center'
                                             }}
                                         >
                                             <MaterialCommunityIcons
-                                                name="delete-outline"
-                                                size={18}
-                                                color="#dc2626"
+                                                name="dots-horizontal"
+                                                size={20}
+                                                color={modernTheme.text.secondary}
                                             />
                                         </Pressable>
                                     </HStack>
@@ -3601,7 +3597,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 )}
 
                 {/* 🌈 누군가의 하루 섹션 - 메인 피드 (우선순위 최상) */}
-                <HStack ref={postsStartRef} className="justify-between items-center mb-1 mt-1" style={{ paddingHorizontal: 8 }}>
+                <HStack ref={postsStartRef} className="justify-between items-center mb-1 mt-1" style={{ paddingHorizontal: 8, flexWrap: 'wrap', rowGap: 4 }}>
                     <HStack className="items-center">
                         <Text 
                             className="text-2xl font-bold" 
@@ -3615,7 +3611,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             🌈 누군가의 하루는..
                         </Text>
                     </HStack>
-                    <HStack className="items-center" style={{ gap: 6 }}>
+                    <HStack className="items-center" style={{ gap: 6, marginLeft: 'auto' }}>
                         {/* 개수 배지 */}
                         {/* 필터로 목록이 줄었을 때만 "표시/전체" 개수 표시 (20/20 같은 무의미한 칩 제거) */}
                         {filteredPosts.length !== posts.length && (
@@ -3651,7 +3647,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     borderColor: sortOrder === 'recent' ? colors.primary : colors.border,
                                 }}
                             >
-                                <Text style={{ color: sortOrder === 'recent' ? '#fff' : colors.text, fontWeight: '600', fontSize: normalize(12, 11, 14) }}>
+                                <Text style={{ color: sortOrder === 'recent' ? modernTheme.colors.onAccent : colors.text, fontWeight: '600', fontSize: normalize(12, 11, 14) }}>
                                     최신순
                                 </Text>
                             </Pressable>
@@ -3666,7 +3662,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     borderColor: sortOrder === 'popular' ? colors.primary : colors.border,
                                 }}
                             >
-                                <Text style={{ color: sortOrder === 'popular' ? '#fff' : colors.text, fontWeight: '600', fontSize: normalize(12, 11, 14) }}>
+                                <Text style={{ color: sortOrder === 'popular' ? modernTheme.colors.onAccent : colors.text, fontWeight: '600', fontSize: normalize(12, 11, 14) }}>
                                     인기순
                                 </Text>
                             </Pressable>
@@ -3690,7 +3686,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                         accessibilityLabel="새로고침"
                         accessibilityRole="button"
                     >
-                        <MaterialCommunityIcons name="refresh" size={normalizeIcon(17)} color={SEMANTIC_COLORS.primary} />
+                        <MaterialCommunityIcons name="refresh" size={normalizeIcon(17)} color={modernTheme.colors.primary} />
                     </Pressable>
                     </HStack>
                 </HStack>
@@ -3743,11 +3739,12 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     onPress={scrollToTop}
                     style={{
                         position: 'absolute',
-                        bottom: 90,
-                        right: normalizeSpace(16),
-                        width: normalizeSpace(32),
-                        height: normalizeSpace(32),
-                        borderRadius: normalizeSpace(12),
+                        // '나의 하루' 버튼(bottom 40, 높이 44) 바로 위에 간격 16을 두고 쌓는다(글자 크기를 키워도 겹치지 않게 넉넉히)
+                        bottom: normalizeSpace(40) + normalizeSpace(44) + 16,
+                        right: normalizeSpace(8),
+                        width: normalizeSpace(44),
+                        height: normalizeSpace(44),
+                        borderRadius: normalizeSpace(22),
                         padding: normalizeSpace(6),
                         justifyContent: 'center',
                         alignItems: 'center',
@@ -3765,7 +3762,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     accessibilityLabel="맨 위로 스크롤"
                     accessibilityRole="button"
                 >
-                    <MaterialCommunityIcons name="arrow-up" size={normalizeIcon(20)} color={SEMANTIC_COLORS.primary} />
+                    <MaterialCommunityIcons name="arrow-up" size={normalizeIcon(20)} color={modernTheme.colors.primary} />
                 </Pressable>
             )}
 
@@ -3934,17 +3931,15 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                         bottom: normalizeSpace(40),
                     }}
                 >
-                    <LinearGradient
-                        colors={hasPostedToday ? [SEMANTIC_COLORS.success, SEMANTIC_COLORS.successLight] : [SEMANTIC_COLORS.purpleDark, SEMANTIC_COLORS.purple]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
+                    <View
                         style={{
+                            backgroundColor: hasPostedToday ? modernTheme.colors.success : modernTheme.colors.primary,
                             paddingHorizontal: normalizeSpace(18),
                             height: normalizeSpace(44),
                             borderRadius: normalizeSpace(22),
                             justifyContent: 'center',
                             alignItems: 'center',
-                            shadowColor: hasPostedToday ? SEMANTIC_COLORS.success : SEMANTIC_COLORS.purpleDark,
+                            shadowColor: isDark ? '#000000' : (hasPostedToday ? modernTheme.colors.success : modernTheme.colors.primary),
                             shadowOffset: { width: 0, height: 4 },
                             shadowOpacity: 0.35,
                             shadowRadius: 10,
@@ -3952,8 +3947,9 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                         }}
                     >
                         <RNText
+                            maxFontSizeMultiplier={1.3}
                             style={{
-                                color: '#ffffff',
+                                color: modernTheme.colors.onAccent,
                                 fontSize: normalize(15, 13, 16),
                                 fontWeight: '700',
                                 letterSpacing: -0.3,
@@ -3964,7 +3960,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 ? "확인 중..."
                                 : (hasPostedToday ? "나눔 완료! ✨" : "💕 나의 하루")}
                         </RNText>
-                    </LinearGradient>
+                    </View>
                 </TouchableOpacity>
             )}
 
@@ -3979,17 +3975,15 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                         bottom: normalizeSpace(40),
                     }}
                 >
-                    <LinearGradient
-                        colors={['#8B5CF6', '#7C3AED']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
+                    <View
                         style={{
+                            backgroundColor: modernTheme.colors.primary,
                             paddingHorizontal: normalizeSpace(18),
                             paddingVertical: normalizeSpace(12),
                             borderRadius: normalizeSpace(16),
                             justifyContent: 'center',
                             alignItems: 'center',
-                            shadowColor: '#8B5CF6',
+                            shadowColor: isDark ? '#000000' : modernTheme.colors.primary,
                             shadowOffset: { width: 0, height: 4 },
                             shadowOpacity: 0.3,
                             shadowRadius: 12,
@@ -3999,12 +3993,11 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                         <VStack style={{ alignItems: 'center', gap: 2 }}>
                             <RNText
                                 style={{
-                                    color: '#ffffff',
-                                    fontSize: normalize(11, 10, 12),
+                                    color: modernTheme.colors.onAccent,
+                                    fontSize: normalize(12, 12, 13),
                                     fontWeight: '500',
                                     letterSpacing: -0.1,
                                     includeFontPadding: false,
-                                    opacity: 0.9,
                                 }}
                             >
                                 함께 나누고 싶다면
@@ -4012,7 +4005,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             <HStack style={{ alignItems: 'center', gap: 4 }}>
                                 <RNText
                                     style={{
-                                        color: '#ffffff',
+                                        color: modernTheme.colors.onAccent,
                                         fontSize: normalize(14, 13, 16),
                                         fontWeight: '700',
                                         letterSpacing: -0.3,
@@ -4021,10 +4014,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 >
                                     시작하기
                                 </RNText>
-                                <MaterialCommunityIcons name="arrow-right" size={16} color="#ffffff" />
+                                <MaterialCommunityIcons name="arrow-right" size={16} color={modernTheme.colors.onAccent} />
                             </HStack>
                         </VStack>
-                    </LinearGradient>
+                    </View>
                 </TouchableOpacity>
             )}
 
@@ -4057,6 +4050,21 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 onClose={() => setEmotionToast({ ...emotionToast, visible: false })}
                 position="bottom"
                 duration={2500}
+            />
+
+            <BottomSheet
+                visible={showEmotionMoreSheet}
+                onClose={() => setShowEmotionMoreSheet(false)}
+                title="감정 기록"
+                actions={[
+                    {
+                        id: "delete-today-emotions",
+                        title: "오늘 감정 기록 삭제",
+                        icon: "delete-outline",
+                        destructive: true,
+                        onPress: () => { setShowEmotionMoreSheet(false); setShowEmotionDeleteModal(true); },
+                    },
+                ]}
             />
 
             {/* 감정 중심 로그인 프롬프트 모달 */}
@@ -4175,10 +4183,10 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             {/* 수정하기 버튼 - Primary */}
                             <TouchableOpacity
                                 style={{
-                                    backgroundColor: '#667EEA',
+                                    backgroundColor: modernTheme.colors.primary,
                                     paddingVertical: normalizeSpace(16),
                                     borderRadius: normalizeBorderRadius(16),
-                                    shadowColor: '#667EEA',
+                                    shadowColor: isDark ? '#000000' : modernTheme.colors.primary,
                                     shadowOffset: { width: 0, height: 4 },
                                     shadowOpacity: 0.3,
                                     shadowRadius: 8,
@@ -4197,12 +4205,12 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                 activeOpacity={0.8}
                             >
                                 <HStack style={{ justifyContent: 'center', alignItems: 'center', gap: 8 }}>
-                                    <MaterialCommunityIcons name="pencil-outline" size={normalize(20)} color="#FFFFFF" />
+                                    <MaterialCommunityIcons name="pencil-outline" size={normalize(20)} color={modernTheme.colors.onAccent} />
                                     <RNText
                                         style={{
                                             fontSize: normalize(16),
                                             fontWeight: '600',
-                                            color: '#FFFFFF',
+                                            color: modernTheme.colors.onAccent,
                                             fontFamily: 'Pretendard-SemiBold',
                                             letterSpacing: -0.3,
                                         }}

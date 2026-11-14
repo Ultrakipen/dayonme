@@ -35,19 +35,22 @@ const EMOTION_OPTIONS = [
   { id: 2, label: '행복이', icon: 'emoticon-excited', color: '#FFA500' },
   { id: 3, label: '슬픔이', icon: 'emoticon-sad', color: '#4682B4' },
   { id: 4, label: '우울이', icon: 'emoticon-neutral', color: '#708090' },
-  { id: 5, label: '지루미', icon: 'emoticon-dead', color: '#A9A9A9' },
-  { id: 6, label: '버럭이', icon: 'emoticon-angry', color: '#FF4500' },
-  { id: 7, label: '불안이', icon: 'emoticon-confused', color: '#DDA0DD' },
-  { id: 8, label: '걱정이', icon: 'emoticon-frown', color: '#FFA07A' },
+  { id: 5, label: '불안이', icon: 'emoticon-confused', color: '#DDA0DD' },
+  { id: 6, label: '걱정이', icon: 'emoticon-frown', color: '#FFA07A' },
+  { id: 7, label: '버럭이', icon: 'emoticon-angry', color: '#FF4500' },
+  { id: 8, label: '짜증이', icon: 'emoticon-devil', color: '#DC143C' },
   { id: 9, label: '감동이', icon: 'heart', color: '#FF6347' },
   { id: 10, label: '황당이', icon: 'emoticon-wink', color: '#20B2AA' },
   { id: 11, label: '당황이', icon: 'emoticon-tongue', color: '#FF8C00' },
-  { id: 12, label: '짜증이', icon: 'emoticon-devil', color: '#DC143C' },
-  { id: 13, label: '무섭이', icon: 'emoticon-cry', color: '#9370DB' },
+  { id: 12, label: '무섭이', icon: 'emoticon-cry', color: '#9370DB' },
+  { id: 13, label: '편안이', icon: 'emoticon-kiss', color: '#98FB98' },
   { id: 14, label: '추억이', icon: 'emoticon-cool', color: '#87CEEB' },
   { id: 15, label: '설렘이', icon: 'heart-multiple', color: '#FF69B4' },
-  { id: 16, label: '편안이', icon: 'emoticon-kiss', color: '#98FB98' },
-  { id: 17, label: '궁금이', icon: 'emoticon-outline', color: '#DAA520' }
+  { id: 16, label: '지루미', icon: 'emoticon-dead', color: '#A9A9A9' },
+  { id: 17, label: '궁금이', icon: 'emoticon-outline', color: '#DAA520' },
+  { id: 18, label: '사랑이', icon: 'heart', color: '#E91E63' },
+  { id: 19, label: '아픔이', icon: 'bandage', color: '#8B4513' },
+  { id: 20, label: '욕심이', icon: 'cash', color: '#32CD32' }
 ];
 
 interface CreatePostScreenProps {
@@ -67,7 +70,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: theme.colors.primary,
   };
 
   const [content, setContent] = useState('');
@@ -290,7 +293,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
     >
       <ScrollView style={{ flex: 1, padding: 16 }} keyboardShouldPersistTaps="handled">
         {/* 감정 선택 섹션 */}
-        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
+        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
           <Card.Title
             title="오늘의 감정을 선택해주세요"
             titleStyle={{ color: theme.text.primary }}
@@ -308,18 +311,19 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
                   onPress={() => handleEmotionToggle(emotion.id)}
                   style={[
                     { marginBottom: 8 },
-                    selectedEmotions.includes(emotion.id) && {
-                      backgroundColor: emotion.color + '40'
-                    }
+                    selectedEmotions.includes(emotion.id)
+                      ? { backgroundColor: theme.colors.tint, borderWidth: 2, borderColor: theme.colors.accent }
+                      : { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border }
                   ]}
                   textStyle={{
-                    color: selectedEmotions.includes(emotion.id) ? emotion.color : '#666'
+                    color: theme.colors.text.primary,
+                    fontWeight: selectedEmotions.includes(emotion.id) ? '700' : '600'
                   }}
                   icon={() => (
                     <MaterialCommunityIcons
-                      name={emotion.icon}
+                      name={selectedEmotions.includes(emotion.id) ? 'check' : emotion.icon}
                       size={16}
-                      color={selectedEmotions.includes(emotion.id) ? emotion.color : '#666'}
+                      color={theme.colors.text.primary}
                     />
                   )}
                 >
@@ -339,7 +343,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
         </Card>
 
         {/* 게시물 내용 작성 섹션 */}
-        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
+        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
           <Card.Title
             title="나의 하루를 공유해주세요"
             titleStyle={{ color: theme.text.primary }}
@@ -358,7 +362,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
               maxLength={1000}
               testID="post-content-input"
               outlineColor={theme.bg.border}
-              activeOutlineColor={isDark ? '#8b5cf6' : '#6b21a8'}
+              activeOutlineColor={theme.colors.primary}
             />
             <HStack style={{ justifyContent: 'flex-end', marginTop: 8 }}>
               <Text style={{ fontSize: FONT_SIZES.small, color: theme.text.secondary }}>
@@ -369,7 +373,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
         </Card>
 
         {/* 설정 섹션 */}
-        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
+        <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
           <Card.Title
             title="게시 설정"
             titleStyle={{ color: theme.text.primary }}
@@ -392,7 +396,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
 
             <HStack style={{ alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: theme.bg.border }}>
               <Text style={{ fontSize: FONT_SIZES.bodySmall, color: theme.text.secondary, marginRight: 8 }}>게시자 표시:</Text>
-              <Text style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: isDark ? '#a78bfa' : '#6b21a8' }}>
+              <Text style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: theme.colors.accentText }}>
                 {isAnonymous ? '익명' : (user?.nickname || user?.username || '사용자')}
               </Text>
             </HStack>
@@ -401,7 +405,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
 
         {/* 미리보기 섹션 */}
         {content.length >= 10 && selectedEmotions.length > 0 && (
-          <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#fff' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
+          <Card style={{ marginBottom: 16, backgroundColor: theme.bg.card, shadowColor: isDark ? '#000000' : '#000', shadowOpacity: isDark ? 0.1 : 0.2 }}>
             <Card.Title
               title="미리보기"
               titleStyle={{ color: theme.text.primary }}
@@ -409,7 +413,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
             />
             <Card.Content>
               <HStack style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <Text style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: isDark ? '#a78bfa' : '#6b21a8' }}>
+                <Text style={{ fontSize: FONT_SIZES.bodySmall, fontWeight: '500', color: theme.colors.accentText }}>
                   {isAnonymous ? '익명' : (user?.nickname || user?.username || '사용자')}
                 </Text>
                 <Text style={{ fontSize: FONT_SIZES.small, color: theme.text.secondary }}>
@@ -423,8 +427,8 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
                   return emotion ? (
                     <Chip
                       key={emotion.id}
-                      style={[{ height: 24, backgroundColor: emotion.color + '20' }]}
-                      textStyle={{ color: emotion.color }}
+                      style={[{ height: 24, backgroundColor: theme.colors.tint, borderWidth: 1, borderColor: theme.colors.border }]}
+                      textStyle={{ color: theme.colors.text.primary }}
                     >
                       {emotion.label}
                     </Chip>
@@ -444,7 +448,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
       {isSubmitting && !showSuccessToast && (
         <Box style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' }}>
           <Surface style={{ backgroundColor: theme.bg.card, padding: 24, borderRadius: 16, alignItems: 'center', minWidth: 200 }}>
-            <ActivityIndicator size="large" color="#667eea" />
+            <ActivityIndicator size="large" color={theme.colors.primary} />
             <Text style={{ marginTop: 12, fontSize: FONT_SIZES.bodySmall, color: theme.text.secondary, textAlign: 'center' }}>게시물을 작성하고 있습니다...</Text>
           </Surface>
         </Box>
@@ -468,7 +472,7 @@ const CreatePostScreen: React.FC<CreatePostScreenProps> = ({ navigation }) => {
               backgroundColor: theme.bg.card,
               borderRadius: 20,
               padding: 24,
-              shadowColor: isDark ? '#fff' : '#000',
+              shadowColor: isDark ? '#000000' : '#000',
               shadowOffset: { width: 0, height: 8 },
               shadowOpacity: isDark ? 0.1 : 0.2,
               shadowRadius: 16,

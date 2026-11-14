@@ -124,7 +124,7 @@ export const ReceivedTab: React.FC = () => {
         </Text>
         {!item.is_read && (
           <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]}>
-            <Text style={styles.unreadText}>NEW</Text>
+            <Text style={[styles.unreadText, { color: colors.onAccent }]}>NEW</Text>
           </View>
         )}
       </Card>
@@ -231,7 +231,7 @@ const createStyles = (scale: number) => StyleSheet.create({
   },
   unreadText: {
     color: '#fff',
-    fontSize: 10 * scale,
+    fontSize: Math.max(12, 12 * scale),
     fontWeight: '700',
   },
   emptyContainer: {

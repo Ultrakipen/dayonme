@@ -14,7 +14,9 @@ import { Text, VStack, HStack, Box } from './ui';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../contexts/ThemeContext';
+import { useModernTheme } from '../contexts/ModernThemeContext';
 import { normalize, wp, hp } from '../utils/responsive';
+import { EMOTION_AVATARS } from '../constants/emotions';
 
 interface EmotionLoginPromptModalProps {
   visible: boolean;
@@ -25,28 +27,7 @@ interface EmotionLoginPromptModalProps {
 }
 
 // 감정 캐릭터 20개
-const emotionCharacters = [
-  { emoji: '😊', label: '기쁨이', color: '#FFD700' },
-  { emoji: '😄', label: '행복이', color: '#FFA500' },
-  { emoji: '😢', label: '슬픔이', color: '#4682B4' },
-  { emoji: '😞', label: '우울이', color: '#708090' },
-  { emoji: '😑', label: '지루미', color: '#A9A9A9' },
-  { emoji: '😠', label: '버럭이', color: '#FF4500' },
-  { emoji: '😰', label: '불안이', color: '#DDA0DD' },
-  { emoji: '😟', label: '걱정이', color: '#FFA07A' },
-  { emoji: '🥺', label: '감동이', color: '#FF6347' },
-  { emoji: '🤨', label: '황당이', color: '#20B2AA' },
-  { emoji: '😲', label: '당황이', color: '#FF8C00' },
-  { emoji: '😤', label: '짜증이', color: '#DC143C' },
-  { emoji: '😨', label: '무섭이', color: '#9370DB' },
-  { emoji: '🥰', label: '추억이', color: '#87CEEB' },
-  { emoji: '🤗', label: '설렘이', color: '#FF69B4' },
-  { emoji: '😌', label: '편안이', color: '#98FB98' },
-  { emoji: '🤔', label: '궁금이', color: '#DAA520' },
-  { emoji: '❤️', label: '사랑이', color: '#E91E63' },
-  { emoji: '🤕', label: '아픔이', color: '#8B4513' },
-  { emoji: '🤑', label: '욕심이', color: '#32CD32' },
-];
+const emotionCharacters = EMOTION_AVATARS.map(({ emoji, label, color }) => ({ emoji, label, color }));
 
 const EmotionLoginPromptModal: React.FC<EmotionLoginPromptModalProps> = ({
   visible,
@@ -56,6 +37,7 @@ const EmotionLoginPromptModal: React.FC<EmotionLoginPromptModalProps> = ({
   actionType = 'like',
 }) => {
   const { isDarkMode } = useTheme();
+  const { theme } = useModernTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const floatAnim = useRef(new Animated.Value(0)).current;
@@ -118,7 +100,7 @@ const EmotionLoginPromptModal: React.FC<EmotionLoginPromptModalProps> = ({
           title: '함께 이야기 나눠볼까요?',
           description: '당신의 감정도 소중해요\n회원가입하고 따뜻한 위로를 주고받아보세요',
           icon: 'comment-text',
-          iconColor: '#667eea',
+          iconColor: theme.colors.primary,
         };
       case 'post':
         return {
@@ -139,7 +121,7 @@ const EmotionLoginPromptModal: React.FC<EmotionLoginPromptModalProps> = ({
           title: '함께해요!',
           description: '회원가입하고 더 많은 이야기를 나눠보세요',
           icon: 'emoticon-happy',
-          iconColor: '#667eea',
+          iconColor: theme.colors.primary,
         };
     }
   };
@@ -290,7 +272,7 @@ const EmotionLoginPromptModal: React.FC<EmotionLoginPromptModalProps> = ({
                       <MaterialCommunityIcons
                         name="account-group"
                         size={18}
-                        color="#667eea"
+                        color={theme.colors.primary}
                       />
                       <Text
                         style={[styles.statsText, { color: colors.textSecondary }]}

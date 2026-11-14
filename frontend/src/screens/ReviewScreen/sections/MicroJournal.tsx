@@ -201,7 +201,7 @@ export const MicroJournal: React.FC = React.memo(() => {
           <Text style={[
             styles.submitButtonText,
             {
-              color: inputValue.trim() && !isOverLimit ? '#fff' : colors.textSecondary,
+              color: inputValue.trim() && !isOverLimit ? colors.onAccent : colors.textSecondary,
               fontSize: FONT_SIZES.body
             }
           ]}>
@@ -216,14 +216,14 @@ export const MicroJournal: React.FC = React.memo(() => {
           style={[
             styles.successMessage,
             {
-              backgroundColor: isDark ? '#1a3d1a' : '#e8f5e9',
+              backgroundColor: colors.tint,
               opacity: successOpacity,
             }
           ]}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TwemojiImage emoji="✨" size={FONT_SIZES.bodySmall * scale} style={{ marginRight: 6 * scale }} />
-            <Text style={[styles.successText, { color: '#4caf50', fontSize: FONT_SIZES.bodySmall }]}>
+            <Text style={[styles.successText, { color: colors.success, fontSize: FONT_SIZES.bodySmall }]}>
               기록되었어요!
             </Text>
           </View>

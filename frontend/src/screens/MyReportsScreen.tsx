@@ -12,6 +12,7 @@ import {
   Animated,
   useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
@@ -45,6 +46,7 @@ interface ReportFilters {
 }
 
 const MyReportsScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<NavigationProp>();
   const { isDarkMode } = useTheme();
   const { theme, isDark } = useModernTheme();
@@ -81,7 +83,7 @@ const MyReportsScreen: React.FC = () => {
     resolvedBg: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
     dismissed: '#9CA3AF',
     dismissedBg: isDark ? 'rgba(156, 163, 175, 0.15)' : 'rgba(156, 163, 175, 0.1)',
-    challengeIcon: '#667EEA',
+    challengeIcon: theme.colors.primary,
     postIcon: '#10B981',
     cardShadow: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)',
     emptyIcon: isDark ? '#38383A' : '#E5E5E5',
@@ -401,6 +403,7 @@ const MyReportsScreen: React.FC = () => {
         style={[
           styles.header,
           {
+            paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + SPACING.sm,
             backgroundColor: colors.headerBg,
             borderBottomWidth: 1,
             borderBottomColor: colors.border,
@@ -491,7 +494,7 @@ const MyReportsScreen: React.FC = () => {
             style={[styles.retryButton, { backgroundColor: colors.primary }]}
             onPress={onRefresh}
           >
-            <Text style={styles.retryText}>다시 시도</Text>
+            <Text style={[styles.retryText, { color: theme.colors.onAccent }]}>다시 시도</Text>
           </TouchableOpacity>
         </View>
       ) : isInitialLoading ? (

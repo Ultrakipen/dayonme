@@ -2,7 +2,7 @@
 
 // 위로와 공감 페이지와 통일된 컬러 팔레트
 export const CHALLENGE_COLORS = {
-  primary: '#6366F1', // 위로와 공감 페이지와 동일
+  primary: '#5566DD', // 앱 공통 primary(후보 A)와 동일
   secondary: '#EC4899', // 위로와 공감 페이지와 동일
   accent: '#10B981',
   success: '#10B981',

@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import { Text, Box } from './ui';
 import { useTheme } from '../contexts/ThemeContext';
+import { useModernTheme } from '../contexts/ModernThemeContext';
 import encouragementService from '../services/api/encouragementService';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { getScale } from '../utils/responsive';
@@ -38,6 +39,7 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
   confirmText = '확인',
 }) => {
   const { isDarkMode } = useTheme();
+  const { theme: mt } = useModernTheme();
   const scale = getScale();
   const scaleAnim = React.useRef(new Animated.Value(0)).current;
   const opacityAnim = React.useRef(new Animated.Value(0)).current;
@@ -72,9 +74,9 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
     successBg: isDarkMode ? 'rgba(52, 211, 153, 0.12)' : 'rgba(16, 185, 129, 0.1)',
     error: isDarkMode ? '#f87171' : '#ef4444',
     errorBg: isDarkMode ? 'rgba(248, 113, 113, 0.12)' : 'rgba(239, 68, 68, 0.1)',
-    info: isDarkMode ? '#818cf8' : '#6366f1',
-    infoBg: isDarkMode ? 'rgba(129, 140, 248, 0.12)' : 'rgba(99, 102, 241, 0.1)',
-    primary: isDarkMode ? '#818cf8' : '#6366f1',
+    info: mt.colors.accentText,
+    infoBg: mt.colors.tint,
+    primary: mt.colors.primary,
   };
 
   const iconConfig = {
@@ -125,7 +127,7 @@ const CustomAlert: React.FC<CustomAlertProps> = ({
             onPress={handleConfirm}
             activeOpacity={0.8}
           >
-            <RNText style={[styles.alertButtonText, { fontSize: 16 * scale }]}>
+            <RNText style={[styles.alertButtonText, { fontSize: 16 * scale, color: mt.colors.onAccent }]}>
               {confirmText}
             </RNText>
           </TouchableOpacity>
@@ -149,6 +151,7 @@ const SendEncouragementModal: React.FC<SendEncouragementModalProps> = ({
   toUserNickname,
 }) => {
   const { isDarkMode } = useTheme();
+  const { theme: mt } = useModernTheme();
   const scale = getScale();
 
   // 테마별 색상 정의 (개선된 색상)
@@ -157,8 +160,9 @@ const SendEncouragementModal: React.FC<SendEncouragementModalProps> = ({
     surface: isDarkMode ? '#2a2a2a' : '#f9fafb',
     text: isDarkMode ? '#ffffff' : '#000000',
     textSecondary: isDarkMode ? '#b0b0b0' : '#6b7280',
-    primary: isDarkMode ? '#818cf8' : '#6366f1',
-    primaryLight: isDarkMode ? '#4c52a8' : '#eef2ff',
+    primary: mt.colors.primary,
+    accent: mt.colors.accentText,
+    primaryLight: mt.colors.tint,
     error: isDarkMode ? '#f87171' : '#ef4444',
     errorLight: isDarkMode ? '#4a2020' : '#fef2f2',
     border: isDarkMode ? '#3a3a3a' : '#e5e7eb',
@@ -311,7 +315,7 @@ const SendEncouragementModal: React.FC<SendEncouragementModalProps> = ({
                     <MaterialCommunityIcons
                       name="heart"
                       size={28 * scale}
-                      color={colors.primary}
+                      color={colors.accent}
                     />
                   </View>
                   <View style={{ marginLeft: 16 * scale, flex: 1 }}>
@@ -342,13 +346,13 @@ const SendEncouragementModal: React.FC<SendEncouragementModalProps> = ({
                 <MaterialCommunityIcons
                   name="information"
                   size={22 * scale}
-                  color={remainingCount > 0 ? colors.primary : colors.error}
+                  color={remainingCount > 0 ? colors.accent : colors.error}
                 />
                 <RNText
                   style={[
                     styles.infoText,
                     {
-                      color: remainingCount > 0 ? colors.primary : colors.error,
+                      color: remainingCount > 0 ? colors.accent : colors.error,
                       fontSize: 16 * scale,
                     }
                   ]}
@@ -432,9 +436,9 @@ const SendEncouragementModal: React.FC<SendEncouragementModalProps> = ({
                 disabled={loading || !message.trim() || (remainingCount !== null && remainingCount <= 0)}
               >
                 {loading ? (
-                  <ActivityIndicator color="#fff" size="small" />
+                  <ActivityIndicator color={mt.colors.onAccent} size="small" />
                 ) : (
-                  <RNText style={[styles.buttonText, { color: '#ffffff', fontSize: 17 * scale }]}>
+                  <RNText style={[styles.buttonText, { color: mt.colors.onAccent, fontSize: 17 * scale }]}>
                     전송
                   </RNText>
                 )}

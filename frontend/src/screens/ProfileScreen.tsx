@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import {
   ScrollView,
@@ -13,6 +13,8 @@ import {
   useWindowDimensions,
   StatusBar,
   ActivityIndicator,
+  Animated,
+  AccessibilityInfo,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useModernTheme } from '../contexts/ModernThemeContext';
@@ -60,6 +62,15 @@ interface EmotionTag {
 }
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+// 원형 아이콘 배지 (배경 tint, 아이콘 accentText)
+const IconBadge: React.FC<{ name: string; size: number; bg: string; color: string }> = ({ name, size, bg, color }) => (
+  <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, alignItems: 'center', justifyContent: 'center' }}>
+    <Icon name={name} size={Math.round(size * 0.5)} color={color} />
+  </View>
+);
+
+const CARD_ANIM_COUNT = 7;
+
 const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { user, logout, updateUser, isAuthenticated } = useAuth();
@@ -67,6 +78,23 @@ const ProfileScreen: React.FC = () => {
   const navigation = useNavigation();
   const isFocused = useIsFocused();
   const { width: screenWidth } = useWindowDimensions();
+
+  // 카드 진입 애니메이션 (마운트 1회, 동작 줄이기 설정 시 즉시 표시)
+  const cardAnims = useRef(Array.from({ length: CARD_ANIM_COUNT }, () => new Animated.Value(0))).current;
+  useEffect(() => {
+    let cancelled = false;
+    const showAll = () => cardAnims.forEach(v => v.setValue(1));
+    AccessibilityInfo.isReduceMotionEnabled().then(reduce => {
+      if (cancelled) return;
+      if (reduce) { showAll(); return; }
+      Animated.stagger(60, cardAnims.map(v => Animated.timing(v, { toValue: 1, duration: 220, useNativeDriver: true }))).start();
+    }).catch(showAll);
+    return () => { cancelled = true; };
+  }, [cardAnims]);
+  const cardAnimStyle = (i: number) => ({
+    opacity: cardAnims[i],
+    transform: [{ translateY: cardAnims[i].interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }],
+  });
 
   const maskEmail = useCallback((email: string): string => {
     if (!email || !email.includes('@')) return email;
@@ -77,7 +105,7 @@ const ProfileScreen: React.FC = () => {
 
   // 2025 트렌드 컬러 시스템 (다크모드 대응)
   const emotionColors = {
-    primary: isDark ? '#60a5fa' : '#0095F6',
+    primary: theme.colors.accentText,
     secondary: isDark ? '#9ca3af' : '#444444',
     text: theme.colors.text.primary,
     textSecondary: isDark ? theme.colors.text.secondary : '#555555',
@@ -200,7 +228,7 @@ const ProfileScreen: React.FC = () => {
       '버럭': '#E17055',
       '지루': '#B2BEC3'
     };
-    return colorMap[emotionName] || '#667eea';
+    return colorMap[emotionName] || '#5566DD';
   }, []);
 
   // 🔥 연속 작성일 계산
@@ -567,7 +595,7 @@ const ProfileScreen: React.FC = () => {
           <MaterialCommunityIcons
             name={isDark ? 'weather-sunny' : 'weather-night'}
             size={normalizeIcon(28)}
-            color={isDark ? '#A78BFA' : '#667eea'}
+            color={theme.colors.primary}
           />
         </TouchableOpacity>
 
@@ -589,7 +617,7 @@ const ProfileScreen: React.FC = () => {
             alignItems: 'center',
             marginBottom: 20,
             borderWidth: 3,
-            borderColor: '#667eea',
+            borderColor: theme.colors.primary,
           }}>
             <RNText style={{ fontSize: 48 }}>😊</RNText>
           </View>
@@ -622,12 +650,12 @@ const ProfileScreen: React.FC = () => {
               width: '100%',
               maxWidth: 320,
               height: 48,
-              backgroundColor: '#667eea',
+              backgroundColor: theme.colors.primary,
               borderRadius: 24,
               justifyContent: 'center',
               alignItems: 'center',
               marginBottom: 12,
-              shadowColor: '#667eea',
+              shadowColor: isDark ? '#000000' : theme.colors.primary,
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.3,
               shadowRadius: 8,
@@ -637,7 +665,7 @@ const ProfileScreen: React.FC = () => {
             accessibilityLabel="로그인하기"
           >
             <RNText style={{
-              color: '#FFFFFF',
+              color: theme.colors.onAccent,
               fontSize: getFontSize(15),
               fontWeight: '700',
               letterSpacing: -0.3,
@@ -658,13 +686,13 @@ const ProfileScreen: React.FC = () => {
               justifyContent: 'center',
               alignItems: 'center',
               borderWidth: 2,
-              borderColor: '#667eea',
+              borderColor: theme.colors.primary,
             }}
             accessibilityRole="button"
             accessibilityLabel="회원가입하기"
           >
             <RNText style={{
-              color: '#667eea',
+              color: theme.colors.primary,
               fontSize: getFontSize(15),
               fontWeight: '700',
               letterSpacing: -0.3,
@@ -689,8 +717,8 @@ const ProfileScreen: React.FC = () => {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
               {[
                 { emoji: '🎨', text: '나만의\n감정 기록장', gradient: ['#FF6B9D', '#FFA06B'] },
-                { emoji: '💫', text: '나를 표현하는\n특별한 공간', gradient: ['#A78BFA', '#EC4899'] },
-                { emoji: '🏆', text: '도전과\n성장의 기록', gradient: ['#60A5FA', '#34D399'] },
+                { emoji: '💫', text: '나를 표현하는\n특별한 공간', gradient: isDark ? [theme.colors.primary, theme.colors.primary] : [theme.colors.tint, theme.colors.tint] },
+                { emoji: '🏆', text: '도전과\n성장의 기록', gradient: isDark ? [theme.colors.primary, theme.colors.primary] : [theme.colors.tint, theme.colors.tint] },
                 { emoji: '💬', text: '따뜻한\n위로와 공감', gradient: ['#FBBF24', '#F59E0B'] }
               ].map((item, index) => (
                 <LinearGradient
@@ -782,7 +810,7 @@ const ProfileScreen: React.FC = () => {
                 accessibilityLabel="받은 격려 메시지"
                 accessibilityHint="받은 격려 메시지를 확인합니다"
               >
-                <Icon name="heart" size={24} color="#E91E63" />
+                <Icon name="heart" size={24} color={theme.colors.accentText} />
               </TouchableOpacity>
             </View>
             <View style={styles.subtitleContainer}>
@@ -794,8 +822,15 @@ const ProfileScreen: React.FC = () => {
         </View>
 
         {/* 프로필 정보 */}
-        <View style={[styles.profileCard, { backgroundColor: theme.colors.card }]}>
-          <View style={styles.profileHeader}>
+        <Animated.View style={[styles.profileCard, { backgroundColor: theme.colors.card }, cardAnimStyle(0)]}>
+          <LinearGradient
+            pointerEvents="none"
+            colors={[theme.colors.primary + '33', theme.colors.primary + '00']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.profileBanner}
+          />
+          <View style={[styles.profileHeader, { marginTop: 28 }]}>
             <TouchableOpacity
               onPress={() => setShowImagePicker(true)}
               style={styles.profileImageContainer}
@@ -840,7 +875,7 @@ const ProfileScreen: React.FC = () => {
 
           {/* 좋아하는 명언 */}
           {favoriteQuote && (
-            <TouchableOpacity style={[styles.quoteContainer, { backgroundColor: isDark ? theme.bg.secondary : '#E3F2FD' }]} onPress={() => {
+            <TouchableOpacity style={[styles.quoteContainer, { backgroundColor: theme.colors.tint }]} onPress={() => {
               setTempQuote(favoriteQuote);
               setShowQuoteEditor(true);
             }}>
@@ -852,10 +887,10 @@ const ProfileScreen: React.FC = () => {
               <RNText style={[styles.quoteText, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>{favoriteQuote}</RNText>
             </TouchableOpacity>
           )}
-        </View>
+        </Animated.View>
 
         {/* 통계 정보 */}
-        <View style={[styles.statsCard, { backgroundColor: theme.colors.card }]}>
+        <Animated.View style={[styles.statsCard, { backgroundColor: theme.colors.card }, cardAnimStyle(1)]}>
           <RNText style={[styles.cardTitle, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
             활동 통계
           </RNText>
@@ -866,8 +901,8 @@ const ProfileScreen: React.FC = () => {
               onPress={() => navigation.navigate('Encouragement')}
               activeOpacity={0.7}
             >
-              <Icon name="heart" size={20} color="#E91E63" />
-              <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
+              <IconBadge name="heart" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
+              <RNText style={[styles.statNumber, { fontSize: FONT_SIZES.h3 + 2, fontWeight: '800', color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.encouragement_received_count || 0)}
               </RNText>
               <RNText style={[styles.statLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
@@ -882,8 +917,8 @@ const ProfileScreen: React.FC = () => {
               accessibilityLabel="내가 쓴 글 보기"
               onPress={() => (navigation as any).navigate('MyPosts')}
             >
-              <Icon name="happy-outline" size={20} color={emotionColors.primary} />
-              <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
+              <IconBadge name="happy-outline" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
+              <RNText style={[styles.statNumber, { fontSize: FONT_SIZES.h3 + 2, fontWeight: '800', color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_post_count)}
               </RNText>
               <RNText style={[styles.statLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
@@ -892,8 +927,8 @@ const ProfileScreen: React.FC = () => {
             </TouchableOpacity>
 
             <View style={styles.statItem}>
-              <Icon name="heart-outline" size={20} color={emotionColors.error} />
-              <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
+              <IconBadge name="heart-outline" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
+              <RNText style={[styles.statNumber, { fontSize: FONT_SIZES.h3 + 2, fontWeight: '800', color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_like_received_count)}
               </RNText>
               <RNText style={[styles.statLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
@@ -904,8 +939,8 @@ const ProfileScreen: React.FC = () => {
 
           <View style={[styles.statsContainer, { marginTop: 4, justifyContent: 'center' }]}>
             <View style={styles.statItem}>
-              <Icon name="chatbubble-outline" size={20} color={emotionColors.warning} />
-              <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
+              <IconBadge name="chatbubble-outline" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
+              <RNText style={[styles.statNumber, { fontSize: FONT_SIZES.h3 + 2, fontWeight: '800', color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.my_day_comment_received_count)}
               </RNText>
               <RNText style={[styles.statLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
@@ -914,8 +949,8 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={styles.statItem}>
-              <Icon name="trophy-outline" size={20} color={emotionColors.gold} />
-              <RNText style={[styles.statNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
+              <IconBadge name="trophy-outline" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
+              <RNText style={[styles.statNumber, { fontSize: FONT_SIZES.h3 + 2, fontWeight: '800', color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {formatNumber(stats.challenge_count)}
               </RNText>
               <RNText style={[styles.statLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>
@@ -923,10 +958,10 @@ const ProfileScreen: React.FC = () => {
               </RNText>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* 이번 주 활동 현황 */}
-        <View style={[styles.weeklyActivityCard, { backgroundColor: theme.colors.card }]}>
+        <Animated.View style={[styles.weeklyActivityCard, { backgroundColor: theme.colors.card }, cardAnimStyle(2)]}>
           <View style={styles.cardHeader}>
             <Icon name="calendar" size={22} color={emotionColors.primary} />
             <RNText style={[styles.cardTitle, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>이번 주 활동</RNText>
@@ -935,41 +970,41 @@ const ProfileScreen: React.FC = () => {
 
           <View style={styles.weeklyStats}>
             <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="create-outline" size={20} color="#4CAF50" />
+              <IconBadge name="create-outline" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
               <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>작성한 글</RNText>
-              <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
+              <RNText style={[styles.weeklyNumber, { fontWeight: '800', color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {weeklyStats.weeklyPosts}개
               </RNText>
             </View>
 
             <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="heart-outline" size={20} color="#E91E63" />
+              <IconBadge name="heart-outline" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
               <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>받은 공감</RNText>
-              <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
+              <RNText style={[styles.weeklyNumber, { fontWeight: '800', color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {weeklyStats.weeklyLikes}개
               </RNText>
             </View>
 
             <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="chatbubble-outline" size={20} color="#FF9800" />
+              <IconBadge name="chatbubble-outline" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
               <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>받은 댓글</RNText>
-              <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
+              <RNText style={[styles.weeklyNumber, { fontWeight: '800', color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {weeklyStats.weeklyComments}개
               </RNText>
             </View>
 
             <View style={[styles.weeklyItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="flame" size={20} color="#FF5722" />
+              <IconBadge name="flame" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
               <RNText style={[styles.weeklyLabel, { color: isDark ? theme.colors.text.primary : '#000000' }]}>연속 작성</RNText>
-              <RNText style={[styles.weeklyNumber, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
+              <RNText style={[styles.weeklyNumber, { fontWeight: '800', color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
                 {weeklyStats.consecutiveDays > 0 ? `${weeklyStats.consecutiveDays}일` : '오늘부터 시작!'}
               </RNText>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* 나만의 특별한 기록 */}
-        <View style={[styles.recordsCard, { backgroundColor: theme.colors.card }]}>
+        <Animated.View style={[styles.recordsCard, { backgroundColor: theme.colors.card }, cardAnimStyle(3)]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
             <Icon name="ribbon" size={20} color={emotionColors.primary} style={{ marginRight: 8 }} />
             <RNText style={{ fontSize: FONT_SIZES.h4, fontWeight: '700', color: isDark ? theme.colors.text.primary : emotionColors.text }}>나만의 특별한 기록</RNText>
@@ -977,7 +1012,7 @@ const ProfileScreen: React.FC = () => {
 
           <View style={styles.recordsList}>
             <View style={[styles.recordItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="rocket" size={20} color={emotionColors.warning} />
+              <IconBadge name="rocket" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
               <View style={styles.recordInfo}>
                 <RNText style={[styles.recordTitle, { color: isDark ? theme.colors.text.primary : '#000000' }]}>여정 시작일</RNText>
                 <RNText style={[styles.recordValue, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
@@ -987,7 +1022,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={[styles.recordItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="trophy" size={20} color={emotionColors.gold} />
+              <IconBadge name="trophy" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
               <View style={styles.recordInfo}>
                 <RNText style={[styles.recordTitle, { color: isDark ? theme.colors.text.primary : '#000000' }]}>최장 연속 작성</RNText>
                 <RNText style={[styles.recordValue, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
@@ -997,7 +1032,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={[styles.recordItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="star" size={20} color={emotionColors.primary} />
+              <IconBadge name="star" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
               <View style={styles.recordInfo}>
                 <RNText style={[styles.recordTitle, { color: isDark ? theme.colors.text.primary : '#000000' }]}>인기 게시물</RNText>
                 <RNText style={[styles.recordValue, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
@@ -1007,7 +1042,7 @@ const ProfileScreen: React.FC = () => {
             </View>
 
             <View style={[styles.recordItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
-              <Icon name="calendar" size={20} color={emotionColors.success} />
+              <IconBadge name="calendar" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
               <View style={styles.recordInfo}>
                 <RNText style={[styles.recordTitle, { color: isDark ? theme.colors.text.primary : '#000000' }]}>활동 최초 D+</RNText>
                 <RNText style={[styles.recordValue, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>
@@ -1016,11 +1051,11 @@ const ProfileScreen: React.FC = () => {
               </View>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
         {/* 나의 배지 */}
         {badges.length > 0 && (
-          <View style={[styles.badgeCard, { backgroundColor: theme.colors.card }]}>
+          <Animated.View style={[styles.badgeCard, { backgroundColor: theme.colors.card }, cardAnimStyle(4)]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
               <Icon name="medal-outline" size={20} color={emotionColors.gold} style={{ marginRight: 8 }} />
               <RNText style={{ fontSize: FONT_SIZES.h4, fontWeight: '700', color: isDark ? theme.colors.text.primary : emotionColors.text }}>나의 배지</RNText>
@@ -1035,11 +1070,11 @@ const ProfileScreen: React.FC = () => {
                 </View>
               ))}
             </View>
-          </View>
+          </Animated.View>
         )}
 
         {/* 챌린지 현황 */}
-        <View style={[styles.challengeCard, { backgroundColor: theme.colors.card }]}>
+        <Animated.View style={[styles.challengeCard, { backgroundColor: theme.colors.card }, cardAnimStyle(5)]}>
           <View style={styles.cardHeader}>
             <Icon name="trophy-outline" size={22} color={emotionColors.primary} />
             <RNText style={[styles.cardTitle, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>챌린지 현황</RNText>
@@ -1048,9 +1083,9 @@ const ProfileScreen: React.FC = () => {
           <View style={styles.challengeStats}>
             <View style={[styles.challengeStatItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
               <View style={styles.challengeIconContainer}>
-                <Icon name="add-circle-outline" size={25} color={emotionColors.success} />
+                <IconBadge name="add-circle-outline" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
               </View>
-              <RNText style={[styles.challengeStatNumber, { color: isDark ? theme.colors.text.primary : '#000000' }]}>
+              <RNText style={[styles.challengeStatNumber, { fontSize: FONT_SIZES.h3 + 2, fontWeight: '800', color: isDark ? theme.colors.text.primary : '#000000' }]}>
                 {challengeStats.createdChallenges}
               </RNText>
               <RNText style={[styles.challengeStatLabel, { color: isDark ? theme.colors.text.secondary : '#555555' }]}>만든{'\n'}챌린지</RNText>
@@ -1058,9 +1093,9 @@ const ProfileScreen: React.FC = () => {
 
             <View style={[styles.challengeStatItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
               <View style={styles.challengeIconContainer}>
-                <Icon name="people-outline" size={25} color={emotionColors.primary} />
+                <IconBadge name="people-outline" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
               </View>
-              <RNText style={[styles.challengeStatNumber, { color: isDark ? theme.colors.text.primary : '#000000' }]}>
+              <RNText style={[styles.challengeStatNumber, { fontSize: FONT_SIZES.h3 + 2, fontWeight: '800', color: isDark ? theme.colors.text.primary : '#000000' }]}>
                 {challengeStats.joinedChallenges}
               </RNText>
               <RNText style={[styles.challengeStatLabel, { color: isDark ? theme.colors.text.secondary : '#555555' }]}>참여한{'\n'}챌린지</RNText>
@@ -1068,20 +1103,20 @@ const ProfileScreen: React.FC = () => {
 
             <View style={[styles.challengeStatItem, { backgroundColor: isDark ? theme.bg.secondary : '#F8F9FA' }]}>
               <View style={styles.challengeIconContainer}>
-                <Icon name="checkmark-circle-outline" size={25} color={emotionColors.warning} />
+                <IconBadge name="checkmark-circle-outline" size={40} bg={theme.colors.tint} color={theme.colors.accentText} />
               </View>
-              <RNText style={[styles.challengeStatNumber, { color: isDark ? theme.colors.text.primary : '#000000' }]}>
+              <RNText style={[styles.challengeStatNumber, { fontSize: FONT_SIZES.h3 + 2, fontWeight: '800', color: isDark ? theme.colors.text.primary : '#000000' }]}>
                 {challengeStats.completedChallenges}
               </RNText>
               <RNText style={[styles.challengeStatLabel, { color: isDark ? theme.colors.text.secondary : '#555555' }]}>완료한{'\n'}챌린지</RNText>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
 
         {/* 감정 태그 선호도 */}
         {emotionTags.length > 0 && (
-          <View style={[styles.emotionTagsCard, { backgroundColor: theme.colors.card }]}>
+          <Animated.View style={[styles.emotionTagsCard, { backgroundColor: theme.colors.card }, cardAnimStyle(6)]}>
             <View style={styles.emotionHeader}>
               <Icon name="heart" size={22} color={emotionColors.primary} />
               <RNText style={[styles.cardTitle, { color: isDark ? theme.colors.text.primary : emotionColors.text }]}>감정 태그 선호도</RNText>
@@ -1097,7 +1132,7 @@ const ProfileScreen: React.FC = () => {
                   style={[
                     styles.simpleEmotionTag,
                     index < 3 && styles.topSimpleTag,
-                    { backgroundColor: index < 3 ? (isDark ? theme.bg.secondary : '#E3F2FD') : (isDark ? theme.bg.secondary : '#F8F9FA') }
+                    { backgroundColor: index < 3 ? theme.colors.tint : (isDark ? theme.bg.secondary : '#F8F9FA') }
                   ]}
                 >
                   <View
@@ -1132,7 +1167,7 @@ const ProfileScreen: React.FC = () => {
               ))}
             </View>
 
-            <View style={[styles.emotionStats, { backgroundColor: isDark ? theme.bg.secondary : '#F0F8FF' }]}>
+            <View style={[styles.emotionStats, { backgroundColor: theme.colors.tint }]}>
               <View style={styles.statRow}>
                 <RNText style={[styles.emotionStatLabel, { color: isDark ? theme.colors.text.secondary : emotionColors.textSecondary }]}>가장 자주 사용한 감정</RNText>
                 <RNText style={[styles.statValue, { color: isDark ? theme.colors.text.primary : '#000000' }]}>
@@ -1152,7 +1187,7 @@ const ProfileScreen: React.FC = () => {
                 </RNText>
               </View>
             </View>
-          </View>
+          </Animated.View>
         )}
 
         {/* 설정 및 기타 옵션 */}
@@ -1169,7 +1204,7 @@ const ProfileScreen: React.FC = () => {
               activeOpacity={0.7}
               accessibilityLabel="전체 설정"
             >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(96, 165, 250, 0.15)' : 'rgba(102, 126, 234, 0.1)' }]}>
+              <View style={[styles.settingIconContainer, { backgroundColor: theme.colors.tint }]}>
                 <Icon name="settings-outline" size={20} color={emotionColors.primary} />
               </View>
               <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>전체 설정</RNText>
@@ -1183,8 +1218,8 @@ const ProfileScreen: React.FC = () => {
               activeOpacity={0.7}
               accessibilityLabel="관심 글"
             >
-              <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(236, 72, 153, 0.15)' : 'rgba(236, 72, 153, 0.1)' }]}>
-                <Icon name="bookmark-outline" size={20} color="#EC4899" />
+              <View style={[styles.settingIconContainer, { backgroundColor: theme.colors.tint }]}>
+                <Icon name="bookmark-outline" size={20} color={theme.colors.accentText} />
               </View>
               <RNText style={[styles.settingText, { color: isDark ? theme.colors.text.primary : '#1A1A1A' }]}>관심 글</RNText>
               <Icon name="chevron-forward" size={16} color={isDark ? emotionColors.textSecondary : '#999999'} />
@@ -1207,16 +1242,16 @@ const ProfileScreen: React.FC = () => {
             {/* 관리자 대시보드 */}
             {(user?.role === 'admin' || user?.is_admin) && (
               <TouchableOpacity
-                style={[styles.settingItem, { backgroundColor: isDark ? 'rgba(102, 126, 234, 0.08)' : 'rgba(102, 126, 234, 0.06)' }]}
+                style={[styles.settingItem, { backgroundColor: isDark ? 'rgba(85, 102, 221, 0.08)' : 'rgba(85, 102, 221, 0.06)' }]}
                 onPress={() => navigation.navigate('AdminDashboard')}
                 activeOpacity={0.7}
                 accessibilityLabel="관리자 대시보드"
               >
-                <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(102, 126, 234, 0.2)' : 'rgba(102, 126, 234, 0.12)' }]}>
-                  <Icon name="shield-checkmark" size={20} color="#667EEA" />
+                <View style={[styles.settingIconContainer, { backgroundColor: isDark ? 'rgba(85, 102, 221, 0.2)' : 'rgba(85, 102, 221, 0.12)' }]}>
+                  <Icon name="shield-checkmark" size={20} color={theme.colors.primary} />
                 </View>
-                <RNText style={[styles.settingText, { color: '#667EEA', fontWeight: '700' }]}>관리자</RNText>
-                <Icon name="chevron-forward" size={16} color="#667EEA" />
+                <RNText style={[styles.settingText, { color: theme.colors.primary, fontWeight: '700' }]}>관리자</RNText>
+                <Icon name="chevron-forward" size={16} color={theme.colors.primary} />
               </TouchableOpacity>
             )}
 
@@ -1326,11 +1361,11 @@ const ProfileScreen: React.FC = () => {
                   <Icon
                     name="checkmark"
                     size={16}
-                    color={(!tempQuote || tempQuote.trim().length === 0) ? emotionColors.textLight : '#FFFFFF'}
+                    color={(!tempQuote || tempQuote.trim().length === 0) ? emotionColors.textLight : theme.colors.onAccent}
                   />
                   <RNText style={[
                     styles.modernCompleteButtonText,
-                    { color: (!tempQuote || tempQuote.trim().length === 0) ? emotionColors.textLight : '#FFFFFF' },
+                    { color: (!tempQuote || tempQuote.trim().length === 0) ? emotionColors.textLight : theme.colors.onAccent },
                     (!tempQuote || tempQuote.trim().length === 0) && styles.modernCompleteButtonTextDisabled
                   ]}>
                     완료
@@ -1486,7 +1521,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 6,
     borderWidth: 0,
-    overflow: 'hidden',
+    overflow: 'hidden' as const,
+  },
+  profileBanner: {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 80,
   },
   profileHeader: {
     flexDirection: 'row',
@@ -2056,16 +2098,22 @@ const styles = StyleSheet.create({
   recordInfo: {
     flex: 1,
     flexDirection: 'row',
+    flexWrap: 'wrap', // 글자가 커져 한 줄에 안 들어가면 값이 아래 줄로 내려온다(기본 크기에서는 한 줄 그대로)
     justifyContent: 'space-between',
     alignItems: 'center',
+    columnGap: 8,
   },
   recordTitle: {
     fontSize: FONT_SIZES.bodySmall,
     fontWeight: '500',
+    flexShrink: 1,
   },
   recordValue: {
     fontSize: FONT_SIZES.bodySmall,
     fontWeight: '600',
+    flexShrink: 1,
+    marginLeft: 'auto',
+    textAlign: 'right',
   },
   // 배지 스타일
   badgeCard: {

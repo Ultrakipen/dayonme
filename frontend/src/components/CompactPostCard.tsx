@@ -1,6 +1,6 @@
 // src/components/CompactPostCard.tsx
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Image, Text as RNText, Dimensions } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text as RNText, Dimensions } from 'react-native';
 import { Card } from 'react-native-paper';
 import { Text, Box, HStack, VStack } from './ui';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -9,11 +9,13 @@ import { useModernTheme } from '../contexts/ModernThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { normalizeImageUrl } from '../utils/imageUtils';
 import { devLog, safeJsonParse } from '../utils/security';
+import { getReadableEmotionColor } from '../utils/emotionTextColor';
 import ImageCarousel from './ImageCarousel';
 import ClickableNickname from './ClickableNickname';
 import ClickableAvatar from './ClickableAvatar';
+import EmotionIcon from './common/EmotionIcon';
 import ReactionButton from './ReactionButton';
-import { EMOTION_AVATARS, getConsistentEmotion, getEmotionEmoji, getEmotionById, getEmotionByName, getTwemojiUrl } from '../constants/emotions';
+import { EMOTION_AVATARS, getConsistentEmotion, getEmotionEmoji, getEmotionById, getEmotionByName } from '../constants/emotions';
 
 // 감정 중복 처리를 위한 글로벌 상태
 const usedEmotions = new Map<string, number>();
@@ -91,6 +93,7 @@ interface CompactPostCardProps {
   isBestPost?: boolean;
   onBookmark?: (postId: number) => void;
   isBookmarked?: boolean;
+  emotionIconVariant?: 'b5' | 'b3';
 }
 
 const CompactPostCard: React.FC<CompactPostCardProps> = ({
@@ -100,7 +103,8 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
   liked = false,
   isBestPost = false,
   onBookmark,
-  isBookmarked = false
+  isBookmarked = false,
+  emotionIconVariant
 }) => {
   const { theme: modernTheme, isDark } = useModernTheme();
   const { user } = useAuth();
@@ -112,7 +116,7 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
     textSecondary: modernTheme.text.secondary,
     previewText: modernTheme.text.primary,
     buttonBackground: isDark ? '#404040' : '#f8fafc',
-    primary: isDark ? '#60a5fa' : '#405DE6',
+    primary: modernTheme.colors.accentText,
     border: modernTheme.bg.border,
   };
   
@@ -289,37 +293,34 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
           backgroundColor: post.emotions && post.emotions.length > 0 ? `${post.emotions[0].color}10` : '#FFD70010',
           borderColor: post.emotions && post.emotions.length > 0 ? `${post.emotions[0].color}30` : '#FFD70030'
         }]}>
-          {/* Twemoji 이미지로 선명하게 렌더링 */}
-          <Image
-            source={{
-              uri: getTwemojiUrl(
+          <View style={styles.emotionIconImage}>
+            <EmotionIcon
+              emotionId={
                 post.emotions && post.emotions.length > 0
-                  ? (getEmotionByName(post.emotions[0].name)?.emojiCode || '1f60a')
-                  : '1f60a'
-              )
-            }}
-            style={styles.emotionIconImage}
-            resizeMode="contain"
-          />
+                  ? (post.emotions[0].emotion_id || getEmotionByName(post.emotions[0].name)?.id)
+                  : 1
+              }
+              size={34}
+              variant={emotionIconVariant}
+            />
+          </View>
      <HStack style={{ flex: 1, flexWrap: 'wrap', alignItems: 'center', gap: 4, padding: 3 ,paddingTop:8}}>
               <Text style={{
                 fontSize: 14,
                 lineHeight: 21,
                 fontWeight: '600',
                 color: isDark ? '#ffffff' : '#1f2937',
-                textShadowColor: isDark ? 'rgba(0, 0, 0, 0.3)' :
-  'rgba(255, 255, 255, 0.8)',
-                textShadowOffset: { width: 0, height: 0.5 },
-                textShadowRadius: 1,
               }}>오늘은</Text>
               <Text style={{
                 fontSize: 18,
                 fontWeight: '800',
-                color: post.emotions && post.emotions.length > 0 ?
-  post.emotions[0].color : '#FFD700',
-                textShadowColor: 'rgba(0, 0, 0, 0.15)',
-                textShadowOffset: { width: 0, height: 0.5 },
-                textShadowRadius: 1,
+                color: getReadableEmotionColor(
+                  (post.emotions && post.emotions.length > 0
+                    ? (post.emotions[0].color || getEmotionByName(post.emotions[0].name)?.color)
+                    : undefined) as string | undefined,
+                  isDark,
+                  modernTheme.text.primary
+                ),
               }}>"{post.emotions && post.emotions.length > 0 ?
   post.emotions[0].name : '기쁨'}"</Text>
               <Text style={{
@@ -327,10 +328,6 @@ const CompactPostCard: React.FC<CompactPostCardProps> = ({
                 lineHeight: 21,
                 fontWeight: '600',
                 color: isDark ? '#ffffff' : '#1f2937',
-                textShadowColor: isDark ? 'rgba(0, 0, 0, 0.3)' :
-  'rgba(255, 255, 255, 0.8)',
-                textShadowOffset: { width: 0, height: 0.5 },
-                textShadowRadius: 1,
               }}>에요</Text>
 
               {/* 익명 게시물에서 본인이 작성한 글일 때 "나" 표시 */}
@@ -604,8 +601,8 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   emotionIconImage: {
-    width: 28,
-    height: 28,
+    width: 34,
+    height: 34,
     marginBottom: 6,
     marginRight: 6,
   },
@@ -732,7 +729,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   timestamp: {
-    fontSize: 11,
+    fontSize: 12,
   },
   emotionsContainer: {
     flexWrap: 'wrap',
@@ -751,7 +748,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   moreEmotions: {
-    fontSize: 11,
+    fontSize: 12,
     marginLeft: 2,
   },
   previewText: {
@@ -778,7 +775,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '500',
   },
   likedText: {
@@ -793,7 +790,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   expandButtonText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
   imagePreview: {

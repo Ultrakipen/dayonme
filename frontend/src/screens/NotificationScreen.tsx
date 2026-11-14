@@ -1,5 +1,6 @@
 // src/screens/NotificationScreen.tsx
 import React, { useEffect, useState, useRef, createContext, useContext, useCallback, useMemo } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlatList, Alert, TouchableOpacity, StyleSheet, View, Pressable, Text, StatusBar, Dimensions, Animated, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -28,6 +29,7 @@ interface NotificationScreenProps {
 const NotificationScreen = (props: NotificationScreenProps = {}) => {
   const navigation = useNavigation();
   const { theme, isDark } = useModernTheme();
+  const insets = useSafeAreaInsets();
 
   // Dimensions 호출은 컴포넌트 내부에서
   const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -45,7 +47,7 @@ const NotificationScreen = (props: NotificationScreenProps = {}) => {
     headerIcon: theme.text.primary,
     readAction: isDark ? '#0EA5E9' : '#0095F6',
     deleteAction: isDark ? '#EF4444' : '#FF3B30',
-    markAllButton: isDark ? '#6366F1' : '#667EEA',
+    markAllButton: theme.colors.primary,
     iconBackground: isDark ? '#3B4BF9' : '#EEF2FF',
   }), [theme, isDark]);
   const [notifications, setNotifications] = useState<Notification[]>(props.testNotifications || []);
@@ -370,7 +372,7 @@ const fetchNotifications = useCallback(async (refresh = false) => {
               borderColor: theme.bg.border,
               ...Platform.select({
                 ios: {
-                  shadowColor: isDark ? '#fff' : '#000',
+                  shadowColor: isDark ? '#000000' : '#000',
                   shadowOffset: { width: 0, height: verticalScale(2) },
                   shadowOpacity: isDark ? 0.1 : 0.08,
                   shadowRadius: moderateScale(8),
@@ -444,8 +446,8 @@ const fetchNotifications = useCallback(async (refresh = false) => {
   if (loading && !refreshing && notifications.length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: theme.bg.primary }]}>
-        <StatusBar barStyle={isDark ? "light-content" : "light-content"} backgroundColor={colors.headerBg} />
-        <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: theme.bg.border }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.headerBg} />
+        <View style={[styles.header, { backgroundColor: colors.headerBg, borderBottomColor: theme.bg.border, paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + SPACING.sm }]}>
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Icon name="arrow-back" size={24} color={colors.headerIcon} />
           </TouchableOpacity>
@@ -464,16 +466,17 @@ const fetchNotifications = useCallback(async (refresh = false) => {
   return (
     <SwipeContext.Provider value={{ openSwipeableRef }}>
       <View style={[styles.container, { backgroundColor: theme.bg.primary }]}>
-        <StatusBar barStyle={isDark ? "light-content" : "light-content"} backgroundColor={colors.headerBg} />
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.headerBg} />
         {/* 헤더 */}
         <View style={[
           styles.header,
           {
             backgroundColor: colors.headerBg,
             borderBottomColor: theme.bg.border,
+            paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + SPACING.sm,
             ...Platform.select({
               ios: {
-                shadowColor: isDark ? '#fff' : '#000',
+                shadowColor: isDark ? '#000000' : '#000',
                 shadowOffset: { width: 0, height: verticalScale(2) },
                 shadowOpacity: isDark ? 0.1 : 0.08,
                 shadowRadius: moderateScale(8),
@@ -501,7 +504,7 @@ const fetchNotifications = useCallback(async (refresh = false) => {
                 accessibilityLabel="모든 알림 읽음으로 표시"
                 accessibilityRole="button"
               >
-                <Text style={[styles.markAllText, { color: '#FFFFFF' }]}>모두 읽음</Text>
+                <Text style={[styles.markAllText, { color: theme.colors.onAccent }]}>모두 읽음</Text>
               </Pressable>
             )}
           </View>
@@ -708,6 +711,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.body,
     fontWeight: '400',
     textAlign: 'center',
+    paddingHorizontal: 24,
     lineHeight: moderateScale(22),
     letterSpacing: 0.1,
   },

@@ -6,6 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import EmotionLoginPromptModal from './EmotionLoginPromptModal';
+import { useModernTheme } from '../contexts/ModernThemeContext';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
@@ -33,6 +34,7 @@ const ClickableNickname: React.FC<ClickableNicknameProps> = ({
 }) => {
   const navigation = useNavigation<NavigationProp>();
   const { user, isAuthenticated } = useAuth();
+  const { theme } = useModernTheme();
   const [loginPromptVisible, setLoginPromptVisible] = useState(false);
 
   // 본인 여부 확인
@@ -96,8 +98,9 @@ const ClickableNickname: React.FC<ClickableNicknameProps> = ({
   // 클릭 가능한 스타일을 명시적으로 적용
   const clickableTextStyle: TextStyle = {
     ...mergedStyle,
-    color: '#405DE6',
+    color: theme.colors.accentText,
     textDecorationLine: 'underline',
+    textDecorationColor: theme.colors.accentText,
     fontWeight: '700',
   };
 

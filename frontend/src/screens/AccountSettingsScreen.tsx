@@ -11,6 +11,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FastImage from 'react-native-fast-image';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useAuth } from '../contexts/AuthContext';
@@ -43,6 +44,7 @@ interface AccountSettingsScreenProps {
 }
 
 const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
   const { isDarkMode } = useTheme();
   const { theme, isDark } = useModernTheme();
@@ -310,7 +312,7 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={colors.background} />
       {/* 헤더 */}
-      <View style={[styles.header, { backgroundColor: colors.background, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
+      <View style={[styles.header, { paddingTop: Math.max(StatusBar.currentHeight || 0, insets.top) + 16, backgroundColor: colors.background, borderBottomWidth: 1, borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
@@ -329,7 +331,7 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
           styles.userCard,
           {
             backgroundColor: theme.colors.surface,
-            shadowColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+            shadowColor: isDark ? '#000000' : 'rgba(0, 0, 0, 0.08)',
           }
         ]}>
           {/* 🖼️ 이미지 최적화: FastImage 사용 */}
@@ -341,13 +343,13 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
                   priority: FastImage.priority.high,
                   cache: FastImage.cacheControl.immutable,
                 }}
-                style={styles.profileImage}
+                style={[styles.profileImage, { borderColor: theme.colors.primary }]}
                 resizeMode={FastImage.resizeMode.cover}
                 onError={() => setImageLoadError(true)}
               />
             ) : (
-              <View style={[styles.profileImagePlaceholder, { borderColor: colors.primary }]}>
-                <Text style={[styles.profileImagePlaceholderText, { color: colors.text }]}>
+              <View style={[styles.profileImagePlaceholder, { backgroundColor: theme.colors.primary, borderColor: colors.primary }]}>
+                <Text style={[styles.profileImagePlaceholderText, { color: theme.colors.onAccent }]}>
                   {(user?.nickname || user?.username || 'U')[0].toUpperCase()}
                 </Text>
               </View>
@@ -369,7 +371,7 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
               styles.sectionCard,
               {
                 backgroundColor: theme.colors.surface,
-                shadowColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+                shadowColor: isDark ? '#000000' : 'rgba(0, 0, 0, 0.08)',
               }
             ]}>
               {section.items.map((item, itemIndex) => (
@@ -538,7 +540,7 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
                       { backgroundColor:
                         button.style === 'destructive' ? '#FF3B30' :
                         button.style === 'cancel' ? (isDark ? '#2A2A2A' : '#F0F0F0') :
-                        (isDark ? '#667eea' : '#667eea')
+                        theme.colors.primary
                       }
                     ]}
                     onPress={() => {
@@ -548,7 +550,7 @@ const AccountSettingsScreen: React.FC<AccountSettingsScreenProps> = ({ navigatio
                   >
                     <Text style={[
                       styles.alertButtonText,
-                      { color: button.style === 'cancel' ? (isDark ? '#FFFFFF' : '#1A1A1A') : '#FFFFFF' }
+                      { color: button.style === 'cancel' ? (isDark ? '#FFFFFF' : '#1A1A1A') : button.style === 'destructive' ? '#FFFFFF' : theme.colors.onAccent }
                     ]}>
                       {button.text}
                     </Text>
@@ -614,13 +616,13 @@ const styles = StyleSheet.create({
     height: 88,
     borderRadius: 44,
     borderWidth: 3,
-    borderColor: '#667eea',
+    borderColor: '#5566DD',
   },
   profileImagePlaceholder: {
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: '#667eea',
+    backgroundColor: '#5566DD',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,

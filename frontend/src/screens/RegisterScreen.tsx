@@ -14,7 +14,6 @@ import {
   Pressable
 } from 'react-native';
 import { TextInput, ActivityIndicator } from 'react-native-paper';
-import LinearGradient from 'react-native-linear-gradient';
 import { Text, VStack, HStack } from '../components/ui';
 import { useAuth } from '../contexts/AuthContext';
 import authService from '../services/api/authService';
@@ -26,6 +25,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
 import { FONT_SIZES } from '../constants';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // 타입 정의
 type RootStackParamList = {
@@ -59,11 +59,6 @@ const BREAKPOINTS = {
 } as const;
 
 const COLORS = {
-  gradient: {
-    primary: ['#667eea', '#764ba2'] as const,
-    primaryDark: ['#1a1a1a', '#2d2d2d', '#1a1a1a'] as const,
-    primaryLight: ['#667eea', '#764ba2', '#f093fb'] as const,
-  },
   error: '#FF3040',
   success: '#00C851',
   white: '#ffffff',
@@ -77,7 +72,7 @@ const COLORS = {
     text: '#ffffff'
   },
   progress: {
-    active: '#667eea',
+    active: '#5566DD',
     inactive: '#e0e0e0'
   },
   border: {
@@ -114,6 +109,7 @@ const TIMER_DURATION = 300;
 const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const { register } = useAuth();
   const { theme, isDark, toggleTheme } = useModernTheme();
+  const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [step, setStep] = useState(1); // 1: 이메일, 2: 인증, 3: 정보, 4: 프로필
 
@@ -379,7 +375,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
     },
     themeToggle: {
       position: 'absolute' as const,
-      top: spacing(16),
+      top: insets.top + spacing(8),
       right: spacing(16),
       zIndex: 1000,
       padding: spacing(8),
@@ -420,7 +416,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       paddingVertical: spacing(16),
       minHeight: spacing(54),
       justifyContent: 'center' as const,
-      shadowColor: COLORS.gradient.primary[0],
+      shadowColor: isDark ? '#000000' : theme.colors.primary,
       shadowOffset: { width: 0, height: spacing(6) },
       shadowOpacity: 0.25,
       shadowRadius: spacing(12),
@@ -453,11 +449,11 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
       fontWeight: '600' as const
     },
     loginLinkHighlight: {
-      color: isDark ? '#60a5fa' : COLORS.gradient.primary[0],
+      color: theme.colors.accentText,
       fontSize: normalizeFontSize(15),
       fontWeight: '700' as const
     }
-  }), [theme, isDark, height, spacing, normalizeFontSize]);
+  }), [theme, isDark, height, spacing, normalizeFontSize, insets.top]);
 
   // 진행률 표시 스타일
   const progressBarStyles = useMemo(() => ({
@@ -509,7 +505,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
           fontWeight: '600',
           textAlign: 'center',
-          lineHeight: normalizeFontSize(22)
+          lineHeight: normalizeFontSize(22) * Math.max(1, PixelRatio.getFontScale())
         }}>
           가입할 이메일 주소를{'\n'}입력해주세요
         </Text>
@@ -526,8 +522,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           contentStyle={styles.textInputContent}
           outlineStyle={{
             borderRadius: 16,
-            borderWidth: 2,
-            borderColor: formData.email ? COLORS.gradient.primary[0] : 'transparent'
+            borderWidth: formData.email ? 2 : 1,
+            borderColor: formData.email ? theme.colors.primary : theme.colors.inputBorder
           }}
           keyboardType="email-address"
           autoCapitalize="none"
@@ -536,7 +532,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           editable={!sendingCode}
           theme={{
             colors: {
-              primary: COLORS.gradient.primary[0],
+              primary: theme.colors.primary,
               onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
               outline: 'transparent'
             },
@@ -554,16 +550,17 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         accessibilityLabel="인증 코드 받기"
         accessibilityState={{ disabled: sendingCode }}
       >
-        <LinearGradient
-          colors={sendingCode ? ['#ccc', '#999'] : COLORS.gradient.primary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[styles.button, { marginTop: spacing(8), opacity: sendingCode ? 0.7 : 1 }]}
+        <View
+          style={[styles.button, {
+            marginTop: spacing(8),
+            opacity: sendingCode ? 0.7 : 1,
+            backgroundColor: sendingCode ? (isDark ? '#4B4B55' : '#767676') : theme.colors.primary
+          }]}
         >
           <HStack style={{ justifyContent: 'center', alignItems: 'center', gap: spacing(8) }}>
             {sendingCode && <ActivityIndicator size="small" color={COLORS.white} />}
             <Text style={{
-              color: COLORS.white,
+              color: sendingCode ? COLORS.white : theme.colors.onAccent,
               fontSize: normalizeFontSize(16),
               fontWeight: '700',
               letterSpacing: 0.3
@@ -571,7 +568,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               {sendingCode ? '전송 중...' : '인증 코드 받기'}
             </Text>
           </HStack>
-        </LinearGradient>
+        </View>
       </Pressable>
 
       {/* 간편 가입 */}
@@ -693,7 +690,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
             color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
             fontWeight: '600',
             textAlign: 'center',
-            lineHeight: normalizeFontSize(22)
+            lineHeight: normalizeFontSize(22) * Math.max(1, PixelRatio.getFontScale())
           }}>
             {formData.email}으로{'\n'}발송된 코드를 입력해주세요
           </Text>
@@ -713,13 +710,13 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               style={{
                 flex: 1,
                 maxWidth: 44,
-                height: 40,
+                minHeight: 40,
                 borderRadius: 8,
                 borderWidth: digit ? 2 : 1.5,
-                borderColor: digit ? COLORS.gradient.primary[0] : (isDark ? 'rgba(255,255,255,0.2)' : '#D1D5DB'),
+                borderColor: digit ? theme.colors.primary : (isDark ? 'rgba(255,255,255,0.2)' : '#D1D5DB'),
                 backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : '#F9FAFB',
                 marginHorizontal: 4,
-                shadowColor: digit ? COLORS.gradient.primary[0] : '#000',
+                shadowColor: digit ? theme.colors.primary : '#000',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: digit ? 0.15 : 0.05,
                 shadowRadius: 4,
@@ -753,7 +750,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           <Text style={{
             textAlign: 'center',
             fontSize: normalizeFontSize(15),
-            color: isDark ? '#60a5fa' : COLORS.gradient.primary[0],
+            color: theme.colors.accentText,
             fontWeight: '700'
           }}>
             {minutes}:{seconds.toString().padStart(2, '0')}
@@ -767,16 +764,16 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           accessibilityLabel="인증 코드 확인"
           accessibilityState={{ disabled: loading }}
         >
-          <LinearGradient
-            colors={loading ? ['#ccc', '#999'] : COLORS.gradient.primary}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.button, { opacity: loading ? 0.7 : 1 }]}
+          <View
+            style={[styles.button, {
+              opacity: loading ? 0.7 : 1,
+              backgroundColor: loading ? (isDark ? '#4B4B55' : '#767676') : theme.colors.primary
+            }]}
           >
             <HStack style={{ justifyContent: 'center', alignItems: 'center', gap: spacing(8) }}>
               {loading && <ActivityIndicator size="small" color={COLORS.white} />}
               <Text style={{
-                color: COLORS.white,
+                color: loading ? COLORS.white : theme.colors.onAccent,
                 fontSize: normalizeFontSize(16),
                 fontWeight: '700',
                 letterSpacing: 0.3
@@ -784,7 +781,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                 {loading ? '확인 중...' : '다음'}
               </Text>
             </HStack>
-          </LinearGradient>
+          </View>
         </Pressable>
 
         {resendTimer === 0 && (
@@ -796,7 +793,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
             <Text style={{
               textAlign: 'center',
               fontSize: normalizeFontSize(15),
-              color: isDark ? '#60a5fa' : COLORS.gradient.primary[0],
+              color: theme.colors.accentText,
               fontWeight: '700'
             }}>
               코드 재전송
@@ -824,7 +821,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
           fontWeight: '600',
           textAlign: 'center',
-          lineHeight: normalizeFontSize(22)
+          lineHeight: normalizeFontSize(22) * Math.max(1, PixelRatio.getFontScale())
         }}>
           사용자명과 비밀번호를{'\n'}설정해주세요
         </Text>
@@ -841,14 +838,14 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           contentStyle={styles.textInputContent}
           outlineStyle={{
             borderRadius: 16,
-            borderWidth: 2,
-            borderColor: formData.username ? COLORS.gradient.primary[0] : 'transparent'
+            borderWidth: formData.username ? 2 : 1,
+            borderColor: formData.username ? theme.colors.primary : theme.colors.inputBorder
           }}
           autoCapitalize="none"
           maxLength={20}
           theme={{
             colors: {
-              primary: COLORS.gradient.primary[0],
+              primary: theme.colors.primary,
               onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
               outline: 'transparent'
             },
@@ -868,13 +865,13 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           contentStyle={styles.textInputContent}
           outlineStyle={{
             borderRadius: 16,
-            borderWidth: 2,
-            borderColor: formData.password ? COLORS.gradient.primary[0] : 'transparent'
+            borderWidth: formData.password ? 2 : 1,
+            borderColor: formData.password ? theme.colors.primary : theme.colors.inputBorder
           }}
           secureTextEntry={!showPassword}
           theme={{
             colors: {
-              primary: COLORS.gradient.primary[0],
+              primary: theme.colors.primary,
               onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
               outline: 'transparent'
             },
@@ -888,7 +885,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           fontSize: FONT_SIZES.bodySmall,
           marginTop: -8,
           marginLeft: 8,
-          lineHeight: 22,
+          lineHeight: 22 * Math.max(1, PixelRatio.getFontScale()),
           fontWeight: '600'
         }}>
           대문자, 소문자, 숫자, 특수문자(!@#$%^&*) 포함
@@ -912,7 +909,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           secureTextEntry={!showConfirmPassword}
           theme={{
             colors: {
-              primary: COLORS.gradient.primary[0],
+              primary: theme.colors.primary,
               onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
               outline: 'transparent'
             },
@@ -942,14 +939,14 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
             height: 22,
             borderRadius: 6,
             borderWidth: 2,
-            borderColor: showPassword ? COLORS.gradient.primary[0] : (isDark ? '#555' : '#ccc'),
-            backgroundColor: showPassword ? COLORS.gradient.primary[0] : 'transparent',
+            borderColor: showPassword ? theme.colors.primary : (isDark ? '#555' : '#ccc'),
+            backgroundColor: showPassword ? theme.colors.primary : 'transparent',
             justifyContent: 'center',
             alignItems: 'center',
             marginRight: 10
           }}>
             {showPassword && (
-              <MaterialCommunityIcons name="check" size={14} color={COLORS.white} />
+              <MaterialCommunityIcons name="check" size={14} color={theme.colors.onAccent} />
             )}
           </View>
           <Text style={{
@@ -981,14 +978,11 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         accessibilityRole="button"
         accessibilityLabel="다음 단계로"
       >
-        <LinearGradient
-          colors={COLORS.gradient.primary}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={[styles.button, { marginTop: spacing(14) }]}
+        <View
+          style={[styles.button, { marginTop: spacing(14), backgroundColor: theme.colors.primary }]}
         >
           <Text style={{
-            color: COLORS.white,
+            color: theme.colors.onAccent,
             fontSize: normalizeFontSize(16),
             fontWeight: '700',
             textAlign: 'center',
@@ -996,7 +990,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           }}>
             다음
           </Text>
-        </LinearGradient>
+        </View>
       </Pressable>
     </VStack>
   ), [formData.username, formData.password, formData.confirmPassword, updateFormData, spacing, normalizeFontSize, isDark, theme, styles, showPassword, showConfirmPassword]);
@@ -1019,7 +1013,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
           fontWeight: '600',
           textAlign: 'center',
-          lineHeight: normalizeFontSize(22)
+          lineHeight: normalizeFontSize(22) * Math.max(1, PixelRatio.getFontScale())
         }}>
           닉네임을 설정해주세요{'\n'}(나중에 변경 가능)
         </Text>
@@ -1035,13 +1029,13 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
         contentStyle={styles.textInputContent}
         outlineStyle={{
           borderRadius: 16,
-          borderWidth: 2,
-          borderColor: formData.nickname ? COLORS.gradient.primary[0] : 'transparent'
+          borderWidth: formData.nickname ? 2 : 1,
+          borderColor: formData.nickname ? theme.colors.primary : theme.colors.inputBorder
         }}
         maxLength={20}
         theme={{
           colors: {
-            primary: COLORS.gradient.primary[0],
+            primary: theme.colors.primary,
             onSurfaceVariant: isDark ? theme.text.secondary : COLORS.text.secondary.light,
             outline: 'transparent'
           },
@@ -1059,16 +1053,16 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           accessibilityLabel="가입 완료"
           accessibilityState={{ disabled: loading }}
         >
-          <LinearGradient
-            colors={loading ? ['#ccc', '#999'] : COLORS.gradient.primary}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.button, { opacity: loading ? 0.7 : 1 }]}
+          <View
+            style={[styles.button, {
+              opacity: loading ? 0.7 : 1,
+              backgroundColor: loading ? (isDark ? '#4B4B55' : '#767676') : theme.colors.primary
+            }]}
           >
             <HStack style={{ justifyContent: 'center', alignItems: 'center', gap: spacing(8) }}>
               {loading && <ActivityIndicator size="small" color={COLORS.white} />}
               <Text style={{
-                color: COLORS.white,
+                color: loading ? COLORS.white : theme.colors.onAccent,
                 fontSize: normalizeFontSize(16),
                 fontWeight: '700',
                 letterSpacing: 0.3
@@ -1076,7 +1070,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                 {loading ? '가입 중...' : '가입 완료'}
               </Text>
             </HStack>
-          </LinearGradient>
+          </View>
         </Pressable>
 
         <Pressable
@@ -1134,11 +1128,8 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
             />
           </Pressable>
 
-          <LinearGradient
-            colors={isDark ? COLORS.gradient.primaryDark : COLORS.gradient.primaryLight}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={{ flex: 1 }}
+          <View
+            style={{ flex: 1, backgroundColor: isDark ? COLORS.black : theme.colors.primary }}
           >
             <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -1193,7 +1184,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
                 </View>
               </ScrollView>
             </KeyboardAvoidingView>
-          </LinearGradient>
+          </View>
         </View>
       </TouchableWithoutFeedback>
     </>

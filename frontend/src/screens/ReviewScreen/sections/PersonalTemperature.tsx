@@ -115,7 +115,7 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
 
       <View style={[styles.tempContainer, { marginBottom: 12 * scale }]}>
         <TwemojiImage emoji={getPersonalTempIcon(data.temperature)} size={48 * scale} style={{ marginBottom: 8 * scale }} />
-        <Text style={[styles.tempText, { color: getPersonalTempColor(data.temperature), fontSize: FONT_SIZES.h1 }]}>
+        <Text style={[styles.tempText, { color: colors.text, fontSize: FONT_SIZES.h1 }]}>
           {getPersonalTempText(data.temperature)} {data.temperature.toFixed(1)}°
         </Text>
       </View>
@@ -130,7 +130,7 @@ export const PersonalTemperature: React.FC<Props> = React.memo(({ period = 'week
             styles.progressFill,
             {
               width: `${Math.max(0, Math.min(((data.temperature - 35) / 3) * 100, 100))}%`,
-              backgroundColor: getPersonalTempColor(data.temperature),
+              backgroundColor: data.temperature >= 36.3 && data.temperature < 36.8 ? colors.success : data.temperature >= 35.8 && data.temperature < 36.3 ? colors.primary : getPersonalTempColor(data.temperature),
               borderRadius: 4 * scale
             }
           ]}

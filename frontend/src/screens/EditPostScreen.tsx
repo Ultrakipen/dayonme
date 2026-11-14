@@ -45,19 +45,22 @@ const FALLBACK_EMOTION_OPTIONS = [
   { id: 2, label: '행복이', icon: 'emoticon-excited', color: '#FFA500' },
   { id: 3, label: '슬픔이', icon: 'emoticon-sad', color: '#4682B4' },
   { id: 4, label: '우울이', icon: 'emoticon-neutral', color: '#708090' },
-  { id: 5, label: '지루미', icon: 'emoticon-dead', color: '#A9A9A9' },
-  { id: 6, label: '버럭이', icon: 'emoticon-angry', color: '#FF4500' },
-  { id: 7, label: '불안이', icon: 'emoticon-confused', color: '#DDA0DD' },
-  { id: 8, label: '걱정이', icon: 'emoticon-frown', color: '#FFA07A' },
+  { id: 5, label: '불안이', icon: 'emoticon-confused', color: '#DDA0DD' },
+  { id: 6, label: '걱정이', icon: 'emoticon-frown', color: '#FFA07A' },
+  { id: 7, label: '버럭이', icon: 'emoticon-angry', color: '#FF4500' },
+  { id: 8, label: '짜증이', icon: 'emoticon-devil', color: '#DC143C' },
   { id: 9, label: '감동이', icon: 'heart', color: '#FF6347' },
   { id: 10, label: '황당이', icon: 'emoticon-wink', color: '#20B2AA' },
   { id: 11, label: '당황이', icon: 'emoticon-tongue', color: '#FF8C00' },
-  { id: 12, label: '짜증이', icon: 'emoticon-devil', color: '#DC143C' },
-  { id: 13, label: '무섭이', icon: 'emoticon-cry', color: '#9370DB' },
+  { id: 12, label: '무섭이', icon: 'emoticon-cry', color: '#9370DB' },
+  { id: 13, label: '편안이', icon: 'emoticon-kiss', color: '#98FB98' },
   { id: 14, label: '추억이', icon: 'emoticon-cool', color: '#87CEEB' },
   { id: 15, label: '설렘이', icon: 'heart-multiple', color: '#FF69B4' },
-  { id: 16, label: '편안이', icon: 'emoticon-kiss', color: '#98FB98' },
-  { id: 17, label: '궁금이', icon: 'emoticon-outline', color: '#DAA520' }
+  { id: 16, label: '지루미', icon: 'emoticon-dead', color: '#A9A9A9' },
+  { id: 17, label: '궁금이', icon: 'emoticon-outline', color: '#DAA520' },
+  { id: 18, label: '사랑이', icon: 'heart', color: '#E91E63' },
+  { id: 19, label: '아픔이', icon: 'bandage', color: '#8B4513' },
+  { id: 20, label: '욕심이', icon: 'cash', color: '#32CD32' }
 ];
 
 interface EditPostScreenProps {
@@ -91,7 +94,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
     text: theme.text.primary,
     textSecondary: theme.text.secondary,
     border: theme.bg.border,
-    primary: isDark ? '#60a5fa' : '#3b82f6',
+    primary: theme.colors.primary,
   };
 
   // 반응형 크기 계산 (기준: 360dp - React Native 논리적 픽셀)
@@ -189,7 +192,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
       headerStyle: {
         backgroundColor: theme.bg.primary,
         elevation: 2,
-        shadowColor: isDark ? '#fff' : '#000',
+        shadowColor: isDark ? '#000000' : '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: isDark ? 0.1 : 0.2,
         shadowRadius: 4,
@@ -226,7 +229,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
             className="px-4 py-2 rounded-lg mr-3"
             style={{
               backgroundColor: (content.trim().length < 10 || selectedEmotions.length === 0 || isSubmitting) ? theme.bg.border : '#9333ea',
-              shadowColor: isDark ? '#fff' : '#6b46c1',
+              shadowColor: isDark ? '#000000' : '#6b46c1',
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: isDark ? 0.1 : 0.2,
               shadowRadius: 4,
@@ -308,7 +311,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 className="px-4 py-2 rounded-lg mr-3"
                 style={{
                   backgroundColor: (content.trim().length < 10 || selectedEmotions.length === 0 || isSubmitting) ? theme.bg.border : '#9333ea',
-                  shadowColor: isDark ? '#fff' : '#6b46c1',
+                  shadowColor: isDark ? '#000000' : '#6b46c1',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: isDark ? 0.1 : 0.2,
                   shadowRadius: 4,
@@ -789,7 +792,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
           borderRadius: 12,
           padding: 20,
           marginBottom: 16,
-          shadowColor: isDark ? '#fff' : '#000',
+          shadowColor: isDark ? '#000000' : '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDark ? 0.1 : 0.2,
           shadowRadius: 4,
@@ -843,7 +846,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
           borderRadius: 12,
           padding: 20,
           marginBottom: 16,
-          shadowColor: isDark ? '#fff' : '#000',
+          shadowColor: isDark ? '#000000' : '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDark ? 0.1 : 0.2,
           shadowRadius: 4,
@@ -916,12 +919,12 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 position: 'absolute',
                 top: scale(8),
                 left: scale(8),
-                backgroundColor: (selectedImage || (uploadedImageUrl && uploadedImageUrl !== currentImageUrl)) ? '#3b82f6' : '#22c55e',
+                backgroundColor: (selectedImage || (uploadedImageUrl && uploadedImageUrl !== currentImageUrl)) ? theme.colors.primary : '#22c55e',
                 borderRadius: scale(12),
                 paddingHorizontal: scale(8),
                 paddingVertical: scale(4)
               }}>
-                <Text style={{ color: 'white', fontSize: scale(13), fontWeight: 'bold' }}>
+                <Text style={{ color: (selectedImage || (uploadedImageUrl && uploadedImageUrl !== currentImageUrl)) ? theme.colors.onAccent : 'white', fontSize: scale(13), fontWeight: 'bold' }}>
                   {(selectedImage || (uploadedImageUrl && uploadedImageUrl !== currentImageUrl)) ? '새 이미지' : '기존 이미지'}
                 </Text>
               </Box>
@@ -974,11 +977,11 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
             style={{
               marginTop: scale(12),
               borderRadius: scale(8),
-              backgroundColor: getDisplayImageUrl() ? '#f59e0b' : '#3b82f6'
+              backgroundColor: getDisplayImageUrl() ? '#f59e0b' : theme.colors.primary
             }}
             contentStyle={{ paddingVertical: scale(8) }}
             icon={getDisplayImageUrl() ? "image-edit" : "image-plus"}
-            labelStyle={{ fontSize: scale(14) }}
+            labelStyle={{ fontSize: scale(14), ...(getDisplayImageUrl() ? {} : { color: theme.colors.onAccent }) }}
             {...({} as any)}
           >
             {getDisplayImageUrl() ? '이미지 변경/제거' : '이미지 추가'}
@@ -994,7 +997,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
             backgroundColor: theme.bg.card,
             borderRadius: 12,
             marginBottom: 16,
-            shadowColor: isDark ? '#fff' : '#000',
+            shadowColor: isDark ? '#000000' : '#000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: isDark ? 0.1 : 0.2,
             shadowRadius: 8,
@@ -1054,9 +1057,9 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                     paddingVertical: scale(12),
                     borderRadius: scale(20),
                     borderWidth: 2,
-                    borderColor: selectedEmotions.includes(emotion.id) ? 'transparent' : theme.bg.border,
-                    backgroundColor: selectedEmotions.includes(emotion.id) ? emotion.color : theme.bg.secondary,
-                    shadowColor: selectedEmotions.includes(emotion.id) ? emotion.color : (isDark ? '#fff' : '#000'),
+                    borderColor: selectedEmotions.includes(emotion.id) ? theme.colors.accent : 'transparent',
+                    backgroundColor: selectedEmotions.includes(emotion.id) ? theme.colors.tint : theme.colors.surface,
+                    shadowColor: isDark ? '#000000' : '#000',
                     shadowOffset: { width: 0, height: 2 },
                     shadowOpacity: selectedEmotions.includes(emotion.id) ? 0.3 : (isDark ? 0.1 : 0.2),
                     shadowRadius: 4,
@@ -1067,7 +1070,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                     <MaterialCommunityIcons
                       name={emotion.icon as any}
                       size={scale(18)}
-                      color={selectedEmotions.includes(emotion.id) ? colors.text : emotion.color}
+                      color={theme.colors.text.primary}
                     />
                     <Text
                       style={{
@@ -1075,7 +1078,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                         fontSize: scale(15),
                         fontWeight: 'bold',
                         textAlign: 'center',
-                        color: selectedEmotions.includes(emotion.id) ? colors.text : emotion.color,
+                        color: theme.colors.text.primary,
                         fontFamily: 'Pretendard-Bold',
                         includeFontPadding: false,
                         lineHeight: scale(20)
@@ -1083,6 +1086,12 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                     >
                       {emotion.label}
                     </Text>
+                    <MaterialCommunityIcons
+                      name="check-circle"
+                      size={scale(16)}
+                      color={theme.colors.accent}
+                      style={{ marginLeft: scale(6), opacity: selectedEmotions.includes(emotion.id) ? 1 : 0 }}
+                    />
                   </HStack>
                 </Pressable>
               ))}
@@ -1099,7 +1108,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
             backgroundColor: theme.bg.card,
             borderRadius: 12,
             marginBottom: 16,
-            shadowColor: isDark ? '#fff' : '#000',
+            shadowColor: isDark ? '#000000' : '#000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: isDark ? 0.1 : 0.2,
             shadowRadius: 8,
@@ -1138,7 +1147,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 backgroundColor: theme.bg.secondary,
                 borderRadius: 999,
                 padding: 8,
-                shadowColor: isDark ? '#fff' : '#000',
+                shadowColor: isDark ? '#000000' : '#000',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: isDark ? 0.1 : 0.2,
                 shadowRadius: 2,
@@ -1148,8 +1157,8 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               <Switch
                 value={isAnonymous}
                 onValueChange={setIsAnonymous}
-                thumbColor={isAnonymous ? '#8b5cf6' : '#f4f3f4'}
-                trackColor={{ false: '#d1d5db', true: '#c084fc' }}
+                thumbColor={isAnonymous ? theme.colors.onAccent : '#f4f3f4'}
+                trackColor={{ false: '#d1d5db', true: theme.colors.primary }}
                 style={{ transform: [{ scaleX: 1.1 }, { scaleY: 1.1 }] }}
               />
             </Box>
@@ -1167,7 +1176,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
             marginBottom: scale(16),
             borderWidth: 1,
             borderColor: theme.bg.border,
-            shadowColor: isDark ? '#fff' : '#8b5cf6',
+            shadowColor: isDark ? '#000000' : '#000000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: isDark ? 0.1 : 0.2,
             shadowRadius: 8,
@@ -1193,7 +1202,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 style={{
                   width: scale(8),
                   height: scale(8),
-                  backgroundColor: '#8b5cf6',
+                  backgroundColor: theme.colors.primary,
                   borderRadius: scale(4),
                   marginRight: scale(12),
                   marginTop: 2
@@ -1217,7 +1226,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 style={{
                   width: scale(8),
                   height: scale(8),
-                  backgroundColor: '#8b5cf6',
+                  backgroundColor: theme.colors.primary,
                   borderRadius: scale(4),
                   marginRight: scale(12),
                   marginTop: 2
@@ -1241,7 +1250,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 style={{
                   width: scale(8),
                   height: scale(8),
-                  backgroundColor: '#8b5cf6',
+                  backgroundColor: theme.colors.primary,
                   borderRadius: scale(4),
                   marginRight: scale(12),
                   marginTop: 2
@@ -1265,7 +1274,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 style={{
                   width: scale(8),
                   height: scale(8),
-                  backgroundColor: '#8b5cf6',
+                  backgroundColor: theme.colors.primary,
                   borderRadius: scale(4),
                   marginRight: scale(12),
                   marginTop: 2
@@ -1408,7 +1417,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               fontSize: FONT_SIZES.h3,
               fontWeight: 'bold',
               textAlign: 'center',
-              color: theme.text.success || '#10b981',
+              color: theme.colors.success || '#10b981',
               marginBottom: 16
             }}>✅ 수정 완료!</Text>
             <Text style={{
@@ -1424,7 +1433,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               }}
               style={{
                 paddingVertical: 12,
-                backgroundColor: theme.text.success || '#10b981',
+                backgroundColor: theme.colors.success || '#10b981',
                 borderRadius: 8
               }}
             >
@@ -1460,7 +1469,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               fontSize: FONT_SIZES.h3,
               fontWeight: 'bold',
               textAlign: 'center',
-              color: theme.text.error || '#ef4444',
+              color: theme.colors.error || '#ef4444',
               marginBottom: 16
             }}>❌ 알림</Text>
             <Text style={{
@@ -1473,7 +1482,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
               onPress={() => setErrorModalVisible(false)}
               style={{
                 paddingVertical: 12,
-                backgroundColor: theme.text.error || '#ef4444',
+                backgroundColor: theme.colors.error || '#ef4444',
                 borderRadius: 8
               }}
             >
@@ -1545,7 +1554,7 @@ const EditPostScreen: React.FC<EditPostScreenProps> = ({ navigation, route }) =>
                 }}
                 style={{
                   paddingVertical: 12,
-                  backgroundColor: theme.text.error || '#ef4444',
+                  backgroundColor: theme.colors.error || '#ef4444',
                   borderRadius: 8
                 }}
               >

@@ -16,6 +16,7 @@ export const useModernTheme = () => {
       secondary: colors.info,
       background: colors.background,
       card: colors.card,
+      surface: colors.surface,
 
       // 텍스트 색상 (간소화: colors.text.primary → colors.text)
       text: colors.text.primary,
@@ -29,6 +30,10 @@ export const useModernTheme = () => {
       success: colors.success,
       error: colors.error,
       warning: colors.warning,
+      onAccent: colors.onAccent,
+      accentText: colors.accentText,
+      tint: colors.tint,
+      warningText: colors.warningText,
     },
     isDark,
     theme,

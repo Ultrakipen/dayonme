@@ -31,7 +31,7 @@ const ChallengeFeatureButtons: React.FC<ChallengeFeatureButtonsProps> = ({
   isParticipant = false,
 }) => {
   const navigation = useNavigation<any>();
-  const { isDark } = useModernTheme();
+  const { isDark, theme } = useModernTheme();
   const [showEncouragement, setShowEncouragement] = useState(false);
   const [showCompletionCard, setShowCompletionCard] = useState(false);
 
@@ -45,9 +45,9 @@ const ChallengeFeatureButtons: React.FC<ChallengeFeatureButtonsProps> = ({
     card: isDark ? '#1e1e1e' : '#f8f9fa',
     text: isDark ? '#ffffff' : '#1a1a1a',
     textSecondary: isDark ? '#a0a0a0' : '#666666',
-    primary: isDark ? '#667eea' : '#764ba2',
+    primary: theme.colors.primary,
     border: isDark ? '#333333' : '#e0e0e0',
-  }), [isDark]);
+  }), [isDark, theme]);
 
   // 감정 리포트로 이동
   const handleGoToReport = useCallback(() => {
