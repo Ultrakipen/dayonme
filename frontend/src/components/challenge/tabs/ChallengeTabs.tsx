@@ -39,7 +39,7 @@ export const ChallengeTabs = memo<ChallengeTabsProps>(({ activeTab, onTabChange,
           size={normalizeIcon(16)}
           color={activeTab === 'all' ? theme.colors.onAccent : theme.text.secondary}
         />
-        <Text style={[
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[
           styles.tabText,
           activeTab === 'all' && styles.tabTextActive,
           { color: activeTab === 'all' ? theme.colors.onAccent : theme.text.secondary }
@@ -61,7 +61,7 @@ export const ChallengeTabs = memo<ChallengeTabsProps>(({ activeTab, onTabChange,
           size={normalizeIcon(16)}
           color={activeTab === 'hot' ? theme.colors.onAccent : theme.text.secondary}
         />
-        <Text style={[
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[
           styles.tabText,
           activeTab === 'hot' && styles.tabTextActive,
           { color: activeTab === 'hot' ? theme.colors.onAccent : theme.text.secondary }
@@ -85,7 +85,7 @@ export const ChallengeTabs = memo<ChallengeTabsProps>(({ activeTab, onTabChange,
             size={normalizeIcon(16)}
             color={activeTab === 'my' ? 'white' : theme.text.secondary}
           />
-          <Text style={[
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[
             styles.tabText,
             activeTab === 'my' && styles.tabTextActive,
             { color: activeTab === 'my' ? 'white' : theme.text.secondary }

@@ -2801,8 +2801,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     <Text
                                         className="text-sm text-center font-medium"
                                         style={{
-                                            color: colors.primary,
-                                            lineHeight: 20
+                                            color: colors.primary
                                         }}
                                     >
                                         첫 번째 글을 작성해보세요!
@@ -2810,8 +2809,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                                     <Text
                                         className="text-xs text-center mt-1"
                                         style={{
-                                            color: colors.textSecondary,
-                                            lineHeight: 16
+                                            color: colors.textSecondary
                                         }}
                                     >
                                         탭하여 하루 이야기 시작하기
@@ -3599,7 +3597,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 )}
 
                 {/* 🌈 누군가의 하루 섹션 - 메인 피드 (우선순위 최상) */}
-                <HStack ref={postsStartRef} className="justify-between items-center mb-1 mt-1" style={{ paddingHorizontal: 8 }}>
+                <HStack ref={postsStartRef} className="justify-between items-center mb-1 mt-1" style={{ paddingHorizontal: 8, flexWrap: 'wrap', rowGap: 4 }}>
                     <HStack className="items-center">
                         <Text 
                             className="text-2xl font-bold" 
@@ -3613,7 +3611,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                             🌈 누군가의 하루는..
                         </Text>
                     </HStack>
-                    <HStack className="items-center" style={{ gap: 6 }}>
+                    <HStack className="items-center" style={{ gap: 6, marginLeft: 'auto' }}>
                         {/* 개수 배지 */}
                         {/* 필터로 목록이 줄었을 때만 "표시/전체" 개수 표시 (20/20 같은 무의미한 칩 제거) */}
                         {filteredPosts.length !== posts.length && (

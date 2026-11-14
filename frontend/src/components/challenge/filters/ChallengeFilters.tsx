@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     marginBottom: 5,
-    height: 38,
+    minHeight: 38,
     shadowOffset: { width: 0, height: 1 },
     shadowRadius: 3,
     elevation: 2,
