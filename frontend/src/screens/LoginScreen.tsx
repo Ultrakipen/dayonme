@@ -517,7 +517,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
                           color: isDark ? COLORS.text.secondary.dark : '#555',
                           fontWeight: '600',
                           textAlign: 'center',
-                          lineHeight: normalizeFontSize(19)
+                          lineHeight: normalizeFontSize(19) * Math.max(1, PixelRatio.getFontScale())
                         }}>
                           작은 공감들의 큰 이야기{'\n'}
           오늘도 나의 마음에 따뜻함이 켜집니다

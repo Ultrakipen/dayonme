@@ -23,6 +23,7 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import ImageResizer from '@bam.tech/react-native-image-resizer';
 import { normalizeImageUrl, invalidateImageCache } from '../utils/imageUtils';
 import { FONT_SIZES } from '../constants';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 interface ProfileEditScreenProps {
   navigation: {
@@ -222,7 +223,7 @@ const ProfileEditScreen: React.FC<ProfileEditScreenProps> = ({ navigation }) => 
               </View>
             )}
             <View style={[styles.cameraIcon, { backgroundColor: primaryColor }]}>
-              <Text style={styles.cameraEmoji}>📷</Text>
+              <MaterialCommunityIcons name="camera" size={16} color={theme?.colors?.onAccent || '#FFFFFF'} />
             </View>
           </TouchableOpacity>
 

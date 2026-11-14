@@ -505,7 +505,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
           fontWeight: '600',
           textAlign: 'center',
-          lineHeight: normalizeFontSize(22)
+          lineHeight: normalizeFontSize(22) * Math.max(1, PixelRatio.getFontScale())
         }}>
           가입할 이메일 주소를{'\n'}입력해주세요
         </Text>
@@ -690,7 +690,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
             color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
             fontWeight: '600',
             textAlign: 'center',
-            lineHeight: normalizeFontSize(22)
+            lineHeight: normalizeFontSize(22) * Math.max(1, PixelRatio.getFontScale())
           }}>
             {formData.email}으로{'\n'}발송된 코드를 입력해주세요
           </Text>
@@ -710,7 +710,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
               style={{
                 flex: 1,
                 maxWidth: 44,
-                height: 40,
+                minHeight: 40,
                 borderRadius: 8,
                 borderWidth: digit ? 2 : 1.5,
                 borderColor: digit ? theme.colors.primary : (isDark ? 'rgba(255,255,255,0.2)' : '#D1D5DB'),
@@ -821,7 +821,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
           fontWeight: '600',
           textAlign: 'center',
-          lineHeight: normalizeFontSize(22)
+          lineHeight: normalizeFontSize(22) * Math.max(1, PixelRatio.getFontScale())
         }}>
           사용자명과 비밀번호를{'\n'}설정해주세요
         </Text>
@@ -885,7 +885,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           fontSize: FONT_SIZES.bodySmall,
           marginTop: -8,
           marginLeft: 8,
-          lineHeight: 22,
+          lineHeight: 22 * Math.max(1, PixelRatio.getFontScale()),
           fontWeight: '600'
         }}>
           대문자, 소문자, 숫자, 특수문자(!@#$%^&*) 포함
@@ -1013,7 +1013,7 @@ const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
           color: isDark ? theme.text.secondary : COLORS.text.secondary.light,
           fontWeight: '600',
           textAlign: 'center',
-          lineHeight: normalizeFontSize(22)
+          lineHeight: normalizeFontSize(22) * Math.max(1, PixelRatio.getFontScale())
         }}>
           닉네임을 설정해주세요{'\n'}(나중에 변경 가능)
         </Text>
