@@ -2098,16 +2098,22 @@ const styles = StyleSheet.create({
   recordInfo: {
     flex: 1,
     flexDirection: 'row',
+    flexWrap: 'wrap', // 글자가 커져 한 줄에 안 들어가면 값이 아래 줄로 내려온다(기본 크기에서는 한 줄 그대로)
     justifyContent: 'space-between',
     alignItems: 'center',
+    columnGap: 8,
   },
   recordTitle: {
     fontSize: FONT_SIZES.bodySmall,
     fontWeight: '500',
+    flexShrink: 1,
   },
   recordValue: {
     fontSize: FONT_SIZES.bodySmall,
     fontWeight: '600',
+    flexShrink: 1,
+    marginLeft: 'auto',
+    textAlign: 'right',
   },
   // 배지 스타일
   badgeCard: {
