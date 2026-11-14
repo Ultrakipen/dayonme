@@ -1414,12 +1414,18 @@ const executeSearch = useCallback((query: string) => {
         backgroundColor={theme.bg.primary}
         translucent={false}
       />
+      {/* 상단 은은한 색 번짐 (헤더 뒤 배경) */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={[theme.colors.primary + '26', theme.colors.primary + '00']}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 180 }}
+      />
       {/* 위로와 공감 페이지와 동일한 단일 색상 헤더 */}
       <View
         style={[
           styles.headerGradient,
           {
-            backgroundColor: theme.bg.primary,
+            backgroundColor: 'transparent',
             borderBottomWidth: isDark ? 0 : 0.5,
             borderBottomColor: isDark ? 'transparent' : theme.bg.border,
           }
@@ -1612,7 +1618,7 @@ const executeSearch = useCallback((query: string) => {
         {/* 챌린지 생성 버튼 - 로그인 사용자만 표시 */}
         {isAuthenticated && (
           <TouchableOpacity
-            style={styles.floatingButton}
+            style={[styles.floatingButton, { shadowColor: isDark ? '#000000' : theme.colors.primary }]}
             onPress={handleCreateChallenge}
             activeOpacity={0.8}
             accessibilityLabel="새 챌린지 만들기"

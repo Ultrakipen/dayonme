@@ -1,5 +1,5 @@
 import React, { memo, useRef, useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated, ScrollView, ActivityIndicator, AccessibilityInfo } from 'react-native';
 import FastImage from 'react-native-fast-image';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -78,18 +78,28 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
     }
   }, [challenge.image_urls, challenge.challenge_id]);
 
+  // 모션 줄이기 설정이면 눌림 효과 끔
+  const reduceMotionRef = useRef(false);
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(v => { reduceMotionRef.current = !!v; }).catch(() => {});
+  }, []);
+
   const handlePressIn = () => {
-    Animated.timing(scaleValue, {
-      toValue: 0.98,
-      duration: 150,
+    if (reduceMotionRef.current) return;
+    Animated.spring(scaleValue, {
+      toValue: 0.97,
       useNativeDriver: true,
+      speed: 40,
+      bounciness: 0,
     }).start();
   };
   const handlePressOut = () => {
-    Animated.timing(scaleValue, {
+    if (reduceMotionRef.current) { scaleValue.setValue(1); return; }
+    Animated.spring(scaleValue, {
       toValue: 1,
-      duration: 150,
       useNativeDriver: true,
+      speed: 30,
+      bounciness: 6,
     }).start();
   };
 
@@ -266,10 +276,19 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
               })}
             </ScrollView>
           ) : (
-            <View style={[
-              styles.textCard,
-              { backgroundColor: theme.colors.tint }
-            ]}>
+            <LinearGradient
+              colors={[theme.colors.tint, theme.colors.primary + '24']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.textCard as any}
+            >
+              <MaterialCommunityIcons
+                name="trophy-variant"
+                size={44}
+                color={theme.colors.primary + '1F'}
+                style={styles.textCardDecoIcon}
+                pointerEvents="none"
+              />
               <Text style={[
                 styles.textCardTitle,
                 { color: theme.text.primary }
@@ -285,7 +304,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
                   ))}
                 </View>
               )}
-            </View>
+            </LinearGradient>
           )}
         </View>
 
@@ -315,7 +334,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
             <MaterialCommunityIcons
               name="account-group"
               size={normalizeIcon(20)}
-              color={theme.text.secondary}
+              color={theme.colors.accentText}
             />
             <Text
               style={[styles.participantText, { color: theme.text.primary }]}
@@ -329,7 +348,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
             <MaterialCommunityIcons
               name="heart"
               size={normalizeIcon(20)}
-              color={theme.text.secondary}
+              color={theme.colors.accentText}
             />
             <Text style={[
               styles.socialInteractionText,
@@ -341,7 +360,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
             <MaterialCommunityIcons
               name="emoticon-happy-outline"
               size={normalizeIcon(20)}
-              color={theme.text.secondary}
+              color={theme.colors.accentText}
             />
             <Text style={[
               styles.socialInteractionText,
@@ -353,7 +372,7 @@ export const GoalChallengeCard = memo<GoalChallengeCardProps>(({
             <MaterialCommunityIcons
               name="comment-text-outline"
               size={normalizeIcon(20)}
-              color={theme.text.secondary}
+              color={theme.colors.accentText}
             />
             <Text style={[
               styles.socialInteractionText,
@@ -554,6 +573,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  textCardDecoIcon: {
+    position: 'absolute' as const,
+    right: -8,
+    top: -8,
   },
   textCardTitle: {
     fontSize: 18,
