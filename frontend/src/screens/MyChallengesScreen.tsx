@@ -9,6 +9,7 @@ import {
   FlatList,
   RefreshControl,
   Alert,
+  Share,
   ActivityIndicator,
   Platform,
   Animated,
@@ -525,28 +526,10 @@ const MyChallengesScreenFixed = ({ route }: any) => {
   const handleShareChallenge = useCallback((challenge: Challenge) => {
     const shareText = `🎯 감정 챌린지에 함께 참여해보세요!\n\n📝 ${challenge.title}\n${challenge.description ? `💭 ${challenge.description}\n` : ''}👥 현재 ${challenge.participant_count}명 참여 중\n\n#감정챌린지 #Dayonme`;
 
-    Alert.alert(
-      '챌린지 공유',
-      '어떤 방식으로 공유하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '링크 복사',
-          onPress: () => {
-            // TODO: 실제 클립보드 API 사용
-            if (__DEV__) console.log('링크 복사:', shareText);
-            Alert.alert('완료', '챌린지 링크가 클립보드에 복사되었습니다.');
-          }
-        },
-        {
-          text: 'SNS 공유',
-          onPress: () => {
-            if (__DEV__) console.log('SNS 공유:', shareText);
-            Alert.alert('알림', 'SNS 공유 기능은 곧 추가될 예정입니다.');
-          }
-        }
-      ]
-    );
+    // 시스템 공유창으로 공유(앱에서 링크가 열리도록 하는 작업 전까지는 링크 없이 문구만)
+    Share.share({ message: shareText }).catch(() => {
+      Alert.alert('오류', '공유 중 오류가 발생했습니다.');
+    });
   }, []);
 
   // 참여자 초대 핸들러
