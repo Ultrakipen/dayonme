@@ -159,17 +159,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap', // 글자 크기를 키우거나 서체가 넓어져도 첫/끝 칩이 잘리지 않게 두 줄로 내려온다
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
     paddingVertical: 4,
   },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 16,
     borderWidth: 0.5,
-    marginHorizontal: 2,
+    marginHorizontal: 0,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 3,
@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
   filterChipText: {
     fontSize: normalize(13),
     fontWeight: '600',
-    marginLeft: 4,
-    letterSpacing: -0.2,
+    marginLeft: 3,
+    letterSpacing: -0.3,
     textAlignVertical: 'center',
     includeFontPadding: false,
     fontFamily: Platform.select({
